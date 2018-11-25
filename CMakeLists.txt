@@ -66,6 +66,6 @@ include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build
 link_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build/.libs)
 
 add_subdirectory(3rdparty)
-add_subdirectory(my_hello)
+add_subdirectory(src/my_hello)
 
 
