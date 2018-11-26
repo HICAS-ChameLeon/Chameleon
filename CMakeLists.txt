@@ -45,6 +45,7 @@ include(CompilationConfigure)
 # ${CMAKE_SOURCE_DIR}/3rdparty/libprocess/cmake
 include(ProcessConfigure)
 
+include_directories(${CMAKE_BINARY_DIR}/3rdparty/boost-1.53.0-prefix/src/boost-1.53.0)
 
 include(cmake/protobuf_download.cmake)
 include(cmake/protobuf_compile.cmake)
