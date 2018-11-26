@@ -8,6 +8,9 @@ First,
 # Update the packages.
 $ sudo apt-get update
 
+# install cmake
+$ sudo apt-get install -y cmake
+
 # Install a few utility tools.
 $ sudo apt-get install -y tar wget git
 

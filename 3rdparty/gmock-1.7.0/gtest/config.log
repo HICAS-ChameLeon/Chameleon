@@ -539,7 +539,7 @@ conftest.c:29:22: warning: null argument where non-null required (argument 1) [-
                       pthread_create(0,0,0,0); pthread_cleanup_pop(0);
                       ^
 conftest.c:29:22: warning: null argument where non-null required (argument 3) [-Wnonnull]
-/tmp/ccU3dPBN.o: In function `main':
+/tmp/ccUYbYP9.o: In function `main':
 /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/conftest.c:27: undefined reference to `pthread_join'
 /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/conftest.c:28: undefined reference to `__pthread_register_cancel'
 /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/conftest.c:29: undefined reference to `pthread_create'
