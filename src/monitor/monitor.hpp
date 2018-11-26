@@ -1,0 +1,76 @@
+//
+// Created by lemaker on 18-11-26.
+//
+
+#ifndef CHAMELEON_MONITOR_HPP
+#define CHAMELEON_MONITOR_HPP
+// C++ 11 dependencies
+#include <iostream>
+#include <unordered_map>
+
+// stout dependencies
+#include <stout/os.hpp>
+#include <stout/os/pstree.hpp>
+
+// libprocess dependencies
+#include <process/defer.hpp>
+#include <process/dispatch.hpp>
+#include <process/future.hpp>
+#include <process/http.hpp>
+#include <process/process.hpp>
+#include <process/protobuf.hpp>
+
+// protobuf
+#include <participant_info.pb.h>
+
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::string;
+using std::unordered_map;
+
+using os::Process;
+using os::ProcessTree;
+
+using process::UPID;
+using process::PID;
+using process::Future;
+using process::Promise;
+using namespace process::http;
+
+using process::http::Request;
+using process::http::OK;
+using process::http::InternalServerError;
+
+
+namespace chameleon {
+    struct PariTemp{
+        string hostname;
+    };
+
+    class Monitor : public ProtobufProcess<Monitor> {
+
+    public:
+        Monitor() : ProcessBase("monitor") {
+
+        }
+
+        virtual void initialize() {
+            install<ParticipantInfo>(&Monitor::register_participant, &ParticipantInfo::hostname);
+        }
+
+        void register_participant(const string& hostname){
+            cout<<"monitor receive register message from "<< hostname<<endl;
+        }
+
+    private:
+        unordered_map<UPID,PariTemp> m_participants;
+    };
+
+
+}
+
+
+
+
+#endif //CHAMELEON_MONITOR_HPP

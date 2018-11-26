@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.8.10)
 
+ADD_DEFINITIONS(
+        -std=c++11 # Or -std=c++0x
+)
 
 project(Chameleon)
 
@@ -7,9 +10,9 @@ project(Chameleon)
 #message(${CMAKE_SOURCE_DIR})
 #message(${CMAKE_CURRENT_LIST_DIR})
 
-execute_process(WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0
-                   COMMAND  ./my_make.sh
-        )
+#execute_process(WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0
+#                   COMMAND  ./my_make.sh
+#        )
 
 # CMAKE MODULE SETUP.f
 #####################
@@ -63,10 +66,12 @@ link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/lib/.libs)
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/gtest/include)
 link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/gtest/lib/.libs)
 
-include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build/src)
+include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build/src/glog)
 link_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build/.libs)
 
 add_subdirectory(3rdparty)
-add_subdirectory(src/my_hello)
+#add_subdirectory(src/my_hello)
+
+add_subdirectory(src)
 
 
