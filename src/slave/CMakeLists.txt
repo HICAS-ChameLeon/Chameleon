@@ -23,3 +23,7 @@ target_link_libraries(disk hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} 
 set(cpu_SRCS cpu_collector.cpp cpu_collector.hpp)
 add_executable(cpu ${cpu_SRCS})
 target_link_libraries(cpu hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
+
+set(memory_SRCS memory_collector.hpp memory_collector_tests.cpp)
+add_executable(memory ${memory_SRCS})
+target_link_libraries(memory hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
