@@ -11,6 +11,10 @@
 #include <unordered_map>
 
 // stout dependencies
+#include <stout/gtest.hpp>
+#include <stout/json.hpp>
+#include <stout/jsonify.hpp>
+#include <stout/protobuf.hpp>
 #include <stout/os.hpp>
 #include <stout/os/pstree.hpp>
 
@@ -64,7 +68,7 @@ namespace chameleon {
             install<HardwareResourcesMessage>(&Master::update_hardware_resources);
             // http://172.20.110.228:5050/master/post-test
             route(
-                    "/HardwareResource",
+                    "/HardwareResources",
                     "get the topology resources of the whole topology",
                     [](Request request) {
                         string request_method = request.method;

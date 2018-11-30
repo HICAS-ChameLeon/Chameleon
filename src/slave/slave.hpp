@@ -60,6 +60,7 @@ namespace chameleon {
     public:
         explicit Slave():ProcessBase("slave"){
             msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+            msp_resource_collector->collect_hardware_resources();
         }
 
         virtual ~Slave(){
