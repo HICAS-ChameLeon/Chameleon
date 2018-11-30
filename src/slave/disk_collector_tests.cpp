@@ -17,7 +17,7 @@ using std::shared_ptr;
 
 TEST(DiskCollectorTest, DiskInfo)
 {
-    DiskCollector* disk_collector = new DiskCollector();
+    chameleon::DiskCollector* disk_collector = new chameleon::DiskCollector();
     DiskCollection* disk_collection = disk_collector->get_disk_collection();
 
     Option<int> disk_quantity = disk_collection->disk_quantity();

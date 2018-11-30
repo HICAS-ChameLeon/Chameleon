@@ -9,8 +9,13 @@
 using namespace chameleon;
 
 void Slave::initialize() {
+
     mp_masterUPID = new UPID(DEFAULT_MASTER);
     install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
+
+    HardwareResourcesMessage* hr_message = msp_resource_collector->collect_hardware_resources();
+    send(*mp_masterUPID,*hr_message);
+
 }
 
 
