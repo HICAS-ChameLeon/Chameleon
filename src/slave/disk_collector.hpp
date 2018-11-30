@@ -169,7 +169,7 @@ public:
        * Author       ：heldon
        * Date         ：2018-11-30
        * Description  ：Overload the symbol of output
-       * Parameter    ：ostream, DiskCollector
+       * Parameter    ：ostream, disk_collector
        * Return       ：ostream
        */
         friend std::ostream &operator<<(std::ostream &stream, DiskCollector *&disk_collector) {
