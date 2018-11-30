@@ -4246,7 +4246,7 @@ infy_add (EV_P_ ev_stat *w)
       /* can't use inotify, continue to stat */
       w->timer.repeat = w->interval ? w->interval : DEF_STAT_INTERVAL;
 
-      /* if path is not there, monitor some parent directory for speedup hints */
+      /* if path is not there, master some parent directory for speedup hints */
       /* note that exceeding the hardcoded path limit is not a correctness issue, */
       /* but an efficiency issue only */
       if ((errno == ENOENT || errno == EACCES) && strlen (w->path) < 4096)

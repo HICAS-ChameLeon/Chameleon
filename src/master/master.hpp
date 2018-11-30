@@ -1,9 +1,9 @@
 //
 // Created by lemaker on 18-11-26.
 //
-#ifndef CHAMELEON_PARTICIPANT_HPP
-#define CHAMELEON_PARTICIPANT_HPP
 
+#ifndef CHAMELEON_MONITOR_HPP
+#define CHAMELEON_MONITOR_HPP
 // C++ 11 dependencies
 #include <iostream>
 #include <unordered_map>
@@ -21,7 +21,7 @@
 #include <process/protobuf.hpp>
 
 // protobuf
-#include <monitor_info.pb.h>
+#include <participant_info.pb.h>
 
 using std::cerr;
 using std::cout;
@@ -42,29 +42,36 @@ using process::http::Request;
 using process::http::OK;
 using process::http::InternalServerError;
 
+
 namespace chameleon {
 
-    class Participant : public ProtobufProcess<Participant> {
+    class Monitor : public ProtobufProcess<Monitor> {
+
     public:
-        explicit Participant():ProcessBase("participant"){
+        explicit Monitor() : ProcessBase("master") {
 
         }
 
-        virtual ~Participant(){
+        virtual ~Monitor(){
 
         }
 
         virtual void initialize() {
-            install<MonitorInfo>(&Participant::register_feedback, &MonitorInfo::hostname);
+            install<ParticipantInfo>(&Monitor::register_participant, &ParticipantInfo::hostname);
         }
 
-        void register_feedback(const string& hostname){
-            cout<<" receive register feedback from monitor"<< hostname<<endl;
+        void register_participant(const string& hostname){
+            cout<<"master receive register message from "<< hostname<<endl;
         }
+
+    private:
+        unordered_map<UPID,ParticipantInfo> m_participants;
     };
+
+
 }
 
 
 
 
-#endif //CHAMELEON_PARTICIPANT_HPP
+#endif //CHAMELEON_MONITOR_HPP

@@ -18,5 +18,5 @@ $ sudo apt-get install -y tar wget git
 $ sudo apt-get install -y autoconf libtool
 
 # Install other  ependencies.
-$ sudo apt-get -y install build-essential ibcurl4-nss-dev libsasl2-dev libsasl2-modules  ibapr1-dev libsvn-dev zlib1g-dev iputils-ping
+$ sudo apt-get -y install build-essential libcurl4-nss-dev libsasl2-dev libsasl2-modules  libapr1-dev libsvn-dev zlib1g-dev iputils-ping
 ```

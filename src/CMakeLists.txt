@@ -9,8 +9,8 @@ link_directories(${PROCESS_LIB_DIRS})
 
 add_subdirectory(messages)
 
-add_subdirectory(monitor)
+add_subdirectory(master)
 
-add_subdirectory(participant)
+add_subdirectory(slave)
 
 #add_subdirectory(my_hello)
