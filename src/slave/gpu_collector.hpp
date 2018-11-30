@@ -21,7 +21,7 @@ namespace chameleon {
  * author：ZhangYixin 1968959287@qq.com
  * description： Collecting GPU information by executing commands.
  */
-    class GpuCollector {
+    class GpuCollector {   m
     private:
         string m_gpu_info;
         GPUCollection* m_gpu_proto = new GPUCollection();
