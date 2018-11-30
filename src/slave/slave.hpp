@@ -11,6 +11,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <memory>
+#include <string>
 
 // stout dependencies
 #include <stout/os.hpp>
@@ -56,6 +57,7 @@ namespace chameleon {
     // forward declations
     class SlaveHeartbeater;
 
+    constexpr string DEFAULT_MASTER="172.20.110.228:5050";
     class Slave : public ProtobufProcess<Slave> {
     public:
         explicit Slave():ProcessBase("slave"){
@@ -102,7 +104,7 @@ namespace chameleon {
         }
 
         const Duration m_interval;
-
+        const UPID* mp_masterUPID;
 
     };
 }

@@ -9,6 +9,7 @@
 using namespace chameleon;
 
 void Slave::initialize() {
+    mp_masterUPID = new UPID(DEFAULT_MASTER);
     install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
 }
 
