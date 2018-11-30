@@ -4,3 +4,8 @@ include_directories(${CMAKE_CURRENT_LIST_DIR})
 set(slave_SRCS slave.hpp slave.cpp resource_collector.hpp resource_collector.cpp)
 add_executable(slave ${slave_SRCS})
 target_link_libraries(slave monitor_info hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
+
+include_directories(${CMAKE_CURRENT_LIST_DIR})
+set(disk_SRCS disk_collector.hpp disk_collector.cpp)
+add_executable(disk ${disk_SRCS})
+target_link_libraries(disk hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
