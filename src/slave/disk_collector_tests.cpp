@@ -17,14 +17,14 @@ using std::shared_ptr;
 
 TEST(DiskCollectorTest, DiskInfo)
 {
-    shared_ptr<DiskCollector> disk_collector;
-    DiskCollection disk_collection = disk_collector->get_disk_collection();
+    DiskCollector* disk_collector = new DiskCollector();
+    DiskCollection* disk_collection = disk_collector->get_disk_collection();
 
-    Option<int> disk_quantity = disk_collection.disk_quantity();
+    Option<int> disk_quantity = disk_collection->disk_quantity();
     EXPECT_SOME(disk_quantity);
 
-    for(int i = 0;i < disk_collection.disk_infos_size(); i++){
-        Option<DiskInfo*> disk_info = disk_collection.mutable_disk_infos(i);
+    for(int i = 0;i < disk_collection->disk_infos_size(); i++){
+        Option<DiskInfo*> disk_info = disk_collection->mutable_disk_infos(i);
         EXPECT_SOME(disk_info);
         Option<string> disk_name = disk_info.get()->name();
         EXPECT_SOME(disk_name);
