@@ -7,6 +7,7 @@
 // C++ 11 dependencies
 #include <iostream>
 #include <unordered_map>
+#include <memory>
 
 // stout dependencies
 #include <stout/os.hpp>
@@ -23,11 +24,16 @@
 // protobuf
 #include <monitor_info.pb.h>
 
+// chameleon headers
+#include <resource_collector.hpp>
+
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::string;
 using std::unordered_map;
+using std::shared_ptr;
+using std::make_shared;
 
 using os::Process;
 using os::ProcessTree;
@@ -47,7 +53,7 @@ namespace chameleon {
     class Slave : public ProtobufProcess<Slave> {
     public:
         explicit Slave():ProcessBase("slave"){
-
+            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
         }
 
         virtual ~Slave(){
@@ -61,6 +67,9 @@ namespace chameleon {
         void register_feedback(const string& hostname){
             cout<<" receive register feedback from master"<< hostname<<endl;
         }
+
+    private:
+       shared_ptr<ResourceCollector> msp_resource_collector;
     };
 }
 

@@ -22,6 +22,7 @@
 
 // protobuf
 #include <participant_info.pb.h>
+#include <hardware_resource.pb.h>
 
 using std::cerr;
 using std::cout;
@@ -58,12 +59,16 @@ namespace chameleon {
 
         virtual void initialize() {
             install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
-
+            install<HardwareResourcesMessage>(&Master::update_hardware_resources);
 
         }
 
         void register_participant(const string& hostname){
             cout<<"master receive register message from "<< hostname<<endl;
+        }
+
+        void update_hardware_resources(const UPID& from, const HardwareResourcesMessage& hardware_resources_message){
+
         }
 
 
