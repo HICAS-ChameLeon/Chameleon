@@ -38,7 +38,7 @@ namespace chameleon {
     class MemoryCollector {
     public:
         /* message class. */
-        MemoryCollection m_memory_collection;
+        MemoryCollection* m_memory_collection = new MemoryCollection();
 
         /* storing strings during processing. */
         vector<string> m_tokens;
@@ -74,7 +74,7 @@ namespace chameleon {
          * Parameter    ：vector<string> m_tokens
          * Return       ：MemoryCollection m_memory_collection
          */
-        MemoryCollection select_meminfo(vector<string> tokens) {
+        MemoryCollection* select_meminfo(vector<string> tokens) {
             /* the number of size,type,speed. */
             int num_size = 0, num_type = 0, num_speed = 0;
             /* class ptr. */
@@ -86,12 +86,12 @@ namespace chameleon {
                     string nospace = strings::trim(*iter);
                     if (nospace == "Maximum Capacity") {
                         iter++;
-                        m_memory_collection.set_max_size(strings::trim(*iter));
+                        m_memory_collection->set_max_size(strings::trim(*iter));
                     }
                     if (nospace == "Size") {
                         iter++;
                         if (strings::trim(*iter) != "No Module Installed") {
-                            tmp = m_memory_collection.add_mem_infos();
+                            tmp = m_memory_collection->add_mem_infos();
                             tmp->set_size(strings::trim(*iter));
                             num_size++;
                         }
@@ -115,7 +115,7 @@ namespace chameleon {
                     }
                 }
             }
-            m_memory_collection.set_device_quantity(num_size);
+            m_memory_collection->set_device_quantity(num_size);
             return m_memory_collection;
         }
 
@@ -128,12 +128,12 @@ namespace chameleon {
          * Output       :memory information
          * Return       ：none
          */
-        void show_meminfo(MemoryCollection memory_collection) {
-            cout << "Maximum Capacity：" << memory_collection.max_size() << endl;
+        void show_meminfo(MemoryCollection* memory_collection) {
+            cout << "Maximum Capacity：" << memory_collection->max_size() << endl;
             /* memoryCollection.info().size() */
-            cout << "当前机器有" << memory_collection.device_quantity() << "个使用中的内存插槽" << endl;
-            for (auto iter = memory_collection.mem_infos().begin(); iter != memory_collection.mem_infos().end(); iter++) {
-                cout << "第" << iter - memory_collection.mem_infos().begin() + 1 << "个Memory Device的信息为：" << endl;
+            cout << "当前机器有" << memory_collection->device_quantity() << "个使用中的内存插槽" << endl;
+            for (auto iter = memory_collection->mem_infos().begin(); iter != memory_collection->mem_infos().end(); iter++) {
+                cout << "第" << iter - memory_collection->mem_infos().begin() + 1 << "个Memory Device的信息为：" << endl;
                 cout << "Size：" << iter.operator->()->size() << endl;
                 cout << "Type：" << iter.operator->()->type() << endl;
                 cout << "Speed：" << iter.operator->()->speed() << endl;
