@@ -9,14 +9,24 @@
 
 // C++ 11 dependencies
 #include <iostream>
+#include <memory>
+#include <vector>
 
 #include <hardware_resource.pb.h>
+
+#include <disk_collector.hpp>
+
+using std::cout;
+using std::endl;
+using std::vector;
+using std::shared_ptr;
+using std::make_shared;
 
 namespace chameleon {
     class ResourceCollector {
     public:
         explicit ResourceCollector(){
-
+            msp_disk = make_shared<DiskCollector>(DiskCollector());
         }
 
         virtual ~ResourceCollector(){
@@ -25,7 +35,27 @@ namespace chameleon {
 
         HardwareResourcesMessage& collect_hardware_resources(){
 
+            HardwareResourcesMessage hr_message;
+
+
+            // disk collector
+            vector<DiskInfo> local_diskinfos = msp_disk->get_disk_collection();
+            for(auto it = local_diskinfos.begin();it!=local_diskinfos.end();it++){
+                cout << "name: "                    << it->name()
+                       << " size: "                   << it->size()
+                       << " type: "                   << it->type()           <<'\n'
+                       <<"Timing disk reads speed = " << it->disk_speed()     << " MB/s " << '\n'
+                       << "Disk_free = "              << it->disk_free()      << " GB"    << '\n'
+                       << "Disk_available = "         << it->disk_available() << " GB"    << '\n';
+            }
+//
+//            std::cout<<msp_disk.get()<<std::endl;
+//            int a = 4;
         }
+
+    private:
+        shared_ptr<DiskCollector> msp_disk;
+
     };
 
 

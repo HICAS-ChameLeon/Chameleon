@@ -60,19 +60,16 @@ namespace chameleon {
     public:
         explicit Slave():ProcessBase("slave"){
             msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+            msp_resource_collector->collect_hardware_resources();
         }
 
         virtual ~Slave(){
 
         }
 
-        virtual void initialize() {
-            install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
-        }
+        virtual void initialize();
 
-        void register_feedback(const string& hostname){
-            cout<<" receive register feedback from master"<< hostname<<endl;
-        }
+        void register_feedback(const string& hostname);
 
     private:
        shared_ptr<ResourceCollector> msp_resource_collector;

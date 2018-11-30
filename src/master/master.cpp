@@ -17,6 +17,13 @@ int main(){
     cout << "Running master on " << process::address().ip << ":" << process::address().port << endl;
     cout << "PID" << endl;
 
+    //get slave ip and port
+    string slave_str;
+    std::cin >> slave_str;
+    UPID slaveUPID(slave_str);
+    master.slave = slaveUPID;
+
+
     const PID<Master> master_pid = master.self();
     cout << master_pid << endl;
     process::wait(master.self());
