@@ -8,6 +8,16 @@
 #include "slave.hpp"
 using namespace chameleon;
 
+void Slave::initialize() {
+    install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
+}
+
+
+void Slave::register_feedback(const string& hostname){
+    cout<<" receive register feedback from master"<< hostname<<endl;
+}
+
+
 int main(){
     os::setenv("LIBPROCESS_PORT", stringify(5051));
     process::initialize("slave");

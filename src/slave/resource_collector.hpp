@@ -35,6 +35,9 @@ namespace chameleon {
 
         HardwareResourcesMessage& collect_hardware_resources(){
 
+            HardwareResourcesMessage hr_message;
+
+
             // disk collector
             vector<DiskInfo> local_diskinfos = msp_disk->get_disk_collection();
             for(auto it = local_diskinfos.begin();it!=local_diskinfos.end();it++){
