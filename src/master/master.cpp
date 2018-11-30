@@ -9,13 +9,13 @@ int main(){
     os::setenv("LIBPROCESS_PORT", stringify(5050));
     process::initialize("master");
 
-    Monitor monitor;
-    PID<Monitor> cur_monitor = process::spawn(monitor);
+    Master master;
+    PID<Master> cur_master = process::spawn(master);
     cout << "Running master on " << process::address().ip << ":" << process::address().port << endl;
     cout << "PID" << endl;
 
-    const PID<Monitor> monitor_pid = monitor.self();
-    cout << monitor_pid << endl;
-    process::wait(monitor.self());
+    const PID<Master> master_pid = master.self();
+    cout << master_pid << endl;
+    process::wait(master.self());
     return 0;
 }

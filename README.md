@@ -15,7 +15,7 @@ $ sudo apt-get install -y cmake
 $ sudo apt-get install -y tar wget git
 
 # Install autotools
-$ sudo apt-get install -y autoconf libtool
+$ sudo apt-get install -y autoconf libtool automake
 
 # Install other  ependencies.
 $ sudo apt-get -y install build-essential libcurl4-nss-dev libsasl2-dev libsasl2-modules  libapr1-dev libsvn-dev zlib1g-dev iputils-ping

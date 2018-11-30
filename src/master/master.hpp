@@ -45,19 +45,21 @@ using process::http::InternalServerError;
 
 namespace chameleon {
 
-    class Monitor : public ProtobufProcess<Monitor> {
+    class Master : public ProtobufProcess<Master> {
 
     public:
-        explicit Monitor() : ProcessBase("master") {
+        explicit Master() : ProcessBase("master") {
 
         }
 
-        virtual ~Monitor(){
+        virtual ~Master(){
 
         }
 
         virtual void initialize() {
-            install<ParticipantInfo>(&Monitor::register_participant, &ParticipantInfo::hostname);
+            install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
+
+
         }
 
         void register_participant(const string& hostname){
@@ -66,6 +68,7 @@ namespace chameleon {
 
     private:
         unordered_map<UPID,ParticipantInfo> m_participants;
+//        unordered_map<string,HardwareResource> m_topology_resources;
     };
 
 

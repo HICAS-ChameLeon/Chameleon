@@ -44,18 +44,18 @@ using process::http::InternalServerError;
 
 namespace chameleon {
 
-    class Participant : public ProtobufProcess<Participant> {
+    class Slave : public ProtobufProcess<Slave> {
     public:
-        explicit Participant():ProcessBase("slave"){
+        explicit Slave():ProcessBase("slave"){
 
         }
 
-        virtual ~Participant(){
+        virtual ~Slave(){
 
         }
 
         virtual void initialize() {
-            install<MonitorInfo>(&Participant::register_feedback, &MonitorInfo::hostname);
+            install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
         }
 
         void register_feedback(const string& hostname){
