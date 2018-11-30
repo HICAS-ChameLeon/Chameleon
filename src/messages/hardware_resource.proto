@@ -1,5 +1,5 @@
 
-message HardwareResource
+message HardwareResourcesMessage
 {
     required string slave_id =1;
     required CPUCollection cpu_collection = 2;
