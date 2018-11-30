@@ -35,7 +35,7 @@ using std::endl;
 using std::string;
 
 /*
- * Class name ：DiskCollector
+ * Class name ：disk_collector
  * Author     ：heldon  764165887@qq.com
  * Date       ：18-11-30
  * Description：A Class to get Disks' information
@@ -146,7 +146,8 @@ public:
                                     disk_info.set_disk_free(disk_free.get());
                                     disk_info.set_disk_available(disk_available.get());
                                     disk_collection_vector.push_back(disk_info);
-                                }
+                                } else
+                                    cout<<"data lost,please check"<<endl;
                             }
                             /*If there isn't a key called "type"*/
                             else
@@ -163,7 +164,7 @@ public:
        * Author       ：heldon
        * Date         ：2018-11-30
        * Description  ：Overload the symbol of output
-       * Parameter    ：ostream, DiskCollector
+       * Parameter    ：ostream, disk_collector
        * Return       ：ostream
        */
         friend std::ostream &operator<<(std::ostream &stream, DiskCollector *&disk_collector) {
