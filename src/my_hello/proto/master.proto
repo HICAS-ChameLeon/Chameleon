@@ -1,0 +1,13 @@
+message ReportProgressMessage{
+    repeated Task task  =3;
+}
+
+message Task {
+    required string name = 1;
+    required TaskID task_id = 2;
+    required float progress = 3;
+}
+
+message TaskID{
+    required string value = 1;
+}

@@ -1,0 +1,15 @@
+message Chinese{
+  required int32 age =1;
+  required int32 id = 2;
+  required string name = 3;
+  optional string career = 4;
+
+}
+
+
+message Teacher
+{
+
+  required Chinese chinese=6;
+}
+
