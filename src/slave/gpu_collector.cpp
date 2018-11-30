@@ -1,4 +1,4 @@
-#include "GpuCollector.hpp"
+#include "gpu_collector.hpp"
 namespace chameleon {
 /*
  * functionName：get_gpu_string
