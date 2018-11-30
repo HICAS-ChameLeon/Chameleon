@@ -5,22 +5,20 @@
 #ifndef LIBPROCESS_START_CPU_INFO_H
 #define LIBPROCESS_START_CPU_INFO_H
 
+// C++ 11 dependencies
+#include <iostream>
 #include <fstream>
 #include <sstream>
-#include <iostream>
-
 #include <error.h>
-#include <list>
 #include <string>
 #include <vector>
 
-#include <sstream>
-
+// stout dependencies
 #include <stout/option.hpp>
 #include <stout/try.hpp>
-#include <stout/numify.hpp>
-#include <stout/os/int_fd.hpp>
 
+
+// libprocess dependencies
 #include <process/io.hpp>
 #include <process/future.hpp>
 #include <process/subprocess.hpp>
@@ -28,28 +26,28 @@
 #include <hardware_resource.pb.h>
 
 
-using std::vector;
-using std::string;
 using std::cout;
 using std::endl;
-using std::list;
-using std::istringstream;
-using std::ostream;
+using std::vector;
+using std::string;
 
-using strings::tokenize;
-
-using process::subprocess;
 using process::Subprocess;
 
-
 namespace chameleon {
-    class cpu_collector {
+    class Cpu_Collector {
 
     public:
-        vector<CPUInfo> get_cpu_info() {
-            vector<CPUInfo> result_ci;
 
+        /**
+         * ClassName   : CpuCollector
+         * Date        : 18/11/30
+         * Author      : weiguo
+         * Description : Collecting CPU information from computer*/
+
+        CPUCollection get_cpu_info() {
             CPUInfo ci;
+            vector<CPUCollection> result_ci;
+            CPUCollection* cpuCollection = new CPUCollection();
             std::ifstream file("/proc/cpuinfo");
 
             if (!file.is_open()) {
@@ -106,7 +104,9 @@ namespace chameleon {
                     }
                 }
 
-                //finally create a CPU if we have all the information.
+                /**
+                 * finally create a CPU if we have all the information.
+                 * */
                 if (cpuID.isSome() && coreID.isSome() && physicalID.isSome() && cpucores.isSome() &&
                     modelname.isSome() && cpuMHz.isSome() && L1dcache.isSome() && L2cache.isSome() &&
                     L1dcache.isSome() && L3cache.isSome()) {
@@ -123,7 +123,8 @@ namespace chameleon {
                     ci.set_l2cache(L2cache.get());
                     ci.set_l3cache(L3cache.get());
 
-                    result_ci.push_back(ci);
+                    cpuCollection->add_cpu_infos()->MergeFrom(ci);
+                    result_ci.push_back(*cpuCollection);
 
                     cpuID = None();
                     coreID = None();
@@ -137,7 +138,8 @@ namespace chameleon {
                     L3cache = None();
                 }
             }
-            return result_ci;
+            cpuCollection->set_cpu_quantity(result_ci.size());
+            return  *cpuCollection;
         }
     };
 }
