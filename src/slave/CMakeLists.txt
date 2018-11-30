@@ -14,3 +14,9 @@ set(disk_SRCS disk_collector.hpp disk_collector.cpp)
 add_executable(disk ${disk_SRCS})
 target_link_libraries(disk hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
 
+#[[<<<<<<< HEAD]]
+set(memory_SRCS memory_collector.hpp memory_collector.cpp)
+add_executable(memory ${memory_SRCS})
+target_link_libraries(memory hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
+#[[=======
+>>>>>>> 38012e84f8897d7be4e7226e613fb97f46bbc9e0]]
