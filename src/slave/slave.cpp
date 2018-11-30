@@ -1,9 +1,22 @@
-//
-// Created by lemaker on 18-11-26.
-//
+/*
+ * Copyright  ：SIAT 异构智能计算体系结构与系统研究中心
+ * Author     ：Lele Li lilelr@163.com
+ * Date       ：18-11-26
+ * Description：slave codes
+ */
 
 #include "slave.hpp"
 using namespace chameleon;
+
+void Slave::initialize() {
+    install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
+}
+
+
+void Slave::register_feedback(const string& hostname){
+    cout<<" receive register feedback from master"<< hostname<<endl;
+}
+
 
 int main(){
     os::setenv("LIBPROCESS_PORT", stringify(5051));
