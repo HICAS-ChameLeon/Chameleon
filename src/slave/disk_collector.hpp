@@ -33,6 +33,7 @@ using process::subprocess;
 using std::cout;
 using std::endl;
 using std::string;
+using std::shared_ptr;
 
 /*
  * Class name ：disk_collector
@@ -47,11 +48,11 @@ public:
        * Function name：get_disk_collection
        * Author       ：heldon
        * Date         ：2018-11-30
-       * Description  ：To get disk's name,size,type,speed,rest storage,available storage then store them into a vector
+       * Description  ：To get disk's name,size,type,speed,rest storage,available storage then store them into protobuf
        * Parameter    ：none
-       * Return       ：vector<Diskinfo>
+       * Return       ：DiskCollection
        */
-        std::vector<DiskInfo> get_disk_collection() {
+        DiskCollection get_disk_collection() {
             Option<string> disk_name;  /*disk's name*/
             Option<string> disk_size;  /*disk's size*/
             Option<string> disk_type;  /*disk's type*/
@@ -77,7 +78,8 @@ public:
             const string name_t = "name";
             const string size_t = "size";
             const string type_t = "type";
-            std::vector<DiskInfo> disk_collection_vector;
+            DiskCollection disk_collection;
+            //std::vector<DiskInfo> disk_collection_vector;
 
             /*Get JSON Object's array which called "blockdevices"*/
             Try<JSON::Value> json_object_blockdevices = lsblk_json_object.values["blockdevices"];
@@ -138,14 +140,16 @@ public:
                                 /*Assign to protobuf*/
                                 if (disk_name.isSome() && disk_size.isSome() && disk_type.isSome() && disk_speed.isSome() &&
                                     disk_free.isSome() && disk_available.isSome()) {
-                                    DiskInfo disk_info;
-                                    disk_info.set_name(disk_name.get());
-                                    disk_info.set_size(disk_size.get());
-                                    disk_info.set_type(disk_type.get());
-                                    disk_info.set_disk_speed(disk_speed.get());
-                                    disk_info.set_disk_free(disk_free.get());
-                                    disk_info.set_disk_available(disk_available.get());
-                                    disk_collection_vector.push_back(disk_info);
+
+                                    DiskInfo *disk_info = disk_collection.add_disk_infos();
+
+                                    disk_info->set_name(disk_name.get());
+                                    disk_info->set_size(disk_size.get());
+                                    disk_info->set_type(disk_type.get());
+                                    disk_info->set_disk_speed(disk_speed.get());
+                                    disk_info->set_disk_free(disk_free.get());
+                                    disk_info->set_disk_available(disk_available.get());
+
                                 } else
                                     cout<<"data lost,please check"<<endl;
                             }
@@ -156,7 +160,8 @@ public:
                     }
                 }
             }
-            return disk_collection_vector;
+            disk_collection.set_disk_quantity(disk_collection.disk_infos_size());
+            return disk_collection;
         }
 
         /*
@@ -164,20 +169,22 @@ public:
        * Author       ：heldon
        * Date         ：2018-11-30
        * Description  ：Overload the symbol of output
-       * Parameter    ：ostream, disk_collector
+       * Parameter    ：ostream, DiskCollector
        * Return       ：ostream
        */
         friend std::ostream &operator<<(std::ostream &stream, DiskCollector *&disk_collector) {
 
-            std::vector<DiskInfo> disk_collection_vector = disk_collector->get_disk_collection();
+            auto disk_collection = disk_collector->get_disk_collection();
 
-            for(auto i = disk_collection_vector.begin();i != disk_collection_vector.end();i++){
-                stream << "name: "                    << i->name()
-                       << " size: "                   << i->size()
-                       << " type: "                   << i->type()           <<'\n'
-                       <<"Timing disk reads speed = " << i->disk_speed()     << " MB/s " << '\n'
-                       << "Disk_free = "              << i->disk_free()      << " GB"    << '\n'
-                       << "Disk_available = "         << i->disk_available() << " GB"    << '\n';
+            stream << "disk_quantity:" <<disk_collection.disk_quantity() << '\n';
+            for(int i = 0;i < disk_collection.disk_infos_size(); i++){
+                auto disk_info = disk_collection.mutable_disk_infos(i);
+                stream << "name: "                     << disk_info->name()
+                       << " size: "                    << disk_info->size()
+                       << " type: "                    << disk_info->type()            << '\n'
+                       << "Timing disk reads speed = " << disk_info->disk_speed()      << " MB/s " << '\n'
+                       << "Disk_free = "               << disk_info->disk_free()       << " GB"    << '\n'
+                       << "Disk_available = "          << disk_info->disk_available()  << " GB"    << '\n';
             }
             return stream;
         }
