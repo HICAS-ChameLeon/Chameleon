@@ -39,7 +39,7 @@ namespace chameleon {
 
 
             // disk collector
-            vector<DiskInfo> local_diskinfos = msp_disk->get_disk_collection();
+            vector<DiskInfo> d = msp_disk->get_disk_collection();
             for(auto it = local_diskinfos.begin();it!=local_diskinfos.end();it++){
                 cout << "name: "                    << it->name()
                        << " size: "                   << it->size()

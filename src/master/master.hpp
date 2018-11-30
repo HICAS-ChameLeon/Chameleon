@@ -65,10 +65,7 @@ namespace chameleon {
 
         virtual void initialize() {
             install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
-<<<<<<< HEAD
 
-            install<CPUCollection>(&Master::cpuinfo_form_slave,&CPUCollection::cpu_infos);
-=======
             install<HardwareResourcesMessage>(&Master::update_hardware_resources);
             // http://172.20.110.228:5050/master/post-test
             route(
@@ -113,16 +110,9 @@ namespace chameleon {
                 terminate(self());
             });
 
->>>>>>> 38012e84f8897d7be4e7226e613fb97f46bbc9e0
         }
 
-        /**
-         * send server a request to get cpuinfo*/
-        void send_slave_request_for_cpuinfo(){
-            CPUInfo ci;
-            ci.set_cpuid("1");
-            send(slave,ci);
-        };
+
         void register_participant(const string& hostname){
             cout<<"master receive register message from "<< hostname<<endl;
         }
