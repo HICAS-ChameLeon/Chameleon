@@ -7,7 +7,7 @@
 #include <process/future.hpp>
 #include <process/io.hpp>
 
-#include "hardware_resource.pb.h"
+#include <hardware_resource.pb.h>
 
 using std::string;
 using std::cout;
@@ -24,13 +24,11 @@ namespace chameleon {
     class GpuCollector {
     private:
         string m_gpu_info;
-        GPUCollection m_gpu_proto;
+        GPUCollection* m_gpu_proto = new GPUCollection();
     public:
         string get_gpu_string();
-
         void split_gpu_string(string m_gpu_info);
-
-        GPUCollection get_gpu_proto();
+        GPUCollection* get_gpu_proto();
     };
 }
 
