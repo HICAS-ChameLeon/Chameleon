@@ -22,6 +22,7 @@
 
 // protobuf
 #include <participant_info.pb.h>
+#include <hardware_resource.pb.h>
 
 using std::cerr;
 using std::cout;
@@ -48,9 +49,9 @@ namespace chameleon {
     class Master : public ProtobufProcess<Master> {
 
     public:
-        explicit Master() : ProcessBase("master") {
+        UPID slave;
 
-        }
+        explicit Master() : ProcessBase("master") {}
 
         virtual ~Master(){
 
@@ -59,9 +60,16 @@ namespace chameleon {
         virtual void initialize() {
             install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
 
-
+            install<CPUCollection>(&Master::cpuinfo_form_slave,&CPUCollection::cpu_infos);
         }
 
+        /**
+         * send server a request to get cpuinfo*/
+        void send_slave_request_for_cpuinfo(){
+            CPUInfo ci;
+            ci.set_cpuid("1");
+            send(slave,ci);
+        };
         void register_participant(const string& hostname){
             cout<<"master receive register message from "<< hostname<<endl;
         }
