@@ -17,6 +17,7 @@
 
 #include <disk_collector.hpp>
 #include <gpu_collector.hpp>
+#include <memory_collector.hpp>
 
 using std::cout;
 using std::endl;
@@ -31,7 +32,7 @@ namespace chameleon {
         explicit ResourceCollector(){
             msp_disk = make_shared<DiskCollector>(DiskCollector());
             msp_gpu = make_shared<GpuCollector>(GpuCollector());
-
+            msp_mem = make_shared<MemoryCollector>(MemoryCollector());
 
         }
 
@@ -39,10 +40,14 @@ namespace chameleon {
 
         }
 
-        HardwareResourcesMessage& collect_hardware_resources(){
+        HardwareResourcesMessage* collect_hardware_resources(){
 
             HardwareResourcesMessage* hr_message = new HardwareResourcesMessage();
 
+            // memeory collector
+            msp_mem->get_dmiinfo_rows();
+            MemoryCollection* memory_collection= msp_mem->select_meminfo(msp_mem->m_tokens);
+            hr_message->set_allocated_mem_collection(memory_collection);
 
             // disk collector
             DiskCollection* disk_collection = msp_disk->get_disk_collection();
@@ -72,6 +77,7 @@ namespace chameleon {
     private:
         shared_ptr<DiskCollector> msp_disk;
         shared_ptr<GpuCollector> msp_gpu;
+        shared_ptr<MemoryCollector> msp_mem;
     };
 
 
