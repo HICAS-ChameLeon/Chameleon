@@ -19,7 +19,7 @@ set(disk_SRCS disk_collector.hpp disk_collector.cpp)
 add_executable(disk ${disk_SRCS})
 target_link_libraries(disk hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
 
-set(cpu_SRCS cpu_collector.cpp cpu_collector.hpp)
-add_executable(cpu ${cpu_SRCS})
-target_link_libraries(cpu hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
+set(cpu_SRCS cpu_collector_tests.cpp cpu_collector.hpp)
+add_executable(cpu_collector ${cpu_SRCS})
+target_link_libraries(cpu_collector hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
 
