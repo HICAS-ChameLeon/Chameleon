@@ -66,6 +66,7 @@ namespace chameleon {
 =======
         explicit Slave():ProcessBase("slave"){
             msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+            msp_resource_collector->collect_hardware_resources();
         }
 
         virtual ~Slave(){
@@ -73,6 +74,7 @@ namespace chameleon {
         }
 >>>>>>> 38012e84f8897d7be4e7226e613fb97f46bbc9e0
 
+<<<<<<< HEAD
         virtual void initialize() {
             install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
             
@@ -106,6 +108,11 @@ namespace chameleon {
         void register_feedback(const string& hostname){
             cout<<" receive register feedback from master"<< hostname<<endl;
         }
+=======
+        virtual void initialize();
+
+        void register_feedback(const string& hostname);
+>>>>>>> 5f5f6ce08eb49160d2cee4ecd9f22f73ea2469b9
 
 <<<<<<< HEAD
 =======
