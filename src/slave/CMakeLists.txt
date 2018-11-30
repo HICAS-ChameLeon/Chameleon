@@ -5,9 +5,9 @@ set(slave_SRCS slave.hpp slave.cpp resource_collector.hpp resource_collector.cpp
 add_executable(slave ${slave_SRCS})
 target_link_libraries(slave monitor_info hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
 
-set(Gpu_Collector_SRCS GpuCollector.cpp GpuCollector.hpp)
-add_executable(yx_gpu_collector  ${Gpu_Collector_SRCS})
-target_link_libraries(yx_gpu_collector hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
+set(Gpu_Collector_SRCS gpu_collector.cpp gpu_collector.hpp)
+add_executable(gpu_collector_test  ${Gpu_Collector_SRCS} gpu_collector_tests.cpp)
+target_link_libraries(gpu_collector_test hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
 
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 set(disk_SRCS disk_collector.hpp disk_collector.cpp)
