@@ -66,6 +66,8 @@ namespace chameleon {
             cout<<"master receive register message from "<< hostname<<endl;
         }
 
+
+
     private:
         unordered_map<UPID,ParticipantInfo> m_participants;
 //        unordered_map<string,HardwareResource> m_topology_resources;
