@@ -1,10 +1,10 @@
-#include "gpu_collector.hpp"
+#include <gpu_collector.hpp>
 using namespace chameleon;
 int main(){
     GpuCollector gpuCollector;
-    gpuCollector.split_gpu_string(gpuCollector.get_gpu_string());
-
-    GPUCollection proto = gpuCollector.get_gpu_proto();
+    string info = gpuCollector.get_gpu_string();
+    gpuCollector.split_gpu_string(info);
+    GPUCollection proto = *gpuCollector.get_gpu_proto();
     GpuInfo *inx;
 
     int num = proto.gpu_infos_size();
@@ -13,17 +13,17 @@ int main(){
 
     for(int i; i<num; i++){
         inx = proto.mutable_gpu_infos(i);
-        cout<<"第"<<i<<"组"<<inx->description()<<endl;
-        cout<<"第"<<i<<"组"<<inx->product()<<endl;
-        cout<<"第"<<i<<"组"<<inx->vendor()<<endl;
-        cout<<"第"<<i<<"组"<<inx->physical_id()<<endl;
-        cout<<"第"<<i<<"组"<<inx->bus_info()<<endl;
-        cout<<"第"<<i<<"组"<<inx->version()<<endl;
-        cout<<"第"<<i<<"组"<<inx->width()<<endl;
-        cout<<"第"<<i<<"组"<<inx->clock()<<endl;
-        cout<<"第"<<i<<"组"<<inx->capabilities()<<endl;
-        cout<<"第"<<i<<"组"<<inx->configuration()<<endl;
-        cout<<"第"<<i<<"组"<<inx->resources()<<endl;
+        cout<<"group["<<i<<"]: "<<inx->description()<<endl;
+        cout<<"group["<<i<<"]: "<<inx->product()<<endl;
+        cout<<"group["<<i<<"]: "<<inx->vendor()<<endl;
+        cout<<"group["<<i<<"]: "<<inx->physical_id()<<endl;
+        cout<<"group["<<i<<"]: "<<inx->bus_info()<<endl;
+        cout<<"group["<<i<<"]: "<<inx->version()<<endl;
+        cout<<"group["<<i<<"]: "<<inx->width()<<endl;
+        cout<<"group["<<i<<"]: "<<inx->clock()<<endl;
+        cout<<"group["<<i<<"]: "<<inx->capabilities()<<endl;
+        cout<<"group["<<i<<"]: "<<inx->configuration()<<endl;
+        cout<<"group["<<i<<"]: "<<inx->resources()<<endl;
 
     }
 }

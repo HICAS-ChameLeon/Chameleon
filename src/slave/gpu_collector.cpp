@@ -1,4 +1,4 @@
-#include "gpu_collector.hpp"
+#include <gpu_collector.hpp>
 namespace chameleon {
 /*
  * functionName：get_gpu_string
@@ -8,7 +8,7 @@ namespace chameleon {
  */
     string GpuCollector::get_gpu_string() {
         Try<Subprocess> s = subprocess(
-                "lshw -numeric -class video",
+                "sudo -S lshw -numeric -class video",
                 Subprocess::FD(STDIN_FILENO),
                 Subprocess::PIPE(),
                 Subprocess::FD(STDERR_FILENO));
@@ -24,12 +24,10 @@ namespace chameleon {
  * returnType: void
  */
     void GpuCollector::split_gpu_string(string m_gpu_info) {
-        vector<string> tokens = strings::split(m_gpu_info,
-                                               "\n"); /*Divide gpu information from the command line by "\n" */
+        vector<string> tokens = strings::split(m_gpu_info, "\n"); /*Divide gpu information from the command line by "\n" */
         vector<string>::iterator vec_iter;
-        GpuInfo *gpuInfo;
+        GpuInfo *gpuInfo = nullptr;
         int index = 0; /*The number of GPU*/
-
         for (vec_iter = tokens.begin(); vec_iter != tokens.end(); vec_iter++) {
             if (strings::contains(*vec_iter, "display")) {
                 index++;
@@ -39,11 +37,10 @@ namespace chameleon {
 
             for (vector<string>::iterator vec = line_token.begin(); vec != line_token.end(); vec++) {
                 if (*vec == "description") {
-                    gpuInfo = m_gpu_proto.add_gpu_infos();
-                    gpuInfo->set_description(strings::trim(*(vec + 1),
-                                                           " "));  /*Save the information that is the right of the ":" to the corresponding protobuf*/
+                    gpuInfo = m_gpu_proto->add_gpu_infos();
+                    gpuInfo->set_description(strings::trim(*(vec + 1), " "));/*Save the information that is the right of the ":" to the corresponding protobuf*/
 
-                } else if (*vec == "product") {
+                }else if (*vec == "product") {
                     gpuInfo->set_product(strings::trim(*(vec + 1), " "));
                 } else if (*vec == "vendor") {
                     gpuInfo->set_vendor(strings::trim(*(vec + 1), " "));
@@ -73,7 +70,7 @@ namespace chameleon {
         }
     }
 
-    GPUCollection GpuCollector::get_gpu_proto() {
+    GPUCollection* GpuCollector::get_gpu_proto() {
         return m_gpu_proto;
     }
 }
