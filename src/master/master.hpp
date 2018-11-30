@@ -11,6 +11,10 @@
 #include <unordered_map>
 
 // stout dependencies
+#include <stout/gtest.hpp>
+#include <stout/json.hpp>
+#include <stout/jsonify.hpp>
+#include <stout/protobuf.hpp>
 #include <stout/os.hpp>
 #include <stout/os/pstree.hpp>
 
@@ -51,9 +55,9 @@ namespace chameleon {
     class Master : public ProtobufProcess<Master> {
 
     public:
-        explicit Master() : ProcessBase("master") {
+        UPID slave;
 
-        }
+        explicit Master() : ProcessBase("master") {}
 
         virtual ~Master(){
 
@@ -61,10 +65,14 @@ namespace chameleon {
 
         virtual void initialize() {
             install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
+<<<<<<< HEAD
+
+            install<CPUCollection>(&Master::cpuinfo_form_slave,&CPUCollection::cpu_infos);
+=======
             install<HardwareResourcesMessage>(&Master::update_hardware_resources);
             // http://172.20.110.228:5050/master/post-test
             route(
-                    "/HardwareResource",
+                    "/HardwareResources",
                     "get the topology resources of the whole topology",
                     [](Request request) {
                         string request_method = request.method;
@@ -105,8 +113,16 @@ namespace chameleon {
                 terminate(self());
             });
 
+>>>>>>> 38012e84f8897d7be4e7226e613fb97f46bbc9e0
         }
 
+        /**
+         * send server a request to get cpuinfo*/
+        void send_slave_request_for_cpuinfo(){
+            CPUInfo ci;
+            ci.set_cpuid("1");
+            send(slave,ci);
+        };
         void register_participant(const string& hostname){
             cout<<"master receive register message from "<< hostname<<endl;
         }
