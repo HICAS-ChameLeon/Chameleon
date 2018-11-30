@@ -1,6 +1,9 @@
-//
-// Created by lemaker on 18-11-26.
-//
+/*
+ * Copyright  ：SIAT 异构智能计算体系结构与系统研究中心
+ * Author     ：Lele Li lilelr@163.com
+ * Date       ：18-11-26
+ * Description：slave codes
+ */
 #ifndef CHAMELEON_PARTICIPANT_HPP
 #define CHAMELEON_PARTICIPANT_HPP
 
@@ -20,6 +23,7 @@
 #include <process/http.hpp>
 #include <process/process.hpp>
 #include <process/protobuf.hpp>
+#include <process/delay.hpp>
 
 // protobuf
 #include <monitor_info.pb.h>
@@ -49,6 +53,8 @@ using process::http::OK;
 using process::http::InternalServerError;
 
 namespace chameleon {
+    // forward declations
+    class SlaveHeartbeater;
 
     class Slave : public ProtobufProcess<Slave> {
     public:
@@ -70,6 +76,37 @@ namespace chameleon {
 
     private:
        shared_ptr<ResourceCollector> msp_resource_collector;
+        Option<process::Owned<SlaveHeartbeater>> heartbeater;
+    };
+
+    constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(5);
+
+    class SlaveHeartbeater : public process::Process<SlaveHeartbeater> {
+
+    public:
+
+        SlaveHeartbeater(const Duration& interval)
+                : process::ProcessBase(process::ID::generate("myheartbeater")),
+                  m_interval(interval) {
+        }
+
+        virtual void initialize() {
+            heartbeat();
+//        install<Offer>(&Master::report_from_client, &Offer::key,&Offer::value);
+        }
+
+    private:
+
+        void heartbeat(){
+            cout<<"5 seconds"<<endl;
+            //  delays 5 seconds to invoke the function "heartbeat " of self.
+            // it's cyclical because "heartbeat invoke heartbeat"
+            process::delay(m_interval,self(),&Self::heartbeat);
+        }
+
+        const Duration m_interval;
+
+
     };
 }
 

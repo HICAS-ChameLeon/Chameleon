@@ -1,6 +1,9 @@
-//
-// Created by lemaker on 18-11-26.
-//
+/*
+ * Copyright  ：SIAT 异构智能计算体系结构与系统研究中心
+ * Author     ：Lele Li lilelr@163.com
+ * Date       ：18-11-26
+ * Description：master
+ */
 
 #include "master.hpp"
 using namespace chameleon;
