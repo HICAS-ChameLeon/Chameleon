@@ -118,6 +118,9 @@ namespace chameleon {
         }
 
         void update_hardware_resources(const UPID& from, const HardwareResourcesMessage& hardware_resources_message){
+            std::cout<<"enter update_hardware_resources"<<std::endl;
+            JSON::Object object = JSON::protobuf(hardware_resources_message);
+            std::cout<<stringify(object)<<std::endl;
 
         }
 

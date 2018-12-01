@@ -57,7 +57,7 @@ namespace chameleon {
     // forward declations
     class SlaveHeartbeater;
 
-    const string DEFAULT_MASTER="172.20.110.228:5050";
+    const string DEFAULT_MASTER="master@172.20.110.228:6060";
     class Slave : public ProtobufProcess<Slave> {
     public:
         explicit Slave():ProcessBase("slave"){

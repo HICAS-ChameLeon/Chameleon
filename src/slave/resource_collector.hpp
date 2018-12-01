@@ -42,7 +42,7 @@ namespace chameleon {
 
         }
 
-        HardwareResourcesMessage* collect_hardware_resources(){
+        HardwareResourcesMessage collect_hardware_resources(){
 
             HardwareResourcesMessage* hr_message = new HardwareResourcesMessage();
 
@@ -53,20 +53,25 @@ namespace chameleon {
             // memeory collector
             msp_mem->get_dmiinfo_rows();
             MemoryCollection* memory_collection= msp_mem->select_meminfo(msp_mem->m_tokens);
+            msp_mem->show_meminfo(memory_collection);
             hr_message->set_allocated_mem_collection(memory_collection);
 
             // disk collector
             DiskCollection* disk_collection = msp_disk->get_disk_collection();
             hr_message->set_allocated_disk_collection(disk_collection);
+//            hr_message->set_allocated_disk_collection(nullptr);
 
-             // GPU collector
+
+            // GPU collector
             string gpu_infos = msp_gpu->get_gpu_string();
             msp_gpu->split_gpu_string(gpu_infos);
             GPUCollection* gpu_collection = msp_gpu->get_gpu_proto();
+            gpu_collection->set_gpu_quantity(1);
             hr_message->set_allocated_gpu_collection(gpu_collection);
+//            hr_message->set_allocated_gpu_collection(nullptr);
 
 //            int a = 4;
-            return hr_message;
+            return *hr_message;
         }
 
     private:

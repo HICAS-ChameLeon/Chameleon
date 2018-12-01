@@ -9,7 +9,7 @@
 using namespace chameleon;
 
 int main(){
-    os::setenv("LIBPROCESS_PORT", stringify(5050));
+    os::setenv("LIBPROCESS_PORT", stringify(6060));
     process::initialize("master");
 
     Master master;
