@@ -61,19 +61,22 @@ namespace chameleon {
     class Slave : public ProtobufProcess<Slave> {
     public:
         explicit Slave():ProcessBase("slave"){
-            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+//            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+            msp_resource_collector = new ResourceCollector();
         }
 
         virtual ~Slave(){
-
+            std::cout<<"~ Slave()"<<std::endl;
         }
+
 
         virtual void initialize();
 
         void register_feedback(const string& hostname);
 
     private:
-       shared_ptr<ResourceCollector> msp_resource_collector;
+//       shared_ptr<ResourceCollector> msp_resource_collector;
+       ResourceCollector* msp_resource_collector;
         Option<process::Owned<SlaveHeartbeater>> heartbeater;
         UPID* mp_masterUPID;
     };

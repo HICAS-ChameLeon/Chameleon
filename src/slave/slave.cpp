@@ -17,8 +17,11 @@ void Slave::initialize() {
     std::cout<<*mp_masterUPID<<std::endl;
     string slave_id = self().id;
     hr_message.set_allocated_slave_id(&slave_id);
-    send(*mp_masterUPID,hr_message);
+    cout<<"before send "<<endl;
 
+    send(*mp_masterUPID,hr_message);
+    int a=456;
+    cout<<"a = 456 "<<endl;
 }
 
 
