@@ -7,11 +7,9 @@ int main(){
     GPUCollection proto = *gpuCollector.get_gpu_proto();
     GpuInfo *inx;
 
-    int num = proto.gpu_infos_size();
-    proto.set_gpu_quantity(num);
     cout<<"size : "<<proto.gpu_quantity()<<endl;
 
-    for(int i; i<num; i++){
+    for(int i; i<proto.gpu_quantity(); i++){
         inx = proto.mutable_gpu_infos(i);
         cout<<"group["<<i<<"]: "<<inx->description()<<endl;
         cout<<"group["<<i<<"]: "<<inx->product()<<endl;
