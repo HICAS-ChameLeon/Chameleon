@@ -69,6 +69,10 @@ namespace chameleon {
             std::cout<<"~ Slave()"<<std::endl;
         }
 
+    protected:
+        void finalize() override;
+
+    public:
 
         virtual void initialize();
 
@@ -77,7 +81,7 @@ namespace chameleon {
     private:
 //       shared_ptr<ResourceCollector> msp_resource_collector;
        ResourceCollector* msp_resource_collector;
-        Option<process::Owned<SlaveHeartbeater>> heartbeater;
+//        Option<process::Owned<SlaveHeartbeater>> heartbeater;
         UPID* mp_masterUPID;
     };
 

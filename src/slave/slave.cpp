@@ -29,6 +29,11 @@ void Slave::register_feedback(const string& hostname){
     cout<<" receive register feedback from master"<< hostname<<endl;
 }
 
+void Slave::finalize() {
+    ProcessBase::finalize();
+    std::cout<<"slave finalize()"<<std::endl;
+}
+
 
 int main(){
     os::setenv("LIBPROCESS_PORT", stringify(6061));

@@ -49,7 +49,7 @@ namespace chameleon {
 //            delete msp_mem;
         }
 
-        HardwareResourcesMessage collect_hardware_resources(){
+        HardwareResourcesMessage* collect_hardware_resources(){
 
             HardwareResourcesMessage* hr_message = new HardwareResourcesMessage();
 
@@ -81,7 +81,7 @@ namespace chameleon {
             hr_message->set_allocated_gpu_collection(t_gpu);
 
 //            int a = 4;
-            return *hr_message;
+            return hr_message;
         }
 
     private:
