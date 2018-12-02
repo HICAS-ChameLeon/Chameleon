@@ -49,23 +49,27 @@ namespace chameleon {
 //            delete msp_mem;
         }
 
-        HardwareResourcesMessage* collect_hardware_resources(){
+        HardwareResourcesMessage collect_hardware_resources(){
 
-            HardwareResourcesMessage* hr_message = new HardwareResourcesMessage();
+            HardwareResourcesMessage hr_message;
 
             // cpu colletor
             CPUCollection cpu_collection = msp_cpu->get_cpu_info();
-            hr_message->set_allocated_cpu_collection(&cpu_collection);
+            CPUCollection* hr_cpu_collection = new CPUCollection();
+//            hr_cpu_collection->set_cpu_quantity(4);
+            hr_cpu_collection->CopyFrom(cpu_collection);
+
+            hr_message.set_allocated_cpu_collection(hr_cpu_collection);
 
             // memeory collector
             msp_mem->get_dmiinfo_rows();
             MemoryCollection* memory_collection= msp_mem->select_meminfo(msp_mem->m_tokens);
             msp_mem->show_meminfo(memory_collection);
-            hr_message->set_allocated_mem_collection(memory_collection);
+            hr_message.set_allocated_mem_collection(memory_collection);
 
             // disk collector
             DiskCollection* disk_collection = msp_disk->get_disk_collection();
-            hr_message->set_allocated_disk_collection(disk_collection);
+            hr_message.set_allocated_disk_collection(disk_collection);
 //            hr_message->set_allocated_disk_collection(nullptr);
 
 
@@ -78,7 +82,7 @@ namespace chameleon {
 
             GPUCollection* t_gpu = new GPUCollection();
             t_gpu->set_gpu_quantity(1);
-            hr_message->set_allocated_gpu_collection(t_gpu);
+            hr_message.set_allocated_gpu_collection(t_gpu);
 
 //            int a = 4;
             return hr_message;

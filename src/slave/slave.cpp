@@ -15,13 +15,12 @@ void Slave::initialize() {
 
     HardwareResourcesMessage hr_message = msp_resource_collector->collect_hardware_resources();
     std::cout<<*mp_masterUPID<<std::endl;
-    string slave_id = self().id;
-    hr_message.set_allocated_slave_id(&slave_id);
+    string slave_id = stringify(self().address.ip);
+    hr_message.set_slave_id(slave_id);
     cout<<"before send "<<endl;
 
     send(*mp_masterUPID,hr_message);
-    int a=456;
-    cout<<"a = 456 "<<endl;
+
 }
 
 
