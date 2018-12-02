@@ -57,12 +57,11 @@ namespace chameleon {
     // forward declations
     class SlaveHeartbeater;
 
-    constexpr string DEFAULT_MASTER="172.20.110.228:5050";
+    const string DEFAULT_MASTER="master@172.20.110.228:6060";
     class Slave : public ProtobufProcess<Slave> {
     public:
         explicit Slave():ProcessBase("slave"){
             msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
-            msp_resource_collector->collect_hardware_resources();
         }
 
         virtual ~Slave(){
@@ -76,6 +75,7 @@ namespace chameleon {
     private:
        shared_ptr<ResourceCollector> msp_resource_collector;
         Option<process::Owned<SlaveHeartbeater>> heartbeater;
+        UPID* mp_masterUPID;
     };
 
     constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(5);
@@ -104,7 +104,6 @@ namespace chameleon {
         }
 
         const Duration m_interval;
-        const UPID* mp_masterUPID;
 
     };
 }

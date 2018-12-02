@@ -9,8 +9,16 @@
 using namespace chameleon;
 
 void Slave::initialize() {
+
     mp_masterUPID = new UPID(DEFAULT_MASTER);
     install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
+
+    HardwareResourcesMessage hr_message = msp_resource_collector->collect_hardware_resources();
+    std::cout<<*mp_masterUPID<<std::endl;
+    string slave_id = self().id;
+    hr_message.set_allocated_slave_id(&slave_id);
+    send(*mp_masterUPID,hr_message);
+
 }
 
 
@@ -20,7 +28,7 @@ void Slave::register_feedback(const string& hostname){
 
 
 int main(){
-    os::setenv("LIBPROCESS_PORT", stringify(5051));
+    os::setenv("LIBPROCESS_PORT", stringify(6061));
     process::initialize("slave");
 
     Slave slave;

@@ -15,8 +15,10 @@
 
 #include <hardware_resource.pb.h>
 
+#include <cpu_collector.hpp>
 #include <disk_collector.hpp>
 #include <gpu_collector.hpp>
+#include <memory_collector.hpp>
 
 using std::cout;
 using std::endl;
@@ -29,9 +31,10 @@ namespace chameleon {
     class ResourceCollector {
     public:
         explicit ResourceCollector(){
+            msp_cpu = make_shared<Cpu_Collector>(Cpu_Collector());
             msp_disk = make_shared<DiskCollector>(DiskCollector());
             msp_gpu = make_shared<GpuCollector>(GpuCollector());
-
+            msp_mem = make_shared<MemoryCollector>(MemoryCollector());
 
         }
 
@@ -39,39 +42,43 @@ namespace chameleon {
 
         }
 
-        HardwareResourcesMessage& collect_hardware_resources(){
+        HardwareResourcesMessage collect_hardware_resources(){
 
             HardwareResourcesMessage* hr_message = new HardwareResourcesMessage();
 
+            // cpu colletor
+            CPUCollection cpu_collection = msp_cpu->get_cpu_info();
+            hr_message->set_allocated_cpu_collection(&cpu_collection);
+
+            // memeory collector
+            msp_mem->get_dmiinfo_rows();
+            MemoryCollection* memory_collection= msp_mem->select_meminfo(msp_mem->m_tokens);
+            msp_mem->show_meminfo(memory_collection);
+            hr_message->set_allocated_mem_collection(memory_collection);
 
             // disk collector
             DiskCollection* disk_collection = msp_disk->get_disk_collection();
             hr_message->set_allocated_disk_collection(disk_collection);
-//            vector<DiskInfo> d = msp_disk->get_disk_collection();
-//            for(auto it = local_diskinfos.begin();it!=local_diskinfos.end();it++){
-//                cout << "name: "                    << it->name()
-//                       << " size: "                   << it->size()
-//                       << " type: "                   << it->type()           <<'\n'
-//                       <<"Timing disk reads speed = " << it->disk_speed()     << " MB/s " << '\n'
-//                       << "Disk_free = "              << it->disk_free()      << " GB"    << '\n'
-//                       << "Disk_available = "         << it->disk_available() << " GB"    << '\n';
-//            }
-////
-////            std::cout<<msp_disk.get()<<std::endl;
-////            int a = 4;
+//            hr_message->set_allocated_disk_collection(nullptr);
 
-             // GPU collector
+
+            // GPU collector
             string gpu_infos = msp_gpu->get_gpu_string();
             msp_gpu->split_gpu_string(gpu_infos);
             GPUCollection* gpu_collection = msp_gpu->get_gpu_proto();
+            gpu_collection->set_gpu_quantity(1);
             hr_message->set_allocated_gpu_collection(gpu_collection);
+//            hr_message->set_allocated_gpu_collection(nullptr);
 
-            int a = 4;
+//            int a = 4;
+            return *hr_message;
         }
 
     private:
+        shared_ptr<Cpu_Collector> msp_cpu;
         shared_ptr<DiskCollector> msp_disk;
         shared_ptr<GpuCollector> msp_gpu;
+        shared_ptr<MemoryCollector> msp_mem;
     };
 
 
