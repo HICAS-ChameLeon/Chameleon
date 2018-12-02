@@ -68,6 +68,8 @@ namespace chameleon {
 
             }
         }
+        /*Assign value to 'gpu_quantity' attribute of class 'GPUCollection'*/
+        m_gpu_proto->set_gpu_quantity(m_gpu_proto->gpu_infos_size());
     }
 
     GPUCollection* GpuCollector::get_gpu_proto() {
