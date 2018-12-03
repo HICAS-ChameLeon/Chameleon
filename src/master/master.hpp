@@ -64,6 +64,10 @@ namespace chameleon {
         }
 
         virtual void initialize() {
+            // Verify that the version of the library that we linked against is
+            // compatible with the version of the headers we compiled against.
+            GOOGLE_PROTOBUF_VERIFY_VERSION;
+
             install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
 
             install<HardwareResourcesMessage>(&Master::update_hardware_resources);

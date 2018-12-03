@@ -13,6 +13,8 @@
 #include <memory>
 #include <string>
 
+#include <glog/logging.h>
+
 // stout dependencies
 #include <stout/os.hpp>
 #include <stout/os/pstree.hpp>
@@ -61,8 +63,8 @@ namespace chameleon {
     class Slave : public ProtobufProcess<Slave> {
     public:
         explicit Slave():ProcessBase("slave"){
-//            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
-            msp_resource_collector = new ResourceCollector();
+            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+//            msp_resource_collector = new ResourceCollector();
         }
 
         virtual ~Slave(){
@@ -79,10 +81,10 @@ namespace chameleon {
         void register_feedback(const string& hostname);
 
     private:
-//       shared_ptr<ResourceCollector> msp_resource_collector;
-       ResourceCollector* msp_resource_collector;
+        shared_ptr<ResourceCollector> msp_resource_collector;
+//       ResourceCollector* msp_resource_collector;
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
-        UPID* mp_masterUPID;
+        shared_ptr<UPID> msp_masterUPID;
     };
 
     constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(5);
