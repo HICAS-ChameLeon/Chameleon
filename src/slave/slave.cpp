@@ -13,13 +13,13 @@ void Slave::initialize() {
     mp_masterUPID = new UPID(DEFAULT_MASTER);
     install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
 
-    HardwareResourcesMessage* hr_message = msp_resource_collector->collect_hardware_resources();
+    HardwareResourcesMessage hr_message = *msp_resource_collector->collect_hardware_resources();
     std::cout<<*mp_masterUPID<<std::endl;
     string slave_id = stringify(self().address.ip);
-    hr_message->set_slave_id(slave_id);
+    hr_message.set_slave_id(slave_id);
     cout<<"before send "<<endl;
 
-    send(*mp_masterUPID,*hr_message);
+    send(*mp_masterUPID,hr_message);
 
 }
 
