@@ -36,13 +36,13 @@ namespace chameleon {
      * Description：A Class to get memory information
      */
     class MemoryCollector {
-    public:
-        /* message class. */
-        MemoryCollection* m_memory_collection = new MemoryCollection();
-
+    private:
         /* storing strings during processing. */
         vector<string> m_tokens;
 
+        /* message class. */
+        MemoryCollection* m_memory_collection = new MemoryCollection();
+    public:
         /*
          * Function name：get_dmiinfo_rows
          * Author       ：marcie
@@ -70,18 +70,20 @@ namespace chameleon {
          * Function name：select_meminfo
          * Author       ：marcie
          * Date         ：2018-11-30
-         * Description  ：divide strings and filter out needed information
-         * Parameter    ：vector<string> m_tokens
+         * Description  ：Input command and get the returned information,
+         *                divide strings and filter out needed information
+         * Parameter    ：none
          * Return       ：MemoryCollection m_memory_collection
          */
-        MemoryCollection* select_meminfo(vector<string> tokens) {
+        MemoryCollection* select_meminfo() {
+            get_dmiinfo_rows();
             /* the number of size,type,speed. */
             int num_size = 0, num_type = 0, num_speed = 0;
             /* class ptr. */
             MemInfo *tmp;
             /* divide strings by ":", and filter memory information. */
-            for (int i = 0; i < tokens.size(); i++) {
-                vector<string> tokens_string = strings::tokenize(tokens[i], ":");
+            for (int i = 0; i < m_tokens.size(); i++) {
+                vector<string> tokens_string = strings::tokenize(m_tokens[i], ":");
                 for (auto iter = tokens_string.begin(); iter != tokens_string.end(); iter++) {
                     string nospace = strings::trim(*iter);
                     if (nospace == "Maximum Capacity") {
@@ -124,16 +126,17 @@ namespace chameleon {
          * Author       ：marcie
          * Date         ：2018-11-30
          * Description  ：output dmidecode infomation by protobuf message
-         * Parameter    ：MemoryCollection m_memory_collection
+         * Parameter    ：none
          * Output       :memory information
          * Return       ：none
          */
-        void show_meminfo(MemoryCollection* memory_collection) {
-            cout << "Maximum Capacity：" << memory_collection->max_size() << endl;
+        void show_meminfo() {
+            select_meminfo();
+            cout << "Maximum Capacity：" << m_memory_collection->max_size() << endl;
             /* memoryCollection.info().size() */
-            cout << "当前机器有" << memory_collection->device_quantity() << "个使用中的内存插槽" << endl;
-            for (auto iter = memory_collection->mem_infos().begin(); iter != memory_collection->mem_infos().end(); iter++) {
-                cout << "第" << iter - memory_collection->mem_infos().begin() + 1 << "个Memory Device的信息为：" << endl;
+            cout << "当前机器有" << m_memory_collection->device_quantity() << "个使用中的内存插槽" << endl;
+            for (auto iter = m_memory_collection->mem_infos().begin(); iter != m_memory_collection->mem_infos().end(); iter++) {
+                cout << "第" << iter - m_memory_collection->mem_infos().begin() + 1 << "个Memory Device的信息为：" << endl;
                 cout << "Size：" << iter.operator->()->size() << endl;
                 cout << "Type：" << iter.operator->()->type() << endl;
                 cout << "Speed：" << iter.operator->()->speed() << endl;
