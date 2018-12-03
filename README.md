@@ -9,7 +9,7 @@ First,
 $ sudo apt-get update
 
 # install cmake
-$ sudo apt-get install -y cmake
+$ sudo apt-get install -y cmake 
 
 # Install a few utility tools.
 $ sudo apt-get install -y tar wget git
@@ -17,6 +17,8 @@ $ sudo apt-get install -y tar wget git
 # Install autotools
 $ sudo apt-get install -y autoconf libtool automake
 
-# Install other  ependencies.
+# Install the dependencies for libprocess.
 $ sudo apt-get -y install build-essential libcurl4-nss-dev libsasl2-dev libsasl2-modules  libapr1-dev libsvn-dev zlib1g-dev iputils-ping
+# Install the dependencies for hardware resources collection
+$ sudo apt-get -y install dmidecode lshw hdparm
 ```

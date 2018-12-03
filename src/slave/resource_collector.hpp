@@ -31,14 +31,10 @@ namespace chameleon {
     class ResourceCollector {
     public:
         explicit ResourceCollector(){
-//            msp_cpu = make_shared<Cpu_Collector>(Cpu_Collector());
-//            msp_disk = make_shared<DiskCollector>(DiskCollector());
-//            msp_gpu = make_shared<GpuCollector>(GpuCollector());
-//            msp_mem = make_shared<MemoryCollector>(MemoryCollector());
-            msp_cpu = new Cpu_Collector();
-            msp_disk = new DiskCollector();
-            msp_gpu = new GpuCollector();
-            msp_mem = new MemoryCollector();
+            msp_cpu = make_shared<Cpu_Collector>(Cpu_Collector());
+            msp_disk = make_shared<DiskCollector>(DiskCollector());
+            msp_gpu = make_shared<GpuCollector>(GpuCollector());
+            msp_mem = make_shared<MemoryCollector>(MemoryCollector());
 
         }
 
@@ -58,7 +54,6 @@ namespace chameleon {
             CPUCollection* hr_cpu_collection = new CPUCollection();
 //            hr_cpu_collection->set_cpu_quantity(4);
             hr_cpu_collection->CopyFrom(cpu_collection);
-
             hr_message->set_allocated_cpu_collection(hr_cpu_collection);
 
             // memeory collector
@@ -84,14 +79,11 @@ namespace chameleon {
         }
 
     private:
-//        shared_ptr<Cpu_Collector> msp_cpu;
-//        shared_ptr<DiskCollector> msp_disk;
-//        shared_ptr<GpuCollector> msp_gpu;
-//        shared_ptr<MemoryCollector> msp_mem;
-        Cpu_Collector* msp_cpu;
-        DiskCollector* msp_disk;
-        GpuCollector* msp_gpu;
-        MemoryCollector* msp_mem;
+        shared_ptr<Cpu_Collector> msp_cpu;
+        shared_ptr<DiskCollector> msp_disk;
+        shared_ptr<GpuCollector> msp_gpu;
+        shared_ptr<MemoryCollector> msp_mem;
+
     };
 
 

@@ -9,18 +9,21 @@
 using namespace chameleon;
 
 void Slave::initialize() {
+    // Verify that the version of the library that we linked against is
+    // compatible with the version of the headers we compiled against.
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    mp_masterUPID = new UPID(DEFAULT_MASTER);
+    msp_masterUPID = make_shared<UPID>(UPID(DEFAULT_MASTER));
     install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
 
-    HardwareResourcesMessage hr_message = *msp_resource_collector->collect_hardware_resources();
-    std::cout<<*mp_masterUPID<<std::endl;
+    HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
+    std::cout << *msp_masterUPID << std::endl;
     string slave_id = stringify(self().address.ip);
-    hr_message.set_slave_id(slave_id);
+    hr_message->set_slave_id(slave_id);
     cout<<"before send "<<endl;
 
-    send(*mp_masterUPID,hr_message);
-
+    send(*msp_masterUPID, *hr_message);
+    delete hr_message;
 }
 
 
