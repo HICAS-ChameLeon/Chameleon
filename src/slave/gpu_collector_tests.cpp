@@ -1,14 +1,16 @@
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+
 #include <gpu_collector.hpp>
-using namespace chameleon;
-int main(){
-    GpuCollector gpuCollector;
-    string info = gpuCollector.get_gpu_string();
-    gpuCollector.split_gpu_string(info);
-    GPUCollection proto = *gpuCollector.get_gpu_proto();
+
+TEST(GPUCollectorTests, GetGpuInfo)
+{
+    chameleon::GpuCollector gpuCollector;
+    GPUCollection proto = *gpuCollector.split_gpu_string();
     GpuInfo *inx;
 
     cout<<"size : "<<proto.gpu_quantity()<<endl;
-
+    //EXPECT_EQ(1,proto.gpu_quantity());
     for(int i; i<proto.gpu_quantity(); i++){
         inx = proto.mutable_gpu_infos(i);
         cout<<"group["<<i<<"]: "<<inx->description()<<endl;
@@ -24,4 +26,9 @@ int main(){
         cout<<"group["<<i<<"]: "<<inx->resources()<<endl;
 
     }
+}
+
+int main(int argc, char** argv) {
+    testing::InitGoogleMock(&argc, argv);
+    return RUN_ALL_TESTS();
 }
