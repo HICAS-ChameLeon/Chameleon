@@ -73,9 +73,28 @@ namespace chameleon {
             install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
 
             install<HardwareResourcesMessage>(&Master::update_hardware_resources);
-            // http://172.20.110.228:5050/master/post-test
+            // http://172.20.110.228:6060/master/hardware-resources
             route(
-                    "/HardwareResources",
+                    "/hardware-resources",
+                    "get the topology resources of the whole topology",
+                    [this](Request request) {
+                        JSON::Object result = JSON::Object();
+                        if(!this->m_hardware_resources.empty()){
+                            JSON::Array array;
+                            for(auto it=this->m_hardware_resources.begin();it!=this->m_hardware_resources.end();it++){
+                                array.values.push_back(it->second);
+                            }
+                            result.values["quantity"]= array.values.size();
+                            result.values["content"] = array;
+                        }else{
+                            result.values["quantity"]= 0;
+                            result.values["content"] = JSON::Object();
+                        }
+                        return OK(stringify(result));
+                    });
+
+            route(
+                    "/test",
                     "get the topology resources of the whole topology",
                     [](Request request) {
                         string request_method = request.method;
@@ -111,6 +130,7 @@ namespace chameleon {
                         return OK(body);
                     });
 
+
 //     install("stop", &MyProcess::stop);
             install("stop", [=](const UPID &from, const string &body) {
                 terminate(self());
@@ -125,15 +145,21 @@ namespace chameleon {
 
         void update_hardware_resources(const UPID& from, const HardwareResourcesMessage& hardware_resources_message){
             DLOG(INFO) <<"enter update_hardware_resources";
-            JSON::Object object = JSON::protobuf(hardware_resources_message);
-            DLOG(INFO) <<stringify(object);
 
+            auto slaveid = hardware_resources_message.slave_id();
+            if(m_hardware_resources.find(slaveid)==m_hardware_resources.end()){
+                JSON::Object object = JSON::protobuf(hardware_resources_message);
+//                string object_str = stringify(object);
+//                DLOG(INFO) << object_str;
+                m_hardware_resources.insert({slaveid,object});
+            }
         }
 
 
 
     private:
         unordered_map<UPID,ParticipantInfo> m_participants;
+        unordered_map<string,JSON::Object> m_hardware_resources;
 //        unordered_map<string,HardwareResource> m_topology_resources;
     };
 
