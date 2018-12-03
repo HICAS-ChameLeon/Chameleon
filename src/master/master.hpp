@@ -10,6 +10,8 @@
 #include <iostream>
 #include <unordered_map>
 
+#include <glog/logging.h>
+
 // stout dependencies
 #include <stout/gtest.hpp>
 #include <stout/json.hpp>
@@ -30,9 +32,9 @@
 #include <participant_info.pb.h>
 #include <hardware_resource.pb.h>
 
-using std::cerr;
-using std::cout;
-using std::endl;
+// chameleon headers
+#include <configuration_glog.hpp>
+
 using std::string;
 using std::unordered_map;
 
@@ -77,34 +79,34 @@ namespace chameleon {
                     "get the topology resources of the whole topology",
                     [](Request request) {
                         string request_method = request.method;
-                        std::cout<<request_method <<std::endl;
+                        DLOG(INFO) <<request_method ;
                         string& tpath = request.url.path;
-                        std::cout<<tpath<<std::endl;
+                        DLOG(INFO) <<tpath;
                         int param_size = request.url.query.size();
-                        std::cout<< param_size<<std::endl;
+                        DLOG(INFO) << param_size;
                         for(string key: request.url.query.keys()){
-                            std::cout<<"key:"<<key<<std::endl;
-                            std::cout<<"value:"<<request.url.query[key]<<std::endl;
+                            DLOG(INFO) <<"key:"<<key;
+                            DLOG(INFO) <<"value:"<<request.url.query[key];
                         }
 
 //                int a = numify<int>(request["a"]).get();
 //                int b = numify<int>(request["b"]).get();
                         string body_str = request.body;
-                        cout<<body_str<<endl;
+                        DLOG(INFO) <<body_str;
                         Option<Pipe::Reader> pipe_reader = request.reader;
                         if(pipe_reader.isSome()){
                             Pipe::Reader reader = pipe_reader.get();
                             Future<string> res = reader.readAll();
                             if(res.isReady()){
-                                cout<<"pipe reader content"<<endl;
-                                cout<<res.get()<<endl;
+                                DLOG(INFO) <<"pipe reader content";
+                                DLOG(INFO) <<res.get();
                             }
                         }
                         int a = 3;
                         int b = 4;
                         std::ostringstream result;
                         result << "{ \"result\": " <<"\"" <<request_method+tpath <<"\"" << "}";
-                        std::cout<<result.str()<<std::endl;
+                        DLOG(INFO) <<result.str();
                         JSON::Value body = JSON::parse(result.str()).get();
                         return OK(body);
                     });
@@ -118,13 +120,13 @@ namespace chameleon {
 
 
         void register_participant(const string& hostname){
-            cout<<"master receive register message from "<< hostname<<endl;
+            DLOG(INFO) <<"master receive register message from "<< hostname;
         }
 
         void update_hardware_resources(const UPID& from, const HardwareResourcesMessage& hardware_resources_message){
-            std::cout<<"enter update_hardware_resources"<<std::endl;
+            DLOG(INFO) <<"enter update_hardware_resources";
             JSON::Object object = JSON::protobuf(hardware_resources_message);
-            std::cout<<stringify(object)<<std::endl;
+            DLOG(INFO) <<stringify(object);
 
         }
 

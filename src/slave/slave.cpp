@@ -39,21 +39,10 @@ void Slave::finalize() {
 
 
 int main(int argc, char **argv){
-    google::InitGoogleLogging(argv[0]);
-    google::SetLogDestination(google::GLOG_FATAL, "../log/log_fatal_"); // set the storage path and prefix of google::FATAL
-    google::SetLogDestination(google::GLOG_ERROR, "../log/log_error_");
-    google::SetLogDestination(google::GLOG_WARNING, "../log/log_warning_");
-    google::SetLogDestination(google::GLOG_INFO, "../log/log_info_");
+    chameleon::set_storage_paths_of_glog("slave");// provides the program name
+    chameleon::set_flags_of_glog();
 
-    FLAGS_alsologtostderr = true;  // glog print to glog files as well as standard input,output, error output
-    FLAGS_colorlogtostderr = true;  // configure the color support
-    FLAGS_log_prefix = true;  // the prefix should print at the beginning of each row
-    FLAGS_logbufsecs = 0;  // output the cache immediately, no cache
-    FLAGS_max_log_size = 10;  // set the maximum size of the glog file (unit is MB)
-    FLAGS_stop_logging_if_full_disk = true;  // disable the output of glog if the disk is full or the disk has no free space
-
-    LOG(INFO) << "glog path configuration finished. OK!";
-
+    LOG(INFO) << "glog files paths configuration for slave finished. OK!";
 
     os::setenv("LIBPROCESS_PORT", stringify(6061));
     process::initialize("slave");

@@ -33,10 +33,9 @@
 
 // chameleon headers
 #include <resource_collector.hpp>
+#include <configuration_glog.hpp>
 
-using std::cerr;
-using std::cout;
-using std::endl;
+
 using std::string;
 using std::unordered_map;
 using std::shared_ptr;
@@ -68,7 +67,7 @@ namespace chameleon {
         }
 
         virtual ~Slave(){
-            std::cout<<"~ Slave()"<<std::endl;
+            LOG(INFO)<<"~ Slave()";
         }
 
     protected:
@@ -106,7 +105,7 @@ namespace chameleon {
     private:
 
         void heartbeat(){
-            cout<<"5 seconds"<<endl;
+            DLOG(INFO)<<"5 seconds";
             //  delays 5 seconds to invoke the function "heartbeat " of self.
             // it's cyclical because "heartbeat invoke heartbeat"
             process::delay(m_interval,self(),&Self::heartbeat);

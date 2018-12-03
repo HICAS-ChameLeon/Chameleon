@@ -20,8 +20,6 @@
 #include <gpu_collector.hpp>
 #include <memory_collector.hpp>
 
-using std::cout;
-using std::endl;
 using std::vector;
 using std::string;
 using std::shared_ptr;
@@ -31,7 +29,7 @@ namespace chameleon {
     class ResourceCollector {
     public:
         explicit ResourceCollector(){
-            msp_cpu = make_shared<Cpu_Collector>(Cpu_Collector());
+            msp_cpu = make_shared<CpuCollector>(CpuCollector());
             msp_disk = make_shared<DiskCollector>(DiskCollector());
             msp_gpu = make_shared<GpuCollector>(GpuCollector());
             msp_mem = make_shared<MemoryCollector>(MemoryCollector());
@@ -46,10 +44,7 @@ namespace chameleon {
             HardwareResourcesMessage* hr_message=new HardwareResourcesMessage();
 
             // cpu colletor
-            CPUCollection cpu_collection = msp_cpu->get_cpu_info();
-            CPUCollection* hr_cpu_collection = new CPUCollection();
-//            hr_cpu_collection->set_cpu_quantity(4);
-            hr_cpu_collection->CopyFrom(cpu_collection);
+            auto hr_cpu_collection = msp_cpu->get_cpu_info();
             hr_message->set_allocated_cpu_collection(hr_cpu_collection);
 
             // memeory collector
@@ -68,7 +63,7 @@ namespace chameleon {
         }
 
     private:
-        shared_ptr<Cpu_Collector> msp_cpu;
+        shared_ptr<CpuCollector> msp_cpu;
         shared_ptr<DiskCollector> msp_disk;
         shared_ptr<GpuCollector> msp_gpu;
         shared_ptr<MemoryCollector> msp_mem;

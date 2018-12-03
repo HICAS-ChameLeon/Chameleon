@@ -8,24 +8,21 @@
 #include "master.hpp"
 using namespace chameleon;
 
-int main(){
+int main(int argc, char **argv){
+
+    chameleon::set_storage_paths_of_glog("master");// provides the program name
+    chameleon::set_flags_of_glog();
+
     os::setenv("LIBPROCESS_PORT", stringify(6060));
     process::initialize("master");
 
     Master master;
     PID<Master> cur_master = process::spawn(master);
-    cout << "Running master on " << process::address().ip << ":" << process::address().port << endl;
-    cout << "PID" << endl;
-
-    //get slave ip and port
-//    string slave_str;
-//    std::cin >> slave_str;
-//    UPID slaveUPID(slave_str);
-//    master.slave = slaveUPID;
-
+   LOG(INFO)<< "Running master on " << process::address().ip << ":" << process::address().port;
 
     const PID<Master> master_pid = master.self();
-    cout << master_pid << endl;
+    LOG(INFO) << master_pid;
+//    LOG(ERROR) << "error test";
     process::wait(master.self());
     return 0;
 }
