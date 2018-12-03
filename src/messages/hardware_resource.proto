@@ -21,10 +21,10 @@ message CPUInfo{
     optional string cpucores = 4;
     optional string modelname = 5;
     optional string cpuMHz = 6;
-    optional string L1dcache = 7;
-    optional string L1icache = 8;
-    optional string L2cache = 9;
-    optional string L3cache = 10;
+    optional string l1dcache = 7;
+    optional string l1icache = 8;
+    optional string l2cache = 9;
+    optional string l3cache = 10;
 }
 
 message MemoryCollection {
