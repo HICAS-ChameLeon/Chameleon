@@ -1,0 +1,6 @@
+message ParticipantInfo{
+    required string ParticipantID=1;
+    required string hostname=2;
+    optional int32 port =8 [default = 5051];
+}
+

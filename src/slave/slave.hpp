@@ -1,0 +1,122 @@
+/*
+ * Copyright  ：SIAT 异构智能计算体系结构与系统研究中心
+ * Author     ：Lele Li lilelr@163.com
+ * Date       ：18-11-26
+ * Description：slave codes
+ */
+#ifndef CHAMELEON_PARTICIPANT_HPP
+#define CHAMELEON_PARTICIPANT_HPP
+
+// C++ 11 dependencies
+#include <iostream>
+#include <unordered_map>
+#include <memory>
+#include <string>
+
+#include <glog/logging.h>
+
+// stout dependencies
+#include <stout/os.hpp>
+#include <stout/os/pstree.hpp>
+
+// libprocess dependencies
+#include <process/defer.hpp>
+#include <process/dispatch.hpp>
+#include <process/future.hpp>
+#include <process/http.hpp>
+#include <process/process.hpp>
+#include <process/protobuf.hpp>
+#include <process/delay.hpp>
+
+// protobuf
+#include <monitor_info.pb.h>
+
+// chameleon headers
+#include <resource_collector.hpp>
+#include <configuration_glog.hpp>
+
+
+using std::string;
+using std::unordered_map;
+using std::shared_ptr;
+using std::make_shared;
+
+using os::Process;
+using os::ProcessTree;
+
+using process::UPID;
+using process::PID;
+using process::Future;
+using process::Promise;
+using namespace process::http;
+
+using process::http::Request;
+using process::http::OK;
+using process::http::InternalServerError;
+
+namespace chameleon {
+    // forward declations
+    class SlaveHeartbeater;
+
+    const string DEFAULT_MASTER="master@172.20.110.228:6060";
+    class Slave : public ProtobufProcess<Slave> {
+    public:
+        explicit Slave():ProcessBase("slave"){
+            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+//            msp_resource_collector = new ResourceCollector();
+        }
+
+        virtual ~Slave(){
+            LOG(INFO)<<"~ Slave()";
+        }
+
+    protected:
+        void finalize() override;
+
+    public:
+
+        virtual void initialize();
+
+        void register_feedback(const string& hostname);
+
+    private:
+        shared_ptr<ResourceCollector> msp_resource_collector;
+//       ResourceCollector* msp_resource_collector;
+//        Option<process::Owned<SlaveHeartbeater>> heartbeater;
+        shared_ptr<UPID> msp_masterUPID;
+    };
+
+    constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(5);
+
+    class SlaveHeartbeater : public process::Process<SlaveHeartbeater> {
+
+    public:
+
+        SlaveHeartbeater(const Duration& interval)
+                : process::ProcessBase(process::ID::generate("myheartbeater")),
+                  m_interval(interval) {
+        }
+
+        virtual void initialize() {
+            heartbeat();
+//        install<Offer>(&Master::report_from_client, &Offer::key,&Offer::value);
+        }
+
+    private:
+
+        void heartbeat(){
+            DLOG(INFO)<<"5 seconds";
+            //  delays 5 seconds to invoke the function "heartbeat " of self.
+            // it's cyclical because "heartbeat invoke heartbeat"
+            process::delay(m_interval,self(),&Self::heartbeat);
+        }
+
+        const Duration m_interval;
+
+    };
+}
+
+
+
+
+#endif //CHAMELEON_PARTICIPANT_HPP
