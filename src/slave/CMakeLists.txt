@@ -20,7 +20,7 @@ target_link_libraries(cpu_collector_tests hardware_resource ${PROCESS_LIBS}  ${P
 set(memory_SRCS memory_collector.hpp)
 set(memory_collector_test_SRCS memory_collector_tests.cpp ${memory_SRCS})
 add_executable(memory_collector_tests ${memory_collector_test_SRCS})
-target_link_libraries(memory_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
+target_link_libraries(memory_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest)
 
 set(slave_SRCS slave.hpp slave.cpp resource_collector.hpp resource_collector.cpp ${cpu_SRCS} ${memory_SRCS} ${disk_SRCS}
         ${Gpu_Collector_SRCS})
