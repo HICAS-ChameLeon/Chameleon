@@ -13,7 +13,10 @@ using std::string;
 using std::cout;
 using std::endl;
 using std::vector;
-using namespace process;
+using process::Subprocess;
+using process::Future;
+namespace io = process::io;
+
 namespace chameleon {
 /*
  * className：GpuCollector
@@ -27,8 +30,7 @@ namespace chameleon {
         GPUCollection* m_gpu_proto = new GPUCollection();
     public:
         string get_gpu_string();
-        void split_gpu_string(string m_gpu_info);
-        GPUCollection* get_gpu_proto();
+        GPUCollection* split_gpu_string ();
     };
 }
 
