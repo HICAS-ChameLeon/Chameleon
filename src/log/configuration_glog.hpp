@@ -12,7 +12,11 @@
 #include <glog/logging.h>
 
 namespace chameleon{
-
+    /**
+     * set the storage directory and the filename of glog. The default directory is the basic = "../log/"
+     * @param program_name
+     * @param basic the storage directory of glog
+     */
     inline void set_storage_paths_of_glog(char* program_name,char* basic = "../log/"){
         google::InitGoogleLogging(program_name);
 
