@@ -9,12 +9,20 @@ message RuntimeResourcesMessage
 }
 
 message CPUUsage{
-
+    required string cpu_used = 1;
 }
 
-message MemoryUsage{
-
+message MemoryUsage {
+    required string mem_total = 1;
+    required string mem_free = 2;
+    required string mem_available = 3;
+    required string buffers = 4;
+    required string cached = 5;
+    required string swap_total = 6;
+    required string swap_free = 7;
+    required string hugepagesize = 8;
 }
+
 
 message DiskUsage{
 
