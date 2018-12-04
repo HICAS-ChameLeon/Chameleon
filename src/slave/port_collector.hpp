@@ -1,10 +1,6 @@
-//
-// Created by wqn on 18-12-4.
-//
 
-#ifndef CHAMELEON_PORT_COLLECTOR_HPP
-#define CHAMELEON_PORT_COLLECTOR_HPP
-
+#ifndef CHAMELEON_PORTCOLLECTOR_H
+#define CHAMELEON_PORTCOLLECTOR_H
 
 #include <string>
 #include <sstream>
@@ -45,5 +41,9 @@ namespace chameleon {
     };
 }
 
+<<<<<<< HEAD
 
 #endif //CHAMELEON_PORT_COLLECTOR_HPP
+=======
+#endif //CHAMELEON_PORTCOLLECTOR_H
+>>>>>>> 8e263783b050ca0709dcac6a824cefe4a7278453
