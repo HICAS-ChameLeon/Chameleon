@@ -1,0 +1,8 @@
+message Job
+{
+  required string uuid=1;
+  required bytes exe_file=2;
+  required int32 cpus = 3;
+  required int32 memory = 4;
+
+}

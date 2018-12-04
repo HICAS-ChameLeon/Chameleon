@@ -1,5 +1,5 @@
-#ifndef LIBPROCESS_START_GPUCOLLECTOR_H
-#define LIBPROCESS_START_GPUCOLLECTOR_H
+#ifndef CHAMELEON_PORTCOLLECTOR_H
+#define CHAMELEON_PORTCOLLECTOR_H
 
 #include <string>
 #include <sstream>
@@ -40,4 +40,4 @@ namespace chameleon {
     };
 }
 
-#endif //LIBPROCESS_START_GPUCOLLECTOR_H
+#endif //CHAMELEON_PORTCOLLECTOR_H

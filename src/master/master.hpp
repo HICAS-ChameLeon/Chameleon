@@ -4,8 +4,8 @@
  * Date       ：18-11-26
  * Description：master
  */
-#ifndef CHAMELEON_MONITOR_HPP
-#define CHAMELEON_MONITOR_HPP
+#ifndef CHAMELEON_MASTER_HPP
+#define CHAMELEON_MASTER_HPP
 // C++ 11 dependencies
 #include <iostream>
 #include <unordered_map>
@@ -169,4 +169,4 @@ namespace chameleon {
 
 
 
-#endif //CHAMELEON_MONITOR_HPP
+#endif //CHAMELEON_MASTER_HPP

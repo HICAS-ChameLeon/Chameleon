@@ -19,6 +19,7 @@
 #include <disk_collector.hpp>
 #include <gpu_collector.hpp>
 #include <memory_collector.hpp>
+#include <port_collector.hpp>
 
 using std::vector;
 using std::string;
@@ -33,6 +34,7 @@ namespace chameleon {
             msp_disk = make_shared<DiskCollector>(DiskCollector());
             msp_gpu = make_shared<GpuCollector>(GpuCollector());
             msp_mem = make_shared<MemoryCollector>(MemoryCollector());
+            msp_port = make_shared<PortCollector>(PortCollector());
         }
 
         virtual ~ResourceCollector(){
@@ -59,6 +61,8 @@ namespace chameleon {
             GPUCollection* hr_gpu = msp_gpu->split_gpu_string();
             hr_message->set_allocated_gpu_collection(hr_gpu);
 
+            PortCollection* hr_port = msp_port->split_port_string();
+            hr_message->set_allocated_port_collection(hr_port);
             return hr_message;
         }
 
@@ -67,7 +71,7 @@ namespace chameleon {
         shared_ptr<DiskCollector> msp_disk;
         shared_ptr<GpuCollector> msp_gpu;
         shared_ptr<MemoryCollector> msp_mem;
-
+        shared_ptr<PortCollector> msp_port;
     };
 
 
