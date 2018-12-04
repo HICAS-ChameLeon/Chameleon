@@ -9,18 +9,22 @@
 using namespace chameleon;
 
 void Slave::initialize() {
+    // Verify that the version of the library that we linked against is
+    // compatible with the version of the headers we compiled against.
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    mp_masterUPID = new UPID(DEFAULT_MASTER);
+    msp_masterUPID = make_shared<UPID>(UPID(DEFAULT_MASTER));
     install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
 
-    HardwareResourcesMessage hr_message = *msp_resource_collector->collect_hardware_resources();
-    std::cout<<*mp_masterUPID<<std::endl;
+    HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
+    DLOG(INFO)<< *msp_masterUPID;
     string slave_id = stringify(self().address.ip);
-    hr_message.set_slave_id(slave_id);
-    cout<<"before send "<<endl;
+    hr_message->set_slave_id(slave_id);
+    DLOG(INFO)<<"before send message to master";
 
-    send(*mp_masterUPID,hr_message);
-
+    send(*msp_masterUPID, *hr_message);
+    delete hr_message;
+    LOG(INFO) << "slave initialize finished ";
 }
 
 
@@ -30,21 +34,26 @@ void Slave::register_feedback(const string& hostname){
 
 void Slave::finalize() {
     ProcessBase::finalize();
-    std::cout<<"slave finalize()"<<std::endl;
+    LOG(INFO)<<"slave finalize()";
 }
 
 
-int main(){
+int main(int argc, char **argv){
+    chameleon::set_storage_paths_of_glog("slave");// provides the program name
+    chameleon::set_flags_of_glog();
+
+    LOG(INFO) << "glog files paths configuration for slave finished. OK!";
+
     os::setenv("LIBPROCESS_PORT", stringify(6061));
     process::initialize("slave");
 
     Slave slave;
     PID<Slave> cur_slave = process::spawn(slave);
-    cout << "Running slave on " << process::address().ip << ":" << process::address().port << endl;
-    cout << "PID" << endl;
+    LOG(INFO)<<"Running slave on " << process::address().ip << ":" << process::address().port;
+
 
     const PID<Slave> slave_pid = slave.self();
-    cout << slave_pid << endl;
+    LOG(INFO)<<slave_pid;
     process::wait(slave.self());
     return 0;
 }

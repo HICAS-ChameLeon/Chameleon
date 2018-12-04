@@ -13,6 +13,8 @@
 #include <memory>
 #include <string>
 
+#include <glog/logging.h>
+
 // stout dependencies
 #include <stout/os.hpp>
 #include <stout/os/pstree.hpp>
@@ -31,10 +33,9 @@
 
 // chameleon headers
 #include <resource_collector.hpp>
+#include <configuration_glog.hpp>
 
-using std::cerr;
-using std::cout;
-using std::endl;
+
 using std::string;
 using std::unordered_map;
 using std::shared_ptr;
@@ -61,12 +62,12 @@ namespace chameleon {
     class Slave : public ProtobufProcess<Slave> {
     public:
         explicit Slave():ProcessBase("slave"){
-//            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
-            msp_resource_collector = new ResourceCollector();
+            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+//            msp_resource_collector = new ResourceCollector();
         }
 
         virtual ~Slave(){
-            std::cout<<"~ Slave()"<<std::endl;
+            LOG(INFO)<<"~ Slave()";
         }
 
     protected:
@@ -79,10 +80,10 @@ namespace chameleon {
         void register_feedback(const string& hostname);
 
     private:
-//       shared_ptr<ResourceCollector> msp_resource_collector;
-       ResourceCollector* msp_resource_collector;
+        shared_ptr<ResourceCollector> msp_resource_collector;
+//       ResourceCollector* msp_resource_collector;
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
-        UPID* mp_masterUPID;
+        shared_ptr<UPID> msp_masterUPID;
     };
 
     constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(5);
@@ -104,7 +105,7 @@ namespace chameleon {
     private:
 
         void heartbeat(){
-            cout<<"5 seconds"<<endl;
+            DLOG(INFO)<<"5 seconds";
             //  delays 5 seconds to invoke the function "heartbeat " of self.
             // it's cyclical because "heartbeat invoke heartbeat"
             process::delay(m_interval,self(),&Self::heartbeat);

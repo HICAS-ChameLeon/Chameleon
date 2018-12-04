@@ -6,6 +6,7 @@ message HardwareResourcesMessage
     required MemoryCollection mem_collection = 3;
     required GPUCollection    gpu_collection=4;
     required DiskCollection    disk_collection = 5;
+    required PortCollection   port_collection = 6;
 
 }
 
@@ -21,10 +22,10 @@ message CPUInfo{
     optional string cpucores = 4;
     optional string modelname = 5;
     optional string cpuMHz = 6;
-    optional string L1dcache = 7;
-    optional string L1icache = 8;
-    optional string L2cache = 9;
-    optional string L3cache = 10;
+    optional string l1dcache = 7;
+    optional string l1icache = 8;
+    optional string l2cache = 9;
+    optional string l3cache = 10;
 }
 
 message MemoryCollection {
@@ -40,12 +41,12 @@ message MemInfo {
 }
 
 message GPUCollection {
-    repeated GpuInfo gpu_infos = 1;
+    repeated GPUInfo gpu_infos = 1;
     required int32 gpu_quantity = 2;
 }
 
 
-message GpuInfo {
+message GPUInfo {
     required string description =2;
     required string product =3;
     required string vendor =4;
@@ -72,5 +73,16 @@ message DiskInfo{
     required string disk_speed = 4;
     required string disk_free = 5;
     required string disk_available = 6;
+}
+
+
+message PortCollection {
+    repeated PortInfo port_infos = 1;
+    required int32 port_quantity = 2;
+}
+message PortInfo{
+    optional string firstport =1;
+    optional string lastport =2;
+
 }
 

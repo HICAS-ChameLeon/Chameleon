@@ -2,6 +2,11 @@
 #define LIBPROCESS_START_GPUCOLLECTOR_H
 
 #include <string>
+#include <sstream>
+#include <fstream>
+#include <iostream>
+
+//#include <stout/strings.hpp>
 
 #include <process/subprocess.hpp>
 #include <process/future.hpp>
@@ -13,24 +18,25 @@ using std::string;
 using std::cout;
 using std::endl;
 using std::vector;
+using std::ifstream;
 using process::Subprocess;
 using process::Future;
 namespace io = process::io;
 
 namespace chameleon {
 /*
- * className：GpuCollector
- * date：18/11/26
- * author：ZhangYixin 1968959287@qq.com
- * description： Collecting GPU information by executing commands.
+ * className：PortCollector
+ * date：18/12/03
+ * author：Jessicallo sherlock_vip@163.com
+ * description： Collecting Port range information by executing commands.
  */
-    class GpuCollector {
+    class PortCollector {
     private:
-        string m_gpu_info;
-        GPUCollection* m_gpu_proto = new GPUCollection();
+        string m_port_info;
+        PortCollection* m_port_proto = new PortCollection();
     public:
-        string get_gpu_string();
-        GPUCollection* split_gpu_string ();
+        string get_port_string();
+        PortCollection* split_port_string ();
     };
 }
 

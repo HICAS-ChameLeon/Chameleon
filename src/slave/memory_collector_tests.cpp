@@ -5,6 +5,9 @@
  * Description：Test of get memory's information
  */
 
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+
 #include "memory_collector.hpp"
 
 /*
@@ -16,9 +19,21 @@
  * Parameter    ：none
  * Return       ：0
  */
-int main(){
+TEST(MemoryCollection, getMemInfo){
     chameleon::MemoryCollector memoryCollector;
     memoryCollector.get_dmiinfo_rows();
-    memoryCollector.select_meminfo(memoryCollector.m_tokens);
-    memoryCollector.show_meminfo(memoryCollector.m_memory_collection);
+}
+TEST(MemoryCollection, SelectMemInfo){
+    chameleon::MemoryCollector memoryCollector;
+    memoryCollector.select_meminfo();
+}
+
+TEST(MemoryCollection, ShowMemInfo){
+    chameleon::MemoryCollector memoryCollector;
+    memoryCollector.show_meminfo();
+}
+
+int main(int argc, char** argv) {
+    testing::InitGoogleMock(&argc, argv);
+    return RUN_ALL_TESTS();
 }
