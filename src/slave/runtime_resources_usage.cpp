@@ -88,6 +88,56 @@ namespace chameleon{
         LOG(INFO) << "Hugepagesize：" << m_memory_usage->hugepagesize();
     }
 
+
+    /*
+     * Function name：get_cpu_used_info
+     * Author       ：zhangyixin
+     * Date         ：2018-12-4
+     * Description  ：Read "/proc/stat" file and Get the total information of CPU usage
+     * Parameter    ：CpuOccupy *o
+     * ReturnValue  ：none
+     */
+    void RuntimeResourceUsage::get_cpu_used_info(RuntimeResourceUsage::CpuOccupy *o) {
+        FILE *fd;
+        char buff[MAXBUFSIZE];
+        fd = fopen ("/proc/stat", "r"); /*Only the first line of 'stat' file and the total information of CPU are read here.*/
+        fgets (buff, sizeof(buff), fd);
+        sscanf (buff, "%s %u %u %u %u", o->cpu_name, &o->user_time, &o->nice_time,&o->system_time, &o->idle_time);
+        /*printf(buff);*/
+        fclose(fd);
+    }
+
+    /*
+     * Function name：cal_cpu_usage
+     * Author       ：zhangyixin
+     * Date         ：2018-12-4
+     * Description  ：Calculate CPU usage , and Save the results to protobuf
+     * Parameter    ：first_info,second_info
+     * ReturnValue  ：CPUUsage*
+     */
+    CPUUsage* RuntimeResourceUsage::cal_cpu_usage(RuntimeResourceUsage::CpuOccupy *first_info,
+                                             RuntimeResourceUsage::CpuOccupy *second_info) {
+        m_cpu_usage = new CPUUsage() ;
+        double fir_total_time, sec_total_time;
+        double user_sub, sys_sub;
+
+        /*The first time (user + nice + system + idle) is assigned to fir_total_time */
+        fir_total_time = (double) (first_info->user_time + first_info->nice_time + first_info->system_time +first_info->idle_time);
+        /*The second time (user + nice + system + idle) is assigned to sec_total_time */
+        sec_total_time = (double) (second_info->user_time + second_info->nice_time + second_info->system_time +second_info->idle_time);
+        /*The difference between the first and second time of the user is then assigned to user_sub*/
+        user_sub = (double) (second_info->user_time - first_info->user_time);
+        /*The difference between the first and second time of the system is then assigned to sys_sub*/
+        sys_sub = (double) (second_info->system_time - first_info->system_time);
+
+        float m_cpu;
+        /*((user_time+system_time)*100)/(The difference between the first and second total time) , and assigned to m_cpu*/
+        m_cpu = ((sys_sub+user_sub)*100.0)/(sec_total_time-fir_total_time);
+
+        m_cpu_usage->set_cpu_used(m_cpu);
+        return m_cpu_usage;
+    }
+
     chameleon::RuntimeResourceUsage::RuntimeResourceUsage() {
     }
 
