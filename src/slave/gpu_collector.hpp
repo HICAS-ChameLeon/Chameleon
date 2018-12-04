@@ -27,7 +27,7 @@ namespace chameleon {
     class GpuCollector {
     private:
         string m_gpu_info;
-        GPUCollection* m_gpu_proto = new GPUCollection();
+        GPUCollection* m_gpu_proto;
     public:
         string get_gpu_string();
         GPUCollection* split_gpu_string ();
