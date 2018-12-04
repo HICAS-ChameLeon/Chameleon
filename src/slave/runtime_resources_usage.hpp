@@ -5,29 +5,25 @@
 #ifndef CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
 #define CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
 
+//C++11 dependencies
 #define MAXBUFSIZE 1024
 
-// C++ 11 dependencies
 #include <iostream>
+#include <sys/statfs.h>
 
-// stout dependencies
-#include <stout/strings.hpp>
+//stout dependencies
+#include <stout/option.hpp>
+#include <stout/stringify.hpp>
 
-// libprocess dependencies
-#include <process/subprocess.hpp>
-#include <process/io.hpp>
-
-// chameleon headers
+//chameleon headers
 #include <runtime_resource.pb.h>
 
 using std::string;
-using std::vector;
 
-using process::Subprocess;
-using process::Future;
+namespace  chameleon{
 
-namespace chameleon {
     class RuntimeResourceUsage {
+
     private:
         /* message class. */
         MemoryUsage* m_memory_usage;
@@ -39,6 +35,14 @@ namespace chameleon {
 
     
         /*
+        * Function name：get_disk_usage
+        * Author       ：heldon
+        * Date         ：2018-12-04
+        * Description  ：get disk usage
+        * Parameter    ：none
+        * Return       ：DiskUsage*
+        */
+        DiskUsage* get_disk_usage();
          * Function name：select_memusage
          * Author       ：marcie
          * Date         ：2018-12-4
@@ -78,6 +82,7 @@ namespace chameleon {
 
     };
 }
+
 
 
 #endif //CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP

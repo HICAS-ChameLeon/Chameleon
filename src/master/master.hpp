@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <memory>
 
+#include <glog/logging.h>
+
 // stout dependencies
 #include <stout/gtest.hpp>
 #include <stout/json.hpp>
