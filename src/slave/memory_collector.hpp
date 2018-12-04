@@ -44,8 +44,6 @@ namespace chameleon {
         /* message class. */
         MemoryCollection* m_memory_collection = new MemoryCollection();
 
-        /* message class. */
-        MemoryUsage* m_memory_usage = new MemoryUsage();
     public:
         /*
          * Function name：get_dmiinfo_rows
@@ -69,17 +67,6 @@ namespace chameleon {
         MemoryCollection* select_meminfo();
 
         /*
-         * Function name：select_meminfo
-         * Author       ：marcie
-         * Date         ：2018-12-4
-         * Description  ：Input command and get the returned information,
-         *                divide strings and filter out needed information
-         * Parameter    ：none
-         * Return       ：MemoryUsage m_memory_usage
-         */
-        MemoryUsage* select_memusage();
-
-        /*
          * Function name：show_meminfo
          * Author       ：marcie
          * Date         ：2018-11-30
@@ -89,17 +76,6 @@ namespace chameleon {
          * Return       ：none
          */
         void show_meminfo();
-
-        /*
-         * Function name：show_memusage
-         * Author       ：marcie
-         * Date         ：2018-12-4
-         * Description  ：output memory usage infomation by protobuf message
-         * Parameter    ：none
-         * Output       :memory usage information
-         * Return       ：none
-         */
-        void show_memusage();
 
         MemoryCollector();
 
