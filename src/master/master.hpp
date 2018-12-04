@@ -10,6 +10,8 @@
 #include <iostream>
 #include <unordered_map>
 
+#include <glog/logging.h>
+
 // stout dependencies
 #include <stout/gtest.hpp>
 #include <stout/json.hpp>
