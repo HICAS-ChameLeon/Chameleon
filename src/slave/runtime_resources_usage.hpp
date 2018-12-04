@@ -34,17 +34,9 @@ namespace chameleon {
 
         /* cpu class. */
         CPUUsage* m_cpu_usage;
-        typedef struct CPUTime
-        {
-            char cpu_name[20];
-            unsigned int user_time;
-            unsigned int nice_time;
-            unsigned int system_time;
-            unsigned int idle_time;
-        } CpuOccupy ;
 
     public:
-        /*
+       /*
          * Function name：select_meminfo
          * Author       ：marcie
          * Date         ：2018-11-30
@@ -67,6 +59,14 @@ namespace chameleon {
         void show_memusage();
 
         /* cpu function */
+        typedef struct CPUTime
+        {
+            char cpu_name[20];
+            unsigned int user_time;
+            unsigned int nice_time;
+            unsigned int system_time;
+            unsigned int idle_time;
+        } CpuOccupy ;
         void get_cpu_used_info (CpuOccupy *o) ;
         CPUUsage* cal_cpu_usage (CpuOccupy *first_info, CpuOccupy *second_info) ;
     };
