@@ -30,20 +30,22 @@ namespace chameleon {
     class RuntimeResourceUsage {
     private:
         /* message class. */
-        MemoryUsage* m_memory_usage = new MemoryUsage();
+        MemoryUsage* m_memory_usage;
 
         /* cpu class. */
         CPUUsage* m_cpu_usage;
 
     public:
-       /*
-         * Function name：select_meminfo
+
+    
+        /*
+         * Function name：select_memusage
          * Author       ：marcie
-         * Date         ：2018-11-30
+         * Date         ：2018-12-4
          * Description  ：Input command and get the returned information,
          *                divide strings and filter out needed information
          * Parameter    ：none
-         * Return       ：MemoryCollection m_memory_collection
+         * Return       ：MemoryUsage m_memory_usage
          */
         MemoryUsage* select_memusage();
 
@@ -69,6 +71,11 @@ namespace chameleon {
         } CpuOccupy ;
         void get_cpu_used_info (CpuOccupy *o) ;
         CPUUsage* cal_cpu_usage (CpuOccupy *first_info, CpuOccupy *second_info) ;
+
+        RuntimeResourceUsage();
+
+        ~RuntimeResourceUsage();
+
     };
 }
 
