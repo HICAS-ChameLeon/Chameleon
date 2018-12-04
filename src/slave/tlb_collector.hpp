@@ -1,12 +1,14 @@
 /**
  * Copyright  ：深圳先进研究所异构智能计算体系结构与系统研究中心
  * Author     ：weiguo
- * Date       ：18-12-3
- * Description：Get Cpu information from computer
+ * Date       ：18-12-4
+ * Description：Get TLB information from computer
  */
 
-#ifndef CHAMELEON_CPU_COLLECTOR_HPP
-#define CHAMELEON_CPU_COLLECTOR_HPP
+#ifndef CHAMELEON_TLB_COLLECTOR_HPP
+#define CHAMELEON_TLB_COLLECTOR_HPP
+
+#endif //CHAMELEON_TLB_COLLECTOR_HPP
 
 // C++ 11 dependencies
 #include <iostream>
@@ -36,18 +38,16 @@ using std::string;
 
 using process::Subprocess;
 
-namespace chameleon {
+namespace chameleon{
     /**
-     * ClassName   : CpuCollector
-     * Date        : 18/11/30
-     * Author      : weiguo
-     * Description : Collecting CPU information from computer
+     * ClassName   :TLBCollector
+     * Date        :18/12/4
+     * Author      :weiguow
+     * Description :Collecting TLB information from computer
      * */
-    class CpuCollector {
+    class TLBCollector {
     public:
-        CPUCollection* get_cpu_info();
+        TLBCollection* get_tlb_info();
     };
 }
-
-#endif //CHAMELEON_CPU_COLLECTOR_HPP
 
