@@ -1,0 +1,14 @@
+//
+// Created by lemaker on 18-12-4.
+//
+
+#ifndef CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
+#define CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
+
+
+class RuntimeResourceUsage {
+
+};
+
+
+#endif //CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
