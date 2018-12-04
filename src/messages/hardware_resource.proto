@@ -41,12 +41,12 @@ message MemInfo {
 }
 
 message GPUCollection {
-    repeated GpuInfo gpu_infos = 1;
+    repeated GPUInfo gpu_infos = 1;
     required int32 gpu_quantity = 2;
 }
 
 
-message GpuInfo {
+message GPUInfo {
     required string description =2;
     required string product =3;
     required string vendor =4;
