@@ -19,7 +19,7 @@ void Submitter::initialize() {
     string job_bytes = read_a_file(m_spark_path);
     new_job.set_exe_file(job_bytes);
     send(*msp_masterUPID,new_job);
-    LOG(INFO)<<"sends a job to the master";
+    LOG(INFO)<<"submitted a job to the master "<<*msp_masterUPID;
 }
 
 int main(){
@@ -38,7 +38,7 @@ int main(){
 
     const PID<Submitter> submitter_pid = submitter.self();
     LOG(INFO)<<submitter_pid;
-    process::terminate(submitter.self());
+//    process::terminate(submitter.self());
     process::wait(submitter.self());
     return 0;
 }
