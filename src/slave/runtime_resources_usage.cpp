@@ -6,26 +6,18 @@
 
 namespace chameleon{
     /*
-     * Function name：select_meminfo
+     * Function name：select_memusage
      * Author       ：marcie
-     * Date         ：2018-11-30
+     * Date         ：2018-12-4
      * Description  ：Input command and get the returned information,
      *                divide strings and filter out needed information
      * Parameter    ：none
-     * Return       ：MemoryCollection m_memory_collection
+     * Return       ：MemoryUsage m_memory_usage
      */
     MemoryUsage* chameleon::RuntimeResourceUsage::select_memusage() {
-        /* amount to input command and get the returned memory information. */
-        Try<Subprocess> s = subprocess(
-                "cat /proc/meminfo",
-                Subprocess::FD(STDIN_FILENO),
-                Subprocess::PIPE(),
-                Subprocess::FD(STDERR_FILENO));
-        Future<string> info = process::io::read(s.get().out().get());
-        /* convert format to string. */
-        string info_string = info.get();
-        /* divide strings by "\n", that is divide it into rows. */
+        string info_string = os::read("/proc/meminfo").get();
         vector<string> m_tokens = strings::tokenize(info_string, "\n");
+        m_memory_usage = new MemoryUsage();
         for (int i = 0; i < m_tokens.size(); i++) {
             vector<string> tokens_string = strings::tokenize(m_tokens[i],":");
             for (auto iter = tokens_string.begin(); iter != tokens_string.end(); iter++) {
@@ -94,5 +86,11 @@ namespace chameleon{
         LOG(INFO) << "SwapTotal：" << m_memory_usage->swap_total();
         LOG(INFO) << "SwapFree：" << m_memory_usage->swap_free();
         LOG(INFO) << "Hugepagesize：" << m_memory_usage->hugepagesize();
+    }
+
+    chameleon::RuntimeResourceUsage::RuntimeResourceUsage() {
+    }
+
+    chameleon::RuntimeResourceUsage::~RuntimeResourceUsage() {
     }
 }

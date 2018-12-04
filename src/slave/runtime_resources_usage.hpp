@@ -28,16 +28,16 @@ namespace chameleon {
     class RuntimeResourceUsage {
     private:
         /* message class. */
-        MemoryUsage* m_memory_usage = new MemoryUsage();
+        MemoryUsage* m_memory_usage;
     public:
         /*
-         * Function name：select_meminfo
+         * Function name：select_memusage
          * Author       ：marcie
-         * Date         ：2018-11-30
+         * Date         ：2018-12-4
          * Description  ：Input command and get the returned information,
          *                divide strings and filter out needed information
          * Parameter    ：none
-         * Return       ：MemoryCollection m_memory_collection
+         * Return       ：MemoryUsage m_memory_usage
          */
         MemoryUsage* select_memusage();
 
@@ -51,6 +51,10 @@ namespace chameleon {
          * Return       ：none
          */
         void show_memusage();
+
+        RuntimeResourceUsage();
+
+        ~RuntimeResourceUsage();
     };
 }
 
