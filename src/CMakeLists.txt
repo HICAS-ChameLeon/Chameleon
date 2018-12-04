@@ -19,4 +19,6 @@ add_subdirectory(master)
 
 add_subdirectory(slave)
 
+add_subdirectory(submitter)
+
 #add_subdirectory(my_hello)
