@@ -101,43 +101,6 @@ namespace chameleon {
                         return OK(stringify(result));
                     });
 
-            route(
-                    "/test",
-                    "get the topology resources of the whole topology",
-                    [](Request request) {
-                        string request_method = request.method;
-                        DLOG(INFO) <<request_method ;
-                        string& tpath = request.url.path;
-                        DLOG(INFO) <<tpath;
-                        int param_size = request.url.query.size();
-                        DLOG(INFO) << param_size;
-                        for(string key: request.url.query.keys()){
-                            DLOG(INFO) <<"key:"<<key;
-                            DLOG(INFO) <<"value:"<<request.url.query[key];
-                        }
-
-//                int a = numify<int>(request["a"]).get();
-//                int b = numify<int>(request["b"]).get();
-                        string body_str = request.body;
-                        DLOG(INFO) <<body_str;
-                        Option<Pipe::Reader> pipe_reader = request.reader;
-                        if(pipe_reader.isSome()){
-                            Pipe::Reader reader = pipe_reader.get();
-                            Future<string> res = reader.readAll();
-                            if(res.isReady()){
-                                DLOG(INFO) <<"pipe reader content";
-                                DLOG(INFO) <<res.get();
-                            }
-                        }
-                        int a = 3;
-                        int b = 4;
-                        std::ostringstream result;
-                        result << "{ \"result\": " <<"\"" <<request_method+tpath <<"\"" << "}";
-                        DLOG(INFO) <<result.str();
-                        JSON::Value body = JSON::parse(result.str()).get();
-                        return OK(body);
-                    });
-
 
 //     install("stop", &MyProcess::stop);
             install("stop", [=](const UPID &from, const string &body) {

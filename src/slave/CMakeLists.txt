@@ -31,4 +31,4 @@ target_link_libraries(port_collector_tests hardware_resource ${PROCESS_LIBS}  ${
 set(slave_SRCS slave.hpp slave.cpp resource_collector.hpp resource_collector.cpp ${cpu_SRCS} ${memory_SRCS} ${disk_SRCS}
         ${Gpu_Collector_SRCS} ${port_SRCS})
 add_executable(slave ${slave_SRCS})
-target_link_libraries(slave monitor_info hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET})
+target_link_libraries(slave monitor_info hardware_resource job ${PROCESS_LIBS}  ${PROCESS_TARGET})
