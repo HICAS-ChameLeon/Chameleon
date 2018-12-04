@@ -28,6 +28,7 @@ namespace chameleon {
         get_gpu_string();
         vector<string> tokens = strings::split(m_gpu_info, "\n"); /*Divide gpu information from the command line by "\n" */
         vector<string>::iterator vec_iter;
+        m_gpu_proto = new GPUCollection();
         GPUInfo *gpuInfo = nullptr;
         int index = 0; /*The number of GPU*/
         for (vec_iter = tokens.begin(); vec_iter != tokens.end(); vec_iter++) {

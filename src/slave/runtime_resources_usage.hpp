@@ -5,6 +5,8 @@
 #ifndef CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
 #define CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
 
+#define MAXBUFSIZE 1024
+
 // C++ 11 dependencies
 #include <iostream>
 
@@ -29,6 +31,18 @@ namespace chameleon {
     private:
         /* message class. */
         MemoryUsage* m_memory_usage = new MemoryUsage();
+
+        /* cpu class. */
+        CPUUsage* m_cpu_usage;
+        typedef struct CPUTime
+        {
+            char cpu_name[20];
+            unsigned int user_time;
+            unsigned int nice_time;
+            unsigned int system_time;
+            unsigned int idle_time;
+        } CpuOccupy ;
+
     public:
         /*
          * Function name：select_meminfo
@@ -51,6 +65,10 @@ namespace chameleon {
          * Return       ：none
          */
         void show_memusage();
+
+        /* cpu function */
+        void get_cpu_used_info (CpuOccupy *o) ;
+        CPUUsage* cal_cpu_usage (CpuOccupy *first_info, CpuOccupy *second_info) ;
     };
 }
 

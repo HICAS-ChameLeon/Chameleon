@@ -95,4 +95,36 @@ namespace chameleon{
         LOG(INFO) << "SwapFree：" << m_memory_usage->swap_free();
         LOG(INFO) << "Hugepagesize：" << m_memory_usage->hugepagesize();
     }
+
+    void RuntimeResourceUsage::get_cpu_used_info(RuntimeResourceUsage::CpuOccupy *o) {
+        FILE *fd;
+        char buff[MAXBUFSIZE];
+        fd = fopen ("/proc/stat", "r"); //这里只读取stat文件的第一行及cpu总信息，如需获取每核cpu的使用情况，请分析stat文件的接下来几行。
+        fgets (buff, sizeof(buff), fd);
+        sscanf (buff, "%s %u %u %u %u", o->cpu_name, &o->user_time, &o->nice_time,&o->system_time, &o->idle_time);
+        printf(buff);
+        fclose(fd);
+    }
+
+    CPUUsage* RuntimeResourceUsage::cal_cpu_usage(RuntimeResourceUsage::CpuOccupy *first_info,
+                                             RuntimeResourceUsage::CpuOccupy *second_info) {
+
+        m_cpu_usage = new CPUUsage();
+
+        double fir_total_time, sec_total_time;
+        double user_sub, sys_sub;
+
+        fir_total_time = (double) (first_info->user_time + first_info->nice_time + first_info->system_time +first_info->idle_time);//第一次(用户+优先级+系统+空闲)的时间再赋给od
+        sec_total_time = (double) (second_info->user_time + second_info->nice_time + second_info->system_time +second_info->idle_time);//第二次(用户+优先级+系统+空闲)的时间再赋给od
+
+        user_sub = (double) (second_info->user_time - first_info->user_time);    //用户第一次和第二次的时间之差再赋给id
+        sys_sub = (double) (second_info->system_time - first_info->system_time);//系统第一次和第二次的时间之差再赋给sd
+
+        float m_cpu;
+        m_cpu = ((sys_sub+user_sub)*100.0)/(sec_total_time-fir_total_time); //((用户+系统)乖100)除(第一次和第二次的时间差)再赋给g_cpu_used
+
+        m_cpu_usage->set_cpu_used(m_cpu);
+
+        return m_cpu_usage;
+    }
 }
