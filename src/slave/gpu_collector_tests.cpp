@@ -7,7 +7,7 @@ TEST(GPUCollectorTests, GetGpuInfo)
 {
     chameleon::GpuCollector gpuCollector;
     GPUCollection proto = *gpuCollector.split_gpu_string();
-    GpuInfo *inx;
+    GPUInfo *inx;
 
     cout<<"size : "<<proto.gpu_quantity()<<endl;
     //EXPECT_EQ(1,proto.gpu_quantity());
