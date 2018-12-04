@@ -17,7 +17,8 @@ message MemoryUsage{
 }
 
 message DiskUsage{
-
+    required string  disk_available = 1;
+    required string  disk_available_percent = 2;
 }
 
 message NetUsage{

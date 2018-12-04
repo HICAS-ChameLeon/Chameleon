@@ -12,7 +12,7 @@
 #include <stout/gtest.hpp>
 
 #include <disk_collector.hpp>
-
+#include <runtime_resources_usage.hpp>
 using std::shared_ptr;
 
 TEST(DiskCollectorTest, DiskInfo)
@@ -30,14 +30,10 @@ TEST(DiskCollectorTest, DiskInfo)
         EXPECT_SOME(disk_name);
         Option<string> disk_size = disk_info.get()->size();
         EXPECT_SOME(disk_size);
-        Option<string> disk_type = disk_info.get()->type();
+        Option<DiskInfo_DiskType> disk_type = disk_info.get()->type();
         EXPECT_SOME(disk_type);
         Option<string> disk_speed = disk_info.get()->disk_speed();
         EXPECT_SOME(disk_speed);
-        Option<string> disk_free = disk_info.get()->disk_free();
-        EXPECT_SOME(disk_free);
-        Option<string> disk_available = disk_info.get()->disk_available();
-        EXPECT_SOME(disk_available);
     }
 
 }

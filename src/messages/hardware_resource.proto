@@ -67,14 +67,16 @@ message DiskCollection{
     required int32 disk_quantity= 2;
 }
 message DiskInfo{
-    required string name = 1;
-    required string size = 2;
-    required string type = 3;
-    required string disk_speed = 4;
-    required string disk_free = 5;
-    required string disk_available = 6;
-}
+    enum DiskType {
+        SSD = 0;
+        HDD = 1;
+    }
+    required string   name = 1;
+    required string   size = 2;
+    required DiskType type = 3;
+    required string   disk_speed = 4;
 
+}
 
 message PortCollection {
     repeated PortInfo port_infos = 1;
