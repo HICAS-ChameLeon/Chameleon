@@ -87,15 +87,3 @@ message PortInfo{
     optional string lastport =2;
 
 }
-
-
-message PortCollection {
-    repeated PortInfo port_infos = 1;
-    required int32 port_quantity = 2;
-}
-message PortInfo{
-    optional string firstport =1;
-    optional string lastport =2;
-
-}
-

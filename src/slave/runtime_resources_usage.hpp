@@ -10,8 +10,10 @@
 
 #include <iostream>
 #include <sys/statfs.h>
+#include <vector>
 
 //stout dependencies
+#include <stout/os.hpp>
 #include <stout/option.hpp>
 #include <stout/stringify.hpp>
 
@@ -19,6 +21,7 @@
 #include <runtime_resource.pb.h>
 
 using std::string;
+using std::vector;
 
 namespace  chameleon{
 
@@ -43,6 +46,8 @@ namespace  chameleon{
         * Return       ：DiskUsage*
         */
         DiskUsage* get_disk_usage();
+
+        /*
          * Function name：select_memusage
          * Author       ：marcie
          * Date         ：2018-12-4
