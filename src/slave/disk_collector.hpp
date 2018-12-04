@@ -18,8 +18,7 @@
 #include <stout/protobuf.hpp>
 
 //libprocess dependencies
-#include .
-<process/subprocess.hpp>
+#include <process/subprocess.hpp>
 #include <process/protobuf.hpp>
 #include <process/io.hpp>
 
