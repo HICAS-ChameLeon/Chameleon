@@ -28,6 +28,16 @@ message CPUInfo{
     optional string l3cache = 10;
 }
 
+message TLBCollection{
+    required TLBInfo tlb_infos = 1;
+}
+
+message TLBInfo{
+    repeated string l1_data_tlb = 1;
+    repeated string l1_instruction_tlb = 2;
+    optional string l2_tlb = 3;
+}
+
 message MemoryCollection {
     required string max_size = 1;
     required int32 device_quantity = 2;
