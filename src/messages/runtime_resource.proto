@@ -1,0 +1,29 @@
+
+message RuntimeResourcesMessage
+{
+    required string slave_id =1;
+    required CPUUsage cpu_usage = 2;
+    required MemoryUsage  mem_usage = 3;
+    required DiskUsage disk_usage = 4;
+    required NetUsage net_usage = 5;
+}
+
+message CPUUsage{
+
+}
+
+message MemoryUsage{
+
+}
+
+message DiskUsage{
+
+}
+
+message NetUsage{
+
+}
+
+
+
+
