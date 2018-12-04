@@ -9,6 +9,7 @@
 // C++ 11 dependencies
 #include <iostream>
 #include <unordered_map>
+#include <memory>
 
 // stout dependencies
 #include <stout/gtest.hpp>
@@ -29,12 +30,16 @@
 // protobuf
 #include <participant_info.pb.h>
 #include <hardware_resource.pb.h>
+#include <job.pb.h>
+
 
 // chameleon headers
 #include <configuration_glog.hpp>
 
 using std::string;
 using std::unordered_map;
+using std::shared_ptr;
+using std::make_shared;
 
 using os::Process;
 using os::ProcessTree;
@@ -57,7 +62,9 @@ namespace chameleon {
     public:
         UPID slave;
 
-        explicit Master() : ProcessBase("master") {}
+        explicit Master() : ProcessBase("master") {
+            msp_slave = make_shared<UPID>(UPID(test_slave_UPID));
+        }
 
         virtual ~Master(){
 
@@ -71,6 +78,9 @@ namespace chameleon {
             install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
 
             install<HardwareResourcesMessage>(&Master::update_hardware_resources);
+            install<JobMessage>(&Master::job_submited);
+
+
             // http://172.20.110.228:6060/master/hardware-resources
             route(
                     "/hardware-resources",
@@ -153,12 +163,20 @@ namespace chameleon {
             }
         }
 
+        void job_submited(const UPID& from, const JobMessage& job_message){
+            LOG(INFO)<<"got a job from "<<from;
+            LOG(INFO)<<"sent the job to the test slave";
+            send(*msp_slave,job_message);
+        }
+
 
 
     private:
         unordered_map<UPID,ParticipantInfo> m_participants;
         unordered_map<string,JSON::Object> m_hardware_resources;
 //        unordered_map<string,HardwareResource> m_topology_resources;
+        const string test_slave_UPID = "slave@172.20.110.228:6061";
+        shared_ptr<UPID> msp_slave;
     };
 
 

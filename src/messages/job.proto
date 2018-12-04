@@ -1,4 +1,4 @@
-message Job
+message JobMessage
 {
   required string uuid=1;
   required bytes exe_file=2;
