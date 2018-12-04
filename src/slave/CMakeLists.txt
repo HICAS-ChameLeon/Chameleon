@@ -9,8 +9,8 @@ target_link_libraries(gpu_collector_test hardware_resource ${PROCESS_LIBS}  ${PR
 
 set(disk_SRCS disk_collector.hpp)
 set(disk_colletor_test_SRCS disk_collector_tests.cpp ${disk_SRCS})
-#add_executable(disk ${disk_SRCS})
-#target_link_libraries(disk hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest)
+add_executable(disk ${disk_colletor_test_SRCS})
+target_link_libraries(disk hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest)
 
 set(cpu_SRCS cpu_collector.hpp)
 set(cpu_collector_test_SRCS cpu_collector_tests.cpp ${cpu_SRCS})
