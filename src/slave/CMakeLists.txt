@@ -22,7 +22,7 @@ set(memory_collector_test_SRCS memory_collector_tests.cpp ${memory_SRCS})
 add_executable(memory_collector_tests ${memory_collector_test_SRCS})
 target_link_libraries(memory_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest)
 
-set(port_SRCS port_collector.cpp port_collector.hpp)
+set(port_SRCS port_collector.cpp)
 set(port_collector_tests_SRCS port_collector_tests.cpp ${port_SRCS})
 add_executable(port_collector_tests ${port_collector_tests_SRCS})
 target_link_libraries(port_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest )

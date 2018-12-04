@@ -1,5 +1,10 @@
-#ifndef LIBPROCESS_START_GPUCOLLECTOR_H
-#define LIBPROCESS_START_GPUCOLLECTOR_H
+//
+// Created by wqn on 18-12-4.
+//
+
+#ifndef CHAMELEON_PORT_COLLECTOR_HPP
+#define CHAMELEON_PORT_COLLECTOR_HPP
+
 
 #include <string>
 #include <sstream>
@@ -40,4 +45,5 @@ namespace chameleon {
     };
 }
 
-#endif //LIBPROCESS_START_GPUCOLLECTOR_H
+
+#endif //CHAMELEON_PORT_COLLECTOR_HPP
