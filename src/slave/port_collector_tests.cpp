@@ -7,9 +7,6 @@
 
 TEST(PortCollectionTests, GetPortInfo) {
     chameleon::PortCollector portCollector;
-    clock_t start, end;
-    start = clock();
-
     PortCollection proto = *portCollector.split_port_string();
     PortInfo *index;
     cout << "size : " << proto.port_quantity() << endl;
@@ -18,9 +15,6 @@ TEST(PortCollectionTests, GetPortInfo) {
         cout << "firstport[" << i << "]: " << index->firstport() << endl;
         cout << "lastport [" << i << "]: " << index->lastport()<< endl;
     }
-
-    end = clock();
-    cout << (double) (end - start) / CLOCKS_PER_SEC << endl;
 
 }
 

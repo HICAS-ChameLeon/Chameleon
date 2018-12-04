@@ -1,4 +1,3 @@
-
 #ifndef CHAMELEON_PORTCOLLECTOR_H
 #define CHAMELEON_PORTCOLLECTOR_H
 
@@ -36,14 +35,9 @@ namespace chameleon {
         string m_port_info;
         PortCollection* m_port_proto = new PortCollection();
     public:
-        string get_port_string();
         PortCollection* split_port_string ();
     };
 }
 
-<<<<<<< HEAD
-
-#endif //CHAMELEON_PORT_COLLECTOR_HPP
-=======
 #endif //CHAMELEON_PORTCOLLECTOR_H
->>>>>>> 8e263783b050ca0709dcac6a824cefe4a7278453
+
