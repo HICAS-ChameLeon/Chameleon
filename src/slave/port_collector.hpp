@@ -35,9 +35,9 @@ namespace chameleon {
         string m_port_info;
         PortCollection* m_port_proto = new PortCollection();
     public:
-        string get_port_string();
         PortCollection* split_port_string ();
     };
 }
 
 #endif //CHAMELEON_PORTCOLLECTOR_H
+
