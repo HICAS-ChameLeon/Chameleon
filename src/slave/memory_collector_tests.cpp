@@ -21,8 +21,9 @@
  */
 TEST(MemoryCollection, getMemInfo){
     chameleon::MemoryCollector memoryCollector;
-    memoryCollector.get_dmiinfo_rows();
+    memoryCollector.get_info_rows("sudo -S dmidecode -t memory");
 }
+
 TEST(MemoryCollection, SelectMemInfo){
     chameleon::MemoryCollector memoryCollector;
     memoryCollector.select_meminfo();
@@ -31,6 +32,21 @@ TEST(MemoryCollection, SelectMemInfo){
 TEST(MemoryCollection, ShowMemInfo){
     chameleon::MemoryCollector memoryCollector;
     memoryCollector.show_meminfo();
+}
+
+TEST(MemoryCollection, getMemUsage){
+    chameleon::MemoryCollector memoryCollector;
+    memoryCollector.get_info_rows("cat /proc/meminfo");
+}
+
+TEST(MemoryCollection, SelectMemUsage){
+    chameleon::MemoryCollector memoryCollector;
+    memoryCollector.select_memusage();
+}
+
+TEST(MemoryCollection, ShowMemUsage){
+    chameleon::MemoryCollector memoryCollector;
+    memoryCollector.show_memusage();
 }
 
 int main(int argc, char** argv) {

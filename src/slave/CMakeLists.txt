@@ -17,7 +17,7 @@ set(cpu_collector_test_SRCS cpu_collector_tests.cpp ${cpu_SRCS})
 add_executable(cpu_collector_tests ${cpu_collector_test_SRCS})
 target_link_libraries(cpu_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest)
 
-set(memory_SRCS memory_collector.hpp)
+set(memory_SRCS memory_collector.hpp memory_collector.cpp)
 set(memory_collector_test_SRCS memory_collector_tests.cpp ${memory_SRCS})
 add_executable(memory_collector_tests ${memory_collector_test_SRCS})
 target_link_libraries(memory_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest)
