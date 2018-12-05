@@ -19,7 +19,6 @@ set(cpu_collector_test_SRCS cpu_collector_tests.cpp ${cpu_SRCS})
 add_executable(cpu_collector_tests ${cpu_collector_test_SRCS})
 target_link_libraries(cpu_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest)
 
-
 set(memory_SRCS memory_collector.hpp memory_collector.cpp)
 set(memory_collector_test_SRCS memory_collector_tests.cpp ${memory_SRCS}
         runtime_resources_usage.hpp runtime_resources_usage.cpp)
@@ -29,8 +28,6 @@ set(tlb_collector_test_SRCS tlb_collector_tests.cpp ${tlb_SRCS})
 add_executable(tlb_collector_tests ${tlb_collector_test_SRCS})
 target_link_libraries(tlb_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest)
 
-set(memory_SRCS memory_collector.hpp)
-set(memory_collector_test_SRCS memory_collector_tests.cpp ${memory_SRCS})
 
 add_executable(memory_collector_tests ${memory_collector_test_SRCS})
 target_link_libraries(memory_collector_tests hardware_resource runtime_resource ${PROCESS_TARGET} gmock gtest)
@@ -42,10 +39,7 @@ target_link_libraries(port_collector_tests hardware_resource ${PROCESS_LIBS}  ${
 
 
 set(slave_SRCS slave.hpp slave.cpp resource_collector.hpp resource_collector.cpp ${cpu_SRCS} ${memory_SRCS} ${disk_SRCS}
-        ${Gpu_Collector_SRCS} ${port_SRCS})
-
-set(slave_SRCS slave.hpp slave.cpp resource_collector.hpp resource_collector.cpp ${cpu_SRCS} ${tlb_SRCS}
-        ${memory_SRCS} ${disk_SRCS} ${Gpu_Collector_SRCS} )
+        ${Gpu_Collector_SRCS} ${tlb_SRCS} ${port_SRCS})
 
 add_executable(slave ${slave_SRCS})
 target_link_libraries(slave monitor_info hardware_resource runtime_resource job ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})
