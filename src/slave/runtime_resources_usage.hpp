@@ -32,8 +32,6 @@ namespace  chameleon{
         CPUUsage* m_cpu_usage;
 
     public:
-
-    
         /*
         * Function name：get_disk_usage
         * Author       ：heldon
@@ -43,7 +41,7 @@ namespace  chameleon{
         * Return       ：DiskUsage*
         */
         DiskUsage* get_disk_usage();
-         * Function name：select_memusage
+        /* Function name：select_memusage
          * Author       ：marcie
          * Date         ：2018-12-4
          * Description  ：Input command and get the returned information,
