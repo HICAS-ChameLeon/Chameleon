@@ -14,12 +14,8 @@
 
 
 // stout dependencies
-#include <stout/gtest.hpp>
-#include <stout/json.hpp>
-#include <stout/jsonify.hpp>
-#include <stout/protobuf.hpp>
 #include <stout/os.hpp>
-#include <stout/os/pstree.hpp>
+#include <stout/uuid.hpp>
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -34,6 +30,7 @@
 
 // chameleon headers
 #include <configuration_glog.hpp>
+#include "../common/chameleon_file.hpp"
 using std::string;
 using std::unordered_map;
 using std::shared_ptr;
@@ -44,9 +41,6 @@ using os::ProcessTree;
 
 using process::UPID;
 using process::PID;
-using process::Future;
-using process::Promise;
-using namespace process::http;
 
 namespace chameleon {
     class Submitter :public ProtobufProcess<Submitter>{
@@ -64,10 +58,10 @@ namespace chameleon {
         }
 
     private:
-         const string spark_path = "/home/lemaker/software/spark-2.3.0-bin-hadoop2.7.tgz";
+         const string m_spark_path = "/home/lemaker/software/spark-2.3.0-bin-hadoop2.7.tgz";
         const string DEFAULT_MASTER="master@172.20.110.228:6060";
         shared_ptr<UPID> msp_masterUPID;
-
+        id::UUID m_uuid = id::UUID::random();
     };
 
 }

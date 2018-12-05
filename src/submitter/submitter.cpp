@@ -12,7 +12,14 @@ void Submitter::initialize() {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
     DLOG(INFO)<<"submitter initializes";
     msp_masterUPID = make_shared<UPID>(UPID(DEFAULT_MASTER));
-
+    JobMessage new_job;
+    new_job.set_cpus(1);
+    new_job.set_memory(1);
+    new_job.set_uuid(m_uuid.toString());
+    string job_bytes = read_a_file(m_spark_path);
+    new_job.set_exe_file(job_bytes);
+    send(*msp_masterUPID,new_job);
+    LOG(INFO)<<"sends a job to the master";
 }
 
 int main(){

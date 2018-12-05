@@ -13,8 +13,6 @@
 #include <memory>
 #include <string>
 
-#include <glog/logging.h>
-
 // stout dependencies
 #include <stout/os.hpp>
 #include <stout/os/pstree.hpp>
