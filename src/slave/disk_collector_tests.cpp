@@ -13,6 +13,7 @@
 
 #include <disk_collector.hpp>
 #include <runtime_resources_usage.hpp>
+
 using std::shared_ptr;
 
 TEST(DiskCollectorTest, DiskInfo)
@@ -39,6 +40,8 @@ TEST(DiskCollectorTest, DiskInfo)
 }
 
 int main(int argc, char** argv) {
+    chameleon::RuntimeResourceUsage *runtime = new chameleon::RuntimeResourceUsage();
+    runtime->get_disk_usage();
     testing::InitGoogleMock(&argc, argv);
     return RUN_ALL_TESTS();
 }
