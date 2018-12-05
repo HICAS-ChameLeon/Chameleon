@@ -42,7 +42,7 @@ namespace chameleon {
         vector<string> m_tokens;
 
         /* message class. */
-        MemoryCollection* m_memory_collection = new MemoryCollection();
+        MemoryCollection* m_memory_collection;
 
     public:
         /*
@@ -53,7 +53,7 @@ namespace chameleon {
          * Parameter    ：none
          * Return       ：vector<string> m_tokens
          */
-        vector<string> get_info_rows(string string1);
+        vector<string> get_info_rows();
 
         /*
          * Function name：select_meminfo
@@ -79,7 +79,7 @@ namespace chameleon {
 
         MemoryCollector();
 
-        ~MemoryCollector();
+        virtual ~MemoryCollector();
     };
 }
 #endif //LIBPROCESS_START_DMIMEMINFO_H

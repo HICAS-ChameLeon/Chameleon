@@ -65,7 +65,8 @@ namespace chameleon {
         UPID slave;
 
         explicit Master() : ProcessBase("master") {
-            msp_slave = make_shared<UPID>(UPID(test_slave_UPID));
+            msp_spark_slave = make_shared<UPID>(UPID(test_slave_UPID));
+            msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
         }
 
         virtual ~Master(){
@@ -130,8 +131,15 @@ namespace chameleon {
 
         void job_submited(const UPID& from, const JobMessage& job_message){
             LOG(INFO)<<"got a job from "<<from;
-            LOG(INFO)<<"sent the job to the test slave";
-            send(*msp_slave,job_message);
+            send(*msp_spark_master,job_message);
+            LOG(INFO)<<"sent the job to the test master 172.20.110.228 successfully!";
+            JobMessage slave_job_message;
+            slave_job_message.CopyFrom(job_message);
+            slave_job_message.set_master_ip("172.20.110.228");
+            slave_job_message.set_is_master(false);
+            LOG(INFO)<<"slave_job_message.is_master = "<<slave_job_message.is_master();
+            send(*msp_spark_slave,slave_job_message);
+            LOG(INFO)<<"sent the job to the test slave 172.20.110.79 successfully!";
         }
 
 
@@ -140,8 +148,10 @@ namespace chameleon {
         unordered_map<UPID,ParticipantInfo> m_participants;
         unordered_map<string,JSON::Object> m_hardware_resources;
 //        unordered_map<string,HardwareResource> m_topology_resources;
-        const string test_slave_UPID = "slave@172.20.110.228:6061";
-        shared_ptr<UPID> msp_slave;
+        const string test_slave_UPID = "slave@172.20.110.79:6061";
+        const string test_master_UPID = "slave@172.20.110.228:6061";
+        shared_ptr<UPID> msp_spark_slave;
+        shared_ptr<UPID> msp_spark_master;
     };
 
 

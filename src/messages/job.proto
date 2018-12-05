@@ -4,5 +4,7 @@ message JobMessage
   required bytes exe_file=2;
   required int32 cpus = 3;
   required int32 memory = 4;
+  optional string master_ip=5;
+  optional bool is_master = 6;
 
 }

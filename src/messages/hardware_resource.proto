@@ -16,16 +16,18 @@ message CPUCollection{
 }
 
 message CPUInfo{
-    required string cpuID = 1;
-    optional string coreID = 2;
-    optional string physicalID = 3;
-    optional string cpucores = 4;
+    required int32 cpuID = 1;
+    optional int32 coreID = 2;
+    optional int32 physicalID = 3;
+    optional int32 cpucores = 4;
     optional string modelname = 5;
-    optional string cpuMHz = 6;
-    optional string l1dcache = 7;
-    optional string l1icache = 8;
-    optional string l2cache = 9;
-    optional string l3cache = 10;
+    optional double cpuMHz = 6;
+    optional double cpumaxMhz = 7;
+    optional double cpuminMHz = 8;
+    optional string l1dcache = 9;
+    optional string l1icache = 10;
+    optional string l2cache = 11;
+    optional string l3cache = 12;
 }
 
 message TLBCollection{

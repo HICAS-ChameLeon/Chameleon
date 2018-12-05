@@ -13,14 +13,14 @@ message CPUUsage{
 }
 
 message MemoryUsage {
-    required string mem_total = 1;
-    required string mem_free = 2;
-    required string mem_available = 3;
-    required string buffers = 4;
-    required string cached = 5;
-    required string swap_total = 6;
-    required string swap_free = 7;
-    required string hugepagesize = 8;
+    required uint32 mem_total = 1;
+    required uint32 mem_free = 2;
+    required uint32 mem_available = 3;
+    required uint32 buffers = 4;
+    required uint32 cached = 5;
+    required uint32 swap_total = 6;
+    required uint32 swap_free = 7;
+    required uint32 hugepagesize = 8;
 }
 
 
