@@ -140,7 +140,8 @@ namespace chameleon {
         unordered_map<UPID,ParticipantInfo> m_participants;
         unordered_map<string,JSON::Object> m_hardware_resources;
 //        unordered_map<string,HardwareResource> m_topology_resources;
-        const string test_slave_UPID = "slave@172.20.110.228:6061";
+        const string test_slave_UPID = "slave@172.20.110.79:6061";
+//        const string test_slave_UPID = "slave@172.20.110.228:6061";
         shared_ptr<UPID> msp_slave;
     };
 

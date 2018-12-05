@@ -57,6 +57,9 @@ void Slave::get_a_job(const UPID& master, const JobMessage& job_message){
         LOG(ERROR)<<s.error();
     }else{
         LOG(INFO)<<"slave "<<self()<<"successfully untar a job file";
+        const string fork_spark_slave = "./spark-2.3.0-bin-hadoop2.7/sbin/start-slave.sh http://172.20.110.228";
+        Try<ProcessTree> res = os::Fork(None(),os::Exec(fork_spark_slave))();
+        LOG(INFO)<<"slave "<<self()<<"successfully fork a process to run spark 2.3.0";
     }
 }
 
