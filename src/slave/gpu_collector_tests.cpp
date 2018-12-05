@@ -2,6 +2,7 @@
 #include <gmock/gmock.h>
 
 #include <gpu_collector.hpp>
+#include <runtime_resources_usage.hpp>
 
 TEST(GPUCollectorTests, GetGpuInfo)
 {
@@ -26,6 +27,19 @@ TEST(GPUCollectorTests, GetGpuInfo)
         cout<<"group["<<i<<"]: "<<inx->resources()<<endl;
 
     }
+}
+
+TEST(CPUCollectorTests, GetCpuUsage)
+{
+    chameleon::RuntimeResourceUsage cpuRuntimeUsage;
+    chameleon::RuntimeResourceUsage::CpuOccupy f_cpu,s_cpu;
+
+    //获取cpu使用率信息
+    cpuRuntimeUsage.get_cpu_used_info(&f_cpu);
+    sleep(1);
+    cpuRuntimeUsage.get_cpu_used_info(&s_cpu);
+    CPUUsage cpuUsage = *cpuRuntimeUsage.cal_cpu_usage(&f_cpu, &s_cpu);
+    printf("cpu used:%4.2f \n", cpuUsage.cpu_used());
 }
 
 int main(int argc, char** argv) {

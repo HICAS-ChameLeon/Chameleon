@@ -9,7 +9,7 @@ message RuntimeResourcesMessage
 }
 
 message CPUUsage{
-    required string cpu_used = 1;
+    required float cpu_used = 1;
 }
 
 message MemoryUsage {
