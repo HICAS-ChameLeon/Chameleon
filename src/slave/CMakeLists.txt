@@ -14,7 +14,7 @@ set(disk_colletor_test_SRCS disk_collector_tests.cpp ${disk_SRCS} runtime_resour
 add_executable(disk_colletor_test ${disk_colletor_test_SRCS})
 target_link_libraries(disk_colletor_test hardware_resource runtime_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest)
 
-set(cpu_SRCS cpu_collector.hpp cpu_collector.cpp)
+set(cpu_SRCS cpu_collector.hpp arm_cpu_collector.cpp x86_cpu_collector.cpp cpu_collector.cpp)
 set(cpu_collector_test_SRCS cpu_collector_tests.cpp ${cpu_SRCS})
 add_executable(cpu_collector_tests ${cpu_collector_test_SRCS})
 target_link_libraries(cpu_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest)

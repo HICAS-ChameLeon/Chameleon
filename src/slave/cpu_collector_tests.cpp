@@ -20,23 +20,32 @@ using std::list;
 
 
 TEST(CpuCollectorTest,TestClass) {
-    chameleon::CpuCollector cpus;
+    chameleon::X86CpuCollector cpus;
     CPUCollection *cpuCollection = cpus.get_cpu_info();
     for (auto i = cpuCollection->cpu_infos().begin(); i != cpuCollection->cpu_infos().end(); i++) {
-        Option<string> cpuid = i->cpuid();
+        Option<int> cpuid = i->cpuid();
         EXPECT_SOME(cpuid);
 
-        Option<string> coreid = i->coreid();
+        Option<int> coreid = i->coreid();
         EXPECT_SOME(coreid);
 
         Option<string> modelname = i->modelname();
         EXPECT_SOME(modelname);
 
-        Option<string> physicalid = i->physicalid();
+        Option<int> physicalid = i->physicalid();
         EXPECT_SOME(physicalid);
 
-        Option<string> cpucores = i->cpucores();
+        Option<int> cpucores = i->cpucores();
         EXPECT_SOME(cpucores);
+
+        Option<double> cpuMHz = i->cpumhz();
+        EXPECT_SOME(cpuMHz);
+
+        Option<double> cpuminMHz = i->cpuminmhz();
+        EXPECT_SOME(cpuminMHz);
+
+        Option<double> cpumaxMHz = i->cpumaxmhz();
+        EXPECT_SOME(cpumaxMHz);
 
         Option<string> l1dcache = i->l1dcache();
         EXPECT_SOME(l1dcache);
@@ -49,6 +58,41 @@ TEST(CpuCollectorTest,TestClass) {
 
         Option<string> l3cache = i->l3cache();
         EXPECT_SOME(l3cache);
+    }
+}
+
+TEST(ARMCpuCollectorTest,TestClass) {
+    chameleon::ARMCpuCollector cpus;
+    CPUCollection *cpuCollection = cpus.get_cpu_info();
+    for (auto i = cpuCollection->cpu_infos().begin(); i != cpuCollection->cpu_infos().end(); i++) {
+        Option<int> cpuid = i->cpuid();
+        EXPECT_SOME(cpuid);
+
+        Option<string> modelname = i->modelname();
+        EXPECT_SOME(modelname);
+
+        Option<int> cpucores = i->cpucores();
+        EXPECT_SOME(cpucores);
+
+        Option<double> cpuMHz = i->cpumhz();
+        EXPECT_SOME(cpuMHz);
+
+        Option<double> cpuminMHz = i->cpuminmhz();
+        EXPECT_SOME(cpuminMHz);
+
+        Option<double> cpumaxMHz = i->cpumaxmhz();
+        EXPECT_SOME(cpumaxMHz);
+
+
+        Option<string> l1dcache = i->l1dcache();
+        EXPECT_SOME(l1dcache);
+
+        Option<string> l1icache = i->l1icache();
+        EXPECT_SOME(l1icache);
+
+        Option<string> l2cache = i->l2cache();
+        EXPECT_SOME(l2cache);
+
     }
 }
 
