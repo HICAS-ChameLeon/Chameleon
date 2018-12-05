@@ -15,6 +15,8 @@ void Slave::initialize() {
 
     msp_masterUPID = make_shared<UPID>(UPID(DEFAULT_MASTER));
     install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
+    install<JobMessage>(&Slave::get_a_job);
+
 
     HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
     DLOG(INFO)<< *msp_masterUPID;
@@ -30,6 +32,32 @@ void Slave::initialize() {
 
 void Slave::register_feedback(const string& hostname){
     cout<<" receive register feedback from master"<< hostname<<endl;
+}
+
+void Slave::get_a_job(const UPID& master, const JobMessage& job_message){
+    LOG(INFO)<<"slave "<<self()<<" got a job";
+    const string test_spark_file = path::join(os::getcwd(),"lele_spark-2.3.0.tar");
+//    ASSERT_SOME(os::write(test_spark_file,job_message.exe_file()));
+    Try<string> decompressed_spark = gzip::decompress(job_message.exe_file());
+    if(decompressed_spark.isError()){
+        LOG(ERROR)<<"slave got a job file which is not completed or decompressing it had mistakes.";
+        LOG(ERROR)<<decompressed_spark.error();
+    }else{
+        ASSERT_SOME(os::write(test_spark_file,decompressed_spark.get()));
+        LOG(INFO)<<"slave "<<self()<<"successfully ungziped a job file";
+    }
+    const string shell_command = "tar xvf "+test_spark_file;
+    Try<Subprocess> s = subprocess(
+            shell_command,
+            Subprocess::FD(STDIN_FILENO),
+            Subprocess::FD(STDOUT_FILENO),
+            Subprocess::FD(STDERR_FILENO));
+    if(s.isError()){
+        LOG(ERROR)<<"slave "<<self()<<"failed to untar the job file.";
+        LOG(ERROR)<<s.error();
+    }else{
+        LOG(INFO)<<"slave "<<self()<<"successfully untar a job file";
+    }
 }
 
 void Slave::finalize() {
