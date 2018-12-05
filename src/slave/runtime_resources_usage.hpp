@@ -36,7 +36,7 @@ namespace  chameleon{
 
     public:
 
-    
+
         /*
         * Function name：get_disk_usage
         * Author       ：heldon
@@ -57,7 +57,6 @@ namespace  chameleon{
          * Return       ：MemoryUsage m_memory_usage
          */
         MemoryUsage* select_memusage();
-
         /*
          * Function name：show_memusage
          * Author       ：marcie
