@@ -31,6 +31,10 @@
 
 using std::cout;
 using std::endl;
+
+using std::stoi;
+using std::stod;
+
 using std::vector;
 using std::string;
 
@@ -44,6 +48,16 @@ namespace chameleon {
      * Description : Collecting CPU information from computer
      * */
     class CpuCollector {
+    public:
+        virtual CPUCollection* get_cpu_info();
+    };
+
+    class X86CpuCollector {
+    public:
+        CPUCollection* get_cpu_info();
+    };
+
+    class ARMCpuCollector {
     public:
         CPUCollection* get_cpu_info();
     };
