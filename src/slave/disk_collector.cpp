@@ -8,6 +8,9 @@
 #include <disk_collector.hpp>
 
 namespace chameleon{
+
+    DiskCollector::~DiskCollector() {}
+
     /*
     * Function name：get_disk_collection
     * Author       ：heldon

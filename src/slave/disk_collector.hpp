@@ -45,6 +45,10 @@ namespace chameleon {
 
     class DiskCollector {
     public:
+
+        DiskCollector() = default;
+
+        virtual ~DiskCollector();
         /*
         * Function name：get_disk_collection
         * Author       ：heldon
