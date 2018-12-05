@@ -16,6 +16,7 @@ void Submitter::initialize() {
     new_job.set_cpus(1);
     new_job.set_memory(1);
     new_job.set_uuid(m_uuid.toString());
+    new_job.set_is_master(true);
     string job_bytes = read_a_file(m_spark_path);
     new_job.set_exe_file(job_bytes);
     send(*msp_masterUPID,new_job);

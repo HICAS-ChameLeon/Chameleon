@@ -47,19 +47,45 @@ void Slave::get_a_job(const UPID& master, const JobMessage& job_message){
         LOG(INFO)<<"slave "<<self()<<"successfully ungziped a job file";
     }
     const string shell_command = "tar xvf "+test_spark_file;
+    string out = path::join(os::getcwd(), "stdout");
+    string err = path::join(os::getcwd(), "stderr");
+
     Try<Subprocess> s = subprocess(
             shell_command,
             Subprocess::FD(STDIN_FILENO),
-            Subprocess::FD(STDOUT_FILENO),
-            Subprocess::FD(STDERR_FILENO));
+            Subprocess::PATH(out),
+            Subprocess::PATH(err)
+            );
     if(s.isError()){
         LOG(ERROR)<<"slave "<<self()<<"failed to untar the job file.";
         LOG(ERROR)<<s.error();
     }else{
         LOG(INFO)<<"slave "<<self()<<"successfully untar a job file";
-        const string fork_spark_slave = "./spark-2.3.0-bin-hadoop2.7/sbin/start-slave.sh http://172.20.110.228";
-        Try<ProcessTree> res = os::Fork(None(),os::Exec(fork_spark_slave))();
-        LOG(INFO)<<"slave "<<self()<<"successfully fork a process to run spark 2.3.0";
+        if(job_message.is_master()){
+            const string fork_spark_master = "./spark-2.3.0-bin-hadoop2.7/sbin/start-master.sh";
+            Try<ProcessTree> res = os::Fork(None(),os::Exec(fork_spark_master))();
+            if(res.isError()){
+                LOG(ERROR)<<"slave "<<self()<<" failed to fork a process to run spark 2.3.0 master process";
+                LOG(ERROR)<<res.error();
+            }else{
+                LOG(INFO)<<"slave "<<self()<<"successfully fork a process to run spark 2.3.0 master process";
+                LOG(INFO)<<"The pid is "<<res.get().children.front().process.pid;
+            }
+        }else{
+            sleep(2);
+            const string master_ip = job_message.master_ip();
+            const string fork_spark_slave = "./spark-2.3.0-bin-hadoop2.7/sbin/start-slave.sh spark://"+master_ip+":7077";
+            Try<ProcessTree> res = os::Fork(None(),os::Exec(fork_spark_slave))();
+            if(res.isError()){
+                LOG(ERROR)<<"slave "<<self()<<" failed to fork a process to run spark 2.3.0 slave process";
+                LOG(ERROR)<<res.error();
+            }else{
+                LOG(INFO)<<"slave "<<self()<<"successfully fork a process to run spark 2.3.0 slave process";
+                LOG(INFO)<<"The pid is "<<res.get().children.front().process.pid;
+            }
+        }
+
+
     }
 }
 
