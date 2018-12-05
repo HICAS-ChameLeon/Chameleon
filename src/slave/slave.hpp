@@ -25,6 +25,7 @@
 #include <stout/os/write.hpp>
 
 #include <stout/tests/utils.hpp>
+#include <stout/gzip.hpp>
 
 
 // libprocess dependencies
