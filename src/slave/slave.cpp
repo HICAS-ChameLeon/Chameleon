@@ -61,6 +61,7 @@ void Slave::get_a_job(const UPID& master, const JobMessage& job_message){
         LOG(ERROR)<<s.error();
     }else{
         LOG(INFO)<<"slave "<<self()<<"successfully untar a job file";
+        LOG(INFO)<<"job_message is_is_master = "<<job_message.is_master();
         if(job_message.is_master()){
             const string fork_spark_master = "./spark-2.3.0-bin-hadoop2.7/sbin/start-master.sh";
             Try<ProcessTree> res = os::Fork(None(),os::Exec(fork_spark_master))();
