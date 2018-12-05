@@ -1,5 +1,5 @@
-#ifndef LIBPROCESS_START_GPUCOLLECTOR_H
-#define LIBPROCESS_START_GPUCOLLECTOR_H
+#ifndef CHAMELEON_GPUCOLLECTOR_H
+#define CHAMELEON_GPUCOLLECTOR_H
 
 #include <string>
 
@@ -27,11 +27,11 @@ namespace chameleon {
     class GpuCollector {
     private:
         string m_gpu_info;
-        GPUCollection* m_gpu_proto = new GPUCollection();
+        GPUCollection* m_gpu_proto;
     public:
         string get_gpu_string();
         GPUCollection* split_gpu_string ();
     };
 }
 
-#endif //LIBPROCESS_START_GPUCOLLECTOR_H
+#endif //CHAMELEON_GPUCOLLECTOR_H

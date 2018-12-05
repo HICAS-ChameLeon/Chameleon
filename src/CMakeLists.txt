@@ -11,6 +11,8 @@ include_directories(${PROCESS_LIB_DIRS})
 # libprocess .so .a libraries directories
 link_directories(${PROCESS_LIB_DIRS})
 
+add_subdirectory(common)
+
 add_subdirectory(messages)
 
 add_subdirectory(log)
@@ -18,5 +20,9 @@ add_subdirectory(log)
 add_subdirectory(master)
 
 add_subdirectory(slave)
+
+add_subdirectory(submitter)
+
+include_directories(${CMAKE_SOURCE_DIR}/src/common)
 
 #add_subdirectory(my_hello)

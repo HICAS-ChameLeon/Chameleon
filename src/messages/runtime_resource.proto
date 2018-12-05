@@ -1,0 +1,39 @@
+
+message RuntimeResourcesMessage
+{
+    required string slave_id =1;
+    required CPUUsage cpu_usage = 2;
+    required MemoryUsage  mem_usage = 3;
+    required DiskUsage disk_usage = 4;
+    required NetUsage net_usage = 5;
+}
+
+message CPUUsage{
+    required float cpu_used = 1;
+}
+
+message MemoryUsage {
+    required uint32 mem_total = 1;
+    required uint32 mem_free = 2;
+    required uint32 mem_available = 3;
+    required uint32 buffers = 4;
+    required uint32 cached = 5;
+    required uint32 swap_total = 6;
+    required uint32 swap_free = 7;
+    required uint32 hugepagesize = 8;
+}
+
+
+message DiskUsage{
+    required string  disk_available = 1;
+    required string  disk_available_percent = 2;
+
+}
+
+message NetUsage{
+
+}
+
+
+
+

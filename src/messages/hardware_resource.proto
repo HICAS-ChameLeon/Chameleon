@@ -28,6 +28,16 @@ message CPUInfo{
     optional string l3cache = 10;
 }
 
+message TLBCollection{
+    required TLBInfo tlb_infos = 1;
+}
+
+message TLBInfo{
+    repeated string l1_data_tlb = 1;
+    repeated string l1_instruction_tlb = 2;
+    optional string l2_tlb = 3;
+}
+
 message MemoryCollection {
     required string max_size = 1;
     required int32 device_quantity = 2;
@@ -41,12 +51,12 @@ message MemInfo {
 }
 
 message GPUCollection {
-    repeated GpuInfo gpu_infos = 1;
+    repeated GPUInfo gpu_infos = 1;
     required int32 gpu_quantity = 2;
 }
 
 
-message GpuInfo {
+message GPUInfo {
     required string description =2;
     required string product =3;
     required string vendor =4;
@@ -67,14 +77,16 @@ message DiskCollection{
     required int32 disk_quantity= 2;
 }
 message DiskInfo{
-    required string name = 1;
-    required string size = 2;
-    required string type = 3;
-    required string disk_speed = 4;
-    required string disk_free = 5;
-    required string disk_available = 6;
-}
+    enum DiskType {
+        SSD = 0;
+        HDD = 1;
+    }
+    required string   name = 1;
+    required string   size = 2;
+    required DiskType type = 3;
+    required string   disk_speed = 4;
 
+}
 
 message PortCollection {
     repeated PortInfo port_infos = 1;
@@ -85,4 +97,3 @@ message PortInfo{
     optional string lastport =2;
 
 }
-

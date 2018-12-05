@@ -4,11 +4,12 @@
  * Date       ：18-11-26
  * Description：master
  */
-#ifndef CHAMELEON_MONITOR_HPP
-#define CHAMELEON_MONITOR_HPP
+#ifndef CHAMELEON_MASTER_HPP
+#define CHAMELEON_MASTER_HPP
 // C++ 11 dependencies
 #include <iostream>
 #include <unordered_map>
+#include <memory>
 
 #include <glog/logging.h>
 
@@ -31,12 +32,16 @@
 // protobuf
 #include <participant_info.pb.h>
 #include <hardware_resource.pb.h>
+#include <job.pb.h>
+
 
 // chameleon headers
 #include <configuration_glog.hpp>
 
 using std::string;
 using std::unordered_map;
+using std::shared_ptr;
+using std::make_shared;
 
 using os::Process;
 using os::ProcessTree;
@@ -59,7 +64,10 @@ namespace chameleon {
     public:
         UPID slave;
 
-        explicit Master() : ProcessBase("master") {}
+        explicit Master() : ProcessBase("master") {
+            msp_spark_slave = make_shared<UPID>(UPID(test_slave_UPID));
+            msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
+        }
 
         virtual ~Master(){
 
@@ -73,6 +81,9 @@ namespace chameleon {
             install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
 
             install<HardwareResourcesMessage>(&Master::update_hardware_resources);
+            install<JobMessage>(&Master::job_submited);
+
+
             // http://172.20.110.228:6060/master/hardware-resources
             route(
                     "/hardware-resources",
@@ -91,43 +102,6 @@ namespace chameleon {
                             result.values["content"] = JSON::Object();
                         }
                         return OK(stringify(result));
-                    });
-
-            route(
-                    "/test",
-                    "get the topology resources of the whole topology",
-                    [](Request request) {
-                        string request_method = request.method;
-                        DLOG(INFO) <<request_method ;
-                        string& tpath = request.url.path;
-                        DLOG(INFO) <<tpath;
-                        int param_size = request.url.query.size();
-                        DLOG(INFO) << param_size;
-                        for(string key: request.url.query.keys()){
-                            DLOG(INFO) <<"key:"<<key;
-                            DLOG(INFO) <<"value:"<<request.url.query[key];
-                        }
-
-//                int a = numify<int>(request["a"]).get();
-//                int b = numify<int>(request["b"]).get();
-                        string body_str = request.body;
-                        DLOG(INFO) <<body_str;
-                        Option<Pipe::Reader> pipe_reader = request.reader;
-                        if(pipe_reader.isSome()){
-                            Pipe::Reader reader = pipe_reader.get();
-                            Future<string> res = reader.readAll();
-                            if(res.isReady()){
-                                DLOG(INFO) <<"pipe reader content";
-                                DLOG(INFO) <<res.get();
-                            }
-                        }
-                        int a = 3;
-                        int b = 4;
-                        std::ostringstream result;
-                        result << "{ \"result\": " <<"\"" <<request_method+tpath <<"\"" << "}";
-                        DLOG(INFO) <<result.str();
-                        JSON::Value body = JSON::parse(result.str()).get();
-                        return OK(body);
                     });
 
 
@@ -155,12 +129,29 @@ namespace chameleon {
             }
         }
 
+        void job_submited(const UPID& from, const JobMessage& job_message){
+            LOG(INFO)<<"got a job from "<<from;
+            send(*msp_spark_master,job_message);
+            LOG(INFO)<<"sent the job to the test master 172.20.110.228 successfully!";
+            JobMessage slave_job_message;
+            slave_job_message.CopyFrom(job_message);
+            slave_job_message.set_master_ip("172.20.110.228");
+            slave_job_message.set_is_master(false);
+            LOG(INFO)<<"slave_job_message.is_master = "<<slave_job_message.is_master();
+            send(*msp_spark_slave,slave_job_message);
+            LOG(INFO)<<"sent the job to the test slave 172.20.110.79 successfully!";
+        }
+
 
 
     private:
         unordered_map<UPID,ParticipantInfo> m_participants;
         unordered_map<string,JSON::Object> m_hardware_resources;
 //        unordered_map<string,HardwareResource> m_topology_resources;
+        const string test_slave_UPID = "slave@172.20.110.79:6061";
+        const string test_master_UPID = "slave@172.20.110.228:6061";
+        shared_ptr<UPID> msp_spark_slave;
+        shared_ptr<UPID> msp_spark_master;
     };
 
 
@@ -169,4 +160,4 @@ namespace chameleon {
 
 
 
-#endif //CHAMELEON_MONITOR_HPP
+#endif //CHAMELEON_MASTER_HPP
