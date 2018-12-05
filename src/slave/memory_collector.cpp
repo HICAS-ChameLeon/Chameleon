@@ -16,10 +16,10 @@ namespace chameleon{
      * Parameter    ：none
      * Return       ：vector<string> m_tokens
      */
-    vector<string> chameleon::MemoryCollector::get_info_rows(string string1) {
+    vector<string> chameleon::MemoryCollector::get_info_rows() {
         /* amount to input command and get the returned memory information. */
         Try<Subprocess> s = subprocess(
-                string1,
+                "sudo -S dmidecode -t memory",
                 Subprocess::FD(STDIN_FILENO),
                 Subprocess::PIPE(),
                 Subprocess::FD(STDERR_FILENO));
@@ -41,7 +41,7 @@ namespace chameleon{
      * Return       ：MemoryCollection m_memory_collection
      */
     MemoryCollection* chameleon::MemoryCollector::select_meminfo() {
-        get_info_rows("sudo -S dmidecode -t memory");
+        get_info_rows();
         /* the number of size,type,speed. */
         int num_size = 0, num_type = 0, num_speed = 0;
         /* class ptr. */
@@ -109,6 +109,7 @@ namespace chameleon{
     }
 
     chameleon::MemoryCollector::MemoryCollector() {
+        m_memory_collection = new MemoryCollection();
     }
 
     chameleon::MemoryCollector::~MemoryCollector() {

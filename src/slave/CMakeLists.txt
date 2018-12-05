@@ -19,19 +19,15 @@ target_link_libraries(cpu_collector_tests hardware_resource ${PROCESS_LIBS}  ${P
 
 
 set(memory_SRCS memory_collector.hpp memory_collector.cpp)
-set(memory_collector_test_SRCS memory_collector_tests.cpp ${memory_SRCS}
+set(memory_collector_test_SRCS memory_collector_tests.cpp ${memory_SRCS})
+add_executable(memory_collector_tests ${memory_collector_test_SRCS}
         runtime_resources_usage.hpp runtime_resources_usage.cpp)
+target_link_libraries(memory_collector_tests hardware_resource runtime_resource ${PROCESS_TARGET} gmock gtest)
 
 set(tlb_SRCS tlb_collector.hpp tlb_collector.cpp)
 set(tlb_collector_test_SRCS tlb_collector_tests.cpp ${tlb_SRCS})
 add_executable(tlb_collector_tests ${tlb_collector_test_SRCS})
 target_link_libraries(tlb_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} gmock gtest)
-
-set(memory_SRCS memory_collector.hpp)
-set(memory_collector_test_SRCS memory_collector_tests.cpp ${memory_SRCS})
-
-add_executable(memory_collector_tests ${memory_collector_test_SRCS})
-target_link_libraries(memory_collector_tests hardware_resource runtime_resource ${PROCESS_TARGET} gmock gtest)
 
 set(port_SRCS port_collector.cpp port_collector.hpp)
 set(port_collector_tests_SRCS port_collector_tests.cpp ${port_SRCS})
