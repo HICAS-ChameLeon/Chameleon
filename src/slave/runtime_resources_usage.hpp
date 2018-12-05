@@ -82,7 +82,7 @@ namespace  chameleon{
 
         RuntimeResourceUsage();
 
-        ~RuntimeResourceUsage();
+        virtual ~RuntimeResourceUsage();
 
     };
 }
