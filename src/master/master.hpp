@@ -137,7 +137,7 @@ namespace chameleon {
             slave_job_message.CopyFrom(job_message);
             slave_job_message.set_master_ip("172.20.110.228");
             slave_job_message.set_is_master(false);
-            send(*msp_spark_slave,job_message);
+            send(*msp_spark_slave,slave_job_message);
             LOG(INFO)<<"sent the job to the test slave 172.20.110.79 successfully!";
         }
 
