@@ -40,8 +40,6 @@ TEST(DiskCollectorTest, DiskInfo)
 }
 
 int main(int argc, char** argv) {
-    chameleon::RuntimeResourceUsage *runtime = new chameleon::RuntimeResourceUsage();
-    runtime->get_disk_usage();
     testing::InitGoogleMock(&argc, argv);
     return RUN_ALL_TESTS();
 }
