@@ -47,3 +47,9 @@ set(slave_SRCS slave.hpp slave.cpp resource_collector.hpp resource_collector.cpp
 
 add_executable(slave ${slave_SRCS})
 target_link_libraries(slave monitor_info hardware_resource runtime_resource job ${PROCESS_LIBS}  ${PROCESS_TARGET})
+
+
+
+
+
+

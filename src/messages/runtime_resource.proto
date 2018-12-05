@@ -31,7 +31,7 @@ message DiskUsage{
 }
 
 message NetUsage{
-
+    required float net_used =1;
 }
 
 
