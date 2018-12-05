@@ -52,12 +52,12 @@ namespace chameleon {
         virtual CPUCollection* get_cpu_info();
     };
 
-    class X86CpuCollector {
+    class X86CpuCollector:CpuCollector{
     public:
         CPUCollection* get_cpu_info();
     };
 
-    class ARMCpuCollector {
+    class ARMCpuCollector:CpuCollector {
     public:
         CPUCollection* get_cpu_info();
     };
