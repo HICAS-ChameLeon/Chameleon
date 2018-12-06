@@ -55,12 +55,12 @@ namespace chameleon {
 
     class X86CpuCollector:public CpuCollector{
     public:
-        CPUCollection* get_cpu_info();
+        CPUCollection* get_cpu_info() override;
     };
 
     class ARMCpuCollector:public CpuCollector {
     public:
-        CPUCollection* get_cpu_info();
+        CPUCollection* get_cpu_info() override;
     };
 }
 
