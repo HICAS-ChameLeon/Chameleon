@@ -19,7 +19,7 @@ namespace chameleon{
         Option<int64_t> disk_available;
         Option<double > available_percent;
 
-        DiskUsage* disk_usage;
+        DiskUsage* disk_usage = new DiskUsage();
 
         /*Use statfs to get disk's rest storage,available storage*/
         struct statfs diskInfo;
@@ -43,8 +43,6 @@ namespace chameleon{
         return  disk_usage;
     }
 
-}
-  
     /*
      * Function name：select_memusage
      * Author       ：marcie
@@ -106,9 +104,6 @@ namespace chameleon{
         }
         return m_memory_usage;
     }
-}
-  
-
 
     /*
      * Function name：show_memusage
