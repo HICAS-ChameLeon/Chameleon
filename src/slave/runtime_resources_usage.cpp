@@ -12,7 +12,7 @@ namespace chameleon{
     * Parameter    ：none
     * Return       ：DiskUsage*
     */
-    DiskUsage* chameleon::RuntimeResourceUsage::get_disk_usage(){
+    DiskUsage* RuntimeResourceUsage::get_disk_usage(){
         Option<int64_t> disk_available;
         Option<double > available_percent;
 
@@ -39,9 +39,6 @@ namespace chameleon{
 
         return  disk_usage;
     }
-
-}
-  
     /*
      * Function name：select_memusage
      * Author       ：marcie
@@ -103,6 +100,9 @@ namespace chameleon{
         }
         return m_memory_usage;
     }
+}
+  
+
 
     /*
      * Function name：show_memusage
