@@ -40,11 +40,12 @@
 // protobuf
 #include <monitor_info.pb.h>
 #include <job.pb.h>
+#include <runtime_resource.pb.h>
 
 // chameleon headers
 #include <resource_collector.hpp>
 #include <configuration_glog.hpp>
-
+#include <runtime_resources_usage.hpp>
 
 using std::string;
 using std::unordered_map;
@@ -67,43 +68,55 @@ namespace chameleon {
     // forward declations
     class SlaveHeartbeater;
 
-    const string DEFAULT_MASTER="master@172.20.110.228:6060";
+    constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(5);
+
+    const string DEFAULT_MASTER = "master@172.20.110.228:6060";
+
     class Slave : public ProtobufProcess<Slave> {
     public:
-        explicit Slave():ProcessBase("slave"){
+        explicit Slave() : ProcessBase("slave"), m_interval(DEFAULT_HEARTBEAT_INTERVAL) {
             msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+            msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
+            LOG(INFO) << "The heartbeat interval is " << DEFAULT_HEARTBEAT_INTERVAL;
+
 //            msp_resource_collector = new ResourceCollector();
         }
 
-        virtual ~Slave(){
-            LOG(INFO)<<"~ Slave()";
+        Slave(const Slave &slave) = default;
+
+        virtual ~Slave() {
+            LOG(INFO) << "~ Slave()";
         }
 
     protected:
         void finalize() override;
 
     public:
-
         virtual void initialize();
 
-        void register_feedback(const string& hostname);
-        void get_a_job(const UPID& master, const JobMessage& job_message);
+        void register_feedback(const string &hostname);
+
+        void get_a_job(const UPID &master, const JobMessage &job_message);
+
+        void send_heartbeat_to_master();
 
     private:
         shared_ptr<ResourceCollector> msp_resource_collector;
-//       ResourceCollector* msp_resource_collector;
+        shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
         shared_ptr<UPID> msp_masterUPID;
+        const Duration m_interval;
+
+        void heartbeat();
     };
 
-    constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(5);
 
     class SlaveHeartbeater : public process::Process<SlaveHeartbeater> {
 
     public:
 
-        SlaveHeartbeater(const Duration& interval)
-                : process::ProcessBase(process::ID::generate("myheartbeater")),
+        SlaveHeartbeater(const Duration &interval)
+                : process::ProcessBase(process::ID::generate("slaveheartbeater")),
                   m_interval(interval) {
         }
 
@@ -114,19 +127,17 @@ namespace chameleon {
 
     private:
 
-        void heartbeat(){
-            DLOG(INFO)<<"5 seconds";
+        void heartbeat() {
+            DLOG(INFO) << "5 seconds";
             //  delays 5 seconds to invoke the function "heartbeat " of self.
             // it's cyclical because "heartbeat invoke heartbeat"
-            process::delay(m_interval,self(),&Self::heartbeat);
+            process::delay(m_interval, self(), &Self::heartbeat);
         }
 
         const Duration m_interval;
 
     };
 }
-
-
 
 
 #endif //CHAMELEON_PARTICIPANT_HPP

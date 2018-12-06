@@ -33,7 +33,7 @@
 #include <participant_info.pb.h>
 #include <hardware_resource.pb.h>
 #include <job.pb.h>
-
+#include <runtime_resource.pb.h>
 
 // chameleon headers
 #include <configuration_glog.hpp>
@@ -82,10 +82,13 @@ namespace chameleon {
 
         void job_submited(const UPID& from, const JobMessage& job_message);
 
+        void received_heartbeat(const UPID& slave, const RuntimeResourcesMessage& runtime_resouces_message);
+
 
     private:
         unordered_map<UPID,ParticipantInfo> m_participants;
         unordered_map<string,JSON::Object> m_hardware_resources;
+        unordered_map<string,JSON::Object> m_runtime_resources;
 //        unordered_map<string,HardwareResource> m_topology_resources;
         const string test_slave_UPID = "slave@172.20.110.79:6061";
         const string test_master_UPID = "slave@172.20.110.228:6061";

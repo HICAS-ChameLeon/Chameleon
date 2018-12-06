@@ -35,9 +35,10 @@ set(port_collector_tests_SRCS port_collector_tests.cpp ${port_SRCS})
 add_executable(port_collector_tests ${port_collector_tests_SRCS})
 target_link_libraries(port_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS} )
 
-
+set(runtime_resource_SRCS runtime_resources_usage.hpp runtime_resources_usage.cpp)
 set(slave_SRCS slave.hpp slave.cpp resource_collector.hpp resource_collector.cpp)
 
+list(APPEND slave_SRCS ${runtime_resource_SRCS})
 list(APPEND slave_SRCS ${cpu_SRCS})
 list(APPEND slave_SRCS ${memory_SRCS})
 list(APPEND slave_SRCS ${disk_SRCS})
@@ -48,6 +49,11 @@ list(REMOVE_DUPLICATES slave_SRCS)
 #message(47 ${slave_SRCS})
 
 add_executable(slave ${slave_SRCS})
+set(slave_PROTOS monitor_info)
+list(APPEND slave_PROTOS hardware_resource)
+list(APPEND slave_PROTOS runtime_resource)
+list(APPEND slave_PROTOS job)
+list(REMOVE_DUPLICATES slave_PROTOS)
 
-target_link_libraries(slave monitor_info hardware_resource runtime_resource job ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})
+target_link_libraries(slave ${slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})
 
