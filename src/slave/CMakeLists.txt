@@ -40,4 +40,6 @@ set(slave_SRCS slave.hpp slave.cpp resource_collector.hpp resource_collector.cpp
         ${Gpu_Collector_SRCS} ${tlb_SRCS} ${port_SRCS})
 
 add_executable(slave ${slave_SRCS})
+
 target_link_libraries(slave monitor_info hardware_resource runtime_resource job ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})
+

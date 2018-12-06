@@ -16,12 +16,16 @@
 #include <stout/os.hpp>
 #include <stout/option.hpp>
 #include <stout/stringify.hpp>
+#include <stout/try.hpp>
+#include <stout/net.hpp>
 
 //chameleon headers
 #include <runtime_resource.pb.h>
 
 using std::string;
 using std::vector;
+using std::set;
+using net::links;
 
 namespace  chameleon{
 
@@ -33,6 +37,9 @@ namespace  chameleon{
 
         /* cpu class. */
         CPUUsage* m_cpu_usage;
+
+        /* net class */
+        NetUsage* m_net_usage;
 
     public:
 
@@ -79,6 +86,17 @@ namespace  chameleon{
         } CpuOccupy ;
         void get_cpu_used_info (CpuOccupy *o) ;
         CPUUsage* cal_cpu_usage (CpuOccupy *first_info, CpuOccupy *second_info) ;
+
+        /*netspeed struct*/
+        typedef struct NetMessage
+        {
+            char netcard_name[20];
+            long int save_rate;
+        }NetMessage;
+
+        long int get_net_used_info(NetMessage *net);
+        NetUsage *cal_net_usage(NetMessage *first_time, NetMessage *last_time);
+
 
         RuntimeResourceUsage();
 

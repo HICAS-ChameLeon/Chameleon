@@ -4,6 +4,8 @@
 
 #include <runtime_resources_usage.hpp>
 
+#define WAIT_SECOND 3
+
 namespace chameleon{
   
   /*
@@ -175,6 +177,65 @@ DiskUsage* chameleon::RuntimeResourceUsage::get_disk_usage(){
         m_cpu_usage->set_cpu_used(m_cpu);
         return m_cpu_usage;
     }
+
+    /*
+     * Function name：get_net_used_info
+     * Author       ：Jessicallo
+     * Date         ：2018-12-5
+     * Description  ：Read "/proc/net/dev" file and Get the receive usage information of net
+     * Parameter    ：NetMessage *net
+     * ReturnValue  ：none
+     */
+    long int RuntimeResourceUsage::get_net_used_info(RuntimeResourceUsage::NetMessage *net) {
+
+        /*Output all network card information*/
+        Try<set<string>> links = net::links();
+        string netname;
+        for (auto iter = links.get().begin(); iter != links.get().end(); iter++) {
+            std::cout << *iter << std::endl;
+            netname = *iter;
+            break;
+        }
+        std::cout << netname << std::endl;
+        //set<string> 类型
+        auto network_card = links.get().begin();
+        char interface[] = "enp3s0";
+        FILE *net_dev_file;
+        char buffer[1024];
+        if ((net_dev_file = fopen("/proc/net/dev", "r")) == NULL) {
+            printf("open file /proc/net/dev/ error!\n");
+            exit(EXIT_FAILURE);
+        }
+        int i = 0;
+        while (i++ < 20) {
+            if (fgets(buffer, sizeof(buffer), net_dev_file) != NULL) {
+                if (strstr(buffer, interface) != NULL) {
+                    sscanf(buffer, "%s %ld", net->netcard_name, net->save_rate);
+                    break;
+                }
+            }
+        }
+        if (i == 20) net->save_rate = 0.01;
+        fclose(net_dev_file); /*close file*/
+        return net->save_rate;
+
+    }
+
+    NetUsage *RuntimeResourceUsage::cal_net_usage(RuntimeResourceUsage::NetMessage *first_time,
+                                                  RuntimeResourceUsage::NetMessage *last_time) {
+        m_net_usage = new NetUsage();
+        long int start_download_rates;  //Traffic count at the start of saving
+        long int end_download_rates;    //Traffic count when saving results
+        start_download_rates = get_net_used_info(first_time);
+        sleep(WAIT_SECOND);             //How many seconds to sleep, this value is determined according to the value of WAIT_SECOND in the macro definition
+        end_download_rates = get_net_used_info(last_time);
+        float m_net;
+        m_net = (end_download_rates - start_download_rates) / WAIT_SECOND / 1024;
+        m_net_usage->set_net_used(m_net);
+        return m_net_usage;
+
+    }
+
 
     RuntimeResourceUsage::RuntimeResourceUsage() {
         m_cpu_usage = new CPUUsage();
