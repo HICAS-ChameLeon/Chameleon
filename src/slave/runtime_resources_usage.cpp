@@ -3,6 +3,9 @@
 //
 
 #include <runtime_resources_usage.hpp>
+
+#define WAIT_SECOND 3
+
 namespace chameleon{
     /*
     * Function name：get_disk_usage
@@ -39,6 +42,9 @@ namespace chameleon{
 
         return  disk_usage;
     }
+
+}
+  
     /*
      * Function name：select_memusage
      * Author       ：marcie
@@ -48,52 +54,52 @@ namespace chameleon{
      * Parameter    ：none
      * Return       ：MemoryUsage m_memory_usage
      */
-    MemoryUsage* chameleon::RuntimeResourceUsage::select_memusage() {
+    MemoryUsage* RuntimeResourceUsage::select_memusage() {
+        std::string::size_type  sz;
         string info_string = os::read("/proc/meminfo").get();
         vector<string> m_tokens = strings::tokenize(info_string, "\n");
-        m_memory_usage = new MemoryUsage();
         for (int i = 0; i < m_tokens.size(); i++) {
             vector<string> tokens_string = strings::tokenize(m_tokens[i],":");
             for (auto iter = tokens_string.begin(); iter != tokens_string.end(); iter++) {
                 string nospace = strings::trim(*iter);
                 if(nospace == "MemTotal"){
                     iter++;
-                    m_memory_usage->set_mem_total(strings::trim(*iter));
+                    m_memory_usage->set_mem_total(std::stoi(strings::trim(*iter),&sz));
                     break;
                 }
                 if(nospace == "MemFree"){
                     iter++;
-                    m_memory_usage->set_mem_free(strings::trim(*iter));
+                    m_memory_usage->set_mem_free(std::stoi(strings::trim(*iter),&sz));
                     break;
                 }
                 if(nospace == "MemAvailable"){
                     iter++;
-                    m_memory_usage->set_mem_available(strings::trim(*iter));
+                    m_memory_usage->set_mem_available(std::stoi(strings::trim(*iter),&sz));
                     break;
                 }
                 if(nospace == "Buffers"){
                     iter++;
-                    m_memory_usage->set_buffers(strings::trim(*iter));
+                    m_memory_usage->set_buffers(std::stoi(strings::trim(*iter),&sz));
                     break;
                 }
                 if(nospace == "Cached"){
                     iter++;
-                    m_memory_usage->set_cached(strings::trim(*iter));
+                    m_memory_usage->set_cached(std::stoi(strings::trim(*iter),&sz));
                     break;
                 }
                 if(nospace == "SwapTotal"){
                     iter++;
-                    m_memory_usage->set_swap_total(strings::trim(*iter));
+                    m_memory_usage->set_swap_total(std::stoi(strings::trim(*iter),&sz));
                     break;
                 }
                 if(nospace == "SwapFree"){
                     iter++;
-                    m_memory_usage->set_swap_free(strings::trim(*iter));
+                    m_memory_usage->set_swap_free(std::stoi(strings::trim(*iter),&sz));
                     break;
                 }
                 if(nospace == "Hugepagesize"){
                     iter++;
-                    m_memory_usage->set_hugepagesize(strings::trim(*iter));
+                    m_memory_usage->set_hugepagesize(std::stoi(strings::trim(*iter),&sz));
                     break;
                 }
             }
@@ -113,16 +119,16 @@ namespace chameleon{
      * Output       :memory usage information
      * Return       ：none
      */
-    void chameleon::RuntimeResourceUsage::show_memusage() {
+    void RuntimeResourceUsage::show_memusage() {
         select_memusage();
-        LOG(INFO) << "MemTotal：" << m_memory_usage->mem_total();
-        LOG(INFO) << "MemFree：" << m_memory_usage->mem_free();
-        LOG(INFO) << "MemAvailable：" << m_memory_usage->mem_available();
-        LOG(INFO) << "Buffers：" << m_memory_usage->buffers();
-        LOG(INFO) << "Cached：" << m_memory_usage->cached();
-        LOG(INFO) << "SwapTotal：" << m_memory_usage->swap_total();
-        LOG(INFO) << "SwapFree：" << m_memory_usage->swap_free();
-        LOG(INFO) << "Hugepagesize：" << m_memory_usage->hugepagesize();
+        LOG(INFO) << "MemTotal：" << m_memory_usage->mem_total() << " kB";
+        LOG(INFO) << "MemFree：" << m_memory_usage->mem_free() << " kB";
+        LOG(INFO) << "MemAvailable：" << m_memory_usage->mem_available() << " kB";
+        LOG(INFO) << "Buffers：" << m_memory_usage->buffers() << " kB";
+        LOG(INFO) << "Cached：" << m_memory_usage->cached() << " kB";
+        LOG(INFO) << "SwapTotal：" << m_memory_usage->swap_total() << " kB";
+        LOG(INFO) << "SwapFree：" << m_memory_usage->swap_free() << " kB";
+        LOG(INFO) << "Hugepagesize：" << m_memory_usage->hugepagesize() << " kB";
     }
 
 
@@ -154,30 +160,90 @@ namespace chameleon{
      */
     CPUUsage* RuntimeResourceUsage::cal_cpu_usage(RuntimeResourceUsage::CpuOccupy *first_info,
                                              RuntimeResourceUsage::CpuOccupy *second_info) {
-        m_cpu_usage = new CPUUsage() ;
-        double fir_total_time, sec_total_time;
+
+        double first_time, second_time;
         double user_sub, sys_sub;
 
         /*The first time (user + nice + system + idle) is assigned to fir_total_time */
-        fir_total_time = (double) (first_info->user_time + first_info->nice_time + first_info->system_time +first_info->idle_time);
+        first_time = (double) (first_info->user_time + first_info->nice_time + first_info->system_time +first_info->idle_time);
         /*The second time (user + nice + system + idle) is assigned to sec_total_time */
-        sec_total_time = (double) (second_info->user_time + second_info->nice_time + second_info->system_time +second_info->idle_time);
+        second_time = (double) (second_info->user_time + second_info->nice_time + second_info->system_time +second_info->idle_time);
         /*The difference between the first and second time of the user is then assigned to user_sub*/
         user_sub = (double) (second_info->user_time - first_info->user_time);
         /*The difference between the first and second time of the system is then assigned to sys_sub*/
         sys_sub = (double) (second_info->system_time - first_info->system_time);
 
-        float m_cpu;
         /*((user_time+system_time)*100)/(The difference between the first and second total time) , and assigned to m_cpu*/
-        m_cpu = ((sys_sub+user_sub)*100.0)/(sec_total_time-fir_total_time);
+        auto m_cpu = ((sys_sub+user_sub)*100.0)/(second_time-first_time);
 
         m_cpu_usage->set_cpu_used(m_cpu);
         return m_cpu_usage;
     }
 
-    chameleon::RuntimeResourceUsage::RuntimeResourceUsage() {
+    /*
+     * Function name：get_net_used_info
+     * Author       ：Jessicallo
+     * Date         ：2018-12-5
+     * Description  ：Read "/proc/net/dev" file and Get the receive usage information of net
+     * Parameter    ：NetMessage *net
+     * ReturnValue  ：none
+     */
+    long int RuntimeResourceUsage::get_net_used_info(RuntimeResourceUsage::NetMessage *net) {
+
+        /*Output all network card information*/
+        Try<set<string>> links = net::links();
+        string netname;
+        for (auto iter = links.get().begin(); iter != links.get().end(); iter++) {
+            std::cout << *iter << std::endl;
+            netname = *iter;
+            break;
+        }
+        std::cout << netname << std::endl;
+        //set<string> 类型
+        auto network_card = links.get().begin();
+        char interface[] = "enp3s0";
+        FILE *net_dev_file;
+        char buffer[1024];
+        if ((net_dev_file = fopen("/proc/net/dev", "r")) == NULL) {
+            printf("open file /proc/net/dev/ error!\n");
+            exit(EXIT_FAILURE);
+        }
+        int i = 0;
+        while (i++ < 20) {
+            if (fgets(buffer, sizeof(buffer), net_dev_file) != NULL) {
+                if (strstr(buffer, interface) != NULL) {
+                    sscanf(buffer, "%s %ld", net->netcard_name, net->save_rate);
+                    break;
+                }
+            }
+        }
+        if (i == 20) net->save_rate = 0.01;
+        fclose(net_dev_file); /*close file*/
+        return net->save_rate;
+
     }
 
-    chameleon::RuntimeResourceUsage::~RuntimeResourceUsage() {
+    NetUsage *RuntimeResourceUsage::cal_net_usage(RuntimeResourceUsage::NetMessage *first_time,
+                                                  RuntimeResourceUsage::NetMessage *last_time) {
+        m_net_usage = new NetUsage();
+        long int start_download_rates;  //Traffic count at the start of saving
+        long int end_download_rates;    //Traffic count when saving results
+        start_download_rates = get_net_used_info(first_time);
+        sleep(WAIT_SECOND);             //How many seconds to sleep, this value is determined according to the value of WAIT_SECOND in the macro definition
+        end_download_rates = get_net_used_info(last_time);
+        float m_net;
+        m_net = (end_download_rates - start_download_rates) / WAIT_SECOND / 1024;
+        m_net_usage->set_net_used(m_net);
+        return m_net_usage;
+
+    }
+
+
+    RuntimeResourceUsage::RuntimeResourceUsage() {
+        m_cpu_usage = new CPUUsage();
+        m_memory_usage = new MemoryUsage();
+    }
+
+    RuntimeResourceUsage::~RuntimeResourceUsage() {
     }
 }

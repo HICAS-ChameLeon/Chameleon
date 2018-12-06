@@ -1,5 +1,3 @@
-PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages job ${CMAKE_BINARY_DIR}/src/messages job)
-
 
 set(submitter_SRCS submitter.hpp submitter.cpp)
 

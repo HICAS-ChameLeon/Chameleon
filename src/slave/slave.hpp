@@ -13,11 +13,20 @@
 #include <memory>
 #include <string>
 
-#include <glog/logging.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 // stout dependencies
 #include <stout/os.hpp>
 #include <stout/os/pstree.hpp>
+#include <stout/path.hpp>
+
+#include <stout/os/getcwd.hpp>
+#include <stout/os/write.hpp>
+
+#include <stout/tests/utils.hpp>
+#include <stout/gzip.hpp>
+
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -30,6 +39,7 @@
 
 // protobuf
 #include <monitor_info.pb.h>
+#include <job.pb.h>
 
 // chameleon headers
 #include <resource_collector.hpp>
@@ -48,7 +58,6 @@ using process::UPID;
 using process::PID;
 using process::Future;
 using process::Promise;
-using namespace process::http;
 
 using process::http::Request;
 using process::http::OK;
@@ -78,6 +87,7 @@ namespace chameleon {
         virtual void initialize();
 
         void register_feedback(const string& hostname);
+        void get_a_job(const UPID& master, const JobMessage& job_message);
 
     private:
         shared_ptr<ResourceCollector> msp_resource_collector;

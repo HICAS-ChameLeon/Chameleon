@@ -22,7 +22,7 @@
  */
 TEST(MemoryCollection, getMemInfo){
     chameleon::MemoryCollector memoryCollector;
-    memoryCollector.get_info_rows("sudo -S dmidecode -t memory");
+    memoryCollector.get_info_rows();
 }
 
 TEST(MemoryCollection, SelectMemInfo){

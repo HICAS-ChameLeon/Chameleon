@@ -1,4 +1,4 @@
-#include <port_collector.hpp>
+ #include <port_collector.hpp>
 
 namespace chameleon{
 /*
@@ -20,7 +20,7 @@ namespace chameleon{
         portInfo->set_firstport(ports[0]);
         portInfo->set_lastport(ports[1]);
 
-        /*Assign value to 'gpu_quantity' attribute of class 'GPUCollection'*/
+        /*Assign value to 'port_quantity' attribute of class 'PortCollection'*/
         m_port_proto->set_port_quantity(m_port_proto->port_infos_size());
 
         return m_port_proto;
