@@ -27,6 +27,7 @@
 #include <gpu_collector.hpp>
 #include <memory_collector.hpp>
 #include <port_collector.hpp>
+#include <tlb_collector.hpp>
 #include <chameleon_os.hpp>
 
 using std::vector;
@@ -54,6 +55,7 @@ namespace chameleon {
             msp_gpu = make_shared<GpuCollector>(GpuCollector());
             msp_mem = make_shared<MemoryCollector>(MemoryCollector());
             msp_port = make_shared<PortCollector>(PortCollector());
+            msp_tlb = make_shared<TLBCollector>(TLBCollector());
         }
 
         virtual ~ResourceCollector(){
@@ -68,6 +70,7 @@ namespace chameleon {
         shared_ptr<GpuCollector> msp_gpu;
         shared_ptr<MemoryCollector> msp_mem;
         shared_ptr<PortCollector> msp_port;
+        shared_ptr<TLBCollector> msp_tlb;
     };
 
 

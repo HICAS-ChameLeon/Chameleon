@@ -7,7 +7,7 @@ message HardwareResourcesMessage
     required GPUCollection    gpu_collection=4;
     required DiskCollection    disk_collection = 5;
     required PortCollection   port_collection = 6;
-
+    required TLBCollection    tlb_collection = 7;
 }
 
 message CPUCollection{
