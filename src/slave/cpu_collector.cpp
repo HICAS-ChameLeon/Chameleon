@@ -8,5 +8,6 @@
 #include <cpu_collector.hpp>
 
 namespace chameleon{
-    CPUCollection* CpuCollector::get_cpu_info() {}
+
 }
+

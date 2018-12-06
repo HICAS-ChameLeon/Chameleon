@@ -50,7 +50,7 @@ namespace chameleon {
      * */
     class CpuCollector {
     public:
-        virtual CPUCollection* get_cpu_info();
+        virtual CPUCollection* get_cpu_info()=0;
     };
 
     class X86CpuCollector:public CpuCollector{
