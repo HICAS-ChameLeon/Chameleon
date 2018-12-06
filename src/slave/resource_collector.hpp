@@ -13,6 +13,13 @@
 #include <vector>
 #include <string>
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+// stout dependencies
+#include <stout/os.hpp>
+#include <stout/tests/utils.hpp>
+
 #include <hardware_resource.pb.h>
 
 #include <cpu_collector.hpp>
@@ -20,6 +27,7 @@
 #include <gpu_collector.hpp>
 #include <memory_collector.hpp>
 #include <port_collector.hpp>
+#include "../common/chameleon_os.hpp"
 
 using std::vector;
 using std::string;
@@ -30,7 +38,18 @@ namespace chameleon {
     class ResourceCollector {
     public:
         explicit ResourceCollector(){
-            msp_cpu = make_shared<CpuCollector>(CpuCollector());
+            const Try<os::UTSInfo> info = os::uname();
+            CHECK_SOME(info);
+            if(info.get().machine == setting::kArmArch){
+                msp_cpu = make_shared<ARMCpuCollector>(ARMCpuCollector());
+                LOG(INFO)<<"The machine belongs to arm architecture.";
+            }else if(info.get().machine == setting::kx86Arch){
+                msp_cpu = make_shared<X86CpuCollector>(X86CpuCollector());
+                LOG(INFO)<<"The machine belongs to x86 architecture.";
+            } else{
+                LOG(FATAL)<<"unknown machine architecture, please check!!";
+                exit(1);
+            }
             msp_disk = make_shared<DiskCollector>(DiskCollector());
             msp_gpu = make_shared<GpuCollector>(GpuCollector());
             msp_mem = make_shared<MemoryCollector>(MemoryCollector());
@@ -41,30 +60,7 @@ namespace chameleon {
 
         }
 
-        HardwareResourcesMessage* collect_hardware_resources(){
-
-            HardwareResourcesMessage* hr_message=new HardwareResourcesMessage();
-
-            // cpu colletor
-            auto hr_cpu_collection = msp_cpu->get_cpu_info();
-            hr_message->set_allocated_cpu_collection(hr_cpu_collection);
-
-            // memeory collector
-            MemoryCollection* memory_collection= msp_mem->select_meminfo();
-            hr_message->set_allocated_mem_collection(memory_collection);
-
-            // disk collector
-            DiskCollection* disk_collection = msp_disk->get_disk_collection();
-            hr_message->set_allocated_disk_collection(disk_collection);
-
-            // GPU collector
-            GPUCollection* hr_gpu = msp_gpu->split_gpu_string();
-            hr_message->set_allocated_gpu_collection(hr_gpu);
-
-            PortCollection* hr_port = msp_port->split_port_string();
-            hr_message->set_allocated_port_collection(hr_port);
-            return hr_message;
-        }
+        HardwareResourcesMessage* collect_hardware_resources();
 
     private:
         shared_ptr<CpuCollector> msp_cpu;
