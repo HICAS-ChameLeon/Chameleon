@@ -27,7 +27,7 @@
 #include <gpu_collector.hpp>
 #include <memory_collector.hpp>
 #include <port_collector.hpp>
-#include "../common/chameleon_os.hpp"
+#include <chameleon_os.hpp>
 
 using std::vector;
 using std::string;

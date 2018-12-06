@@ -1,6 +1,9 @@
-//
-// Created by lemaker on 18-12-4.
-//
+/*
+ * Copyright  ：SIAT 异构智能计算体系结构与系统研究中心
+ * Author     ：Lele Li,Kun ma,Yixing zhang, Hongtai zhang, Weiguo Wang lilelr@163.com
+ * Date       ：18-12-4
+ * Description：runtime resources usage
+ */
 
 #ifndef CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
 #define CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
