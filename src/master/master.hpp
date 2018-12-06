@@ -65,83 +65,32 @@ namespace chameleon {
         UPID slave;
 
         explicit Master() : ProcessBase("master") {
-            msp_slave = make_shared<UPID>(UPID(test_slave_UPID));
+            msp_spark_slave = make_shared<UPID>(UPID(test_slave_UPID));
+            msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
         }
 
         virtual ~Master(){
 
         }
 
-        virtual void initialize() {
-            // Verify that the version of the library that we linked against is
-            // compatible with the version of the headers we compiled against.
-            GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-            install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
-
-            install<HardwareResourcesMessage>(&Master::update_hardware_resources);
-            install<JobMessage>(&Master::job_submited);
+        virtual void initialize();
 
 
-            // http://172.20.110.228:6060/master/hardware-resources
-            route(
-                    "/hardware-resources",
-                    "get the topology resources of the whole topology",
-                    [this](Request request) {
-                        JSON::Object result = JSON::Object();
-                        if(!this->m_hardware_resources.empty()){
-                            JSON::Array array;
-                            for(auto it=this->m_hardware_resources.begin();it!=this->m_hardware_resources.end();it++){
-                                array.values.push_back(it->second);
-                            }
-                            result.values["quantity"]= array.values.size();
-                            result.values["content"] = array;
-                        }else{
-                            result.values["quantity"]= 0;
-                            result.values["content"] = JSON::Object();
-                        }
-                        return OK(stringify(result));
-                    });
+        void register_participant(const string& hostname);
 
+        void update_hardware_resources(const UPID& from, const HardwareResourcesMessage& hardware_resources_message);
 
-//     install("stop", &MyProcess::stop);
-            install("stop", [=](const UPID &from, const string &body) {
-                terminate(self());
-            });
-
-        }
-
-
-        void register_participant(const string& hostname){
-            DLOG(INFO) <<"master receive register message from "<< hostname;
-        }
-
-        void update_hardware_resources(const UPID& from, const HardwareResourcesMessage& hardware_resources_message){
-            DLOG(INFO) <<"enter update_hardware_resources";
-
-            auto slaveid = hardware_resources_message.slave_id();
-            if(m_hardware_resources.find(slaveid)==m_hardware_resources.end()){
-                JSON::Object object = JSON::protobuf(hardware_resources_message);
-//                string object_str = stringify(object);
-//                DLOG(INFO) << object_str;
-                m_hardware_resources.insert({slaveid,object});
-            }
-        }
-
-        void job_submited(const UPID& from, const JobMessage& job_message){
-            LOG(INFO)<<"got a job from "<<from;
-            LOG(INFO)<<"sent the job to the test slave";
-            send(*msp_slave,job_message);
-        }
-
+        void job_submited(const UPID& from, const JobMessage& job_message);
 
 
     private:
         unordered_map<UPID,ParticipantInfo> m_participants;
         unordered_map<string,JSON::Object> m_hardware_resources;
 //        unordered_map<string,HardwareResource> m_topology_resources;
-        const string test_slave_UPID = "slave@172.20.110.228:6061";
-        shared_ptr<UPID> msp_slave;
+        const string test_slave_UPID = "slave@172.20.110.79:6061";
+        const string test_master_UPID = "slave@172.20.110.228:6061";
+        shared_ptr<UPID> msp_spark_slave;
+        shared_ptr<UPID> msp_spark_master;
     };
 
 
