@@ -8,6 +8,7 @@
 #define CHAMELEON_MASTER_HPP
 // C++ 11 dependencies
 #include <iostream>
+#include <vector>
 #include <unordered_map>
 #include <set>
 #include <memory>
@@ -41,6 +42,7 @@
 
 using std::string;
 using std::set;
+using std::vector;
 using std::unordered_map;
 using std::shared_ptr;
 using std::make_shared;
@@ -98,6 +100,8 @@ namespace chameleon {
         const string test_master_UPID = "slave@172.20.110.228:6061";
         shared_ptr<UPID> msp_spark_slave;
         shared_ptr<UPID> msp_spark_master;
+
+        string find_min_cpu_and_memory_rates();
     };
 
 
