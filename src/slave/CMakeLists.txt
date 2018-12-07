@@ -30,10 +30,10 @@ set(tlb_collector_test_SRCS tlb_collector_tests.cpp ${tlb_SRCS})
 add_executable(tlb_collector_tests ${tlb_collector_test_SRCS})
 target_link_libraries(tlb_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})
 
-set(port_SRCS port_collector.cpp port_collector.hpp)
+set(port_SRCS port_collector.cpp port_collector.hpp runtime_resources_usage.hpp runtime_resources_usage.cpp)
 set(port_collector_tests_SRCS port_collector_tests.cpp ${port_SRCS})
 add_executable(port_collector_tests ${port_collector_tests_SRCS})
-target_link_libraries(port_collector_tests hardware_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS} )
+target_link_libraries(port_collector_tests hardware_resource runtime_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS} )
 
 set(runtime_resource_SRCS runtime_resources_usage.hpp runtime_resources_usage.cpp)
 set(slave_SRCS slave.hpp slave.cpp resource_collector.hpp resource_collector.cpp)
