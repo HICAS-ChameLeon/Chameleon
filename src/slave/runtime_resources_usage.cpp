@@ -43,6 +43,7 @@ namespace chameleon{
         return  disk_usage;
     }
 
+  
     /*
      * Function name：select_memusage
      * Author       ：marcie
@@ -53,6 +54,8 @@ namespace chameleon{
      * Return       ：MemoryUsage m_memory_usage
      */
     MemoryUsage* RuntimeResourceUsage::select_memusage() {
+        /* message class. */
+        MemoryUsage* m_memory_usage = new MemoryUsage();
         std::string::size_type  sz;
         string info_string = os::read("/proc/meminfo").get();
         vector<string> m_tokens = strings::tokenize(info_string, "\n");
@@ -115,7 +118,7 @@ namespace chameleon{
      * Return       ：none
      */
     void RuntimeResourceUsage::show_memusage() {
-        select_memusage();
+        MemoryUsage* m_memory_usage = select_memusage();
         LOG(INFO) << "MemTotal：" << m_memory_usage->mem_total() << " kB";
         LOG(INFO) << "MemFree：" << m_memory_usage->mem_free() << " kB";
         LOG(INFO) << "MemAvailable：" << m_memory_usage->mem_available() << " kB";
@@ -158,7 +161,8 @@ namespace chameleon{
 
         double first_time, second_time;
         double user_sub, sys_sub;
-
+        /* cpu class. */
+        CPUUsage* m_cpu_usage = new CPUUsage();
         /*The first time (user + nice + system + idle) is assigned to fir_total_time */
         first_time = (double) (first_info->user_time + first_info->nice_time + first_info->system_time +first_info->idle_time);
         /*The second time (user + nice + system + idle) is assigned to sec_total_time */
@@ -220,7 +224,8 @@ namespace chameleon{
 
     NetUsage *RuntimeResourceUsage::cal_net_usage(RuntimeResourceUsage::NetMessage *first_time,
                                                   RuntimeResourceUsage::NetMessage *last_time) {
-        m_net_usage = new NetUsage();
+        /* net class */
+        NetUsage* m_net_usage = new NetUsage();
         long int start_download_rates;  //Traffic count at the start of saving
         long int end_download_rates;    //Traffic count when saving results
         start_download_rates = get_net_used_info(first_time);
@@ -233,10 +238,7 @@ namespace chameleon{
 
     }
 
-
     RuntimeResourceUsage::RuntimeResourceUsage() {
-        m_cpu_usage = new CPUUsage();
-        m_memory_usage = new MemoryUsage();
     }
 
     RuntimeResourceUsage::~RuntimeResourceUsage() {

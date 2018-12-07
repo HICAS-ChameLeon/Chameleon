@@ -36,7 +36,7 @@ TEST(CPUCollectorTests, GetCpuUsage)
 
     //获取cpu使用率信息
     cpuRuntimeUsage.get_cpu_used_info(&f_cpu);
-    sleep(1);
+    usleep(100000); // we used 10^5 microseconds as the default duration for cpu usage calculation
     cpuRuntimeUsage.get_cpu_used_info(&s_cpu);
     CPUUsage cpuUsage = *cpuRuntimeUsage.cal_cpu_usage(&f_cpu, &s_cpu);
     printf("cpu used:%4.2f \n", cpuUsage.cpu_used());

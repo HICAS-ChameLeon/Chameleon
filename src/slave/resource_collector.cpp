@@ -26,8 +26,13 @@ namespace chameleon {
         GPUCollection* hr_gpu = msp_gpu->split_gpu_string();
         hr_message->set_allocated_gpu_collection(hr_gpu);
 
+        // port collector
         PortCollection* hr_port = msp_port->split_port_string();
         hr_message->set_allocated_port_collection(hr_port);
+
+        //tlb collector
+        TLBCollection* hr_tlb = msp_tlb->get_tlb_info();
+        hr_message->set_allocated_tlb_collection(hr_tlb);
         return hr_message;
     }
 

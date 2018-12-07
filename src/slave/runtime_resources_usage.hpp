@@ -34,16 +34,6 @@ namespace  chameleon{
 
     class RuntimeResourceUsage {
 
-    private:
-        /* message class. */
-        MemoryUsage* m_memory_usage;
-
-        /* cpu class. */
-        CPUUsage* m_cpu_usage;
-
-        /* net class */
-        NetUsage* m_net_usage;
-
     public:
 
 
