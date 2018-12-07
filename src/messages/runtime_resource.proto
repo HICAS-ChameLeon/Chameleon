@@ -25,13 +25,13 @@ message MemoryUsage {
 
 
 message DiskUsage{
-    required string  disk_available = 1;
-    required string  disk_available_percent = 2;
+    required uint32  disk_available = 1;
+    required double  available_percent = 2;
 
 }
 
 message NetUsage{
-
+    required float net_used =1;
 }
 
 

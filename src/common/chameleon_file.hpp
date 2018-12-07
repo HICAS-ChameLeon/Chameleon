@@ -1,6 +1,9 @@
-//
-// Created by lemaker on 18-12-4.
-//
+/*
+ * Copyright  ：SIAT 异构智能计算体系结构与系统研究中心
+ * Author     ：Lele Li lilelr@163.com
+ * Date       ：18-12-06
+ * Description：common operations for file operations.
+ */
 
 #ifndef CHAMELEON_CHAMELEON_FILE_HPP
 #define CHAMELEON_CHAMELEON_FILE_HPP

@@ -4,6 +4,7 @@ include_directories(${CMAKE_BINARY_DIR}/src/messages)
 # the global configuration for glog
 message(5 ${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/src/log)
+include_directories(${CMAKE_SOURCE_DIR}/src/common)
 
 # libprocess libraries headers directories
 include_directories(${PROCESS_LIB_DIRS})
@@ -23,6 +24,5 @@ add_subdirectory(slave)
 
 add_subdirectory(submitter)
 
-include_directories(${CMAKE_SOURCE_DIR}/src/common)
 
 #add_subdirectory(my_hello)

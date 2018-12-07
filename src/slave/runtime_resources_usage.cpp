@@ -4,45 +4,45 @@
 
 #include <runtime_resources_usage.hpp>
 
+#define WAIT_SECOND 3
+
 namespace chameleon{
-  
-  /*
-* Function name：get_disk_usage
-* Author       ：heldon
-* Date         ：2018-12-04
-* Description  ：get disk usage
-* Parameter    ：none
-* Return       ：DiskUsage*
-*/
-DiskUsage* chameleon::RuntimeResourceUsage::get_disk_usage(){
-    Option<string> disk_available;
-    Option<string> disk_available_percent;
+    /*
+    * Function name：get_disk_usage
+    * Author       ：heldon
+    * Date         ：2018-12-04
+    * Description  ：get disk usage
+    * Parameter    ：none
+    * Return       ：DiskUsage*
+    */
+    DiskUsage* RuntimeResourceUsage::get_disk_usage(){
+        Option<int64_t> disk_available;
+        Option<double > available_percent;
 
-    DiskUsage* disk_usage;
+        DiskUsage* disk_usage = new DiskUsage();
 
-    /*Use statfs to get disk's rest storage,available storage*/
-    struct statfs diskInfo;
-    /*Find the information under the path "/home" */
-    statfs("/home", &diskInfo);
+        /*Use statfs to get disk's rest storage,available storage*/
+        struct statfs diskInfo;
+        /*Find the information under the path "/home" */
+        statfs("/home", &diskInfo);
 
-    /*The number of bytes contained in each block*/
-    unsigned long long blocksize = diskInfo.f_bsize;
-    /*The total number of bytes, f_blocks is the number of blocks*/
-    unsigned long long totalsize = blocksize * diskInfo.f_blocks;
-    /*The size of the avaliable space*/
-    unsigned long long availableDisk = diskInfo.f_bavail * blocksize;
+        /*The number of bytes contained in each block*/
+        unsigned long long blocksize = diskInfo.f_bsize;
+        /*The total number of bytes, f_blocks is the number of blocks*/
+        unsigned long long totalsize = blocksize * diskInfo.f_blocks;
+        /*The size of the avaliable space*/
+        unsigned long long availableDisk = diskInfo.f_bavail * blocksize;
 
-    /*Transfer the GB unit and assign to variables*/
-    disk_available = stringify(availableDisk >> 30);
+        disk_available = availableDisk;
+        double decimal = (double)availableDisk/totalsize;
+        available_percent = decimal * 100;
 
-    double decimal = (double)availableDisk/totalsize;
-    disk_available_percent = stringify(decimal * 100) + "%";
+        disk_usage->set_disk_available(disk_available.get());
+        disk_usage->set_available_percent(available_percent.get());
 
-    disk_usage->set_disk_available(disk_available.get());
-    disk_usage->set_disk_available_percent(disk_available_percent.get());
+        return  disk_usage;
+    }
 
-    return  disk_usage;
-}
   
     /*
      * Function name：select_memusage
@@ -54,6 +54,8 @@ DiskUsage* chameleon::RuntimeResourceUsage::get_disk_usage(){
      * Return       ：MemoryUsage m_memory_usage
      */
     MemoryUsage* RuntimeResourceUsage::select_memusage() {
+        /* message class. */
+        MemoryUsage* m_memory_usage = new MemoryUsage();
         std::string::size_type  sz;
         string info_string = os::read("/proc/meminfo").get();
         vector<string> m_tokens = strings::tokenize(info_string, "\n");
@@ -116,7 +118,7 @@ DiskUsage* chameleon::RuntimeResourceUsage::get_disk_usage(){
      * Return       ：none
      */
     void RuntimeResourceUsage::show_memusage() {
-        select_memusage();
+        MemoryUsage* m_memory_usage = select_memusage();
         LOG(INFO) << "MemTotal：" << m_memory_usage->mem_total() << " kB";
         LOG(INFO) << "MemFree：" << m_memory_usage->mem_free() << " kB";
         LOG(INFO) << "MemAvailable：" << m_memory_usage->mem_available() << " kB";
@@ -159,7 +161,8 @@ DiskUsage* chameleon::RuntimeResourceUsage::get_disk_usage(){
 
         double first_time, second_time;
         double user_sub, sys_sub;
-
+        /* cpu class. */
+        CPUUsage* m_cpu_usage = new CPUUsage();
         /*The first time (user + nice + system + idle) is assigned to fir_total_time */
         first_time = (double) (first_info->user_time + first_info->nice_time + first_info->system_time +first_info->idle_time);
         /*The second time (user + nice + system + idle) is assigned to sec_total_time */
@@ -176,9 +179,66 @@ DiskUsage* chameleon::RuntimeResourceUsage::get_disk_usage(){
         return m_cpu_usage;
     }
 
+    /*
+     * Function name：get_net_used_info
+     * Author       ：Jessicallo
+     * Date         ：2018-12-5
+     * Description  ：Read "/proc/net/dev" file and Get the receive usage information of net
+     * Parameter    ：NetMessage *net
+     * ReturnValue  ：none
+     */
+    long int RuntimeResourceUsage::get_net_used_info(RuntimeResourceUsage::NetMessage *net) {
+
+        /*Output all network card information*/
+        Try<set<string>> links = net::links();
+        string netname;
+        for (auto iter = links.get().begin(); iter != links.get().end(); iter++) {
+            std::cout << *iter << std::endl;
+            netname = *iter;
+            break;
+        }
+        std::cout << netname << std::endl;
+        //set<string> 类型
+        auto network_card = links.get().begin();
+        char interface[] = "enp3s0";
+        FILE *net_dev_file;
+        char buffer[1024];
+        if ((net_dev_file = fopen("/proc/net/dev", "r")) == NULL) {
+            printf("open file /proc/net/dev/ error!\n");
+            exit(EXIT_FAILURE);
+        }
+        int i = 0;
+        while (i++ < 20) {
+            if (fgets(buffer, sizeof(buffer), net_dev_file) != NULL) {
+                if (strstr(buffer, interface) != NULL) {
+                    sscanf(buffer, "%s %ld", net->netcard_name, net->save_rate);
+                    break;
+                }
+            }
+        }
+        if (i == 20) net->save_rate = 0.01;
+        fclose(net_dev_file); /*close file*/
+        return net->save_rate;
+
+    }
+
+    NetUsage *RuntimeResourceUsage::cal_net_usage(RuntimeResourceUsage::NetMessage *first_time,
+                                                  RuntimeResourceUsage::NetMessage *last_time) {
+        /* net class */
+        NetUsage* m_net_usage = new NetUsage();
+        long int start_download_rates;  //Traffic count at the start of saving
+        long int end_download_rates;    //Traffic count when saving results
+        start_download_rates = get_net_used_info(first_time);
+        sleep(WAIT_SECOND);             //How many seconds to sleep, this value is determined according to the value of WAIT_SECOND in the macro definition
+        end_download_rates = get_net_used_info(last_time);
+        float m_net;
+        m_net = (end_download_rates - start_download_rates) / WAIT_SECOND / 1024;
+        m_net_usage->set_net_used(m_net);
+        return m_net_usage;
+
+    }
+
     RuntimeResourceUsage::RuntimeResourceUsage() {
-        m_cpu_usage = new CPUUsage();
-        m_memory_usage = new MemoryUsage();
     }
 
     RuntimeResourceUsage::~RuntimeResourceUsage() {
