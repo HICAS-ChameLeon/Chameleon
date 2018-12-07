@@ -105,8 +105,9 @@ namespace chameleon{
 
                                 disk_info->set_disk_speed(disk_speed.get());
 
-                            } else
-                                cout << "data lost,please check" << endl;
+                            } else{
+                                LOG(ERROR)<< "data lost,please check";
+                            }
                         }
                             /*If there isn't a key called "type"*/
                         else
