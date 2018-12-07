@@ -8,7 +8,7 @@
 
 namespace chameleon {
     TLBCollection *TLBCollector::get_tlb_info() {
-        TLBInfo* ti = new TLBInfo;
+        TLBInfo ti;
         TLBCollection *tlbCollection = new TLBCollection();
 
         Option<string> l1_data_tlb;
@@ -34,23 +34,24 @@ namespace chameleon {
 
             if (data == "data") {
                 l1_data_tlb = vec_back.back();
-                ti->add_l1_data_tlb(l1_data_tlb.get());
+                ti.add_l1_data_tlb(l1_data_tlb.get());
                 continue;
             }
             if (data == "instruction") {
                 l1_instruction_tlb = vec_back.back();
-                ti->add_l1_instruction_tlb(l1_instruction_tlb.get());
+                ti.add_l1_instruction_tlb(l1_instruction_tlb.get());
                 continue;
             }
             if (data == "") {
                 if (vec_back.back() != "") {
                     l2_tlb = vec_back.back();
-                    ti->set_l2_tlb(l2_tlb.get());
+                    ti.set_l2_tlb(l2_tlb.get());
                 }
                 continue;
             }
         }
-        tlbCollection->set_allocated_tlb_infos(ti);
+        tlbCollection->add_tlb_infos()->MergeFrom(ti);
+//        tlbCollection->set_allocated_tlb_infos(ti);
         return tlbCollection;
     };
 }

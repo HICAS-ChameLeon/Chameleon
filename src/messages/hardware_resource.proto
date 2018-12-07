@@ -31,7 +31,7 @@ message CPUInfo{
 }
 
 message TLBCollection{
-    required TLBInfo tlb_infos = 1;
+    repeated TLBInfo tlb_infos = 1;
 }
 
 message TLBInfo{
