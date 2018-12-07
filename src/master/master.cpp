@@ -107,6 +107,18 @@ namespace chameleon {
         LOG(INFO) << "received a heartbeat message from " << slave;
         auto slave_id = runtime_resouces_message.slave_id();
         m_runtime_resources[slave_id]= JSON::protobuf(runtime_resouces_message);
+        m_proto_runtime_resources[slave_id] = runtime_resouces_message;
+    }
+
+    string Master::find_min_cpu_and_memory_rates(){
+        double sum_rate = 100.0;
+
+        for(auto it=m_proto_runtime_resources.begin();it!=m_proto_runtime_resources.end();it++){
+            double cur_cpu_rate;
+            double cur_mem_rate;
+
+        }
+        return "abc";
     }
 }
 
