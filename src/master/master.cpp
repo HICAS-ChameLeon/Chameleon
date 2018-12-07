@@ -59,7 +59,9 @@ namespace chameleon {
                         result.values["quantity"] = 0;
                         result.values["content"] = JSON::Object();
                     }
-                    return OK(stringify(result));
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin","*"});
+                    return ok_response;
                 });
 
 
