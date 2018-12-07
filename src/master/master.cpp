@@ -119,6 +119,7 @@ namespace chameleon {
         }
         string str_spark_slave = "slave@";
         str_spark_slave.append(best_machine.get());
+        str_spark_slave.append(":6061");
         UPID spark_slave(str_spark_slave);
         LOG(INFO) << "slave_job_message.is_master = " << slave_job_message.is_master();
         send(spark_slave, slave_job_message);
@@ -139,7 +140,7 @@ namespace chameleon {
             double cur_cpu_rate;
             double cur_mem_rate;
             auto cur_message = it->second;
-            cur_cpu_rate = cur_message.cpu_usage().cpu_used();
+            cur_cpu_rate = cur_message.cpu_usage().cpu_used()*0.01;
             cur_mem_rate = static_cast<double>(cur_message.mem_usage().mem_available()) / static_cast<double >(cur_message.mem_usage().mem_total());
             double cur_sum_rate=50*cur_cpu_rate+50*cur_mem_rate;
             LOG(INFO)<<it->first<<" cpu usage is "<<cur_cpu_rate<<" memory usage is "<<cur_mem_rate;
