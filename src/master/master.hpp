@@ -101,7 +101,7 @@ namespace chameleon {
         shared_ptr<UPID> msp_spark_slave;
         shared_ptr<UPID> msp_spark_master;
 
-        string find_min_cpu_and_memory_rates();
+        Try<string> find_min_cpu_and_memory_rates();
     };
 
 

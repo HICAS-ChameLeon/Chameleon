@@ -90,17 +90,39 @@ namespace chameleon {
         }
     }
 
+//    void Master::job_submited(const UPID &from, const JobMessage &job_message) {
+//        LOG(INFO) << "got a job from " << from;
+//        send(*msp_spark_master, job_message);
+//        LOG(INFO) << "sent the job to the test master 172.20.110.228 successfully!";
+//        JobMessage slave_job_message;
+//        slave_job_message.CopyFrom(job_message);
+//        slave_job_message.set_master_ip("172.20.110.228");
+//        slave_job_message.set_is_master(false);
+//        LOG(INFO) << "slave_job_message.is_master = " << slave_job_message.is_master();
+//        send(*msp_spark_slave, slave_job_message);
+//        LOG(INFO) << "sent the job to the test slave 172.20.110.79 successfully!";
+//    }
+
     void Master::job_submited(const UPID &from, const JobMessage &job_message) {
         LOG(INFO) << "got a job from " << from;
-        send(*msp_spark_master, job_message);
-        LOG(INFO) << "sent the job to the test master 172.20.110.228 successfully!";
+
         JobMessage slave_job_message;
         slave_job_message.CopyFrom(job_message);
         slave_job_message.set_master_ip("172.20.110.228");
         slave_job_message.set_is_master(false);
+
+        // find the best machine whose sum usage of cpu and memory is the lowest.
+        Try<string> best_machine = find_min_cpu_and_memory_rates();
+        if(best_machine.isError()){
+            LOG(FATAL)<<" cannot find a appropriate machine to run the job!";
+            return;
+        }
+        string str_spark_slave = "slave@";
+        str_spark_slave.append(best_machine.get());
+        UPID spark_slave(str_spark_slave);
         LOG(INFO) << "slave_job_message.is_master = " << slave_job_message.is_master();
-        send(*msp_spark_slave, slave_job_message);
-        LOG(INFO) << "sent the job to the test slave 172.20.110.79 successfully!";
+        send(spark_slave, slave_job_message);
+        LOG(INFO) << "sent the job to the test slave "<<str_spark_slave<<" successfully!";
     }
 
     void Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
@@ -110,15 +132,28 @@ namespace chameleon {
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
     }
 
-    string Master::find_min_cpu_and_memory_rates(){
-        double sum_rate = 100.0;
-
+    Try<string> Master::find_min_cpu_and_memory_rates(){
+        double min_sum_rate = 100.0;
+        string res="";
         for(auto it=m_proto_runtime_resources.begin();it!=m_proto_runtime_resources.end();it++){
             double cur_cpu_rate;
             double cur_mem_rate;
-
+            auto cur_message = it->second;
+            cur_cpu_rate = cur_message.cpu_usage().cpu_used();
+            cur_mem_rate = static_cast<double>(cur_message.mem_usage().mem_available()) / static_cast<double >(cur_message.mem_usage().mem_total());
+            double cur_sum_rate=50*cur_cpu_rate+50*cur_mem_rate;
+            LOG(INFO)<<it->first<<" cpu usage is "<<cur_cpu_rate<<" memory usage is "<<cur_mem_rate;
+            LOG(INFO)<<it->first<<" cur_sum_rate is "<<cur_sum_rate;
+            if(min_sum_rate>cur_sum_rate){
+                min_sum_rate = cur_sum_rate;
+                res = it->first;
+            }
         }
-        return "abc";
+        if(res.empty()){
+            LOG(ERROR)<<" calculate the best machine to schedule the new job failed!";
+         return Error("The whole cluster has no machine");
+        }
+        return res;
     }
 }
 
