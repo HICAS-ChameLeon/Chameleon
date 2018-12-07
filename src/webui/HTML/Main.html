@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="../css/navbar.css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 
-
+    <script src="https://cdn.staticfile.org/angular.js/1.6.3/angular.min.js"></script>
     <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
 
 
@@ -156,14 +156,50 @@
                 labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores
                 et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
 
+            <div ng-app="myApp" ng-controller="siteCtrl">
+                这里是阿瑟IT阿里的风景
+                <ul>
+                    <li ng-repeat="x in quantities">
+                        <!--{{ x.Name + ', ' + x.Country }}-->
+                        {{x}}
+                    </li>
+                </ul>
+
+            </div>
+
         </div>
+
     </div>
 </div>
-
-</body>
-</html>
-
 
 <script src="../js/bootstrap.min.js"></script>
 <script src="../js/navbar.js"></script>
 <script src="../js/iconfont.js"></script>
+
+<script>
+    var app = angular.module('myApp', []);
+
+    // app.controller('siteCtrl', function($scope, $http) {
+    //     $http.get("http://172.20.110.228/master/runtime-resources")
+    //         .then(function (response) {$scope.names = response.data.quantity;});
+    // });
+
+    app.controller('siteCtrl', function($scope, $http) {
+        $http({
+            method: 'GET',
+            url: 'http://172.20.110.228:6060/master/runtime-resources'
+        }).then(function successCallback(response) {
+            //$scope.names = response.data.content;
+            $scope.quantities = response.data.quantity;
+        }, function errorCallback(response) {
+            // 请求失败执行代码
+        });
+    });
+</script>
+</body>
+
+</html>
+
+
+
+
