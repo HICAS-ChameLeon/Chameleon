@@ -92,6 +92,7 @@ namespace chameleon {
         unordered_map<string,JSON::Object> m_hardware_resources;
         set<string> m_alive_slaves;
         unordered_map<string,JSON::Object> m_runtime_resources;
+        unordered_map<string,RuntimeResourcesMessage> m_proto_runtime_resources;
 //        unordered_map<string,HardwareResource> m_topology_resources;
         const string test_slave_UPID = "slave@172.20.110.79:6061";
         const string test_master_UPID = "slave@172.20.110.228:6061";

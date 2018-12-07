@@ -107,6 +107,7 @@ namespace chameleon {
         LOG(INFO) << "received a heartbeat message from " << slave;
         auto slave_id = runtime_resouces_message.slave_id();
         m_runtime_resources[slave_id]= JSON::protobuf(runtime_resouces_message);
+        m_proto_runtime_resources[slave_id] = runtime_resouces_message;
     }
 }
 
