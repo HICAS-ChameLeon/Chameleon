@@ -86,6 +86,7 @@ namespace chameleon {
 //                string object_str = stringify(object);
 //                DLOG(INFO) << object_str;
             m_hardware_resources.insert({slaveid, object});
+            m_alive_slaves.insert(slaveid);
         }
     }
 

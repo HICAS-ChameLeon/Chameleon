@@ -91,8 +91,7 @@ namespace chameleon{
 
                             /*Assign to protobuf*/
                             if (disk_name.isSome() && disk_size.isSome() && disk_type.isSome() &&
-                                disk_speed.isSome() &&
-                                disk_free.isSome() && disk_available.isSome()) {
+                                disk_speed.isSome()) {
 
                                 DiskInfo *disk_info = disk_collection->add_disk_infos();
 

@@ -9,6 +9,7 @@
 // C++ 11 dependencies
 #include <iostream>
 #include <unordered_map>
+#include <set>
 #include <memory>
 
 #include <glog/logging.h>
@@ -39,6 +40,7 @@
 #include <configuration_glog.hpp>
 
 using std::string;
+using std::set;
 using std::unordered_map;
 using std::shared_ptr;
 using std::make_shared;
@@ -88,6 +90,7 @@ namespace chameleon {
     private:
         unordered_map<UPID,ParticipantInfo> m_participants;
         unordered_map<string,JSON::Object> m_hardware_resources;
+        set<string> m_alive_slaves;
         unordered_map<string,JSON::Object> m_runtime_resources;
 //        unordered_map<string,HardwareResource> m_topology_resources;
         const string test_slave_UPID = "slave@172.20.110.79:6061";
