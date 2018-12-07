@@ -13,6 +13,7 @@
 
 #include <disk_collector.hpp>
 #include <runtime_resources_usage.hpp>
+
 using std::shared_ptr;
 
 TEST(DiskCollectorTest, DiskInfo)

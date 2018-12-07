@@ -8,6 +8,9 @@
 #include <disk_collector.hpp>
 
 namespace chameleon{
+
+    DiskCollector::~DiskCollector() {}
+
     /*
     * Function name：get_disk_collection
     * Author       ：heldon
@@ -88,8 +91,7 @@ namespace chameleon{
 
                             /*Assign to protobuf*/
                             if (disk_name.isSome() && disk_size.isSome() && disk_type.isSome() &&
-                                disk_speed.isSome() &&
-                                disk_free.isSome() && disk_available.isSome()) {
+                                disk_speed.isSome()) {
 
                                 DiskInfo *disk_info = disk_collection->add_disk_infos();
 
@@ -103,8 +105,9 @@ namespace chameleon{
 
                                 disk_info->set_disk_speed(disk_speed.get());
 
-                            } else
-                                cout << "data lost,please check" << endl;
+                            } else{
+                                LOG(ERROR)<< "data lost,please check";
+                            }
                         }
                             /*If there isn't a key called "type"*/
                         else

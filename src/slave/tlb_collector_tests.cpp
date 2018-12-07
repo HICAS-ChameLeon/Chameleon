@@ -7,30 +7,27 @@
 
 // GTEST DEPENDENCIES
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 
 // STOUT DEPENDENCIES
-#include <stout/gtest.hpp>
 
 #include <tlb_collector.hpp>
 
-TEST(TLBCollectorTest,Test){
+TEST(TLBCollectorTest, Test) {
     chameleon::TLBCollector tlb;
-    TLBCollection* tlbCollection = tlb.get_tlb_info();
-    for(int i=0; i < tlbCollection->tlb_infos().l1_data_tlb().size();i++){
-        Option<string> l1_data_tlb =  tlbCollection->mutable_tlb_infos()->l1_data_tlb(i);
-        EXPECT_SOME(l1_data_tlb);
+    TLBCollection *tlbCollection = tlb.get_tlb_info();
+    for (auto i = tlbCollection->tlb_infos().begin(); i != tlbCollection->tlb_infos().end(); i++) {
+        for (int j = 0; j < i->l1_data_tlb().size(); j++) {
+            LOG(INFO) << i->l1_data_tlb(j);
+        }
+        for (int k = 0; k < i->l1_instruction_tlb().size(); k++) {
+            LOG(INFO) << i->l1_instruction_tlb(k);
+        }
+        LOG(INFO) << i->l2_tlb() ;
     }
-    for(int j = 0;j<tlbCollection->tlb_infos().l1_instruction_tlb().size();j++){
-        Option<string> l1_instruction_tlb = tlbCollection->mutable_tlb_infos()->l1_instruction_tlb(j);
-        EXPECT_SOME(l1_instruction_tlb);
-    }
-    Option<string> l2_tlb = tlbCollection->tlb_infos().l2_tlb();
-    EXPECT_SOME(l2_tlb);
 }
 
-int main(int argc,char** argv){
-    testing::InitGoogleTest(&argc,argv);
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
 

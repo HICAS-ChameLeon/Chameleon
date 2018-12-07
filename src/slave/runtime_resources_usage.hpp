@@ -1,6 +1,9 @@
-//
-// Created by lemaker on 18-12-4.
-//
+/*
+ * Copyright  ：SIAT 异构智能计算体系结构与系统研究中心
+ * Author     ：Lele Li,Kun ma,Yixing zhang, Hongtai zhang, Weiguo Wang lilelr@163.com
+ * Date       ：18-12-4
+ * Description：runtime resources usage
+ */
 
 #ifndef CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
 #define CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
@@ -16,23 +19,20 @@
 #include <stout/os.hpp>
 #include <stout/option.hpp>
 #include <stout/stringify.hpp>
+#include <stout/try.hpp>
+#include <stout/net.hpp>
 
 //chameleon headers
 #include <runtime_resource.pb.h>
 
 using std::string;
 using std::vector;
+using std::set;
+using net::links;
 
-namespace  chameleon{
+namespace chameleon {
 
     class RuntimeResourceUsage {
-
-    private:
-        /* message class. */
-        MemoryUsage* m_memory_usage;
-
-        /* cpu class. */
-        CPUUsage* m_cpu_usage;
 
     public:
 
@@ -45,7 +45,7 @@ namespace  chameleon{
         * Parameter    ：none
         * Return       ：DiskUsage*
         */
-        DiskUsage* get_disk_usage();
+        DiskUsage *get_disk_usage();
 
         /*
          * Function name：select_memusage
@@ -56,7 +56,8 @@ namespace  chameleon{
          * Parameter    ：none
          * Return       ：MemoryUsage m_memory_usage
          */
-        MemoryUsage* select_memusage();
+        MemoryUsage *select_memusage();
+
         /*
          * Function name：show_memusage
          * Author       ：marcie
@@ -69,24 +70,27 @@ namespace  chameleon{
         void show_memusage();
 
         /* cpu function */
-        typedef struct CPUTime
-        {
+        typedef struct CPUTime {
             char cpu_name[20];
             unsigned int user_time;
             unsigned int nice_time;
             unsigned int system_time;
             unsigned int idle_time;
-        } CpuOccupy ;
-        void get_cpu_used_info (CpuOccupy *o) ;
-        CPUUsage* cal_cpu_usage (CpuOccupy *first_info, CpuOccupy *second_info) ;
+        } CpuOccupy;
+
+        void get_cpu_used_info(CpuOccupy *o);
+
+        CPUUsage *cal_cpu_usage(CpuOccupy *first_info, CpuOccupy *second_info);
+
+        void get_net_used_info(long int *save_rate);
+
+        NetUsage *cal_net_usage();
 
         RuntimeResourceUsage();
 
         virtual ~RuntimeResourceUsage();
-
     };
 }
-
 
 
 #endif //CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP

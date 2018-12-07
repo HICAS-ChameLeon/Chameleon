@@ -45,21 +45,22 @@ namespace chameleon {
      * ClassName   : CpuCollector
      * Date        : 18/11/30
      * Author      : weiguo
-     * Description : Collecting CPU information from computer
+     * Description : Collecting CPU information from computer. To satisfy different methods for resources collection for
+     * different architectures, we used strategy design patter.
      * */
     class CpuCollector {
     public:
-        virtual CPUCollection* get_cpu_info();
+        virtual CPUCollection* get_cpu_info()=0;
     };
 
-    class X86CpuCollector:CpuCollector{
+    class X86CpuCollector:public CpuCollector{
     public:
-        CPUCollection* get_cpu_info();
+        CPUCollection* get_cpu_info() override;
     };
 
-    class ARMCpuCollector:CpuCollector {
+    class ARMCpuCollector:public CpuCollector {
     public:
-        CPUCollection* get_cpu_info();
+        CPUCollection* get_cpu_info() override;
     };
 }
 
