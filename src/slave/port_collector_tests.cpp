@@ -4,6 +4,7 @@
 #include <gmock/gmock.h>
 
 #include <port_collector.hpp>
+#include "runtime_resources_usage.hpp"
 
 TEST(PortCollectionTests, GetPortInfo) {
     chameleon::PortCollector portCollector;
@@ -15,7 +16,11 @@ TEST(PortCollectionTests, GetPortInfo) {
         cout << "firstport[" << i << "]: " << index->firstport() << endl;
         cout << "lastport [" << i << "]: " << index->lastport()<< endl;
     }
+}
 
+TEST(NetSpeedTest,Test){
+    chameleon::RuntimeResourceUsage runtimeResourceUsage;
+    NetUsage* netUsage = runtimeResourceUsage.cal_net_usage();
 }
 
 int main(int argc, char **argv) {

@@ -30,7 +30,7 @@ using std::vector;
 using std::set;
 using net::links;
 
-namespace  chameleon{
+namespace chameleon {
 
     class RuntimeResourceUsage {
 
@@ -45,7 +45,7 @@ namespace  chameleon{
         * Parameter    ：none
         * Return       ：DiskUsage*
         */
-        DiskUsage* get_disk_usage();
+        DiskUsage *get_disk_usage();
 
         /*
          * Function name：select_memusage
@@ -56,7 +56,8 @@ namespace  chameleon{
          * Parameter    ：none
          * Return       ：MemoryUsage m_memory_usage
          */
-        MemoryUsage* select_memusage();
+        MemoryUsage *select_memusage();
+
         /*
          * Function name：show_memusage
          * Author       ：marcie
@@ -69,35 +70,27 @@ namespace  chameleon{
         void show_memusage();
 
         /* cpu function */
-        typedef struct CPUTime
-        {
+        typedef struct CPUTime {
             char cpu_name[20];
             unsigned int user_time;
             unsigned int nice_time;
             unsigned int system_time;
             unsigned int idle_time;
-        } CpuOccupy ;
-        void get_cpu_used_info (CpuOccupy *o) ;
-        CPUUsage* cal_cpu_usage (CpuOccupy *first_info, CpuOccupy *second_info) ;
+        } CpuOccupy;
 
-        /*netspeed struct*/
-        typedef struct NetMessage
-        {
-            char netcard_name[20];
-            long int save_rate;
-        }NetMessage;
+        void get_cpu_used_info(CpuOccupy *o);
 
-        long int get_net_used_info(NetMessage *net);
-        NetUsage *cal_net_usage(NetMessage *first_time, NetMessage *last_time);
+        CPUUsage *cal_cpu_usage(CpuOccupy *first_info, CpuOccupy *second_info);
 
+        void get_net_used_info(long int *save_rate);
+
+        NetUsage *cal_net_usage();
 
         RuntimeResourceUsage();
 
         virtual ~RuntimeResourceUsage();
-
     };
 }
-
 
 
 #endif //CHAMELEON_RUNTIME_RESOURCES_COLLECTOR_HPP
