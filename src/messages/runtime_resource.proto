@@ -3,7 +3,7 @@ message RuntimeResourcesMessage
 {
     required string slave_id =1;
     required CPUUsage cpu_usage = 2;
-    required MemoryUsage  mem_usage = 3;
+    required MemoryUsage  mem_usage = 3;  //Runtime memory information
     required DiskUsage disk_usage = 4;
     required NetUsage net_usage = 5;
 }
@@ -12,15 +12,17 @@ message CPUUsage{
     required float cpu_used = 1;
 }
 
-message MemoryUsage {
-    required uint32 mem_total = 1;
-    required uint32 mem_free = 2;
-    required uint32 mem_available = 3;
-    required uint32 buffers = 4;
-    required uint32 cached = 5;
-    required uint32 swap_total = 6;
-    required uint32 swap_free = 7;
-    required uint32 hugepagesize = 8;
+message MemoryUsage {  //Their unit is KB
+    required uint32 mem_total = 1;  //Total usable ram
+    required uint32 mem_free = 2;  //The sum of LowFree+HighFree
+    required uint32 mem_available = 3;  //An estimate of how much memory is available for starting new
+                                        //applications, without swapping.
+    required uint32 buffers = 4;  //Relatively temporary storage for raw disk blocks
+                                    //shouldn't get tremendously large
+    required uint32 cached = 5;  //in-memory cache for files read from the disk
+    required uint32 swap_total = 6;  //total amount of swap space available
+    required uint32 swap_free = 7;  //Memory which has been evicted from RAM, and is temporarily on the disk
+    required uint32 hugepagesize = 8;  //number of pages
 }
 
 
