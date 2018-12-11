@@ -30,9 +30,8 @@
 }*/
 
 .side-menu {
-    position: fixed;
-    width: 300px;
-    height: 100%;
+    padding-bottom:50%;
+    /*height: 1000px;*/
     background-color: #f8f8f8;
     border-right: 1px solid #e7e7e7;
 }

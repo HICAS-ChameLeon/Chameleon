@@ -28,11 +28,12 @@
         margin-right: 20px;
     }
 </style>
-<div class="row">
+
+<div class="row" >
     <!-- uncomment code for absolute positioning tweek see top comment in css -->
     <!-- <div class="absolute-wrapper"> </div> -->
     <!-- Menu -->
-    <div class="side-menu">
+    <div class="side-menu col-md-3 col-lg-3">
 
         <nav class="navbar navbar-default" role="navigation">
             <!-- Brand and toggle get grouped for better mobile display -->
@@ -49,7 +50,7 @@
                     <!-- Brand -->
                     <div class="brand-name-wrapper">
                         <a class="navbar-brand" href="#">
-                            <p style="font-family: verdana;font-size:250%"> Chameleon</p>
+                            <p style="font-family: verdana;font-size:200%"> Chameleon</p>
                         </a>
                         <div class="left" style="float: right">
                             <img src="../icon/chameleon-icon" style="width: 60px;height: 60px">
@@ -105,171 +106,214 @@
     </div>
 
     <!-- Main Content -->
-    <div style="margin-left: 330px; margin-top: 15px; height:50px">
-        <p style="font-size: 200%;">
-            <svg class="icon" aria-hidden="true">
-                <use xlink:href="#icon-kongzhitai-"></use>
-            </svg>
-            控制模块
-        </p>
+    <div class="col-md-8 col-lg-8 ">
+        <div class="row">
+            <p style="font-size: 200%;">
+                <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-kongzhitai-"></use>
+                </svg>
+                控制模块
+            </p>
+        </div>
+
+        <div class="row">
+            <ul id="myTab" class="nav nav-tabs" style="margin-top: 0px">
+
+                <li class="active">
+                    <a href="#slave_node" data-toggle="tab" style="font-size: 150%">
+                        机器节点
+                    </a>
+                </li>
+                <li>
+                    <a href="#resource" data-toggle="tab" style="font-size: 150%">
+                        集群资源使用统计
+                    </a>
+                </li>
+                <li>
+                    <a href="#algorithm option" data-toggle="tab" style="font-size: 150%">
+                        调度算法选择
+                    </a>
+                </li>
+                <li>
+                    <a href="#scheduling policy" data-toggle="tab" style="font-size: 150%">
+                        时空共享调度策略
+                    </a>
+                </li>
+                <li>
+                    <a href="#network topology" data-toggle="tab" style="font-size: 150%">
+                        网络拓扑图
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="row">
+            <!--</div>-->
+            <div id="myTabContent" class="tab-content" style="font-size: 150%; margin-top: 15px">
+                <div class="tab-pane fade in active" id="submit_work">
+                    <div class="container-fluid">
+                        <h1> Main Content here </h1>
+                        <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
+
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="slave_node">
+                    <div class="container-fluid">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>id</th>
+                                <th>作业名字</th>
+                                <th>CPU使用</th>
+                                <th>内存</th>
+                                <th>硬盘</th>
+                                <th>端口</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>2</td>
+                                <td>1核</td>
+                                <td>1G</td>
+                                <td>5G</td>
+                                <td>123.12.23.2/</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>3</td>
+                                <td>1核</td>
+                                <td>1G</td>
+                                <td>5G</td>
+                                <td>123.12.23.2/</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="resource">
+                    <div class="container-fluid">
+                        <table class="table table-hover" ng-app="resourceAPP" ng-controller="resourceCtrl">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>IP</th>
+                                <th>CPU使用率</th>
+                                <th>内存使用率</th>
+                                <th>硬盘使用率</th>
+                                <th>交换空间使用率</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="x in content">
+                                <td>blank</td>
+                                <td>{{x.slave_id}}</td>
+                                <td>{{x.cpu_usage.cpu_used | number:2}} %</td>
+                                <td>{{x.mem_usage.mem_available / x.mem_usage.mem_total * 100 | number:2}} %</td>
+                                <td>{{x.disk_usage.available_percent | number:2}} %</td>
+                                <td>{{x.mem_usage.swap_free / x.mem_usage.swap_total * 100 | number:2}} %</td>
+                                <td></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="algorithm option">
+                    <div class="container-fluid">
+                        <div class="side-body">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th>id</th>
+                                    <th>作业名字</th>
+                                    <th>CPU使用</th>
+                                    <th>内存</th>
+                                    <th>硬盘</th>
+                                    <th>端口</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>0</td>
+                                    <td>1</td>
+                                    <td>1核</td>
+                                    <td>1G</td>
+                                    <td>5G</td>
+                                    <td>123.12.23.2/</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="scheduling policy">
+                    <div class="container-fluid">
+                        <div class="side-body">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th>id</th>
+                                    <th>作业名字</th>
+                                    <th>CPU使用</th>
+                                    <th>内存</th>
+                                    <th>硬盘</th>
+                                    <th>端口</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>0</td>
+                                    <td>1</td>
+                                    <td>1核</td>
+                                    <td>1G</td>
+                                    <td>5G</td>
+                                    <td>123.12.23.2/</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="network topology">
+                    <div class="container-fluid">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>id</th>
+                                <th>作业名字</th>
+                                <th>CPU使用</th>
+                                <th>内存</th>
+                                <th>硬盘</th>
+                                <th>端口</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>2</td>
+                                <td>1核</td>
+                                <td>1G</td>
+                                <td>5G</td>
+                                <td>123.12.23.2/</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>3</td>
+                                <td>1核</td>
+                                <td>1G</td>
+                                <td>5G</td>
+                                <td>123.12.23.2/</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-    <ul id="myTab" class="nav nav-tabs" style="margin-left:300px; margin-top: 0px">
 
-        <li class="active">
-            <a href="#slave_node" data-toggle="tab" style="font-size: 150%">
-                机器节点
-            </a>
-        </li>
-        <li>
-            <a href="#resource" data-toggle="tab" style="font-size: 150%">
-                集群资源使用统计
-            </a>
-        </li>
-        <li>
-            <a href="#algorithm option" data-toggle="tab" style="font-size: 150%">
-                调度算法选择
-            </a>
-        </li>
-        <li>
-            <a href="#scheduling policy" data-toggle="tab" style="font-size: 150%">
-                时空共享调度策略
-            </a>
-        </li>
-    </ul>
-    <!--</div>-->
-    <div id="myTabContent" class="tab-content" style="font-size: 150%; margin-top: 15px">
-        <div class="tab-pane fade in active" id="submit_work">
-            <div class="container-fluid">
-                <div class="side-body">
-                    <h1> Main Content here </h1>
-                    <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
 
-                </div>
-            </div>
-        </div>
-        <div class="tab-pane fade" id="slave_node">
-            <div class="container-fluid">
-                <div class="side-body">
-                    <table class="table table-hover">
-                        <thead>
-                        <tr>
-                            <th>id</th>
-                            <th>作业名字</th>
-                            <th>CPU使用</th>
-                            <th>内存</th>
-                            <th>硬盘</th>
-                            <th>端口</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>2</td>
-                            <td>1核</td>
-                            <td>1G</td>
-                            <td>5G</td>
-                            <td>123.12.23.2/</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>3</td>
-                            <td>1核</td>
-                            <td>1G</td>
-                            <td>5G</td>
-                            <td>123.12.23.2/</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="tab-pane fade" id="resource">
-            <div class="container-fluid">
-                <div class="side-body"  ng-app="resourceAPP" ng-controller="resourceCtrl">
-                    <table class="table table-hover" >
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>IP</th>
-                            <th>CPU使用率</th>
-                            <th>内存使用率</th>
-                            <th>硬盘使用率</th>
-                            <th>交换空间使用率</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr ng-repeat="x in content">
-                            <td>blank</td>
-                            <td>{{x.slave_id}}</td>
-                            <td>{{x.cpu_usage.cpu_used | number:2}} %</td>
-                            <td>{{x.mem_usage.mem_available / x.mem_usage.mem_total * 100 | number:2}} %</td>
-                            <td>{{x.disk_usage.available_percent | number:2}} %</td>
-                            <td>{{x.mem_usage.swap_free / x.mem_usage.swap_total * 100 | number:2}} %</td>
-                            <td></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="tab-pane fade" id="algorithm option">
-            <div class="container-fluid">
-                <div class="side-body">
-                    <table class="table table-hover">
-                        <thead>
-                        <tr>
-                            <th>id</th>
-                            <th>作业名字</th>
-                            <th>CPU使用</th>
-                            <th>内存</th>
-                            <th>硬盘</th>
-                            <th>端口</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>0</td>
-                            <td>1</td>
-                            <td>1核</td>
-                            <td>1G</td>
-                            <td>5G</td>
-                            <td>123.12.23.2/</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="tab-pane fade" id="scheduling policy">
-            <div class="container-fluid">
-                <div class="side-body">
-                    <table class="table table-hover">
-                        <thead>
-                        <tr>
-                            <th>id</th>
-                            <th>作业名字</th>
-                            <th>CPU使用</th>
-                            <th>内存</th>
-                            <th>硬盘</th>
-                            <th>端口</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>0</td>
-                            <td>1</td>
-                            <td>1核</td>
-                            <td>1G</td>
-                            <td>5G</td>
-                            <td>123.12.23.2/</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-    </div>
 </div>
 
 <script src="../js/bootstrap.min.js"></script>
