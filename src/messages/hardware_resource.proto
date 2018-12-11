@@ -65,8 +65,8 @@ message GPUInfo {
     optional int32 physical_id =5;
     optional string bus_info =6;
     optional string version =7;
-    optional string width =8;
-    optional string clock =9;
+    optional int32 width =8;           //unit 'bits'
+    optional int32 clock =9;           //unit 'MHz'
     optional string capabilities =10;
     optional string configuration =11;
     optional string resources =12;
