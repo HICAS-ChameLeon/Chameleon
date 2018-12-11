@@ -6,6 +6,7 @@
  */
 
 #include "slave.hpp"
+#include <slave_flags.hpp>
 
 namespace chameleon {
 
@@ -150,6 +151,15 @@ int main(int argc, char **argv) {
     chameleon::set_flags_of_glog();
 
     LOG(INFO) << "glog files paths configuration for slave finished. OK!";
+
+
+    /* Desciption : SlaveFlagsTest
+     * Author     : weiguow
+     * */
+//    chameleon::SlaveFlagsBase slaveFlagsBase;
+//    os::setenv("SLAVEFLAGS_slave_port","6061a");
+//    Try<Warnings> load = slaveFlagsBase.load("SLAVEFLAGS");
+//    string slport = std::to_string(slaveFlagsBase.slave_port);
 
     os::setenv("LIBPROCESS_PORT", stringify(6061));
     process::initialize("slave");
