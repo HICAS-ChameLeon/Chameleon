@@ -48,7 +48,9 @@ namespace chameleon {
                 } else if (*vec == "vendor") {
                     gpuInfo->set_vendor(strings::trim(*(vec + 1), " "));
                 } else if (*vec == "physical id") {
-                    gpuInfo->set_physical_id(strings::trim(*(vec + 1), " "));
+                    string p_is = strings::trim(*(vec + 1), " ");
+                    int i = boost::lexical_cast<int>(p_is);
+                    gpuInfo->set_physical_id(i);
                 } else if (*vec == "bus info") {
                     gpuInfo->set_bus_info(strings::trim(*(vec + 1), " "));
                 } else if (*vec == "version") {

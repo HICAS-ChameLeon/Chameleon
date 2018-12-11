@@ -62,7 +62,7 @@ message GPUInfo {
     required string description =2;
     required string product =3;
     required string vendor =4;
-    optional string physical_id =5;
+    optional int32 physical_id =5;
     optional string bus_info =6;
     optional string version =7;
     optional string width =8;
