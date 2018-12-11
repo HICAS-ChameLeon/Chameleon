@@ -48,7 +48,7 @@
                     <!-- Brand -->
                     <div class="brand-name-wrapper">
                         <a class="navbar-brand" href="#">
-                            <p style="font-family: verdana;font-size:200%"> Chameleon</p>
+                            <p style="font-family: verdana;font-size:200%">Chameleon</p>
                         </a>
                         <div class="left" style="float: right">
                             <img src="../icon/chameleon-icon" style="width: 60px;height: 60px">
@@ -108,90 +108,76 @@
         <div style="margin-top: 15px; height:50px">
         <p style="font-size: 200%;">
             <svg class="icon" aria-hidden="true">
-                <use xlink:href="#icon-zuoye"></use>
+                <use xlink:href="#icon-kongzhitai-"></use>
             </svg>
-            作业
+            控制模块
         </p>
     </div>
         <ul id="myTab" class="nav nav-tabs">
         <li class="active">
-            <a href="#submit_work" data-toggle="tab" style="font-size: 150%">
-                提交新作业
+            <a href="#hardware" data-toggle="tab" style="font-size: 150%">
+                机器节点
             </a>
         </li>
-        <li><a href="#completed" data-toggle="tab" style="font-size: 150%">
-            已完成
+        <li><a href="#runtime" data-toggle="tab" style="font-size: 150%">
+            集群资源使用统计
         </a></li>
-        <li><a href="#failed" data-toggle="tab" style="font-size: 150%">
-            失败
+        <li><a href="#algorithm" data-toggle="tab" style="font-size: 150%">
+            调度算法选择
+        </a></li>
+        <li><a href="#timeandspace" data-toggle="tab" style="font-size: 150%">
+            时空共享调度策略
         </a></li>
     </ul>
         <div id="myTabContent" class="tab-content" style="font-size: 150%; margin-top: 15px">
-        <div class="tab-pane fade in active" id="submit_work">
+        <div class="tab-pane fade in active" id="hardware">
             <div class="container-fluid">
-                <h1> Main Content here </h1>
-                <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
-
+                <div ng-app="myApp" ng-controller="hardware">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>IP</th>
+                            <th>CPU数</th>
+                            <th>磁盘数</th>
+                            <th>GPU数</th>
+                            <th>内存容量</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="x in hardware">
+                            <td>kong</td>
+                            <td>
+                                {{x.slave_id}}
+                            </td>
+                            <td>
+                                {{x.cpu_collection.cpu_quantity}}
+                            </td>
+                            <td>
+                                {{x.disk_collection.disk_quantity}}
+                            </td>
+                            <td>
+                                {{x.gpu_collection.gpu_quantity}}
+                            </td>
+                            <td>
+                                {{x.mem_collection.max_size}}
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-        <div class="tab-pane fade" id="completed">
+        <div class="tab-pane fade" id="runtime">
             <div class="container-fluid">
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th>id</th>
-                        <th>作业名字</th>
-                        <th>CPU使用</th>
-                        <th>内存</th>
-                        <th>硬盘</th>
-                        <th>端口</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>2</td>
-                        <td>1核</td>
-                        <td>1G</td>
-                        <td>5G</td>
-                        <td>123.12.23.2/</td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>3</td>
-                        <td>1核</td>
-                        <td>1G</td>
-                        <td>5G</td>
-                        <td>123.12.23.2/</td>
-                    </tr>
-                    </tbody>
-                </table>
             </div>
         </div>
-        <div class="tab-pane fade" id="failed">
+        <div class="tab-pane fade" id="algorithm">
             <div class="container-fluid">
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th>id</th>
-                        <th>作业名字</th>
-                        <th>CPU使用</th>
-                        <th>内存</th>
-                        <th>硬盘</th>
-                        <th>端口</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>0</td>
-                        <td>1</td>
-                        <td>1核</td>
-                        <td>1G</td>
-                        <td>5G</td>
-                        <td>123.12.23.2/</td>
-                    </tr>
-                    </tbody>
-                </table>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="timeandspace">
+            <div class="container-fluid">
             </div>
         </div>
     </div>
@@ -201,7 +187,7 @@
 <script src="../js/bootstrap.min.js"></script>
 <script src="../js/navbar.js"></script>
 <script src="../js/iconfont.js"></script>
-
+<script src="../js/app.js"></script>
 </body>
 
 </html>
