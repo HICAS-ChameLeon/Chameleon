@@ -1,6 +1,6 @@
 /*
  * Copyright  ：SIAT 异构智能计算体系结构与系统研究中心
- * Author     ：weiguo 2573777501@qq.com
+ * Author     ：weiguow 2573777501@qq.com
  * Date       ：18-12-10
  * Description：slave flags
  */
@@ -38,7 +38,7 @@ namespace chameleon{
             add(&SlaveFlagsBase::master_ip,
                     "master_ip",
                     "set master_ip",
-                    6060);
+                    "172.20.110.228");
 
             /*master hostname*/
             add(&SlaveFlagsBase::master_hostname,

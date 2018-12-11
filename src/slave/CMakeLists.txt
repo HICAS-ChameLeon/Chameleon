@@ -36,7 +36,7 @@ add_executable(port_collector_tests ${port_collector_tests_SRCS})
 target_link_libraries(port_collector_tests hardware_resource runtime_resource ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS} )
 
 set(runtime_resource_SRCS runtime_resources_usage.hpp runtime_resources_usage.cpp)
-set(slave_SRCS slave.hpp slave.cpp resource_collector.hpp resource_collector.cpp)
+set(slave_SRCS  slave.hpp slave_flags.hpp slave.cpp  resource_collector.hpp resource_collector.cpp)
 
 list(APPEND slave_SRCS ${runtime_resource_SRCS})
 list(APPEND slave_SRCS ${cpu_SRCS})
