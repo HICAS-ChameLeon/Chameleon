@@ -168,10 +168,10 @@ int main(int argc, char **argv) {
             LOG(INFO) << "The input was misformatted";
             LOG(INFO) << slaveFlagsBase.usage();
         } else {
-            for (int i = 0; i < argc; i++) {
-                string cin_message = argv[i];
+                string cin_message = argv[1];
                 if (cin_message == "--help") {
                     LOG(INFO) << slaveFlagsBase.usage();
+
                 } else {
                     os::setenv("LIBPROCESS_PORT", stringify(slaveFlagsBase.slave_port));
                     process::initialize("slave");
@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
                     LOG(INFO) << slave_pid;
                     process::wait(slave.self());
                 }
-            }
+            
         }
 
     }

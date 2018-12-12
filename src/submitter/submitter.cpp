@@ -44,11 +44,9 @@ int main(int argc, char** argv) {
             LOG(INFO) << "The input was misformatted";
             LOG(INFO) << submitterFlagsBase.usage();
         } else {
-            for(int i = 0;i<argc;i++) {
-                string cin_message = argv[i];
+                string cin_message = argv[1];
                 if (cin_message == "--help") {
                     LOG(INFO) << submitterFlagsBase.usage();
-                    continue;
                 } else {
                     os::setenv("LIBPROCESS_PORT", stringify(submitterFlagsBase.submitter_run_port));
                     process::initialize("submitter");
@@ -68,7 +66,7 @@ int main(int argc, char** argv) {
 //    process::terminate(submitter.self());
                     process::wait(submitter.self());
                 }
-            }
+
         }
     }
     return 0;
