@@ -4,6 +4,7 @@
  * Date       ：18-12-10
  * Description：slave flags
  */
+#include <iostream>
 
 #include <stout/flags/flags.hpp>
 #include <stout/os.hpp>
@@ -20,24 +21,31 @@ using std::map;
 
 using utils::arraySize;
 
-namespace chameleon{
-    class SubmitterFlagsBase:public virtual FlagsBase{
+namespace chameleon {
+    class SubmitterFlagsBase : public virtual FlagsBase {
     public:
-        string path;
-        string p;
+        string spark_path;
+        string master_ip_and_port;
+        int submitter_run_port;
 
         SubmitterFlagsBase() {
             /*program run path*/
-            add(&SubmitterFlagsBase::p,
-                "program run path",
-                "set run path",
-                "~/spark/sbin/start-master.sh");
+            add(&SubmitterFlagsBase::spark_path,
+                "spath",
+                "spark exists path",
+                "/home/lemaker/software/spark-2.3.0-bin-hadoop2.7.tgz");
 
             /*program output path*/
-            add(&SubmitterFlagsBase::path,
-                    "program output path",
-                    "set output path",
-                    "~/output")
-        }  76559876543fdrwq
+
+            add(&SubmitterFlagsBase::master_ip_and_port,
+                "iport",
+                "master ip and port",
+                "172.20.110.228:6060");
+
+            add(&SubmitterFlagsBase::submitter_run_port,
+                "rport",
+                "submitter run port",
+                6062);
+        }
     };
 }
