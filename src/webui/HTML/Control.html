@@ -106,6 +106,7 @@
     <!-- Main Content -->
     <div class="col-lg-9 col-md-9">
         <div style="margin-top: 15px; height:50px">
+            <img src="../icon/HICAS.png" style="float: right;width: 80px;height: 100px" alt="">
         <p style="font-size: 200%;">
             <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-kongzhitai-"></use>
@@ -146,7 +147,7 @@
                         </thead>
                         <tbody>
                         <tr ng-repeat="x in hardware">
-                            <td>kong</td>
+                            <td>{{x.slave_uuid}}</td>
                             <td>
                                 {{x.slave_id}}
                             </td>
@@ -185,7 +186,7 @@
                         </thead>
                         <tbody>
                         <tr ng-repeat="x in runtime">
-                            <td>blank</td>
+                            <td>{{x.slave_uuid}}</td>
                             <td>{{x.slave_id}}</td>
                             <td>{{x.cpu_usage.cpu_used | number:2}} %</td>
                             <td>{{x.mem_usage.mem_available / x.mem_usage.mem_total * 100 | number:2}} %</td>

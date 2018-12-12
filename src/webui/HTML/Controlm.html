@@ -5,7 +5,6 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Control Module</title>
 
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="../css/navbar.css">
@@ -32,7 +31,7 @@
     <!-- uncomment code for absolute positioning tweek see top comment in css -->
     <!-- <div class="absolute-wrapper"> </div> -->
     <!-- Menu -->
-    <div class="side-menu">
+    <div class="side-menu col-md-3 col-lg-3">
 
         <nav class="navbar navbar-default" role="navigation">
             <!-- Brand and toggle get grouped for better mobile display -->
@@ -49,7 +48,7 @@
                     <!-- Brand -->
                     <div class="brand-name-wrapper">
                         <a class="navbar-brand" href="#">
-                            <p style="font-family: verdana;font-size:250%"> Chameleon</p>
+                            <p style="font-family: verdana;font-size:200%">Chameleon</p>
                         </a>
                         <div class="left" style="float: right">
                             <img src="../icon/chameleon-icon" style="width: 60px;height: 60px">
@@ -64,7 +63,7 @@
                 <ul class="nav navbar-nav">
 
                     <li>
-                        <a href="Controlm.html" style="font-size: 150%;">
+                        <a href="Control.html" style="font-size: 150%;">
                             <svg class="icon" aria-hidden="true">
                                 <use xlink:href="#icon-kongzhitai-"></use>
                             </svg>
@@ -105,195 +104,121 @@
     </div>
 
     <!-- Main Content -->
-    <div style="margin-left: 330px; margin-top: 15px; height:50px">
-        <p style="font-size: 200%;">
-            <svg class="icon" aria-hidden="true">
-                <use xlink:href="#icon-kongzhitai-"></use>
-            </svg>
-            控制模块
-        </p>
-    </div>
-    <ul id="myTab" class="nav nav-tabs" style="margin-left:300px; margin-top: 0px">
-
-        <li class="active">
-            <a href="#slave_node" data-toggle="tab" style="font-size: 150%">
-                机器节点
-            </a>
-        </li>
-        <li>
-            <a href="#resource" data-toggle="tab" style="font-size: 150%">
+    <div class="col-lg-9 col-md-9">
+        <div style="margin-top: 15px; height:50px">
+            <img src="../icon/HICAS.png" style="float: right;width: 80px;height: 100px" alt="">
+            <p style="font-size: 200%;">
+                <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-kongzhitai-"></use>
+                </svg>
+                控制模块
+            </p>
+        </div>
+        <ul id="myTab" class="nav nav-tabs">
+            <li class="active">
+                <a href="#hardware" data-toggle="tab" style="font-size: 150%">
+                    机器节点
+                </a>
+            </li>
+            <li><a href="#runtime" data-toggle="tab" style="font-size: 150%">
                 集群资源使用统计
-            </a>
-        </li>
-        <li>
-            <a href="#algorithm option" data-toggle="tab" style="font-size: 150%">
+            </a></li>
+            <li><a href="#algorithm" data-toggle="tab" style="font-size: 150%">
                 调度算法选择
-            </a>
-        </li>
-        <li>
-            <a href="#scheduling policy" data-toggle="tab" style="font-size: 150%">
+            </a></li>
+            <li><a href="#timeandspace" data-toggle="tab" style="font-size: 150%">
                 时空共享调度策略
-            </a>
-        </li>
-    </ul>
-    <!--</div>-->
-    <div id="myTabContent" class="tab-content" style="font-size: 150%; margin-top: 15px">
-        <div class="tab-pane fade in active" id="submit_work">
-            <div class="container-fluid">
-                <div class="side-body">
-                    <h1> Main Content here </h1>
-                    <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
+            </a></li>
+        </ul>
+        <div id="myTabContent" class="tab-content" style="font-size: 150%; margin-top: 15px">
+            <div class="tab-pane fade in active" id="hardware">
+                <div class="container-fluid">
+                    <div ng-app="myApp" ng-controller="hardware">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>IP</th>
+                                <th>CPU数</th>
+                                <th>磁盘数</th>
+                                <th>GPU数</th>
+                                <th>内存容量</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="x in hardware">
+                                <td>{{x.slave_uuid}}</td>
+                                <td>
+                                    {{x.slave_id}}
+                                </td>
+                                <td>
+                                    {{x.cpu_collection.cpu_quantity}}
+                                </td>
+                                <td>
+                                    {{x.disk_collection.disk_quantity}}
+                                </td>
+                                <td>
+                                    {{x.gpu_collection.gpu_quantity}}
+                                </td>
+                                <td>
+                                    {{x.mem_collection.max_size}}
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
+            <div class="tab-pane fade" id="runtime">
+                <div class="container-fluid">
+                    <div ng-app="runtimeApp" ng-controller="runtimeCtrl">
+                        <table class="table table-hover" >
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>IP</th>
+                                <th>CPU使用率</th>
+                                <th>内存使用率</th>
+                                <th>硬盘使用率</th>
+                                <th>交换空间使用率</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="x in runtime">
+                                <td>{{x.slave_uuid}}</td>
+                                <td>{{x.slave_id}}</td>
+                                <td>{{x.cpu_usage.cpu_used | number:2}} %</td>
+                                <td>{{x.mem_usage.mem_available / x.mem_usage.mem_total * 100 | number:2}} %</td>
+                                <td>{{x.disk_usage.available_percent | number:2}} %</td>
+                                <td>{{x.mem_usage.swap_free / x.mem_usage.swap_total * 100 | number:2}} %</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="algorithm">
+                <div class="container-fluid">
+                </div>
+            </div>
+            <div class="tab-pane fade" id="timeandspace">
+                <div class="container-fluid">
                 </div>
             </div>
         </div>
-        <div class="tab-pane fade" id="slave_node">
-            <div class="container-fluid">
-                <div class="side-body">
-                    <table class="table table-hover">
-                        <thead>
-                        <tr>
-                            <th>id</th>
-                            <th>作业名字</th>
-                            <th>CPU使用</th>
-                            <th>内存</th>
-                            <th>硬盘</th>
-                            <th>端口</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>2</td>
-                            <td>1核</td>
-                            <td>1G</td>
-                            <td>5G</td>
-                            <td>123.12.23.2/</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>3</td>
-                            <td>1核</td>
-                            <td>1G</td>
-                            <td>5G</td>
-                            <td>123.12.23.2/</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="tab-pane fade" id="resource">
-            <div class="container-fluid">
-                <div class="side-body"  ng-app="resourceAPP" ng-controller="resourceCtrl">
-                    <table class="table table-hover" >
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>IP</th>
-                            <th>CPU使用率</th>
-                            <th>内存使用率</th>
-                            <th>硬盘使用率</th>
-                            <th>交换空间使用率</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr ng-repeat="x in content">
-                            <td>blank</td>
-                            <td>{{x.slave_id}}</td>
-                            <td>{{x.cpu_usage.cpu_used | number:2}} %</td>
-                            <td>{{x.mem_usage.mem_available / x.mem_usage.mem_total * 100 | number:2}} %</td>
-                            <td>{{x.disk_usage.available_percent | number:2}} %</td>
-                            <td>{{x.mem_usage.swap_free / x.mem_usage.swap_total * 100 | number:2}} %</td>
-                            <td></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="tab-pane fade" id="algorithm option">
-            <div class="container-fluid">
-                <div class="side-body">
-                    <table class="table table-hover">
-                        <thead>
-                        <tr>
-                            <th>id</th>
-                            <th>作业名字</th>
-                            <th>CPU使用</th>
-                            <th>内存</th>
-                            <th>硬盘</th>
-                            <th>端口</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>0</td>
-                            <td>1</td>
-                            <td>1核</td>
-                            <td>1G</td>
-                            <td>5G</td>
-                            <td>123.12.23.2/</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="tab-pane fade" id="scheduling policy">
-            <div class="container-fluid">
-                <div class="side-body">
-                    <table class="table table-hover">
-                        <thead>
-                        <tr>
-                            <th>id</th>
-                            <th>作业名字</th>
-                            <th>CPU使用</th>
-                            <th>内存</th>
-                            <th>硬盘</th>
-                            <th>端口</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>0</td>
-                            <td>1</td>
-                            <td>1核</td>
-                            <td>1G</td>
-                            <td>5G</td>
-                            <td>123.12.23.2/</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
 
 <script src="../js/bootstrap.min.js"></script>
 <script src="../js/navbar.js"></script>
 <script src="../js/iconfont.js"></script>
-<script>
-    var resource_app = angular.module('resourceAPP', []);
-
-
-    resource_app.controller('resourceCtrl', function($scope, $http) {
-        $http({
-            method: 'GET',
-            url: 'http://172.20.110.228:6060/master/runtime-resources'
-        }).then(function successCallback(response) {
-            $scope.content = response.data.content;
-            $scope.quantity = response.data.quantity;
-            console.log($scope.content)
-        }, function errorCallback(response) {
-            // 请求失败执行代码
-        });
-    });
-</script>
-
+<script src="../js/app.js"></script>
 
 </body>
 
 </html>
+
+
+
+
