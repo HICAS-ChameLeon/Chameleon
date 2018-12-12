@@ -2,14 +2,14 @@
 message RuntimeResourcesMessage
 {
     required string slave_id =1;
-    required CPUUsage cpu_usage = 2;
+    required CPUUsage cpu_usage = 2;       //Runtime CPU information
     required MemoryUsage  mem_usage = 3;  //Runtime memory information
     required DiskUsage disk_usage = 4;
     required NetUsage net_usage = 5;
 }
 
 message CPUUsage{
-    required float cpu_used = 1;
+    required float cpu_used = 1;    //CPU Usage
 }
 
 message MemoryUsage {  //Their unit is KB
