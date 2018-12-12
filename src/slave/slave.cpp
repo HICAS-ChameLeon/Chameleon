@@ -6,7 +6,7 @@
  */
 
 #include "slave.hpp"
-#include <slave_flags.hpp>
+#include "slave_flags.hpp"
 
 namespace chameleon {
 
@@ -156,25 +156,41 @@ int main(int argc, char **argv) {
 
     LOG(INFO) << "glog files paths configuration for slave finished. OK!";
 
+    chameleon::SlaveFlagsBase slaveFlagsBase;
+    Try<Warnings> load = slaveFlagsBase.load("SLAVE", argc, argv);
+    slaveFlagsBase.setUsageMessage("Slaveflags");
 
-    /* Desciption : SlaveFlagsTest
-     * Author     : weiguow
-     * */
-//    chameleon::SlaveFlagsBase slaveFlagsBase;
-//    os::setenv("SLAVEFLAGS_slave_port","6061a");
-//    Try<Warnings> load = slaveFlagsBase.load("SLAVEFLAGS");
-//    string slport = std::to_string(slaveFlagsBase.slave_port);
+    if (argc <= 1) {
+        LOG(INFO) << "Run this program need to set parameters";
+        LOG(INFO) << slaveFlagsBase.usage();
+    } else {
+        if (load.isError()) {
+            LOG(INFO) << "The input was misformatted";
+            LOG(INFO) << slaveFlagsBase.usage();
+        } else {
+            for (int i = 0; i < argc; i++) {
+                string cin_message = argv[i];
+                if (cin_message == "--help") {
+                    LOG(INFO) << slaveFlagsBase.usage();
+                } else {
+                    os::setenv("LIBPROCESS_PORT", stringify(slaveFlagsBase.slave_port));
+                    process::initialize("slave");
 
-    os::setenv("LIBPROCESS_PORT", stringify(6061));
-    process::initialize("slave");
+                    Slave slave;
 
-    Slave slave;
-    PID<Slave> cur_slave = process::spawn(slave);
-    LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
+                    string master_ip_and_port = "master@" + stringify(slaveFlagsBase.master_ip_and_port);
+                    slave.setDEFAULT_MASTER(master_ip_and_port);
 
+                    PID<Slave> cur_slave = process::spawn(slave);
+                    LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
 
-    const PID<Slave> slave_pid = slave.self();
-    LOG(INFO) << slave_pid;
-    process::wait(slave.self());
+                    const PID<Slave> slave_pid = slave.self();
+                    LOG(INFO) << slave_pid;
+                    process::wait(slave.self());
+                }
+            }
+        }
+
+    }
     return 0;
 }

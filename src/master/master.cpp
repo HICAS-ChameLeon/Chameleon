@@ -6,6 +6,7 @@
  */
 
 #include "master.hpp"
+#include "master_flags.hpp"
 
 namespace chameleon {
     void Master::initialize() {
@@ -39,7 +40,7 @@ namespace chameleon {
                         result.values["content"] = JSON::Object();
                     }
                     OK ok_response(stringify(result));
-                    ok_response.headers.insert({"Access-Control-Allow-Origin","*"});
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
                 });
 
@@ -62,7 +63,7 @@ namespace chameleon {
                         result.values["content"] = JSON::Object();
                     }
                     OK ok_response(stringify(result));
-                    ok_response.headers.insert({"Access-Control-Allow-Origin","*"});
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
                 });
 
@@ -117,8 +118,8 @@ namespace chameleon {
 
         // find the best machine whose sum usage of cpu and memory is the lowest.
         Try<string> best_machine = find_min_cpu_and_memory_rates();
-        if(best_machine.isError()){
-            LOG(FATAL)<<" cannot find a appropriate machine to run the job!";
+        if (best_machine.isError()) {
+            LOG(FATAL) << " cannot find a appropriate machine to run the job!";
             return;
         }
         string str_spark_slave = "slave@";
@@ -127,36 +128,37 @@ namespace chameleon {
         UPID spark_slave(str_spark_slave);
         LOG(INFO) << "slave_job_message.is_master = " << slave_job_message.is_master();
         send(spark_slave, slave_job_message);
-        LOG(INFO) << "sent the job to the test slave "<<str_spark_slave<<" successfully!";
+        LOG(INFO) << "sent the job to the test slave " << str_spark_slave << " successfully!";
     }
 
     void Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
         LOG(INFO) << "received a heartbeat message from " << slave;
         auto slave_id = runtime_resouces_message.slave_id();
-        m_runtime_resources[slave_id]= JSON::protobuf(runtime_resouces_message);
+        m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
     }
 
-    Try<string> Master::find_min_cpu_and_memory_rates(){
+    Try<string> Master::find_min_cpu_and_memory_rates() {
         double min_sum_rate = 100.0;
-        string res="";
-        for(auto it=m_proto_runtime_resources.begin();it!=m_proto_runtime_resources.end();it++){
+        string res = "";
+        for (auto it = m_proto_runtime_resources.begin(); it != m_proto_runtime_resources.end(); it++) {
             double cur_cpu_rate;
             double cur_mem_rate;
             auto cur_message = it->second;
-            cur_cpu_rate = cur_message.cpu_usage().cpu_used()*0.01;
-            cur_mem_rate = static_cast<double>(cur_message.mem_usage().mem_available()) / static_cast<double >(cur_message.mem_usage().mem_total());
-            double cur_sum_rate=50*cur_cpu_rate+50*cur_mem_rate;
-            LOG(INFO)<<it->first<<" cpu usage is "<<cur_cpu_rate<<" memory usage is "<<cur_mem_rate;
-            LOG(INFO)<<it->first<<" cur_sum_rate is "<<cur_sum_rate;
-            if(min_sum_rate>cur_sum_rate){
+            cur_cpu_rate = cur_message.cpu_usage().cpu_used() * 0.01;
+            cur_mem_rate = static_cast<double>(cur_message.mem_usage().mem_available()) /
+                           static_cast<double >(cur_message.mem_usage().mem_total());
+            double cur_sum_rate = 50 * cur_cpu_rate + 50 * cur_mem_rate;
+            LOG(INFO) << it->first << " cpu usage is " << cur_cpu_rate << " memory usage is " << cur_mem_rate;
+            LOG(INFO) << it->first << " cur_sum_rate is " << cur_sum_rate;
+            if (min_sum_rate > cur_sum_rate) {
                 min_sum_rate = cur_sum_rate;
                 res = it->first;
             }
         }
-        if(res.empty()){
-            LOG(ERROR)<<" calculate the best machine to schedule the new job failed!";
-         return Error("The whole cluster has no machine");
+        if (res.empty()) {
+            LOG(ERROR) << " calculate the best machine to schedule the new job failed!";
+            return Error("The whole cluster has no machine");
         }
         return res;
     }
@@ -169,16 +171,37 @@ int main(int argc, char **argv) {
     chameleon::set_storage_paths_of_glog("master");// provides the program name
     chameleon::set_flags_of_glog();
 
-    os::setenv("LIBPROCESS_PORT", stringify(6060));
-    process::initialize("master");
+    chameleon::MasterFlagsBase masterFlagsBase;
+    Try<Warnings> load = masterFlagsBase.load("MASTER", argc, argv);
+    masterFlagsBase.setUsageMessage("Masterflags");
 
-    Master master;
-    PID<Master> cur_master = process::spawn(master);
-    LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
+    if (argc <= 1) {
+        LOG(INFO) << "Run this program need to set parameters";
+        LOG(INFO) << masterFlagsBase.usage();
+    } else {
+        if (load.isError()) {
+            LOG(INFO) << "The input was misformatted";
+            LOG(INFO) << masterFlagsBase.usage();
+        } else {
+            for (int i = 0; i < argc; i++) {
+                string cin_message = argv[i];
+                if (cin_message == "--help") {
+                    LOG(INFO) << masterFlagsBase.usage();
+                } else {
+                    os::setenv("LIBPROCESS_PORT", stringify(masterFlagsBase.master_port));
+                    process::initialize("master");
 
-    const PID<Master> master_pid = master.self();
-    LOG(INFO) << master_pid;
+                    Master master;
+                    PID<Master> cur_master = process::spawn(master);
+                    LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
+
+                    const PID<Master> master_pid = master.self();
+                    LOG(INFO) << master_pid;
 //    LOG(ERROR) << "error test";
-    process::wait(master.self());
+                    process::wait(master.self());
+                }
+            }
+        }
+    }
     return 0;
 }
