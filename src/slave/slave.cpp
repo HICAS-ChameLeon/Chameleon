@@ -156,41 +156,35 @@ int main(int argc, char **argv) {
 
     LOG(INFO) << "glog files paths configuration for slave finished. OK!";
 
-    chameleon::SlaveFlagsBase slaveFlagsBase;
-    Try<Warnings> load = slaveFlagsBase.load("SLAVE", argc, argv);
-    slaveFlagsBase.setUsageMessage("Slaveflags");
+    chameleon::SlaveFlagsBase flags;
+    Try<Warnings> load = flags.load("SLAVE", argc, argv);
+    flags.setUsageMessage("Slaveflags");
 
-    if (argc <= 1) {
-        LOG(INFO) << "Run this program need to set parameters";
-        LOG(INFO) << slaveFlagsBase.usage();
-    } else {
-        if (load.isError()) {
-            LOG(INFO) << "The input was misformatted";
-            LOG(INFO) << slaveFlagsBase.usage();
-        } else {
-                string cin_message = argv[1];
-                if (cin_message == "--help") {
-                    LOG(INFO) << slaveFlagsBase.usage();
+    string slave_port = to_string(flags.slave_port);
 
-                } else {
-                    os::setenv("LIBPROCESS_PORT", stringify(slaveFlagsBase.slave_port));
-                    process::initialize("slave");
+    if (flags.master_ip_and_port == "" && flags.master_hostname == "" && slave_port == "0" && flags.help == 0) {
+        cout << "Have no flags: " << flags.usage() << endl;
+    }
+    if (flags.help == 1) {
+        cout << "Test for flags: " << flags.usage() << endl;
+    }
+    if (!flags.master_ip_and_port.empty() || !flags.master_hostname.empty() || flags.slave_port != 0) {
+        os::setenv("LIBPROCESS_PORT", stringify(flags.slave_port));
+        process::initialize("slave");
 
-                    Slave slave;
+        Slave slave;
 
-                    string master_ip_and_port = "master@" + stringify(slaveFlagsBase.master_ip_and_port);
-                    slave.setDEFAULT_MASTER(master_ip_and_port);
+        string master_ip_and_port = "master@" + stringify(flags.master_ip_and_port);
+        slave.setDEFAULT_MASTER(master_ip_and_port);
 
-                    PID<Slave> cur_slave = process::spawn(slave);
-                    LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
+        PID<Slave> cur_slave = process::spawn(slave);
+        LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
 
-                    const PID<Slave> slave_pid = slave.self();
-                    LOG(INFO) << slave_pid;
-                    process::wait(slave.self());
-                }
-            
-        }
-
+        const PID<Slave> slave_pid = slave.self();
+        LOG(INFO) << slave_pid;
+        process::wait(slave.self());
     }
     return 0;
 }
+
+

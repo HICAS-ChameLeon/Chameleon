@@ -52,6 +52,7 @@ using std::string;
 using std::unordered_map;
 using std::shared_ptr;
 using std::make_shared;
+using std::to_string;
 
 using os::Process;
 using os::ProcessTree;
