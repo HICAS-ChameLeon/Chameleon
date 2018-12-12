@@ -183,8 +183,8 @@ int main(int argc, char **argv) {
             LOG(INFO) << "The input was misformatted";
             LOG(INFO) << masterFlagsBase.usage();
         } else {
-            for (int i = 0; i < argc; i++) {
-                string cin_message = argv[i];
+
+                string cin_message = argv[1];
                 if (cin_message == "--help") {
                     LOG(INFO) << masterFlagsBase.usage();
                 } else {
@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
 //    LOG(ERROR) << "error test";
                     process::wait(master.self());
                 }
-            }
+
         }
     }
     return 0;
