@@ -203,9 +203,9 @@
                                         </a>
                                     </div>
                                     <div id="disk{{x.slave_uuid}}" class="collapse">
-                                        name:{{x.disk_collection.disk_infos[0].name}}
-                                        size:{{x.disk_collection.disk_infos[0].size}}
-                                        type:{{x.disk_collection.disk_infos[0].type}}
+                                        name:{{x.disk_collection.disk_infos[0].name}} <br>
+                                        size:{{x.disk_collection.disk_infos[0].size}} <br>
+                                        type:{{x.disk_collection.disk_infos[0].type}} <br>
                                         speed:{{x.disk_collection.disk_infos[0].disk_speed}}
                                     </div>
                                 </td>
@@ -220,8 +220,8 @@
                                         </a>
                                     </div>
                                     <div id="gpu{{x.slave_uuid}}" class="collapse">
-                                        vendor:{{x.gpu_collection.gpu_infos[0].vendor}}
-                                        physical_id:{{x.gpu_collection.gpu_infos[0].physical_id}}
+                                        vendor:{{x.gpu_collection.gpu_infos[0].vendor}} <br>
+                                        physical_id:{{x.gpu_collection.gpu_infos[0].physical_id}} <br>
                                         width:{{x.gpu_collection.gpu_infos[0].width}}
                                     </div>
                                 </td>
@@ -258,7 +258,7 @@
                                 <th>IP</th>
                                 <th>CPU使用率</th>
                                 <th>内存使用率</th>
-                                <th>硬盘使用率</th>
+                                <th>硬盘空闲率</th>
                                 <th>交换空间空闲率</th>
                             </tr>
                             </thead>
@@ -294,7 +294,7 @@
 
 <script src="../js/navbar.js"></script>
 <script src="../js/iconfont.js"></script>
-<script src="../js/iconfont1.js"></script>
+<!--<script src="../js/iconfont1.js"></script>-->
 <script src="../js/app.js"></script>
 
 </body>
