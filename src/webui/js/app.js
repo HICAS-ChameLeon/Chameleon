@@ -18,7 +18,9 @@ app.controller('hardware', function($scope, $http) {
         // 请求失败执行代码
     });
 });
-app.controller('runtime', function($scope, $http) {
+
+var runtimeApp = angular.module('runtimeApp', []);
+runtimeApp.controller('runtimeCtrl', function($scope, $http) {
     $http({
         method: 'GET',
         url: 'http://172.20.110.228:6060/master/runtime-resources'
@@ -31,3 +33,6 @@ app.controller('runtime', function($scope, $http) {
         // 请求失败执行代码
     });
 });
+
+//手动加载ng-app
+angular.bootstrap(document.querySelector('[ng-app="runtimeApp"]'), ['runtimeApp']);

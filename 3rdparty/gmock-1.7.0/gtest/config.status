@@ -437,11 +437,19 @@ Copyright (C) 2012 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
+<<<<<<< HEAD
+ac_pwd='/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest'
+srcdir='.'
+INSTALL='/usr/bin/install -c'
+MKDIR_P='/bin/mkdir -p'
+AWK='mawk'
+=======
 ac_pwd='/home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 MKDIR_P='/bin/mkdir -p'
 AWK='gawk'
+>>>>>>> dev
 test -n "$AWK" || AWK=awk
 # The default lists apply if the user does not specify any file.
 ac_need_defaults=:
@@ -572,7 +580,11 @@ FGREP='/bin/grep -F'
 LD='/usr/bin/ld -m elf_x86_64'
 NM='/usr/bin/nm -B'
 LN_S='ln -s'
+<<<<<<< HEAD
+max_cmd_len='1572864'
+=======
 max_cmd_len='3458764513820540925'
+>>>>>>> dev
 ac_objext='o'
 exeext=''
 lt_unset='unset'
@@ -674,8 +686,13 @@ postuninstall_cmds=''
 finish_cmds='PATH="\$PATH:/sbin" ldconfig -n $libdir'
 finish_eval=''
 hardcode_into_libs='yes'
+<<<<<<< HEAD
+sys_lib_search_path_spec='/lib /home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib /usr/lib/gcc/x86_64-linux-gnu/5 /usr/lib/x86_64-linux-gnu /usr/lib /lib/x86_64-linux-gnu '
+sys_lib_dlsearch_path_spec='/lib /usr/lib /opt/amdgpu/lib/x86_64-linux-gnu /opt/amdgpu/lib/i386-linux-gnu /usr/lib/x86_64-linux-gnu/libfakeroot /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/lib/i386-linux-gnu/mesa /usr/local/lib /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/mesa-egl /usr/lib/x86_64-linux-gnu/mesa '
+=======
 sys_lib_search_path_spec='/usr/lib/gcc/x86_64-linux-gnu/5 /usr/lib/x86_64-linux-gnu /usr/lib /lib/x86_64-linux-gnu /lib '
 sys_lib_dlsearch_path_spec='/lib /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu/libfakeroot /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/lib/i386-linux-gnu/mesa /usr/local/lib /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/mesa-egl /usr/lib/x86_64-linux-gnu/mesa '
+>>>>>>> dev
 hardcode_action='immediate'
 enable_dlopen='unknown'
 enable_dlopen_self='unknown'
@@ -730,12 +747,20 @@ prelink_cmds_CXX=''
 postlink_cmds_CXX=''
 file_list_spec_CXX=''
 hardcode_action_CXX='immediate'
+<<<<<<< HEAD
+compiler_lib_search_dirs_CXX='./../lib /home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib/../lib /home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib/../lib /usr/lib/gcc/x86_64-linux-gnu/5 /usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu /usr/lib/gcc/x86_64-linux-gnu/5/../../../../lib /lib/x86_64-linux-gnu /lib/../lib /usr/lib/x86_64-linux-gnu /usr/lib/../lib . /home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib /home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib /usr/lib/gcc/x86_64-linux-gnu/5/../../..'
+=======
 compiler_lib_search_dirs_CXX='/usr/lib/gcc/x86_64-linux-gnu/5 /usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu /usr/lib/gcc/x86_64-linux-gnu/5/../../../../lib /lib/x86_64-linux-gnu /lib/../lib /usr/lib/x86_64-linux-gnu /usr/lib/../lib /usr/lib/gcc/x86_64-linux-gnu/5/../../..'
+>>>>>>> dev
 predep_objects_CXX='/usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/5/crtbeginS.o'
 postdep_objects_CXX='/usr/lib/gcc/x86_64-linux-gnu/5/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu/crtn.o'
 predeps_CXX=''
 postdeps_CXX='-lstdc++ -lm -lgcc_s -lc -lgcc_s'
+<<<<<<< HEAD
+compiler_lib_search_path_CXX='-L./../lib -L/home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib/../lib -L/home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/5 -L/usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/5/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L. -L/home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib -L/home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib -L/usr/lib/gcc/x86_64-linux-gnu/5/../../..'
+=======
 compiler_lib_search_path_CXX='-L/usr/lib/gcc/x86_64-linux-gnu/5 -L/usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/5/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/5/../../..'
+>>>>>>> dev
 
 LTCC='gcc'
 LTCFLAGS='-g -O2'
@@ -942,17 +967,30 @@ S["am__tar"]="$${TAR-tar} chof - \"$$tardir\""
 S["AMTAR"]="$${TAR-tar}"
 S["am__leading_dot"]="."
 S["SET_MAKE"]=""
+<<<<<<< HEAD
+S["AWK"]="mawk"
+=======
 S["AWK"]="gawk"
+>>>>>>> dev
 S["mkdir_p"]="/bin/mkdir -p"
 S["MKDIR_P"]="/bin/mkdir -p"
 S["INSTALL_STRIP_PROGRAM"]="$(install_sh) -c -s"
 S["STRIP"]="strip"
+<<<<<<< HEAD
+S["install_sh"]="${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/install-sh"
+S["MAKEINFO"]="${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run makeinfo"
+S["AUTOHEADER"]="${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run autoheader"
+S["AUTOMAKE"]="${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run automake-1.11"
+S["AUTOCONF"]="${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run autoconf"
+S["ACLOCAL"]="${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run aclocal-1.11"
+=======
 S["install_sh"]="${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/install-sh"
 S["MAKEINFO"]="${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run makeinfo"
 S["AUTOHEADER"]="${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run autoheader"
 S["AUTOMAKE"]="${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run automake-1.11"
 S["AUTOCONF"]="${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run autoconf"
 S["ACLOCAL"]="${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run aclocal-1.11"
+>>>>>>> dev
 S["VERSION"]="1.7.0"
 S["PACKAGE"]="gtest"
 S["CYGPATH_W"]="echo"
