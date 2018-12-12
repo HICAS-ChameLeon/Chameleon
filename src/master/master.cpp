@@ -183,20 +183,23 @@ int main(int argc, char **argv) {
             LOG(INFO) << "The input was misformatted";
             LOG(INFO) << masterFlagsBase.usage();
         } else {
-            if (argv[1] = "--help") {
-                LOG(INFO) << masterFlagsBase.usage() ;
-            } else {
-                os::setenv("LIBPROCESS_PORT", stringify(masterFlagsBase.master_port));
-                process::initialize("master");
+            for (int i = 0; i < argc; i++) {
+                string cin_message = argv[i];
+                if (cin_message == "--help") {
+                    LOG(INFO) << masterFlagsBase.usage();
+                } else {
+                    os::setenv("LIBPROCESS_PORT", stringify(masterFlagsBase.master_port));
+                    process::initialize("master");
 
-                Master master;
-                PID<Master> cur_master = process::spawn(master);
-                LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
+                    Master master;
+                    PID<Master> cur_master = process::spawn(master);
+                    LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 
-                const PID<Master> master_pid = master.self();
-                LOG(INFO) << master_pid;
+                    const PID<Master> master_pid = master.self();
+                    LOG(INFO) << master_pid;
 //    LOG(ERROR) << "error test";
-                process::wait(master.self());
+                    process::wait(master.self());
+                }
             }
         }
     }

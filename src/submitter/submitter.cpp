@@ -25,7 +25,7 @@ void Submitter::initialize() {
 }
 
 
-int main(int argc, char *argv[]) {
+int main(int argc, char** argv) {
 
     chameleon::set_storage_paths_of_glog("submitter");// provides the program name
     chameleon::set_flags_of_glog();
@@ -44,26 +44,30 @@ int main(int argc, char *argv[]) {
             LOG(INFO) << "The input was misformatted";
             LOG(INFO) << submitterFlagsBase.usage();
         } else {
-            if (argv[1] = "--help") {
-                LOG(INFO) << submitterFlagsBase.usage();
-            } else {
-                os::setenv("LIBPROCESS_PORT", stringify(submitterFlagsBase.submitter_run_port));
-                process::initialize("submitter");
+            for(int i = 0;i<argc;i++) {
+                string cin_message = argv[i];
+                if (cin_message == "--help") {
+                    LOG(INFO) << submitterFlagsBase.usage();
+                    continue;
+                } else {
+                    os::setenv("LIBPROCESS_PORT", stringify(submitterFlagsBase.submitter_run_port));
+                    process::initialize("submitter");
 
-                Submitter submitter;
-                submitter.setM_spark_path(submitterFlagsBase.spark_path);
+                    Submitter submitter;
+                    submitter.setM_spark_path(submitterFlagsBase.spark_path);
 //            LOG(INFO) <<submitterFlagsBase.master_ip_and_port;
-                string master_ip_and_port = "master@" + stringify(submitterFlagsBase.master_ip_and_port);
-                LOG(INFO) << master_ip_and_port;
-                submitter.setDEFAULT_MASTER(master_ip_and_port);
+                    string master_ip_and_port = "master@" + stringify(submitterFlagsBase.master_ip_and_port);
+                    LOG(INFO) << master_ip_and_port;
+                    submitter.setDEFAULT_MASTER(master_ip_and_port);
 
-                PID<Submitter> cur_submitter = process::spawn(submitter);
-                LOG(INFO) << "Running submitter on " << process::address().ip << ":" << process::address().port;
+                    PID<Submitter> cur_submitter = process::spawn(submitter);
+                    LOG(INFO) << "Running submitter on " << process::address().ip << ":" << process::address().port;
 
-                const PID<Submitter> submitter_pid = submitter.self();
-                LOG(INFO) << submitter_pid;
+                    const PID<Submitter> submitter_pid = submitter.self();
+                    LOG(INFO) << submitter_pid;
 //    process::terminate(submitter.self());
-                process::wait(submitter.self());
+                    process::wait(submitter.self());
+                }
             }
         }
     }

@@ -24,20 +24,20 @@ namespace chameleon{
     class SlaveFlagsBase:public virtual FlagsBase{
     public:
         int slave_port;
-        string master_ip;
+        string master_ip_and_port;
         string master_hostname;
 
         SlaveFlagsBase() {
             /*slave run port*/
             add(&SlaveFlagsBase::slave_port,
-                    "sport",
+                    "slaveport",
                     "slave_port",
                     6061);
 
             /*master ip*/
-            add(&SlaveFlagsBase::master_ip,
-                    "mip",
-                    "master ip",
+            add(&SlaveFlagsBase::master_ip_and_port,
+                    "masterinfo",
+                    "master_ip_and_port",
                     "172.20.110.228");
 
             /*master hostname*/
