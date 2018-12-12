@@ -20,6 +20,7 @@
 #include <stout/os.hpp>
 #include <stout/os/pstree.hpp>
 #include <stout/path.hpp>
+#include <stout/uuid.hpp>
 
 #include <stout/os/getcwd.hpp>
 #include <stout/os/write.hpp>
@@ -106,7 +107,7 @@ namespace chameleon {
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
         shared_ptr<UPID> msp_masterUPID;
         const Duration m_interval;
-
+        string m_uuid;
         void heartbeat();
     };
 
