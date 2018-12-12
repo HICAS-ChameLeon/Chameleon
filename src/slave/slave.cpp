@@ -168,19 +168,26 @@ int main(int argc, char **argv) {
             LOG(INFO) << "The input was misformatted";
             LOG(INFO) << slaveFlagsBase.usage();
         } else {
-            if (argv[1] = "--help") {
-                LOG(INFO) << slaveFlagsBase.usage();
-            } else {
-                os::setenv("LIBPROCESS_PORT", stringify(slaveFlagsBase.slave_port));
-                process::initialize("slave");
+            for (int i = 0; i < argc; i++) {
+                string cin_message = argv[i];
+                if (cin_message == "--help") {
+                    LOG(INFO) << slaveFlagsBase.usage();
+                } else {
+                    os::setenv("LIBPROCESS_PORT", stringify(slaveFlagsBase.slave_port));
+                    process::initialize("slave");
 
-                Slave slave;
-                PID<Slave> cur_slave = process::spawn(slave);
-                LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
+                    Slave slave;
 
-                const PID<Slave> slave_pid = slave.self();
-                LOG(INFO) << slave_pid;
-                process::wait(slave.self());
+                    string master_ip_and_port = "master@" + stringify(slaveFlagsBase.master_ip_and_port);
+                    slave.setDEFAULT_MASTER(master_ip_and_port);
+
+                    PID<Slave> cur_slave = process::spawn(slave);
+                    LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
+
+                    const PID<Slave> slave_pid = slave.self();
+                    LOG(INFO) << slave_pid;
+                    process::wait(slave.self());
+                }
             }
         }
 
