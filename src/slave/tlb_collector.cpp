@@ -51,7 +51,6 @@ namespace chameleon {
             }
         }
         tlbCollection->add_tlb_infos()->MergeFrom(ti);
-//        tlbCollection->set_allocated_tlb_infos(ti);
         return tlbCollection;
     };
 }

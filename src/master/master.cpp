@@ -38,7 +38,9 @@ namespace chameleon {
                         result.values["quantity"] = 0;
                         result.values["content"] = JSON::Object();
                     }
-                    return OK(stringify(result));
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin","*"});
+                    return ok_response;
                 });
 
         // http://172.20.110.228:6060/master/runtime-resources
