@@ -1,7 +1,7 @@
 /build
 /.idea
 /cmake-build-debug
-/3rdparty/gmock-1.7.0
+
 
 # Prerequisites
 *.d

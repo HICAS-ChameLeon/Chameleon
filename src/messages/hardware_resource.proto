@@ -2,6 +2,7 @@
 message HardwareResourcesMessage
 {
     required string slave_id =1;
+    required string slave_uuid=8;
     required CPUCollection cpu_collection = 2;
     required MemoryCollection mem_collection = 3;
     required GPUCollection    gpu_collection=4;
@@ -62,11 +63,11 @@ message GPUInfo {
     required string description =2;
     required string product =3;
     required string vendor =4;
-    optional string physical_id =5;
+    optional int32 physical_id =5;
     optional string bus_info =6;
     optional string version =7;
-    optional string width =8;
-    optional string clock =9;
+    optional int32 width =8;           //unit 'bits'
+    optional int32 clock =9;           //unit 'MHz'
     optional string capabilities =10;
     optional string configuration =11;
     optional string resources =12;
