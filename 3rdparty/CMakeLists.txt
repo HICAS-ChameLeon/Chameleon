@@ -293,11 +293,11 @@ endif (NOT WIN32)
 
 # NOTE: `gmock` is "installed" into a lib directory, see "NOTE: (fix for
 # MESOS-3250)" comment above for explanation.
-if (NOT WIN32)
-  set(GMOCK_INSTALL_CMD mkdir -p ${GMOCK_ROOT}-lib/lib && cp -r ${GMOCK_ROOT}-build/. ${GMOCK_ROOT}-lib/lib && cp -r ${GMOCK_ROOT}-build/gtest/. ${GMOCK_ROOT}-lib/lib)
-elseif (WIN32)
-  set(GMOCK_INSTALL_CMD ${CMAKE_NOOP})
-endif (NOT WIN32)
+#if (NOT WIN32)
+#  set(GMOCK_INSTALL_CMD mkdir -p ${GMOCK_ROOT}-lib/lib && cp -r ${GMOCK_ROOT}-build/. ${GMOCK_ROOT}-lib/lib && cp -r ${GMOCK_ROOT}-build/gtest/. ${GMOCK_ROOT}-lib/lib)
+#elseif (WIN32)
+#  set(GMOCK_INSTALL_CMD ${CMAKE_NOOP})
+#endif (NOT WIN32)
 
 if (NOT WIN32)
   PATCH_CMD(${MESOS_3RDPARTY_SRC}/protobuf-${PROTOBUF_VERSION}.patch PROTOBUF_PATCH_CMD)
@@ -316,15 +316,18 @@ endif (NOT WIN32)
 # non-Windows platforms, we choose to set `GMOCK_CONFIG_CMD` and
 # `GMOCK_BUILD_CMD` with stub commands, which cause CMake to "fall back" to
 # trying to build them with CMake.
-#ExternalProject_Add(
-#  ${GMOCK_TARGET}
-#  PREFIX            ${GMOCK_CMAKE_ROOT}
-#  CMAKE_ARGS        -DBUILD_SHARED_LIBS=FALSE
-#  CONFIGURE_COMMAND ${GMOCK_CONFIG_CMD}
-#  BUILD_COMMAND     ${GMOCK_BUILD_CMD}
-#  INSTALL_COMMAND   ${GMOCK_INSTALL_CMD}
-#  URL               ${GMOCK_URL}
-#  )
+set(GMOCK_ROOT ${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0)
+#message(319 ${GMOCK_ROOT})
+set(GMOCK_CONFIG_CMD  cd ${GMOCK_ROOT} && ./configure)
+set(GMOCK_BUILD_CMD   cd ${GMOCK_ROOT} && make -j 4)
+set(GMOCK_INSTALL_CMD cd ${GMOCK_ROOT} )
+ExternalProject_Add(
+  gmock_1_7
+  CONFIGURE_COMMAND ${GMOCK_CONFIG_CMD}
+  BUILD_COMMAND     ${GMOCK_BUILD_CMD}
+  INSTALL_COMMAND   ${GMOCK_INSTALL_CMD}
+  URL               ${GMOCK_URL}
+  )
 
 ExternalProject_Add(
   ${PROTOBUF_TARGET}
