@@ -106,6 +106,7 @@
     <!-- Main Content -->
     <div class="col-lg-9 col-md-9">
         <div style="margin-top: 15px; height:50px">
+            <img src="../icon/HICAS.png" style="float: right;width: 80px;height: 100px" alt="">
             <p style="font-size: 200%;">
                 <svg class="icon" aria-hidden="true">
                     <use xlink:href="#icon-kongzhitai-"></use>
@@ -129,7 +130,7 @@
                 时空共享调度策略
             </a></li>
         </ul>
-        <div id="myTabContent" class="tab-content" style="font-size: 100%; margin-top: 15px">
+        <div id="myTabContent" class="tab-content" style="margin-top: 15px">
             <div class="tab-pane fade in active" id="hardware">
                 <div class="container-fluid">
                     <div ng-app="myApp" ng-controller="hardware">
@@ -246,44 +247,46 @@
                     </div>
                 </div>
             </div>
+
+            <div class="tab-pane fade" id="runtime">
+                <div class="container-fluid">
+                    <div ng-app="runtimeApp" ng-controller="runtimeCtrl">
+                        <table class="table table-hover" >
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>IP</th>
+                                <th>CPU使用率</th>
+                                <th>内存使用率</th>
+                                <th>硬盘使用率</th>
+                                <th>交换空间空闲率</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="x in runtime">
+                                <td>{{x.slave_uuid}}</td>
+                                <td>{{x.slave_id}}</td>
+                                <td>{{x.cpu_usage.cpu_used | number:2}} %</td>
+                                <td>{{x.mem_usage.mem_available / x.mem_usage.mem_total * 100 | number:2}} %</td>
+                                <td>{{x.disk_usage.available_percent | number:2}} %</td>
+                                <td>{{x.mem_usage.swap_free / x.mem_usage.swap_total * 100 | number:2}} %</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="algorithm">
+                    <div class="container-fluid">
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="timeandspace">
+                    <div class="container-fluid">
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="tab-pane fade" id="runtime">
-            <div class="container-fluid">
-                <div ng-app="runtimeApp" ng-controller="runtimeCtrl">
-                    <table class="table table-hover" >
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>IP</th>
-                            <th>CPU使用率</th>
-                            <th>内存使用率</th>
-                            <th>硬盘使用率</th>
-                            <th>交换空间使用率</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr ng-repeat="x in runtime">
-                            <td>{{x.slave_uuid}}</td>
-                            <td>{{x.slave_id}}</td>
-                            <td>{{x.cpu_usage.cpu_used | number:2}} %</td>
-                            <td>{{x.mem_usage.mem_available / x.mem_usage.mem_total * 100 | number:2}} %</td>
-                            <td>{{x.disk_usage.available_percent | number:2}} %</td>
-                            <td>{{x.mem_usage.swap_free / x.mem_usage.swap_total * 100 | number:2}} %</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="algorithm">
-                <div class="container-fluid">
-                </div>
-            </div>
-            <div class="tab-pane fade" id="timeandspace">
-                <div class="container-fluid">
-                </div>
-            </div>
-        </div>
+
     </div>
 </div>
 
