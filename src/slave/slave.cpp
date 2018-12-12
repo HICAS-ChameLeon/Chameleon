@@ -24,6 +24,9 @@ namespace chameleon {
         DLOG(INFO) << *msp_masterUPID;
         string slave_id = stringify(self().address.ip);
         hr_message->set_slave_id(slave_id);
+
+        m_uuid = UUID::random().toString();
+        hr_message->set_slave_uuid(m_uuid);
         DLOG(INFO) << "before send message to master";
 
         send(*msp_masterUPID, *hr_message);
@@ -111,6 +114,7 @@ namespace chameleon {
         auto t1 = std::chrono::system_clock::now();
 
         RuntimeResourcesMessage *rr_message = new RuntimeResourcesMessage();
+        rr_message->set_slave_uuid(m_uuid);
         RuntimeResourceUsage::CpuOccupy f_cpu, s_cpu;
 
         // get cpu usage

@@ -6,6 +6,8 @@ message RuntimeResourcesMessage
     required MemoryUsage  mem_usage = 3;  //Runtime memory information
     required DiskUsage disk_usage = 4;
     required NetUsage net_usage = 5;
+    required string slave_uuid=6;
+
 }
 
 message CPUUsage{
