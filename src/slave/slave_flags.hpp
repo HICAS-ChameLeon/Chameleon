@@ -30,20 +30,20 @@ namespace chameleon{
         SlaveFlagsBase() {
             /*slave run port*/
             add(&SlaveFlagsBase::slave_port,
+                    "sport",
                     "slave_port",
-                    "set slave_port",
                     6061);
 
             /*master ip*/
             add(&SlaveFlagsBase::master_ip,
-                    "master_ip",
-                    "set master_ip",
+                    "mip",
+                    "master ip",
                     "172.20.110.228");
 
             /*master hostname*/
             add(&SlaveFlagsBase::master_hostname,
+                    "mhostname",
                     "master_hostname",
-                    "set master_hostname",
                     "lilelr");
         }
     };
