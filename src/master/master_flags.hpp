@@ -28,8 +28,8 @@ namespace chameleon{
         MasterFlagsBase() {
             /*master run port*/
             add(&MasterFlagsBase::master_port,
-                "master_port",
-                "set master_port",
+                "mport",
+                "master run port",
                 6060);
         }
     };

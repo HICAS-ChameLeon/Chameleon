@@ -71,8 +71,6 @@ namespace chameleon {
 
     constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(5);
 
-    const string DEFAULT_MASTER = "master@172.20.110.228:6060";
-
     class Slave : public ProtobufProcess<Slave> {
     public:
         explicit Slave() : ProcessBase("slave"), m_interval(DEFAULT_HEARTBEAT_INTERVAL) {
@@ -89,6 +87,8 @@ namespace chameleon {
             LOG(INFO) << "~ Slave()";
         }
 
+        string DEFAULT_MASTER;
+
     protected:
         void finalize() override;
 
@@ -100,6 +100,10 @@ namespace chameleon {
         void get_a_job(const UPID &master, const JobMessage &job_message);
 
         void send_heartbeat_to_master();
+
+        void setDEFAULT_MASTER(const string &DEFAULT_MASTER) {
+            Slave::DEFAULT_MASTER = DEFAULT_MASTER;
+        }
 
     private:
         shared_ptr<ResourceCollector> msp_resource_collector;

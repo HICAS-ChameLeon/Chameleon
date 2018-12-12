@@ -2,7 +2,11 @@
 
 # libtool - Provide generalized library-building support services.
 # Generated automatically by config.status (gmock) 1.7.0
+<<<<<<< HEAD
 # Libtool was configured on host AMD-V:
+=======
+# Libtool was configured on host ma-siat:
+>>>>>>> dev
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 #
 #   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
@@ -272,10 +276,17 @@ finish_eval=""
 hardcode_into_libs=yes
 
 # Compile-time system search path for libraries.
+<<<<<<< HEAD
 sys_lib_search_path_spec="/home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib /usr/lib/gcc/x86_64-linux-gnu/5 /usr/lib/x86_64-linux-gnu /usr/lib /lib/x86_64-linux-gnu /lib "
 
 # Run-time system search path for libraries.
 sys_lib_dlsearch_path_spec="/lib /usr/lib /opt/amdgpu/lib/x86_64-linux-gnu /opt/amdgpu/lib/i386-linux-gnu /usr/lib/x86_64-linux-gnu/libfakeroot /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/lib/i386-linux-gnu/mesa /usr/local/lib /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/mesa-egl /usr/lib/x86_64-linux-gnu/mesa "
+=======
+sys_lib_search_path_spec="/usr/lib/gcc/x86_64-linux-gnu/5 /usr/lib/x86_64-linux-gnu /usr/lib /lib/x86_64-linux-gnu /lib "
+
+# Run-time system search path for libraries.
+sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu/libfakeroot /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/lib/i386-linux-gnu/mesa /usr/local/lib /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/mesa-egl /usr/lib/x86_64-linux-gnu/mesa "
+>>>>>>> dev
 
 # Whether dlopen is supported.
 dlopen_support=unknown
@@ -10230,7 +10241,11 @@ file_list_spec=""
 hardcode_action=immediate
 
 # The directories searched by this compiler when creating a shared library.
+<<<<<<< HEAD
 compiler_lib_search_dirs="/home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib/../lib /home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib/../lib /usr/lib/gcc/x86_64-linux-gnu/5 /usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu /usr/lib/gcc/x86_64-linux-gnu/5/../../../../lib /lib/x86_64-linux-gnu /lib/../lib /usr/lib/x86_64-linux-gnu /usr/lib/../lib . /home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib /home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib /usr/lib/gcc/x86_64-linux-gnu/5/../../.."
+=======
+compiler_lib_search_dirs="/usr/lib/gcc/x86_64-linux-gnu/5 /usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu /usr/lib/gcc/x86_64-linux-gnu/5/../../../../lib /lib/x86_64-linux-gnu /lib/../lib /usr/lib/x86_64-linux-gnu /usr/lib/../lib /usr/lib/gcc/x86_64-linux-gnu/5/../../.."
+>>>>>>> dev
 
 # Dependencies to place before and after the objects being linked to
 # create a shared library.
@@ -10241,6 +10256,10 @@ postdeps="-lstdc++ -lm -lgcc_s -lc -lgcc_s"
 
 # The library search path used internally by the compiler when linking
 # a shared library.
+<<<<<<< HEAD
 compiler_lib_search_path="-L/home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib/../lib -L/home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/5 -L/usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/5/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L. -L/home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib -L/home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib -L/usr/lib/gcc/x86_64-linux-gnu/5/../../.."
+=======
+compiler_lib_search_path="-L/usr/lib/gcc/x86_64-linux-gnu/5 -L/usr/lib/gcc/x86_64-linux-gnu/5/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/5/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/5/../../.."
+>>>>>>> dev
 
 # ### END LIBTOOL TAG CONFIG: CXX

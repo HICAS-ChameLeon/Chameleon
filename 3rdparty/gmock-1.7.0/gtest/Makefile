@@ -191,6 +191,7 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
+<<<<<<< HEAD
 ACLOCAL = ${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run aclocal-1.11
 AMTAR = $${TAR-tar}
 AR = ar
@@ -198,6 +199,15 @@ AUTOCONF = ${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gte
 AUTOHEADER = ${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run autoheader
 AUTOMAKE = ${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run automake-1.11
 AWK = mawk
+=======
+ACLOCAL = ${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run aclocal-1.11
+AMTAR = $${TAR-tar}
+AR = ar
+AUTOCONF = ${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run automake-1.11
+AWK = gawk
+>>>>>>> dev
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
@@ -233,7 +243,11 @@ LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
+<<<<<<< HEAD
 MAKEINFO = ${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run makeinfo
+=======
+MAKEINFO = ${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/missing --run makeinfo
+>>>>>>> dev
 MANIFEST_TOOL = :
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
@@ -260,10 +274,17 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = strip
 VERSION = 1.7.0
+<<<<<<< HEAD
 abs_builddir = /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest
 abs_srcdir = /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest
 abs_top_builddir = /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest
 abs_top_srcdir = /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest
+=======
+abs_builddir = /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest
+abs_srcdir = /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest
+abs_top_builddir = /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest
+abs_top_srcdir = /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest
+>>>>>>> dev
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_CXX = g++
@@ -294,7 +315,11 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
+<<<<<<< HEAD
 install_sh = ${SHELL} /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/install-sh
+=======
+install_sh = ${SHELL} /home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/build-aux/install-sh
+>>>>>>> dev
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
