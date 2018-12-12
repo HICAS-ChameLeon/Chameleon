@@ -38,7 +38,7 @@ namespace chameleon {
             /*program output path*/
 
             add(&SubmitterFlagsBase::master_ip_and_port,
-                "iport",
+                "miport",
                 "master ip and port",
                 "172.20.110.228:6060");
 
