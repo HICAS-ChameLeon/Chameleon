@@ -7,7 +7,7 @@
 
 #include "master.hpp"
 
-DEFINE_int32(port, 0, "master port");              //定义一个int32 端口号
+DEFINE_int32(port, 0, "master port");
 
 /*
  * Function name  : ValidateInt
