@@ -98,7 +98,7 @@ namespace chameleon{
                                 disk_info->set_name(disk_name.get());
                                 disk_info->set_size(disk_size.get());
 
-                                if(disk_type.get().data() == "0")
+                                if(disk_type.get() == "0")
                                     disk_info->set_type(DiskInfo::SSD);
                                 else if(disk_type.get() == "1")
                                     disk_info->set_type(DiskInfo::HDD);
