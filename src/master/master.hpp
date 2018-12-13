@@ -103,8 +103,6 @@ namespace chameleon {
 
         Try<string> find_min_cpu_and_memory_rates();
     };
-
-
 }
 
 

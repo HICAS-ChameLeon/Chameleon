@@ -23,14 +23,13 @@ using utils::arraySize;
 namespace chameleon{
     class MasterFlagsBase:public virtual FlagsBase{
     public:
-        int master_port;
+        string  master_port;
 
         MasterFlagsBase() {
             /*master run port*/
             add(&MasterFlagsBase::master_port,
-                "mport",
-                "master run port",
-                6060);
+                "port",
+                "master port");
         }
     };
 }

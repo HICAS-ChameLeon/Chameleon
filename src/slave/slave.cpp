@@ -156,41 +156,49 @@ int main(int argc, char **argv) {
 
     LOG(INFO) << "glog files paths configuration for slave finished. OK!";
 
-    chameleon::SlaveFlagsBase slaveFlagsBase;
-    Try<Warnings> load = slaveFlagsBase.load("SLAVE", argc, argv);
-    slaveFlagsBase.setUsageMessage("Slaveflags");
+    chameleon::SlaveFlagsBase flags;
+    Try<Warnings> load = flags.load("SLAVE", argc, argv);
 
-    if (argc <= 1) {
-        LOG(INFO) << "Run this program need to set parameters";
-        LOG(INFO) << slaveFlagsBase.usage();
+
+    flags.setUsageMessage("Slaveflags");
+
+    if (flags.help == 1) {
+        LOG(INFO) << "How to run this: " << flags.usage();
     } else {
-        if (load.isError()) {
-            LOG(INFO) << "The input was misformatted";
-            LOG(INFO) << slaveFlagsBase.usage();
-        } else {
-                string cin_message = argv[1];
-                if (cin_message == "--help") {
-                    LOG(INFO) << slaveFlagsBase.usage();
-
-                } else {
-                    os::setenv("LIBPROCESS_PORT", stringify(slaveFlagsBase.slave_port));
-                    process::initialize("slave");
-
-                    Slave slave;
-
-                    string master_ip_and_port = "master@" + stringify(slaveFlagsBase.master_ip_and_port);
-                    slave.setDEFAULT_MASTER(master_ip_and_port);
-
-                    PID<Slave> cur_slave = process::spawn(slave);
-                    LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
-
-                    const PID<Slave> slave_pid = slave.self();
-                    LOG(INFO) << slave_pid;
-                    process::wait(slave.self());
-                }
-            
+        if (flags.slave_port == "" && flags.master_ip_and_port == "") {
+            EXIT(EXIT_FAILURE)
+                    << "To run this program,must set all parameters and correctly \n"
+                       "please check you input or use --help ";
         }
+        if (flags.master_ip_and_port.empty()) {
+            EXIT(EXIT_FAILURE)
+                    << "masterinfo invalid value , see --masterinfo flag";
+        }
+        if (flags.slave_port.empty()) {
+            EXIT(EXIT_FAILURE)
+                    << "slaveport invalid value , see --slaveport flag";
+        } else {
+            if (!flags.master_ip_and_port.empty() && !flags.slave_port.empty()) {
+                os::setenv("LIBPROCESS_PORT", stringify(flags.slave_port));
+                process::initialize("slave");
 
+                Slave slave;
+
+                string master_ip_and_port = "master@" + stringify(flags.master_ip_and_port);
+                slave.setDEFAULT_MASTER(master_ip_and_port);
+
+                PID<Slave> cur_slave = process::spawn(slave);
+                LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
+
+                const PID<Slave> slave_pid = slave.self();
+                LOG(INFO) << slave_pid;
+                process::wait(slave.self());
+            } else {
+                LOG(INFO) << "Enter parameters" << flags.usage();
+            }
+        }
     }
     return 0;
 }
+
+
