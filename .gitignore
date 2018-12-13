@@ -2,6 +2,18 @@
 /.idea
 /cmake-build-debug
 
+/3rdparty/gmock-1.7.0/Makefile
+/3rdparty/gmock-1.7.0/autom4te.cache
+/3rdparty/gmock-1.7.0/config.log
+/3rdparty/gmock-1.7.0/config.status
+/3rdparty/gmock-1.7.0/gtest/Makefile
+/3rdparty/gmock-1.7.0/gtest/config.log
+/3rdparty/gmock-1.7.0/gtest/config.status
+/3rdparty/gmock-1.7.0/gtest/libtool
+/3rdparty/gmock-1.7.0/gtest/autom4te.cache
+/3rdparty/gmock-1.7.0/libtool
+
+
 
 # Prerequisites
 *.d
