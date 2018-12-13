@@ -18,6 +18,7 @@ namespace chameleon {
             const Try<os::UTSInfo> info = os::uname();
             CHECK_SOME(info);
             if(info.get().machine == setting::kArmArch){
+                    LOG(INFO)<<"The machine belongs to arm architecture.";
                     MemoryCollection* memory_collection = new MemoryCollection();
                     const string mem_size = "2048 MB";
                     const string mem_speed="1600 MHz";
@@ -28,7 +29,7 @@ namespace chameleon {
                     mem_info->set_size(mem_size);
                     mem_info->set_speed(mem_speed);
                     mem_info->set_type(mem_type);
-                    LOG(INFO)<<"The machine belongs to arm architecture.";
+                    hr_message->set_allocated_mem_collection(memory_collection);
             }else {
                     MemoryCollection* memory_collection= msp_mem->select_meminfo();
                     hr_message->set_allocated_mem_collection(memory_collection);
