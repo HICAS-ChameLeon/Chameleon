@@ -178,10 +178,12 @@ int main(int argc, char **argv) {
     if (flags.help == 1) {
         LOG(INFO) << "How to run this: " << flags.usage();
     } else {
-        if (flags.master_port == 0) {
-            LOG(INFO) << "Have no flags: " << flags.usage();
+        if (flags.master_port == "") {
+            EXIT(EXIT_FAILURE)
+                    << "To run this program,must set all parameters and correctly \n"
+                       "please check you input or use --help ";
         } else {
-            if (flags.master_port != 0) {
+            if (!flags.master_port.empty()) {
                 os::setenv("LIBPROCESS_PORT", stringify(flags.master_port));
                 process::initialize("master");
 

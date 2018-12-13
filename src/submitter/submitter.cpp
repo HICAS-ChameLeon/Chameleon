@@ -39,10 +39,24 @@ int main(int argc, char **argv) {
     if (flags.help == 1) {
         LOG(INFO) << "How to run this: " << flags.usage();
     } else {
-        if (flags.master_ip_and_port == "" && flags.spark_path == "" && flags.submitter_run_port == 0) {
-            LOG(INFO) << "Have no flags: " << flags.usage();
+        if (flags.master_ip_and_port.empty()&& flags.spark_path.empty() && flags.submitter_run_port.empty()) {
+            EXIT(EXIT_FAILURE)
+                    << "To run this program,must set all parameters and correctly \n"
+                       "please check you input or use --help ";
+        }
+        if (flags.master_ip_and_port.empty()) {
+            EXIT(EXIT_FAILURE)
+                    << "masterinfo invalid value , see --masterinfo flag";
+        }
+        if (flags.spark_path.empty()) {
+            EXIT(EXIT_FAILURE)
+                    << "masterinfo invalid value , see --spath flag";
+        }
+        if (flags.submitter_run_port.empty()) {
+            EXIT(EXIT_FAILURE)
+                    << "masterinfo invalid value , see --port flag";
         } else {
-            if (!flags.master_ip_and_port.empty() && !flags.spark_path.empty() && flags.submitter_run_port != 0) {
+            if (!flags.master_ip_and_port.empty() && !flags.spark_path.empty() && !flags.submitter_run_port.empty()) {
                 os::setenv("LIBPROCESS_PORT", stringify(flags.submitter_run_port));
                 process::initialize("submitter");
 
@@ -58,7 +72,7 @@ int main(int argc, char **argv) {
 
                 const PID<Submitter> submitter_pid = submitter.self();
                 LOG(INFO) << submitter_pid;
-//    process::terminate(submitter.self());
+                //    process::terminate(submitter.self());
                 process::wait(submitter.self());
             } else {
                 LOG(INFO) << "Enter all parameters: " << flags.usage();

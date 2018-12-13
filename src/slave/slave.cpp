@@ -158,17 +158,27 @@ int main(int argc, char **argv) {
 
     chameleon::SlaveFlagsBase flags;
     Try<Warnings> load = flags.load("SLAVE", argc, argv);
-    flags.setUsageMessage("Slaveflags");
 
-    string slave_port = to_string(flags.slave_port);
+
+    flags.setUsageMessage("Slaveflags");
 
     if (flags.help == 1) {
         LOG(INFO) << "How to run this: " << flags.usage();
     } else {
-        if (flags.master_ip_and_port == "" && flags.master_hostname == "" && slave_port == "0" && flags.help == 0) {
-            LOG(INFO) << "Have no flags: " << flags.usage();
+        if (flags.slave_port == "" && flags.master_ip_and_port == "") {
+            EXIT(EXIT_FAILURE)
+                    << "To run this program,must set all parameters and correctly \n"
+                       "please check you input or use --help ";
+        }
+        if (flags.master_ip_and_port.empty()) {
+            EXIT(EXIT_FAILURE)
+                    << "masterinfo invalid value , see --masterinfo flag";
+        }
+        if (flags.slave_port.empty()) {
+            EXIT(EXIT_FAILURE)
+                    << "slaveport invalid value , see --slaveport flag";
         } else {
-            if (!flags.master_ip_and_port.empty() && flags.slave_port != 0) {
+            if (!flags.master_ip_and_port.empty() && !flags.slave_port.empty()) {
                 os::setenv("LIBPROCESS_PORT", stringify(flags.slave_port));
                 process::initialize("slave");
 
@@ -184,7 +194,7 @@ int main(int argc, char **argv) {
                 LOG(INFO) << slave_pid;
                 process::wait(slave.self());
             } else {
-                LOG(INFO) << "Enter parameters" << flags.usage() ;
+                LOG(INFO) << "Enter parameters" << flags.usage();
             }
         }
     }

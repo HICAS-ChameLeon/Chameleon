@@ -32,7 +32,7 @@ $.example
 
 $.explain
   --masterinfo=VALUE     master ip and port
-  --port=VALUE          submitter run port
+  --port=VALUE           submitter run port
   --spath=VALUE          spark exists path
 
 

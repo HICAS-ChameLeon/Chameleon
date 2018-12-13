@@ -26,13 +26,13 @@ namespace chameleon {
     public:
         string spark_path;
         string master_ip_and_port;
-        int submitter_run_port;
+        string submitter_run_port;
 
         SubmitterFlagsBase() {
             /*program run path*/
             add(&SubmitterFlagsBase::spark_path,
                 "spath",
-                "spark exists path \n",
+                "spark exists path \n"
                 "example:/home/XXX/Downloads/spark-2.3.0-bin-hadoop2.7.tgz"
                  );
 
@@ -46,8 +46,8 @@ namespace chameleon {
 
             add(&SubmitterFlagsBase::submitter_run_port,
                 "port",
-                "submitter run port",
-                0);
+                "submitter run port"
+                );
         }
     };
 }
