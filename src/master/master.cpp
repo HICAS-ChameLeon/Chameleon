@@ -6,7 +6,24 @@
  */
 
 #include "master.hpp"
-#include "master_flags.hpp"
+
+DEFINE_int32(port, 0, "master port");              //定义一个int32 端口号
+
+/*
+ * Function name  : ValidateInt
+ * Author         : weiguow
+ * Date           : 2018-12-13
+ * Description    : Determines whether the input parameter is valid
+ * Return         : True or False*/
+static bool ValidateInt(const char *flagname, gflags::int32 value) {
+    if (value >= 0 && value < 32768) {
+        return true;
+    }
+    printf("Invalid value for --%s: %d\n", flagname, (int) value);
+    return false;
+}
+
+static const bool port_dummyInt = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 
 namespace chameleon {
     void Master::initialize() {
@@ -166,38 +183,31 @@ namespace chameleon {
 
 using namespace chameleon;
 
-int main(int argc, char **argv) {
 
+int main(int argc, char **argv) {
     chameleon::set_storage_paths_of_glog("master");// provides the program name
     chameleon::set_flags_of_glog();
 
-    chameleon::MasterFlagsBase flags;
-    Try<Warnings> load = flags.load("MASTER", argc, argv);
-    flags.setUsageMessage("Masterflags");
+    google::SetUsageMessage("usage : Option[name] \n"
+                            "--port     the port used by the program");
+    google::SetVersionString("Chameleon v1.0");
+    google::ParseCommandLineFlags(&argc, &argv, true);
 
-    if (flags.help == 1) {
-        LOG(INFO) << "How to run this: " << flags.usage();
+    google::CommandLineFlagInfo info;
+    if (GetCommandLineFlagInfo("port", &info) && info.is_default) {
+        LOG(INFO) << "To run this program , must set parameters correctly "
+                     "\n read the notice " << google::ProgramUsage();
     } else {
-        if (flags.master_port == "") {
-            EXIT(EXIT_FAILURE)
-                    << "To run this program,must set all parameters and correctly \n"
-                       "please check you input or use --help ";
-        } else {
-            if (!flags.master_port.empty()) {
-                os::setenv("LIBPROCESS_PORT", stringify(flags.master_port));
-                process::initialize("master");
+        process::initialize("master");
 
-                Master master;
-                PID<Master> cur_master = process::spawn(master);
-                LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
+        Master master;
+        PID<Master> cur_master = process::spawn(master);
+        LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 
-                const PID<Master> master_pid = master.self();
-                LOG(INFO) << master_pid;
-                process::wait(master.self());
-            } else {
-                LOG(INFO) << "Enter parameters" << flags.usage();
-            }
-        }
+        const PID<Master> master_pid = master.self();
+        LOG(INFO) << master_pid;
+        process::wait(master.self());
     }
     return 0;
 }
+

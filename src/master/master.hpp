@@ -14,6 +14,7 @@
 #include <memory>
 
 #include <glog/logging.h>
+#include <gflags/gflags.h>
 
 // stout dependencies
 #include <stout/gtest.hpp>

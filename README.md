@@ -24,29 +24,31 @@ $ sudo apt-get -y install dmidecode lshw hdparm cpuid
 ```
 
 Second,
+```shell
 # How to run the program
 
-#.submitter
+#submitter
 $.example
-  ./submitter  --masterinfo=172.20.110.228:6060  --port=6062 --spath=/home/XXX/spark-2.3.0-bin-hadoop2.7.tgz
+  ./submitter  --minfo=172.20.110.228:6060  --port=6062 --path=/home/XXX/spark-2.3.0-bin-hadoop2.7.tgz
 
 $.explain
-  --masterinfo=VALUE     master ip and port
-  --port=VALUE           submitter run port
-  --spath=VALUE          spark exists path
+  --port      the port used by the program 
+  --minfo     the master ip and port,example:127.0.0.1:8080 
+  --path      the path where the spark package exists
 
 
 #slave
 $.example
- ./slave  --masterinfo=172.20.110.228:6060 --slaveport=6061
+ ./slave  --minfo=172.20.110.228:6060 --port=6061
 
 $.explain
-  --masterinfo=VALUE     master_ip_and_port
-  --slaveport=VALUE      slave_port (defalut 0)
+ --port      the port used by the program 
+ --minfo     the master ip and port,example:127.0.0.1:8080
 
 #master
 $.example
  ./master --port=6060
 
 $.explain
-  --port=VALUE     master run port
+  --port     the port used by the program
+

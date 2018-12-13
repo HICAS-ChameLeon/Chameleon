@@ -12,6 +12,8 @@
 #include <string>
 #include <memory>
 
+// gflags dependencies
+#include <gflags/gflags.h>
 
 // stout dependencies
 #include <stout/os.hpp>
