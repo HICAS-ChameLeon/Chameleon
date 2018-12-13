@@ -86,7 +86,7 @@ namespace chameleon{
                             disk_speed = hdparm_token.at(hdparm_token.size() - 2);
 
                             /*read /sys/block/sda/queue/rotational to find disk_type*/
-                            Try<string> readstring  = os::read("/sys/block/sda/queue/rotational");
+                            Try<string> readstring  = os::read(stringify("/sys/block/")+disk_name.get()+stringify("/queue/rotational"));
                             disk_type = strings::trim(readstring.get(), "\n");
 
                             /*Assign to protobuf*/
