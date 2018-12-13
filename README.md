@@ -28,11 +28,11 @@ Second,
 
 #.submitter
 $.example
-  ./submitter  --masterinfo=172.20.110.228:6060  --rport=6062 --spath=/home/XXX/spark-2.3.0-bin-hadoop2.7.tgz
+  ./submitter  --masterinfo=172.20.110.228:6060  --port=6062 --spath=/home/XXX/spark-2.3.0-bin-hadoop2.7.tgz
 
 $.explain
   --masterinfo=VALUE     master ip and port
-  --rport=VALUE          submitter run port
+  --port=VALUE          submitter run port
   --spath=VALUE          spark exists path
 
 
@@ -46,7 +46,7 @@ $.explain
 
 #master
 $.example
- ./master --mport=6060
+ ./master --port=6060
 
 $.explain
-  --mport=VALUE     master run port
+  --port=VALUE     master run port
