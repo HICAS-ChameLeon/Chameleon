@@ -72,25 +72,32 @@ int main(int argc, char **argv) {
     if (GetCommandLineFlagInfo("port", &info) && info.is_default &&
         GetCommandLineFlagInfo("minfo", &info) && info.is_default &&
         GetCommandLineFlagInfo("path", &info) && info.is_default) {
-        LOG(INFO) << "To run this program , must set parameters correctly "
+        LOG(INFO) << "To run this program , must set all parameters correctly "
                      "\n read the notice " << google::ProgramUsage();
     } else {
-        os::setenv("LIBPROCESS_PORT",stringify(FLAGS_port));
-        process::initialize("submitter");
+        if (GetCommandLineFlagInfo("port", &info) && !info.is_default &&
+            GetCommandLineFlagInfo("minfo", &info) && !info.is_default &&
+            GetCommandLineFlagInfo("path", &info) && !info.is_default) {
+            os::setenv("LIBPROCESS_PORT",stringify(FLAGS_port));
+            process::initialize("submitter");
 
-        Submitter submitter;
-        submitter.setM_spark_path(FLAGS_path);
+            Submitter submitter;
+            submitter.setM_spark_path(FLAGS_path);
 
-        string master_ip_and_port = "master@" + stringify(FLAGS_minfo);
-        submitter.setDEFAULT_MASTER(master_ip_and_port);
+            string master_ip_and_port = "master@" + stringify(FLAGS_minfo);
+            submitter.setDEFAULT_MASTER(master_ip_and_port);
 
-        PID<Submitter> cur_submitter = process::spawn(submitter);
-        LOG(INFO) << "Running submitter on " << process::address().ip << ":" << process::address().port;
+            PID<Submitter> cur_submitter = process::spawn(submitter);
+            LOG(INFO) << "Running submitter on " << process::address().ip << ":" << process::address().port;
 
-        const PID<Submitter> submitter_pid = submitter.self();
-        LOG(INFO) << submitter_pid;
-        //    process::terminate(submitter.self());
-        process::wait(submitter.self());
+            const PID<Submitter> submitter_pid = submitter.self();
+            LOG(INFO) << submitter_pid;
+            //    process::terminate(submitter.self());
+            process::wait(submitter.self());
+        } else {
+            LOG(INFO) << "To run this program , must set all parameters correctly "
+                         "\n read the notice " << google::ProgramUsage();
+        }
     }
     return 0;
 }

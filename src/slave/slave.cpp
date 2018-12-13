@@ -199,20 +199,26 @@ int main(int argc, char *argv[]) {
         LOG(INFO) << "To run this program , must set parameters correctly "
                      "\n read the notice " << google::ProgramUsage();
     } else {
-        os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
-        process::initialize("slave");
+        if (GetCommandLineFlagInfo("port", &info) && !info.is_default &&
+            GetCommandLineFlagInfo("minfo", &info) && !info.is_default) {
+            os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
+            process::initialize("slave");
 
-        Slave slave;
+            Slave slave;
 
-        string master_ip_and_port = "master@" + stringify(FLAGS_minfo);
-        slave.setDEFAULT_MASTER(master_ip_and_port);
+            string master_ip_and_port = "master@" + stringify(FLAGS_minfo);
+            slave.setDEFAULT_MASTER(master_ip_and_port);
 
-        PID<Slave> cur_slave = process::spawn(slave);
-        LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
+            PID<Slave> cur_slave = process::spawn(slave);
+            LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
 
-        const PID<Slave> slave_pid = slave.self();
-        LOG(INFO) << slave_pid;
-        process::wait(slave.self());
+            const PID<Slave> slave_pid = slave.self();
+            LOG(INFO) << slave_pid;
+            process::wait(slave.self());
+        } else {
+            LOG(INFO) << "To run this program , must set all parameters correctly "
+                         "\n read the notice " << google::ProgramUsage();
+        }
     }
     return 0;
 }

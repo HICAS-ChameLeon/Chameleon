@@ -198,15 +198,21 @@ int main(int argc, char **argv) {
         LOG(INFO) << "To run this program , must set parameters correctly "
                      "\n read the notice " << google::ProgramUsage();
     } else {
-        process::initialize("master");
+        if (GetCommandLineFlagInfo("port", &info) && !info.is_default) {
+            os::setenv("LIBPROCESS_PORT",stringify(FLAGS_port));
+            process::initialize("master");
 
-        Master master;
-        PID<Master> cur_master = process::spawn(master);
-        LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
+            Master master;
+            PID<Master> cur_master = process::spawn(master);
+            LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 
-        const PID<Master> master_pid = master.self();
-        LOG(INFO) << master_pid;
-        process::wait(master.self());
+            const PID<Master> master_pid = master.self();
+            LOG(INFO) << master_pid;
+            process::wait(master.self());
+        } else {
+            LOG(INFO) << "To run this program , must set all parameters correctly "
+                         "\n read the notice " << google::ProgramUsage();
+        }
     }
     return 0;
 }
