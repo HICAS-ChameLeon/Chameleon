@@ -31,18 +31,14 @@ namespace chameleon{
             /*slave run port*/
             add(&SlaveFlagsBase::slave_port,
                     "slaveport",
-                    "slave_port",
+                    "slave port",
                     0);
 
             /*master ip*/
             add(&SlaveFlagsBase::master_ip_and_port,
                     "masterinfo",
-                    "master_ip_and_port");
-
-            /*master hostname*/
-            add(&SlaveFlagsBase::master_hostname,
-                    "mhostname",
-                    "master_hostname");
+                    "master ip and port"
+                    );
         }
     };
 }

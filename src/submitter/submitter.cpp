@@ -25,47 +25,44 @@ void Submitter::initialize() {
 }
 
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
 
     chameleon::set_storage_paths_of_glog("submitter");// provides the program name
     chameleon::set_flags_of_glog();
 
     LOG(INFO) << "glog files paths configuration for submitter finished. OK!";
 
-    chameleon::SubmitterFlagsBase submitterFlagsBase;
-    Try<Warnings> load = submitterFlagsBase.load("SUBMITTER", argc, argv);
-    submitterFlagsBase.setUsageMessage("Submitterflags");
+    chameleon::SubmitterFlagsBase flags;
+    Try<Warnings> load = flags.load("SUBMITTER", argc, argv);
+    flags.setUsageMessage("Submitterflags");
 
-    if(argc <= 1){
-        LOG(INFO) << "Run this program need to set parameters" ;
-        LOG(INFO) << submitterFlagsBase.usage();
+    if (flags.help == 1) {
+        LOG(INFO) << "How to run this: " << flags.usage();
     } else {
-        if (load.isError()) {
-            LOG(INFO) << "The input was misformatted";
-            LOG(INFO) << submitterFlagsBase.usage();
+        if (flags.master_ip_and_port == "" && flags.spark_path == "" && flags.submitter_run_port == 0) {
+            LOG(INFO) << "Have no flags: " << flags.usage();
         } else {
-                string cin_message = argv[1];
-                if (cin_message == "--help") {
-                    LOG(INFO) << submitterFlagsBase.usage();
-                } else {
-                    os::setenv("LIBPROCESS_PORT", stringify(submitterFlagsBase.submitter_run_port));
-                    process::initialize("submitter");
+            if (!flags.master_ip_and_port.empty() && !flags.spark_path.empty() && flags.submitter_run_port != 0) {
+                os::setenv("LIBPROCESS_PORT", stringify(flags.submitter_run_port));
+                process::initialize("submitter");
 
-                    Submitter submitter;
-                    submitter.setM_spark_path(submitterFlagsBase.spark_path);
-//            LOG(INFO) <<submitterFlagsBase.master_ip_and_port;
-                    string master_ip_and_port = "master@" + stringify(submitterFlagsBase.master_ip_and_port);
-                    LOG(INFO) << master_ip_and_port;
-                    submitter.setDEFAULT_MASTER(master_ip_and_port);
+                Submitter submitter;
+                submitter.setM_spark_path(flags.spark_path);
 
-                    PID<Submitter> cur_submitter = process::spawn(submitter);
-                    LOG(INFO) << "Running submitter on " << process::address().ip << ":" << process::address().port;
+                string master_ip_and_port = "master@" + stringify(flags.master_ip_and_port);
+                LOG(INFO) << master_ip_and_port;
+                submitter.setDEFAULT_MASTER(master_ip_and_port);
 
-                    const PID<Submitter> submitter_pid = submitter.self();
-                    LOG(INFO) << submitter_pid;
+                PID<Submitter> cur_submitter = process::spawn(submitter);
+                LOG(INFO) << "Running submitter on " << process::address().ip << ":" << process::address().port;
+
+                const PID<Submitter> submitter_pid = submitter.self();
+                LOG(INFO) << submitter_pid;
 //    process::terminate(submitter.self());
-                    process::wait(submitter.self());
-                }
+                process::wait(submitter.self());
+            } else {
+                LOG(INFO) << "Enter all parameters: " << flags.usage();
+            }
 
         }
     }

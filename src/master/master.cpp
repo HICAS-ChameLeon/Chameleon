@@ -171,36 +171,30 @@ int main(int argc, char **argv) {
     chameleon::set_storage_paths_of_glog("master");// provides the program name
     chameleon::set_flags_of_glog();
 
-    chameleon::MasterFlagsBase masterFlagsBase;
-    Try<Warnings> load = masterFlagsBase.load("MASTER", argc, argv);
-    masterFlagsBase.setUsageMessage("Masterflags");
+    chameleon::MasterFlagsBase flags;
+    Try<Warnings> load = flags.load("MASTER", argc, argv);
+    flags.setUsageMessage("Masterflags");
 
-    if (argc <= 1) {
-        LOG(INFO) << "Run this program need to set parameters";
-        LOG(INFO) << masterFlagsBase.usage();
+    if (flags.help == 1) {
+        LOG(INFO) << "How to run this: " << flags.usage();
     } else {
-        if (load.isError()) {
-            LOG(INFO) << "The input was misformatted";
-            LOG(INFO) << masterFlagsBase.usage();
+        if (flags.master_port == 0) {
+            LOG(INFO) << "Have no flags: " << flags.usage();
         } else {
+            if (flags.master_port != 0) {
+                os::setenv("LIBPROCESS_PORT", stringify(flags.master_port));
+                process::initialize("master");
 
-                string cin_message = argv[1];
-                if (cin_message == "--help") {
-                    LOG(INFO) << masterFlagsBase.usage();
-                } else {
-                    os::setenv("LIBPROCESS_PORT", stringify(masterFlagsBase.master_port));
-                    process::initialize("master");
+                Master master;
+                PID<Master> cur_master = process::spawn(master);
+                LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 
-                    Master master;
-                    PID<Master> cur_master = process::spawn(master);
-                    LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
-
-                    const PID<Master> master_pid = master.self();
-                    LOG(INFO) << master_pid;
-//    LOG(ERROR) << "error test";
-                    process::wait(master.self());
-                }
-
+                const PID<Master> master_pid = master.self();
+                LOG(INFO) << master_pid;
+                process::wait(master.self());
+            } else {
+                LOG(INFO) << "Enter parameters" << flags.usage();
+            }
         }
     }
     return 0;

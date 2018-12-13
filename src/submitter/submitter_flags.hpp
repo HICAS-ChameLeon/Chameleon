@@ -32,20 +32,22 @@ namespace chameleon {
             /*program run path*/
             add(&SubmitterFlagsBase::spark_path,
                 "spath",
-                "spark exists path",
-                "/home/lemaker/software/spark-2.3.0-bin-hadoop2.7.tgz");
+                "spark exists path \n",
+                "example:/home/XXX/Downloads/spark-2.3.0-bin-hadoop2.7.tgz"
+                 );
 
             /*program output path*/
 
             add(&SubmitterFlagsBase::master_ip_and_port,
                 "masterinfo",
-                "master ip and port",
-                "172.20.110.228:6060");
+                "master ip and port \n"
+                "example: ip:port"
+                );
 
             add(&SubmitterFlagsBase::submitter_run_port,
-                "rport",
+                "port",
                 "submitter run port",
-                6062);
+                0);
         }
     };
 }

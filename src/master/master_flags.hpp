@@ -29,8 +29,8 @@ namespace chameleon{
             /*master run port*/
             add(&MasterFlagsBase::master_port,
                 "mport",
-                "master run port",
-                6060);
+                "master port",
+                0);
         }
     };
 }

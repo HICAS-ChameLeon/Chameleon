@@ -162,27 +162,31 @@ int main(int argc, char **argv) {
 
     string slave_port = to_string(flags.slave_port);
 
-    if (flags.master_ip_and_port == "" && flags.master_hostname == "" && slave_port == "0" && flags.help == 0) {
-        cout << "Have no flags: " << flags.usage() << endl;
-    }
     if (flags.help == 1) {
-        cout << "Test for flags: " << flags.usage() << endl;
-    }
-    if (!flags.master_ip_and_port.empty() || !flags.master_hostname.empty() || flags.slave_port != 0) {
-        os::setenv("LIBPROCESS_PORT", stringify(flags.slave_port));
-        process::initialize("slave");
+        LOG(INFO) << "How to run this: " << flags.usage();
+    } else {
+        if (flags.master_ip_and_port == "" && flags.master_hostname == "" && slave_port == "0" && flags.help == 0) {
+            LOG(INFO) << "Have no flags: " << flags.usage();
+        } else {
+            if (!flags.master_ip_and_port.empty() && flags.slave_port != 0) {
+                os::setenv("LIBPROCESS_PORT", stringify(flags.slave_port));
+                process::initialize("slave");
 
-        Slave slave;
+                Slave slave;
 
-        string master_ip_and_port = "master@" + stringify(flags.master_ip_and_port);
-        slave.setDEFAULT_MASTER(master_ip_and_port);
+                string master_ip_and_port = "master@" + stringify(flags.master_ip_and_port);
+                slave.setDEFAULT_MASTER(master_ip_and_port);
 
-        PID<Slave> cur_slave = process::spawn(slave);
-        LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
+                PID<Slave> cur_slave = process::spawn(slave);
+                LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
 
-        const PID<Slave> slave_pid = slave.self();
-        LOG(INFO) << slave_pid;
-        process::wait(slave.self());
+                const PID<Slave> slave_pid = slave.self();
+                LOG(INFO) << slave_pid;
+                process::wait(slave.self());
+            } else {
+                LOG(INFO) << "Enter parameters" << flags.usage() ;
+            }
+        }
     }
     return 0;
 }
