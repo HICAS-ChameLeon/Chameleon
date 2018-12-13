@@ -18,6 +18,7 @@
 </head>
 
 <body onload="draw()">
+
 <style type="text/css">
     .icon {
         font-size: 30px;
@@ -107,7 +108,7 @@
 
     <!-- Main Content -->
     <div class="col-md-8 col-lg-8 ">
-        <div class="row">
+            <div style="margin-top: 15px; height:50px">
             <p style="font-size: 200%;">
                <svg class="icon" aria-hidden="true">
                   <use xlink:href="#icon-kongzhitai-"></use>
@@ -115,27 +116,31 @@
                控制模块
             </p>
         </div>
-        <div class="row">
-            <ul id="myTab" class="nav nav-tabs" style="margin-left:300px; margin-top: 0px">
+            <ul id="myTab" class="nav nav-tabs">
 
                 <li class="active">
-                    <a href="#slave_node" data-toggle="tab" style="font-size: 150%">
+                    <a href="#slave_node" data-toggle="tab" style="font-size: 135%">
                         机器节点
                     </a>
                 </li>
                 <li>
-                    <a href="#resource" data-toggle="tab" style="font-size: 150%">
+                    <a href="#resource" data-toggle="tab" style="font-size: 135%">
                         集群资源使用统计
                     </a>
                 </li>
                 <li>
-                    <a href="#algorithm option" data-toggle="tab" style="font-size: 150%">
+                    <a href="#algorithmoption" data-toggle="tab" style="font-size: 135%">
                         调度算法选择
                     </a>
                 </li>
                 <li>
-                    <a href="#scheduling policy" data-toggle="tab" style="font-size: 150%">
+                    <a href="#schedulingpolicy" data-toggle="tab" style="font-size: 135%">
                         时空共享调度策略
+                    </a>
+                </li>
+                <li>
+                    <a href="#schedulingpolicy" data-toggle="tab" style="font-size: 135%">
+                        网络拓扑图
                     </a>
                 </li>
             </ul>
@@ -336,7 +341,7 @@
     }
 
 </script>
-<div id="mynetwork" style="margin-left: 330px ;></div>
+c
 
 <script>
     var resource_app = angular.module('resourceAPP', []);
