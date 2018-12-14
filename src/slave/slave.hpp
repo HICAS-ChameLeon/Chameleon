@@ -75,15 +75,11 @@ namespace chameleon {
     // forward declations
     class SlaveHeartbeater;
 
-    constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(5);
-
     class Slave : public ProtobufProcess<Slave> {
     public:
-        explicit Slave() : ProcessBase("slave"), m_interval(DEFAULT_HEARTBEAT_INTERVAL) {
+         explicit Slave() : ProcessBase("slave"), m_interval(){
             msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
             msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
-            LOG(INFO) << "The heartbeat interval is " << DEFAULT_HEARTBEAT_INTERVAL;
-
 //            msp_resource_collector = new ResourceCollector();
         }
 
@@ -93,7 +89,7 @@ namespace chameleon {
             LOG(INFO) << "~ Slave()";
         }
 
-        string DEFAULT_MASTER;
+
 
     protected:
         void finalize() override;
@@ -107,17 +103,24 @@ namespace chameleon {
 
         void send_heartbeat_to_master();
 
-        void setDEFAULT_MASTER(const string &DEFAULT_MASTER) {
-            Slave::DEFAULT_MASTER = DEFAULT_MASTER;
+        void setM_master(const string &m_master) {
+            Slave::m_master = m_master;
+        }
+
+        void setM_interval(const Duration &m_interval) {
+            Slave::m_interval = m_interval;
         }
 
     private:
         shared_ptr<ResourceCollector> msp_resource_collector;
         shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
+
         shared_ptr<UPID> msp_masterUPID;
-        const Duration m_interval;
+        Duration m_interval;
         string m_uuid;
+        string m_master;
+
         void heartbeat();
     };
 
@@ -136,6 +139,10 @@ namespace chameleon {
 //        install<Offer>(&Master::report_from_client, &Offer::key,&Offer::value);
         }
 
+        void setM_interval(Duration &m_interval) {
+            SlaveHeartbeater::m_interval = m_interval;
+        }
+
     private:
 
         void heartbeat() {
@@ -144,9 +151,7 @@ namespace chameleon {
             // it's cyclical because "heartbeat invoke heartbeat"
             process::delay(m_interval, self(), &Self::heartbeat);
         }
-
-        const Duration m_interval;
-
+        Duration m_interval;
     };
 }
 
