@@ -9,7 +9,7 @@
 
 DEFINE_string(minfo, "127.0.0.1:8080", "ip and port info");
 DEFINE_int32(port, 0, "port");
-
+DEFINE_uint32(ht,6,"Heartbeat interval");
 
 /*
  * Function name  : ValidateStr
@@ -32,7 +32,15 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
     printf("Invalid value for --%s: %d\n", flagname, (int) value);
     return false;
 }
+static bool ValidateUint(const char *flagname, gflags::uint32 value) {
+    if (value >= 2 ) {
+        return true;
+    }
+    printf("Invalid value for --%s: %d\n", flagname, (int) value);
+    return false;
+}
 
+static const bool port_dummyUint = gflags::RegisterFlagValidator(&FLAGS_ht, &ValidateUint);
 static const bool port_dummyInt = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 static const bool minfo_dummyStr = gflags::RegisterFlagValidator(&FLAGS_minfo, &ValidateStr);
 
@@ -43,7 +51,7 @@ namespace chameleon {
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-        msp_masterUPID = make_shared<UPID>(UPID(DEFAULT_MASTER));
+        msp_masterUPID = make_shared<UPID>(UPID(m_master));
         install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
         install<JobMessage>(&Slave::get_a_job);
 
@@ -121,8 +129,6 @@ namespace chameleon {
                     LOG(INFO) << "The pid is " << res.get().children.front().process.pid;
                 }
             }
-
-
         }
     }
 
@@ -138,6 +144,8 @@ namespace chameleon {
     }
 
     void Slave::send_heartbeat_to_master() {
+
+        LOG(INFO) << "The Heartbeat is: " << m_interval;
 
         auto t1 = std::chrono::system_clock::now();
 
@@ -188,7 +196,9 @@ int main(int argc, char *argv[]) {
 
     google::SetUsageMessage("usage : Option[name] \n"
                             "--port      the port used by the program \n"
-                            "--minfo     the master ip and port,example:127.0.0.1:8080");
+                            "--minfo     the master ip and port,example:127.0.0.1:8080 \n"
+                            "--ht        fixed time interval, slave send message to master \n"
+                            "            and the interval >= 2");
     google::SetVersionString("Chameleon v1.0");
     google::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -201,13 +211,18 @@ int main(int argc, char *argv[]) {
     } else {
         if (GetCommandLineFlagInfo("port", &info) && !info.is_default &&
             GetCommandLineFlagInfo("minfo", &info) && !info.is_default) {
+
             os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
+            os::setenv("FLAGS_ht",stringify(FLAGS_ht));
+
             process::initialize("slave");
 
             Slave slave;
 
+            slave.setM_interval(Seconds(FLAGS_ht));
+
             string master_ip_and_port = "master@" + stringify(FLAGS_minfo);
-            slave.setDEFAULT_MASTER(master_ip_and_port);
+            slave.setM_master(master_ip_and_port);
 
             PID<Slave> cur_slave = process::spawn(slave);
             LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
