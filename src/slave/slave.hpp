@@ -15,6 +15,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <gflags/gflags.h>
 
 // stout dependencies
 #include <stout/os.hpp>
@@ -48,6 +49,9 @@
 #include <configuration_glog.hpp>
 #include <runtime_resources_usage.hpp>
 
+
+
+
 using std::string;
 using std::unordered_map;
 using std::shared_ptr;
@@ -65,6 +69,7 @@ using process::Promise;
 using process::http::Request;
 using process::http::OK;
 using process::http::InternalServerError;
+
 
 namespace chameleon {
     // forward declations

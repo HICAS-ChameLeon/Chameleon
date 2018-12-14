@@ -28,9 +28,11 @@ $ sudo apt-get -y install dmidecode lshw hdparm
 ```
 
 Second,
+```shell
 # How to run the program
 
 #submitter
+
 example
 
 $./submitter  --masterinfo=172.20.110.228:6060  --port=6062 --spath=/home/XXX/spark-2.3.0-bin-hadoop2.7.tgz
@@ -54,6 +56,7 @@ explain
 example
 
 $./master --port=6060
+
 
 explain
   --port=VALUE     master run port
