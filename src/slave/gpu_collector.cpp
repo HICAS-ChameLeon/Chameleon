@@ -30,6 +30,7 @@ namespace chameleon {
         vector<string>::iterator vec_iter;
         m_gpu_proto = new GPUCollection();
         GPUInfo *gpuInfo = nullptr;
+        std::string::size_type str;
         int index = 0; /*The number of GPU*/
         for (vec_iter = tokens.begin(); vec_iter != tokens.end(); vec_iter++) {
             if (strings::contains(*vec_iter, "display")) {
@@ -48,15 +49,21 @@ namespace chameleon {
                 } else if (*vec == "vendor") {
                     gpuInfo->set_vendor(strings::trim(*(vec + 1), " "));
                 } else if (*vec == "physical id") {
-                    gpuInfo->set_physical_id(strings::trim(*(vec + 1), " "));
+                    string p_id = strings::trim(*(vec + 1), " ");
+                    int i = boost::lexical_cast<int>(p_id);
+                    gpuInfo->set_physical_id(i);
                 } else if (*vec == "bus info") {
                     gpuInfo->set_bus_info(strings::trim(*(vec + 1), " "));
                 } else if (*vec == "version") {
                     gpuInfo->set_version(strings::trim(*(vec + 1), " "));
-                } else if (*vec == "width") {
-                    gpuInfo->set_width(strings::trim(*(vec + 1), " "));
-                } else if (*vec == "clock") {
-                    gpuInfo->set_clock(strings::trim(*(vec + 1), " "));
+                } else if (*vec == "width") {   //unit 'bits'
+                    string w = strings::trim(*(vec + 1), " ");
+                    int w_int = std::stoi(strings::trim(w," "), &str);
+                    gpuInfo->set_width(w_int);
+                } else if (*vec == "clock") {   //unit 'MHz'
+                    string c = strings::trim(*(vec + 1), " ");
+                    int c_int = std::stoi(strings::trim(c," "), &str);
+                    gpuInfo->set_clock(c_int);
                 } else if (*vec == "capabilities") {
                     gpuInfo->set_capabilities(strings::trim(*(vec + 1), " "));
                 } else if (*vec == "configuration") {

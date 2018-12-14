@@ -20,31 +20,23 @@ using std::map;
 
 using utils::arraySize;
 
-namespace chameleon{
-    class SlaveFlagsBase:public virtual FlagsBase{
+namespace chameleon {
+    class SlaveFlagsBase : public virtual FlagsBase {
     public:
-        int slave_port;
-        string master_ip;
-        string master_hostname;
+        string slave_port;
+        string master_ip_and_port;
 
         SlaveFlagsBase() {
-            /*slave run port*/
+
             add(&SlaveFlagsBase::slave_port,
-                    "slave_port",
-                    "set slave_port",
-                    6061);
+                "slaveport",
+                "slave port"
+            );
 
-            /*master ip*/
-            add(&SlaveFlagsBase::master_ip,
-                    "master_ip",
-                    "set master_ip",
-                    "172.20.110.228");
-
-            /*master hostname*/
-            add(&SlaveFlagsBase::master_hostname,
-                    "master_hostname",
-                    "set master_hostname",
-                    "lilelr");
+            add(&SlaveFlagsBase::master_ip_and_port,
+                "masterinfo",
+                "master ip and port"
+            );
         }
     };
 }

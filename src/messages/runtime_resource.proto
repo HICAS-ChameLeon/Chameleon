@@ -2,14 +2,16 @@
 message RuntimeResourcesMessage
 {
     required string slave_id =1;
-    required CPUUsage cpu_usage = 2;
+    required CPUUsage cpu_usage = 2;       //Runtime CPU information
     required MemoryUsage  mem_usage = 3;  //Runtime memory information
     required DiskUsage disk_usage = 4;
     required NetUsage net_usage = 5;
+    required string slave_uuid=6;
+
 }
 
 message CPUUsage{
-    required float cpu_used = 1;
+    required float cpu_used = 1;    //CPU Usage
 }
 
 message MemoryUsage {  //Their unit is KB
@@ -22,7 +24,7 @@ message MemoryUsage {  //Their unit is KB
     required uint32 cached = 5;  //in-memory cache for files read from the disk
     required uint32 swap_total = 6;  //total amount of swap space available
     required uint32 swap_free = 7;  //Memory which has been evicted from RAM, and is temporarily on the disk
-    required uint32 hugepagesize = 8;  //number of pages
+    optional uint32 hugepagesize = 8;  //number of pages
 }
 
 

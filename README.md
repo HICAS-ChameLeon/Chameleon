@@ -20,5 +20,40 @@ $ sudo apt-get install -y autoconf libtool automake
 # Install the dependencies for libprocess.
 $ sudo apt-get -y install build-essential libcurl4-nss-dev libsasl2-dev libsasl2-modules  libapr1-dev libsvn-dev zlib1g-dev iputils-ping
 # Install the dependencies for hardware resources collection
+if on x86_64 architecture
 $ sudo apt-get -y install dmidecode lshw hdparm cpuid
+if on Arm architecture
+$ sudo apt-get -y install dmidecode lshw hdparm 
+
 ```
+
+Second,
+# How to run the program
+
+#submitter
+example
+
+$./submitter  --masterinfo=172.20.110.228:6060  --port=6062 --spath=/home/XXX/spark-2.3.0-bin-hadoop2.7.tgz
+
+explain
+  --masterinfo=VALUE     master ip and port
+  --port=VALUE           submitter run port
+  --spath=VALUE          spark exists path
+
+
+#slave
+example
+
+$./slave  --masterinfo=172.20.110.228:6060 --slaveport=6061
+
+explain
+  --masterinfo=VALUE     master_ip_and_port
+  --slaveport=VALUE      slave_port (defalut 0)
+
+#master
+example
+
+$./master --port=6060
+
+explain
+  --port=VALUE     master run port

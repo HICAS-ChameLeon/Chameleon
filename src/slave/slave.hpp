@@ -20,6 +20,7 @@
 #include <stout/os.hpp>
 #include <stout/os/pstree.hpp>
 #include <stout/path.hpp>
+#include <stout/uuid.hpp>
 
 #include <stout/os/getcwd.hpp>
 #include <stout/os/write.hpp>
@@ -51,6 +52,7 @@ using std::string;
 using std::unordered_map;
 using std::shared_ptr;
 using std::make_shared;
+using std::to_string;
 
 using os::Process;
 using os::ProcessTree;
@@ -70,8 +72,6 @@ namespace chameleon {
 
     constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(5);
 
-    const string DEFAULT_MASTER = "master@172.20.110.228:6060";
-
     class Slave : public ProtobufProcess<Slave> {
     public:
         explicit Slave() : ProcessBase("slave"), m_interval(DEFAULT_HEARTBEAT_INTERVAL) {
@@ -88,6 +88,8 @@ namespace chameleon {
             LOG(INFO) << "~ Slave()";
         }
 
+        string DEFAULT_MASTER;
+
     protected:
         void finalize() override;
 
@@ -100,13 +102,17 @@ namespace chameleon {
 
         void send_heartbeat_to_master();
 
+        void setDEFAULT_MASTER(const string &DEFAULT_MASTER) {
+            Slave::DEFAULT_MASTER = DEFAULT_MASTER;
+        }
+
     private:
         shared_ptr<ResourceCollector> msp_resource_collector;
         shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
         shared_ptr<UPID> msp_masterUPID;
         const Duration m_interval;
-
+        string m_uuid;
         void heartbeat();
     };
 
