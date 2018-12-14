@@ -33,7 +33,7 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
     return false;
 }
 static bool ValidateUint(const char *flagname, gflags::uint32 value) {
-    if (value >= 3 ) {
+    if (value >= 2 ) {
         return true;
     }
     printf("Invalid value for --%s: %d\n", flagname, (int) value);
@@ -197,7 +197,8 @@ int main(int argc, char *argv[]) {
     google::SetUsageMessage("usage : Option[name] \n"
                             "--port      the port used by the program \n"
                             "--minfo     the master ip and port,example:127.0.0.1:8080 \n"
-                            "--ht        fixed time interval, slave send message to master");
+                            "--ht        fixed time interval, slave send message to master \n"
+                            "            and the interval >= 2");
     google::SetVersionString("Chameleon v1.0");
     google::ParseCommandLineFlags(&argc, &argv, true);
 
