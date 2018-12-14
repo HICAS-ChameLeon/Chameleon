@@ -9,9 +9,9 @@
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="../css/navbar.css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
-    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
-    <script src="https://cdn.staticfile.org/angular.js/1.6.3/angular.min.js"></script>
 
+    <script src="https://cdn.staticfile.org/angular.js/1.6.3/angular.min.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
 
 
 </head>
@@ -130,117 +130,38 @@
                 时空共享调度策略
             </a></li>
         </ul>
-        <div id="myTabContent" class="tab-content" style="margin-top: 15px">
+        <div id="myTabContent" class="tab-content" style="font-size: 150%; margin-top: 15px">
             <div class="tab-pane fade in active" id="hardware">
                 <div class="container-fluid">
                     <div ng-app="myApp" ng-controller="hardware">
-                        <table class="table table-hover" style="table-layout:fixed">
+                        <table class="table table-hover">
                             <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>IP</th>
-                                <th>CPU</th>
-                                <th>Cache</th>
-                                <th>硬盘</th>
-                                <th>GPU</th>
-                                <th>内存</th>
+                                <th>CPU数</th>
+                                <th>磁盘数</th>
+                                <th>GPU数</th>
+                                <th>内存容量</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr ng-repeat="x in hardware">
-                                <td>
-                                    {{x.slave_uuid}}
-                                </td>
+                                <td>{{x.slave_uuid}}</td>
                                 <td>
                                     {{x.slave_id}}
                                 </td>
                                 <td>
-                                    <!--<div class="panel panel-default">
-                                        <div class="panel-heading">-->
-                                            {{x.cpu_collection.cpu_quantity}}
-                                            <a style="float:right" data-toggle="collapse"
-                                               href="#cpu{{x.slave_uuid}}">
-
-                                                <svg class="icon" aria-hidden="true">
-                                                    <use xlink:href="#icon-xiala"></use>
-                                                </svg>
-                                            </a>
-                                        <!--</div>-->
-                                        <div id="cpu{{x.slave_uuid}}" class="collapse">
-                                            <!--<div class="panel-body">-->
-                                                modelname:{{x.cpu_collection.cpu_infos[0].modelname}}
-                                                主频:{{x.cpu_collection.cpu_infos[0].cpuMHz}}MHz
-                                                最大主频:{{x.cpu_collection.cpu_infos[0].cpumaxMhz}}MHz
-                                            <!--</div>-->
-                                        </div>
-                                    <!--</div>-->
-
+                                    {{x.cpu_collection.cpu_quantity}}
                                 </td>
                                 <td>
-                                    <div>
-                                        三级缓存
-                                        <a style="float:right" data-toggle="collapse"
-                                           href="#cache{{x.slave_uuid}}">
-                                            <svg class="icon" aria-hidden="true">
-                                                <use xlink:href="#icon-xiala"></use>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                    <div id="cache{{x.slave_uuid}}" class="collapse">
-                                        l1dcache:{{x.cpu_collection.cpu_infos[0].l1dcache}}
-                                        l1dcache:{{x.cpu_collection.cpu_infos[0].l1dcache}}
-                                        l2cache:{{x.cpu_collection.cpu_infos[0].l2cache}}
-                                        l3cache:{{x.cpu_collection.cpu_infos[0].l3cache}}
-                                    </div>
+                                    {{x.disk_collection.disk_quantity}}
                                 </td>
                                 <td>
-                                    <div>
-                                        {{x.disk_collection.disk_quantity}}
-                                        <a style="float:right" data-toggle="collapse"
-                                           href="#disk{{x.slave_uuid}}">
-                                            <svg class="icon" aria-hidden="true">
-                                                <use xlink:href="#icon-xiala"></use>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                    <div id="disk{{x.slave_uuid}}" class="collapse">
-                                        name:{{x.disk_collection.disk_infos[0].name}} <br>
-                                        size:{{x.disk_collection.disk_infos[0].size}} <br>
-                                        type:{{x.disk_collection.disk_infos[0].type}} <br>
-                                        speed:{{x.disk_collection.disk_infos[0].disk_speed}}
-                                    </div>
+                                    {{x.gpu_collection.gpu_quantity}}
                                 </td>
                                 <td>
-                                    <div>
-                                        {{x.gpu_collection.gpu_quantity}}
-                                        <a style="float:right" data-toggle="collapse"
-                                           href="#gpu{{x.slave_uuid}}">
-                                            <svg class="icon" aria-hidden="true">
-                                                <use xlink:href="#icon-xiala"></use>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                    <div id="gpu{{x.slave_uuid}}" class="collapse">
-                                        vendor:{{x.gpu_collection.gpu_infos[0].vendor}} <br>
-                                        physical_id:{{x.gpu_collection.gpu_infos[0].physical_id}} <br>
-                                        width:{{x.gpu_collection.gpu_infos[0].width}}
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>
-                                        {{x.mem_collection.max_size}}
-                                        <a style="float:right" data-toggle="collapse"
-                                           href="#mem{{x.slave_uuid}}">
-                                            <svg class="icon" aria-hidden="true">
-                                                <use xlink:href="#icon-xiala"></use>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                    <div id="mem{{x.slave_uuid}}" class="collapse">
-                                        size:{{x.mem_collection.mem_infos[0].size}}
-                                        speed:{{x.mem_collection.mem_infos[0].speed}}
-                                        type:{{x.mem_collection.mem_infos[0].type}}
-                                    </div>
+                                    {{x.mem_collection.max_size}}
                                 </td>
                             </tr>
                             </tbody>
@@ -259,8 +180,8 @@
                                 <th>IP</th>
                                 <th>CPU使用率</th>
                                 <th>内存使用率</th>
-                                <th>硬盘空闲率</th>
-                                <th>交换空间空闲率</th>
+                                <th>硬盘使用率</th>
+                                <th>交换空间使用率</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -276,26 +197,22 @@
                         </table>
                     </div>
                 </div>
-                <div class="tab-pane fade" id="algorithm">
-                    <div class="container-fluid">
-                    </div>
+            </div>
+            <div class="tab-pane fade" id="algorithm">
+                <div class="container-fluid">
                 </div>
-                <div class="tab-pane fade" id="timeandspace">
-                    <div class="container-fluid">
-                    </div>
+            </div>
+            <div class="tab-pane fade" id="timeandspace">
+                <div class="container-fluid">
                 </div>
             </div>
         </div>
-
-
     </div>
 </div>
 
 <script src="../js/bootstrap.min.js"></script>
-
 <script src="../js/navbar.js"></script>
 <script src="../js/iconfont.js"></script>
-<!--<script src="../js/iconfont1.js"></script>-->
 <script src="../js/app.js"></script>
 
 </body>

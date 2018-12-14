@@ -59,6 +59,9 @@ namespace chameleon {
         std::string::size_type sz;
         string info_string = os::read("/proc/meminfo").get();
         vector<string> m_tokens = strings::tokenize(info_string, "\n");
+        //Note that: before Linux kernel 3.14 ,we didn't have the indication named "MemAvailable" in /proc/meminfo
+        // Hence, we used the indication "MemFree" to replace "MemAvailable" if the linux kernel version is smaller than 3.14
+        bool has_available = false;
         for (int i = 0; i < m_tokens.size(); i++) {
             vector<string> tokens_string = strings::tokenize(m_tokens[i], ":");
             for (auto iter = tokens_string.begin(); iter != tokens_string.end(); iter++) {
@@ -74,6 +77,7 @@ namespace chameleon {
                     break;
                 }
                 if (nospace == "MemAvailable") {
+                    has_available = true;
                     iter++;
                     m_memory_usage->set_mem_available(std::stoi(strings::trim(*iter), &sz));
                     break;
@@ -105,6 +109,12 @@ namespace chameleon {
                 }
             }
         }
+
+        if(!has_available){
+            // we used the indication "MemFree" to replace "MemAvailable" if the linux kernel version is smaller than 3.14
+            m_memory_usage->set_mem_available(m_memory_usage->mem_free());
+        }
+
         return m_memory_usage;
     }
 
