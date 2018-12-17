@@ -29,11 +29,11 @@ runtimeApp.controller('runtimeCtrl', function($scope, $http) {
         console.log(response.data.quantity);
 
         var DIR = '../icon/refresh-cl/';
-        var my_slaves = new Array(5*$scope.quantities);
+        var vertexes = new Array();
 
         var my_master = {};
-        my_slaves[0] = my_master;
-        my_master.id = 1;
+        vertexes[0] = my_master;
+        my_master.id = 0;
         my_master.label = "master";
         my_master.shape = 'image';
         my_master.image = DIR + 'Network-Pipe-icon.png';
@@ -41,60 +41,54 @@ runtimeApp.controller('runtimeCtrl', function($scope, $http) {
 
         //my_slaves[0] = my_master;
         var index_slave = 1;
-        var index_edge = 0;
+        var index_edge = -1;
         var index_subslave =777;
         var my_edges = [];
+        var cur_index=0;
 
         if($scope.quantities>=2){
-            my_edges = [$scope.quantities-1];
+            my_edges = [];
             for(var i in $scope.runtime){
                 var slave = $scope.runtime[i];
 
-                var temp_slave = {};
-                temp_slave.label = "slave"+index_slave;
-                temp_slave.id = index_slave+1;
+                var temp_slave = {}; // 添加一个顶点
+                cur_index++; // 全局id
+                temp_slave.label = "slave"+cur_index;
+                console.log('57 '+cur_index);
+                temp_slave.id = cur_index;
                 temp_slave.shape ='image';
                 temp_slave.image = DIR + 'Hardware-My-Computer-3-icon.png';
                 temp_slave.title = JSON.stringify(slave);
-                my_slaves[index_slave]= temp_slave;
-                var temp_edge = {};
-                temp_edge.from = 1;
+                vertexes[cur_index]= temp_slave; // cur_index 同时代表 顶点集合 my_slaves 的下标
+                console.info(vertexes);
+                var temp_edge = {}; // 添加一条边 master -> temp_slave
+                temp_edge.from = 0;
                 temp_edge.to = temp_slave.id;
                 temp_edge.arrows = 'to';
+                index_edge++; // 边集合 my_edges 的下标
                 my_edges[index_edge] = temp_edge;
+
+                // 添加cpu节点
+                var temp_cpu = {};
+                cur_index++;
+                temp_cpu.label = "cpu"+cur_index;
+                temp_cpu.id = cur_index;
+                temp_cpu.group = 'server';
+                // temp_cpu.shape='image';
+                // temp_cpu.image = DIR + 'Hardware-My-Computer-3-icon.png';
+                vertexes[cur_index] = temp_cpu;
+                // 添加连接cpu节点的边, temp_slave -> temp_cpu
+                var edge_cpu = {};
                 index_edge++;
-                for(var j =0;j<$scope.quantities;j++)
-                {
+                edge_cpu.from= temp_slave.id;
+                edge_cpu.to = temp_cpu.id;
+                edge_cpu.arrows = 'to';
+                my_edges[index_edge] = edge_cpu;
 
-                    temp_slave.id = index_subslave+1;
-                    temp_slave.group ='server';
-                    temp_edge.from =index_slave+1;
-                    temp_edge.to =index_subslave+1;
-                    temp_edge.arrows = 'to';
-                    my_slaves[index_slave+2]=temp_slave;
 
-                    temp_slave.id = index_subslave+2;
-                    temp_slave.group ='server';
-                    temp_edge.from =index_slave+1;
-                    temp_edge.to =index_subslave+2;
-                    temp_edge.arrows = 'to';
-                    my_slaves[index_slave+3]=temp_slave;
 
-                    temp_slave.id = index_subslave+3;
-                    temp_slave.group ='server';
-                    temp_edge.from =index_slave+1;
-                    temp_edge.to =index_subslave+3;
-                    temp_edge.arrows = 'to';
-                    my_slaves[index_slave+4]=temp_slave;
+                // var temp_mem
 
-                    temp_slave.id = index_subslave+4;
-                    temp_slave.group ='server';
-                    temp_edge.from =index_slave+1;
-                    temp_edge.to =index_subslave+4;
-                    temp_edge.arrows = 'to';
-                    my_slaves[index_slave+5]=temp_slave;
-
-                }
                 index_slave++;
 
             }
@@ -103,7 +97,7 @@ runtimeApp.controller('runtimeCtrl', function($scope, $http) {
         }
 
 
-        var nodes = new vis.DataSet(my_slaves);
+        var nodes = new vis.DataSet(vertexes);
 
 
         var edges = new vis.DataSet(my_edges);
