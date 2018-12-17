@@ -29,7 +29,7 @@ runtimeApp.controller('runtimeCtrl', function($scope, $http) {
         console.log(response.data.quantity);
 
         var DIR = '../icon/refresh-cl/';
-        var my_slaves = new Array($scope.quantities);
+        var my_slaves = new Array(5*$scope.quantities);
 
         var my_master = {};
         my_slaves[0] = my_master;
@@ -42,27 +42,60 @@ runtimeApp.controller('runtimeCtrl', function($scope, $http) {
         //my_slaves[0] = my_master;
         var index_slave = 1;
         var index_edge = 0;
+        var index_subslave =777;
         var my_edges = [];
+
         if($scope.quantities>=2){
             my_edges = [$scope.quantities-1];
             for(var i in $scope.runtime){
                 var slave = $scope.runtime[i];
 
                 var temp_slave = {};
-                temp_slave.label = "slave"+index_slave+"@"+slave.slave_id;
+                temp_slave.label = "slave"+index_slave;
                 temp_slave.id = index_slave+1;
                 temp_slave.shape ='image';
                 temp_slave.image = DIR + 'Hardware-My-Computer-3-icon.png';
                 temp_slave.title = JSON.stringify(slave);
                 my_slaves[index_slave]= temp_slave;
-                index_slave++;
-
                 var temp_edge = {};
                 temp_edge.from = 1;
                 temp_edge.to = temp_slave.id;
                 temp_edge.arrows = 'to';
                 my_edges[index_edge] = temp_edge;
                 index_edge++;
+                for(var j =0;j<$scope.quantities;j++)
+                {
+
+                    temp_slave.id = index_subslave+1;
+                    temp_slave.group ='server';
+                    temp_edge.from =index_slave+1;
+                    temp_edge.to =index_subslave+1;
+                    temp_edge.arrows = 'to';
+                    my_slaves[index_slave+2]=temp_slave;
+
+                    temp_slave.id = index_subslave+2;
+                    temp_slave.group ='server';
+                    temp_edge.from =index_slave+1;
+                    temp_edge.to =index_subslave+2;
+                    temp_edge.arrows = 'to';
+                    my_slaves[index_slave+3]=temp_slave;
+
+                    temp_slave.id = index_subslave+3;
+                    temp_slave.group ='server';
+                    temp_edge.from =index_slave+1;
+                    temp_edge.to =index_subslave+3;
+                    temp_edge.arrows = 'to';
+                    my_slaves[index_slave+4]=temp_slave;
+
+                    temp_slave.id = index_subslave+4;
+                    temp_slave.group ='server';
+                    temp_edge.from =index_slave+1;
+                    temp_edge.to =index_subslave+4;
+                    temp_edge.arrows = 'to';
+                    my_slaves[index_slave+5]=temp_slave;
+
+                }
+                index_slave++;
 
             }
         }else{
@@ -71,6 +104,7 @@ runtimeApp.controller('runtimeCtrl', function($scope, $http) {
 
 
         var nodes = new vis.DataSet(my_slaves);
+
 
         var edges = new vis.DataSet(my_edges);
 
