@@ -1,3 +1,4 @@
+
 var app = angular.module('myApp', []);
 
 // app.controller('siteCtrl', function($scope, $http) {
@@ -10,6 +11,8 @@ app.controller('hardware', function($scope, $http) {
         method: 'GET',
         url: 'http://172.20.110.228:6060/master/hardware-resources'
     }).then(function successCallback(response) {
+
+
         $scope.hardware = response.data.content;
         $scope.quantities = response.data.quantity;
     }, function errorCallback(response) {
@@ -193,7 +196,21 @@ runtimeApp.controller('runtimeCtrl', function($scope, $http) {
     }, function errorCallback(response) {
         // 请求失败执行代码
     });
-});
+})
+   ;
+//
+// var AgentApp = angular.module('AgentApp', []);
+//
+//
+// angular.module('agentNodes',['ngRoute'])
+//     .config(function($routeProvider){
+//         $routeProvider.
+//         when('/Control/:agent_id',{
+//             //templateURL：插入ng-view的HTML模板文件
+//             templateUrl:'/Chameleon/webui/HTML/agent.html',
+//             controller:'AgentCtrl'})
+//     });
+
 
 //手动加载ng-app
 angular.bootstrap(document.querySelector('[ng-app="runtimeApp"]'), ['runtimeApp']);

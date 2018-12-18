@@ -6,7 +6,7 @@
 <head>
     <meta charset="utf-8">
 
-    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../css/navbar.css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
@@ -278,7 +278,17 @@
                             </thead>
                             <tbody>
                             <tr ng-repeat="x in runtime">
-                                <td>{{x.slave_uuid}}</td>
+                                <td>
+                                    <a href="#/Control/{{x.slave_uuid}}">{{x.slave_uuid}}</a>
+                                    <button class="btn btn-xs btn-default btn-toggle"
+                                            clipboard
+                                            data-clipboard-text="{{x.slave_uuid}}"
+                                            tooltip="Copy ID"
+                                            tooltip-placement="right"
+                                            tooltip-trigger="clipboardhover">
+                                        <i class="icon-file"></i>
+                                    </button>
+                                </td>
                                 <td>{{x.slave_id}}</td>
                                 <td>{{x.cpu_usage.cpu_used | number:2}} %</td>
                                 <td>{{x.mem_usage.mem_available / x.mem_usage.mem_total * 100 | number:2}} %</td>
@@ -298,7 +308,6 @@
                     <div class="container-fluid">
                     </div>
                 </div>
-
             <div class="tab-pane fade " id="networktopology">
                 <div id="mynetwork"></div>
                 <p id="selection"></p>
@@ -323,119 +332,6 @@
 <script type="text/javascript" src="../vis-4.21.0/dist/vis.js"></script>
 <link href="../vis-4.21.0/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="../js/exampleUtil.js"></script>
-
-
-<!--<script type="text/javascript">-->
-    <!--var Hardware = null;-->
-    <!--var app = angular.module('myApp', []);-->
-
-    <!--// app.controller('siteCtrl', function($scope, $http) {-->
-    <!--//     $http.get("http://172.20.110.228/master/runtime-resources")-->
-    <!--//         .then(function (response) {$scope.names = response.data.quantity;});-->
-    <!--// });-->
-
-    <!--app.controller('hardware', function($scope, $http,$rootScope) {-->
-        <!--$http({-->
-            <!--method: 'GET',-->
-            <!--url: 'http://172.20.110.228:6060/master/hardware-resources'-->
-        <!--}).then(function successCallback(response) {-->
-            <!--$scope.hardware = response.data.content;-->
-            <!--console.log($scope.hardware);-->
-            <!--$rootScope.Hardware = response.data.content;-->
-            <!--console.log($rootScope.Hardware);-->
-            <!--console.log(response.data.content[0].slave_uuid);-->
-            <!--Hardware = response.data.content[0].slave_uuid;-->
-            <!--console.log(Hardware);-->
-            <!--$scope.quantities = response.data.quantity;-->
-            <!--console.log(response.data.quantity);-->
-        <!--}, function errorCallback(response) {-->
-            <!--// 请求失败执行代码-->
-        <!--});-->
-
-    <!--});-->
-    <!--console.log(document.getElementById("cpu{{x.slave_uuid}}"));-->
-    <!--console.log(hardware_controller);-->
-    <!--console.log(Hardware);-->
-    <!--var string = "str";-->
-    <!--var nodes = null;-->
-    <!--var edges = null;-->
-    <!--var network = null;-->
-
-    <!--var DIR = '../icon/refresh-cl/';-->
-    <!--//var EDGE_LENGTH_MAIN = 150;-->
-    <!--var EDGE_LENGTH_SUB = 150;-->
-    <!--// Called when the Visualization API is loaded.-->
-    <!--function draw() {-->
-        <!--// Create a data table with nodes.-->
-        <!--nodes = [];-->
-        <!--// Create a data table with links.-->
-        <!--edges = [];-->
-        <!--nodes.push({id: 1, label:Hardware, image: DIR + 'Network-Pipe-icon.png', shape: 'image',title: 'main node'});-->
-        <!--for (var i = 4; i <= 9; i++) {-->
-               <!--nodes.push({id: i, label: 'Computer', image: DIR + 'Hardware-My-Computer-3-icon.png', shape: 'image',title: 'slave node'});-->
-                 <!--edges.push({from: 1, to: i, length: EDGE_LENGTH_SUB});-->
-             <!--}-->
-
-
-        <!--/*example*/-->
-        <!--// nodes.push({id: 1, label: 'Main', image: DIR + 'Network-Pipe-icon.png', shape: 'image'});-->
-        <!--// nodes.push({id: 2, label: 'Office', image: DIR + 'Network-Pipe-icon.png', shape: 'image'});-->
-        <!--// nodes.push({id: 3, label: 'Wireless', image: DIR + 'Network-Pipe-icon.png', shape: 'image'});-->
-        <!--// edges.push({from: 1, to: 2, length: EDGE_LENGTH_MAIN});-->
-        <!--// edges.push({from: 1, to: 3, length: EDGE_LENGTH_MAIN});-->
-        <!--//-->
-        <!--// for (var i = 4; i <= 7; i++) {-->
-        <!--//     nodes.push({id: i, label: 'Computer', image: DIR + 'Hardware-My-Computer-3-icon.png', shape: 'image'});-->
-        <!--//     edges.push({from: 2, to: i, length: EDGE_LENGTH_SUB});-->
-        <!--// }-->
-        <!--//-->
-        <!--// nodes.push({id: 101, label: 'Printer', image: DIR + 'Hardware-Printer-Blue-icon.png', shape: 'image'});-->
-        <!--// edges.push({from: 2, to: 101, length: EDGE_LENGTH_SUB});-->
-        <!--//-->
-        <!--// nodes.push({id: 102, label: 'Laptop', image: DIR + 'Hardware-Laptop-1-icon.png', shape: 'image'});-->
-        <!--// edges.push({from: 3, to: 102, length: EDGE_LENGTH_SUB});-->
-        <!--//-->
-        <!--// nodes.push({id: 103, label: 'network drive', image: DIR + 'Network-Drive-icon.png', shape: 'image'});-->
-        <!--// edges.push({from: 1, to: 103, length: EDGE_LENGTH_SUB});-->
-        <!--//-->
-        <!--// nodes.push({id: 104, label: 'Internet', image: DIR + 'System-Firewall-2-icon.png', shape: 'image'});-->
-        <!--// edges.push({from: 1, to: 104, length: EDGE_LENGTH_SUB});-->
-        <!--//-->
-        <!--// for (var i = 200; i <= 201; i++ ) {-->
-        <!--//     nodes.push({id: i, label: 'Smartphone', image: DIR + 'Hardware-My-PDA-02-icon.png', shape: 'image'});-->
-        <!--//     edges.push({from: 3, to: i, length: EDGE_LENGTH_SUB});-->
-        <!--// }-->
-
-        <!--// create a network-->
-        <!--var container = document.getElementById('mynetwork');-->
-        <!--var data = {-->
-            <!--nodes: nodes,-->
-            <!--edges: edges-->
-        <!--};-->
-
-        <!--var options = {-->
-            <!--interaction:{hover:true},-->
-            <!--manipulation: {-->
-                <!--enabled: true-->
-            <!--}-->
-        <!--};-->
-
-        <!--network = new vis.Network(container, data, options);-->
-
-        <!--network.on("click", function (params) {-->
-            <!--//$scope.runtime-->
-            <!--params.event = "[oringal events]";-->
-            <!--document.getElementById('wqnnetwork').innerHTML = '<h2>Click event:</h2>' + JSON.stringify(params, null, 4);-->
-            <!--console.log('click event, getNodeAt returns: ' + this.getNodeAt(params.pointer.DOM));-->
-        <!--});-->
-   <!--}-->
-
-
-<!--</script>-->
-
-
-<!--<script src="../js/iconfont1.js"></script>-->
-
 
 </body>
 
