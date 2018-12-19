@@ -9,22 +9,22 @@
         .config(function ($routeProvider) {
             $routeProvider.when('/hardware', {
                 //templateURL：插入ng-view的HTML模板文件
-                templateUrl: '/webui/HTML/hardware.html',
+                templateUrl: '/Chameleon/src/webui/HTML/hardware.html',
                 controller: 'HardwareCtrl'
 
             })
                 .when('/runtime', {
-                    templateUrl: '/webui/HTML/runtime.html',
+                    templateUrl: '/Chameleon/src/webui/HTML/runtime.html',
                     controller: 'RuntimeCtrl'
                 })
                 // network_topology.html
                 .when('/topology', {
-                    templateUrl: '/webui/HTML/network_topology.html',
+                    templateUrl: '/Chameleon/src/webui/HTML/network_topology.html',
                     controller: 'TopologyCtrl'
                 })
                 // slave.html
                 .when('/slaves/:slave_uuid/ip/:slave_id/cpu_usage/:cpu_used/mem_usage/:mem_used', {
-                    templateUrl: '/webui/HTML/slave.html',
+                    templateUrl: '/Chameleon/src/webui/HTML/slave.html',
                     controller: 'SlaveCtrl'
                 })
         })
