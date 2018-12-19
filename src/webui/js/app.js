@@ -23,7 +23,7 @@
                     controller: 'TopologyCtrl'
                 })
                 // slave.html
-                .when('/slaves/:slave_uuid/ip/:slave_id/cpu_usage/:cpu_used/mem_usage/:mem_used', {
+                .when('/slaves/:slave_uuid/ip/:slave_id/cpu_usage/:cpu_used/mem_usage/:mem_used/disk_usage/:disk_used', {
                     templateUrl: '/Chameleon/src/webui/HTML/slave.html',
                     controller: 'SlaveCtrl'
                 })
