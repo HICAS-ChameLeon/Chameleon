@@ -39,6 +39,343 @@
         $scope.slave_id = $routeParams.slave_id;
         $scope.cpu_used = $routeParams.cpu_used;
         $scope.mem_used = $routeParams.mem_used;
+        $scope.disk_used = $routeParams.disk_used;
+
+        // 基于准备好的dom，初始化echarts实例
+        var myChart = echarts.init(document.getElementById('cpu'));
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption({
+            title: {
+                text: 'cpu使用率',
+                x:'center'
+            },
+            tooltip : {
+                trigger: 'item',
+                formatter: "{a} <br/>{b} :  ({d}%)"
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'right',
+                data: ['已使用','未使用']
+            },
+            series : [
+                {
+                    name: 'cpu使用率',
+                    type: 'pie',
+                    radius: '55%',
+                    label: {
+                        normal: {
+                            formatter: '  {b|{b}：}  {per|{d}%}  ',
+                            backgroundColor: '#eee',
+                            borderColor: '#aaa',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            // shadowBlur:3,
+                            // shadowOffsetX: 2,
+                            // shadowOffsetY: 2,
+                            // shadowColor: '#999',
+                            // padding: [0, 7],
+                            rich: {
+                                a: {
+                                    color: '#999',
+                                    lineHeight: 22,
+                                    align: 'center'
+                                },
+                                // abg: {
+                                //     backgroundColor: '#333',
+                                //     width: '100%',
+                                //     align: 'right',
+                                //     height: 22,
+                                //     borderRadius: [4, 4, 0, 0]
+                                // },
+                                hr: {
+                                    borderColor: '#aaa',
+                                    width: '100%',
+                                    borderWidth: 0.5,
+                                    height: 0
+                                },
+                                b: {
+                                    fontSize: 16,
+                                    lineHeight: 33
+                                },
+                                per: {
+                                    color: '#eee',
+                                    backgroundColor: '#334455',
+                                    padding: [2, 4],
+                                    borderRadius: 2
+                                }
+                            }
+                        }
+                    },
+                    center: ['50%', '60%'],
+                    data:[
+                        {value:$scope.cpu_used, name:'已使用'},
+                        {value:100-$scope.cpu_used, name:'未使用'},
+                    ],
+                    itemStyle: {
+                        emphasis: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+
+                }
+            ]
+        })
+
+        var myChart = echarts.init(document.getElementById('mem'));
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption({
+            title: {
+                text: 'mem使用率',
+                x:'center'
+            },
+            tooltip : {
+                trigger: 'item',
+                formatter: "{a} <br/>{b} :  ({d}%)"
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'right',
+                data: ['已使用','未使用']
+            },
+            series : [
+                {
+                    name: 'mem使用率',
+                    type: 'pie',
+                    radius: '55%',
+                    label: {
+                        normal: {
+                            formatter: '  {b|{b}：}  {per|{d}%}  ',
+                            backgroundColor: '#eee',
+                            borderColor: '#aaa',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            // shadowBlur:3,
+                            // shadowOffsetX: 2,
+                            // shadowOffsetY: 2,
+                            // shadowColor: '#999',
+                            // padding: [0, 7],
+                            rich: {
+                                a: {
+                                    color: '#999',
+                                    lineHeight: 22,
+                                    align: 'center'
+                                },
+                                // abg: {
+                                //     backgroundColor: '#333',
+                                //     width: '100%',
+                                //     align: 'right',
+                                //     height: 22,
+                                //     borderRadius: [4, 4, 0, 0]
+                                // },
+                                hr: {
+                                    borderColor: '#aaa',
+                                    width: '100%',
+                                    borderWidth: 0.5,
+                                    height: 0
+                                },
+                                b: {
+                                    fontSize: 16,
+                                    lineHeight: 33
+                                },
+                                per: {
+                                    color: '#eee',
+                                    backgroundColor: '#334455',
+                                    padding: [2, 4],
+                                    borderRadius: 2
+                                }
+                            }
+                        }
+                    },
+                    center: ['50%', '60%'],
+                    data:[
+                        {value:$scope.mem_used, name:'已使用'},
+                        {value:100-$scope.mem_used, name:'未使用'},
+                    ],
+                    itemStyle: {
+                        emphasis: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+
+                }
+            ]
+        })
+
+        var myChart = echarts.init(document.getElementById('disk'));
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption({
+            title: {
+                text: 'disk使用率',
+                x:'center'
+            },
+            tooltip : {
+                trigger: 'item',
+                formatter: "{a} <br/>{b} :  ({d}%)"
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'right',
+                data: ['已使用','未使用']
+            },
+            series : [
+                {
+                    name: 'disk使用率',
+                    type: 'pie',
+                    radius: '55%',
+                    label: {
+                        normal: {
+                            formatter: '  {b|{b}：}  {per|{d}%}  ',
+                            backgroundColor: '#eee',
+                            borderColor: '#aaa',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            // shadowBlur:3,
+                            // shadowOffsetX: 2,
+                            // shadowOffsetY: 2,
+                            // shadowColor: '#999',
+                            // padding: [0, 7],
+                            rich: {
+                                a: {
+                                    color: '#999',
+                                    lineHeight: 22,
+                                    align: 'center'
+                                },
+                                // abg: {
+                                //     backgroundColor: '#333',
+                                //     width: '100%',
+                                //     align: 'right',
+                                //     height: 22,
+                                //     borderRadius: [4, 4, 0, 0]
+                                // },
+                                hr: {
+                                    borderColor: '#aaa',
+                                    width: '100%',
+                                    borderWidth: 0.5,
+                                    height: 0
+                                },
+                                b: {
+                                    fontSize: 16,
+                                    lineHeight: 33
+                                },
+                                per: {
+                                    color: '#eee',
+                                    backgroundColor: '#334455',
+                                    padding: [2, 4],
+                                    borderRadius: 2
+                                }
+                            }
+                        }
+                    },
+                    center: ['50%', '60%'],
+                    data:[
+                        {value:$scope.disk_used, name:'已使用'},
+                        {value:100-$scope.disk_used, name:'未使用'},
+                    ],
+                    itemStyle: {
+                        emphasis: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+
+                }
+            ]
+        })
+
+        var myChart = echarts.init(document.getElementById('swap'));
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption({
+            title: {
+                text: 'swap使用率',
+                x:'center'
+            },
+            tooltip : {
+                trigger: 'item',
+                formatter: "{a} <br/>{b} :  ({d}%)"
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'right',
+                data: ['已使用','未使用']
+            },
+            series : [
+                {
+                    name: 'swap使用率',
+                    type: 'pie',
+                    radius: '55%',
+                    label: {
+                        normal: {
+                            formatter: '  {b|{b}：}  {per|{d}%}  ',
+                            backgroundColor: '#eee',
+                            borderColor: '#aaa',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            // shadowBlur:3,
+                            // shadowOffsetX: 2,
+                            // shadowOffsetY: 2,
+                            // shadowColor: '#999',
+                            // padding: [0, 7],
+                            rich: {
+                                a: {
+                                    color: '#999',
+                                    lineHeight: 22,
+                                    align: 'center'
+                                },
+                                // abg: {
+                                //     backgroundColor: '#333',
+                                //     width: '100%',
+                                //     align: 'right',
+                                //     height: 22,
+                                //     borderRadius: [4, 4, 0, 0]
+                                // },
+                                hr: {
+                                    borderColor: '#aaa',
+                                    width: '100%',
+                                    borderWidth: 0.5,
+                                    height: 0
+                                },
+                                b: {
+                                    fontSize: 16,
+                                    lineHeight: 33
+                                },
+                                per: {
+                                    color: '#eee',
+                                    backgroundColor: '#334455',
+                                    padding: [2, 4],
+                                    borderRadius: 2
+                                }
+                            }
+                        }
+                    },
+                    center: ['50%', '60%'],
+                    data:[
+                        {value:$scope.cpu_used, name:'已使用'},
+                        {value:100-$scope.cpu_used, name:'未使用'},
+                    ],
+                    itemStyle: {
+                        emphasis: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+
+                }
+            ]
+        })
+
+
+
 
         console.log("40  "+ $scope.slave_uuid);
         console.log( $scope.slave_id );
@@ -46,6 +383,7 @@
         console.log($scope.mem_used);
 
     });
+
 
     chameleon_app.controller('TopologyCtrl', function($scope, $http) {
         $http({
