@@ -1,137 +1,104 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Network | Navigation</title>
+    <meta charset="UTF-8">
+    <title>路由</title>
 
-    <style type="text/css">
-        body {
-            font: 10pt sans;
-        }
-        #mynetwork {
-            width: 600px;
-            height: 600px;
-            border: 1px solid lightgray;
-        }
-        table.legend_table {
-            border-collapse: collapse;
-        }
-        table.legend_table td,
-        table.legend_table th {
-            border: 1px solid #d3d3d3;
-            padding: 10px;
-        }
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
 
-        table.legend_table td {
-            text-align: center;
-            width:110px;
-        }
-    </style>
-
+    <script src="../js/thirdparty/bootstrap.min.js"></script>
+    <script src="../js/thirdparty/angular-1.2.3.js"></script>
+    <script src="../js/thirdparty/angular-route-1.2.3.js"></script>
 
     <script type="text/javascript" src="../vis-4.21.0/dist/vis.js"></script>
     <link href="../vis-4.21.0/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
 
-    <script type="text/javascript">
-        var nodes = null;
-        var edges = null;
-        var network = null;
-
-        function destroy() {
-            if (network !== null) {
-                network.destroy();
-                network = null;
-            }
-        }
-
-        function draw() {
-            destroy();
-
-            // create an array with nodes
-            var nodes = [
-                {id: 1, label: 'Node 1'},
-                {id: 2, label: 'Node 2'},
-                {id: 3, label: 'Node 3'},
-                {id: 4, label: 'Node 4'},
-                {id: 5, label: 'Node 5'}
-            ];
-
-            // create an array with edges
-            var edges = new vis.DataSet([
-                {from: 1, to: 3},
-                {from: 1, to: 2},
-                {from: 2, to: 4},
-                {from: 2, to: 5}
-            ]);
-
-            // create a network
-            var container = document.getElementById('mynetwork');
-            var data = {
-                nodes: nodes,
-                edges: edges
-            };
-
-            var options = {
-                interaction: {
-                    navigationButtons: true,
-                    keyboard: true
-                }
-            };
-
-            network = new vis.Network(container, data, options);
-
-            // add event listeners
-            network.on('select', function(params) {
-                document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
-            });
-        }
-    </script>
+    <script type="text/javascript" src="../js/thirdparty/exampleUtil.js"></script>
+    <script src="../js/thirdparty/navbar.js"></script>
+    <script src="../js/thirdparty/iconfont.js"></script>
 
 </head>
-
-<body onload="draw();">
-<h2>Navigation controls and keyboad navigation</h2>
-<div style="width: 800px; font-size:14px; text-align: justify;">
-    This example is the same as example 2, except for the navigation controls that have been activated. The navigation controls are described below. <br /><br />
-    <table class="legend_table">
-        <tr>
-            <th>Icons: </th>
-            <td><img src="../vis-4.21.0/dist/img/network/upArrow.png" />     </td>
-            <td><img src="../vis-4.21.0/dist/img/network/downArrow.png" />   </td>
-            <td><img src="../vis-4.21.0/dist/img/network/leftArrow.png" />   </td>
-            <td><img src="../vis-4.21.0/dist/img/network/rightArrow.png" />  </td>
-            <td><img src="../vis-4.21.0/dist/img/network/plus.png" />        </td>
-            <td><img src="../vis-4.21.0/dist/img/network/minus.png" />       </td>
-            <td><img src="../vis-4.21.0/dist/img/network/zoomExtends.png" /> </td>
-        </tr>
-        <tr>
-            <th>Keyboard shortcuts:</th>
-            <td><div>Up arrow</div></td>
-            <td><div>Down arrow</div></td>
-            <td><div>Left arrow</div></td>
-            <td><div>Right arrow</div></td>
-            <td><div>=<br />[<br />Page up</div></td>
-            <td><div>-<br />]<br />Page down</div></td>
-            <td><div>None</div></td>
-        </tr>
-        <tr>
-            <th>Description:</th>
-            <td>Move up</td>
-            <td>Move down</td>
-            <td>Move left</td>
-            <td>Move right</td>
-            <td>Zoom in</td>
-            <td>Zoom out</td>
-            <td>Zoom extent</td>
-        </tr>
-    </table>
-    <br />
-    Apart from clicking the icons, you can also navigate using the keyboard. The buttons are in table above.
-    Zoom Extends changes the zoom and position of the camera to encompass all visible nodes. <u>To correctly display the navigation icons, <b>vis.css</b> or <b>vis-network.min.css</b> must be included.</u>
-    The user is free to alter or overload the CSS classes but without them the navigation icons are not visible.
+<body ng-app='Chameleon'>
+<!--左边栏-->
+<div id="navigator" style="width: 20%;display: inline-block;background-color: red;height: 400px;float: left">
+    <!--菜单-->
+    <ul>
+        <li><a href="#/home">首页</a></li>
+        <li><a href="#/woman">女装</a></li>
+        <li><a href="#/man">男装</a></li>
+        <li><a href="#/life">生活用品</a></li>
+        <li><a href="#/cook">厨房用品</a></li>
+    </ul>
 </div>
-
-<div id="mynetwork"></div>
-
-<p id="selection"></p>
+<!--右边栏-->
+<div style="width: 80%;display: inline-block;background-color: green;height: 400px;float: right">
+    <div ng-view=""></div>
+</div>
 </body>
+<script type="text/ng-template" id="index.home.html">
+    <h1>这是首页</h1>
+</script>
+<script type="text/ng-template" id="index.woman.html">
+    <h1>这是女装</h1>
+</script>
+<script type="text/ng-template" id="index.man.html">
+    <h1>这是男装</h1>
+</script>
+<script type="text/ng-template" id="index.life.html">
+    <h1>这是生活馆</h1>
+</script>
+<script type="text/ng-template" id="index.cook.html">
+    <h1>这是厨房用品</h1>
+</script>
+<script type="text/javascript">
+    angular.module('Chameleon',['ngRoute'])
+        .controller('HomeController',function ($scope,$route) {
+            $scope.$route = $route;
+        })
+        .controller('WomanController',function ($scope,$route) {
+            $scope.$route = $route;
+        })
+        .controller('WomanController',function ($scope,$route) {
+            $scope.$route = $route;
+        })
+        .controller('ManController',function ($scope,$route) {
+            $scope.$route = $route;
+        })
+        .controller('LifeController',function ($scope,$route) {
+            $scope.$route = $route;
+        })
+        .controller('CookController',function ($scope,$route) {
+            $scope.$route = $route;
+        })
+
+        //配置$routeProvider用来定义路由规则
+        //$routeProvider为我们提供了when（path，object）& other(object)函数按顺序定义所有路由，函数包含两个参数：
+        //@param1:url或者url正则规则
+        //@param2：路由配置对象
+        .config(function($routeProvider){
+            $routeProvider.
+            when('/home',{
+                //templateURL：插入ng-view的HTML模板文件
+                templateUrl:'/webui/HTML/hardware.html',
+                controller:'HomeController'
+
+            }).
+            when('/woman',{
+                templateUrl:'index.woman.html',
+                controller:'WomanController'
+            }).
+            when('/man',{
+                templateUrl:'index.man.html',
+                controller:'ManController'
+            }).
+            when('/life',{
+                templateUrl:'index.life.html',
+                controller:'LifeController'
+            }).
+            when('/cook',{
+                templateUrl:'index.cook.html',
+                controller:'CookController'
+            })
+        })
+</script>
 </html>
