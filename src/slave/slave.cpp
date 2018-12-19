@@ -155,7 +155,7 @@ namespace chameleon {
 
         // get cpu usage
         msp_runtime_resource_usage->get_cpu_used_info(&f_cpu);
-        usleep(100000); // we used 10^5 microseconds as the default duration for cpu usage calculation
+        usleep(1000000); // we used 1 second = 10^6  microseconds as the default duration for cpu usage calculation
         msp_runtime_resource_usage->get_cpu_used_info(&s_cpu);
         CPUUsage *cpu_usage = msp_runtime_resource_usage->cal_cpu_usage(&f_cpu, &s_cpu);
         rr_message->set_allocated_cpu_usage(cpu_usage);
