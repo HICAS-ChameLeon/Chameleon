@@ -130,7 +130,7 @@
         // 使用刚指定的配置项和数据显示图表。
         myChart.setOption({
             title: {
-                text: 'mem使用率',
+                text: 'memory使用率',
                 x:'center'
             },
             tooltip : {
@@ -144,7 +144,7 @@
             },
             series : [
                 {
-                    name: 'mem使用率',
+                    name: 'memory使用率',
                     type: 'pie',
                     radius: '55%',
                     label: {
