@@ -36,6 +36,7 @@ namespace chameleon {
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         install<JobMessage>(&Master::job_submited);
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
+        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
 
 
         // http://172.20.110.228:6060/master/hardware-resources
@@ -79,6 +80,32 @@ namespace chameleon {
                         result.values["quantity"] = 0;
                         result.values["content"] = JSON::Object();
                     }
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+
+        // http://172.20.110.228:6060/master/stop-cluster
+        route(
+                "/stop-cluster",
+                "try to stop the whole Chameleon cluster",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+
+                    //send a shutdown message to every slave
+                    LOG(INFO)<<"stopping the Chameleon cluster, we have "<< m_alive_slaves.size()<<" slaves to terminate";
+                    for(string ip : this->m_alive_slaves){
+                        const UPID current_slave(construct_UPID_string("slave",ip,"6061"));
+                        ShutdownMessage m;
+                        m.set_master_ip(this->self().id);
+                        m.set_slave_ip(ip);
+                        send(current_slave,m);
+                        LOG(INFO)<<self() <<"sent a shutdown message to "<<current_slave;
+                    }
+
+                    result.values["stop"] = "success";
+
                     OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
@@ -178,6 +205,26 @@ namespace chameleon {
             return Error("The whole cluster has no machine");
         }
         return res;
+    }
+
+    void Master::received_reply_shutdown_message(const string& ip,const bool& is_shutdown){
+        if(is_shutdown){
+            for(auto it=m_alive_slaves.begin();it!=m_alive_slaves.end();it++){
+                if(*it == ip){
+                    m_alive_slaves.erase(it);
+                }
+            }
+            if(m_hardware_resources.count(ip)){
+                m_hardware_resources.erase(ip);
+            }
+            if(m_runtime_resources.count(ip)){
+                m_runtime_resources.erase(ip);
+            }
+            if(m_proto_runtime_resources.count(ip)){
+                m_proto_runtime_resources.erase(ip);
+            }
+            LOG(INFO)<< "successfully shutdown a slave "<<ip;
+        }
     }
 }
 

@@ -1,0 +1,15 @@
+// the master sends a ShutdownMessage to a slave to require it to shutdown
+message ShutdownMessage
+{
+  required string master_ip=1;
+  required string slave_ip =2;
+
+}
+//the slave has terminated itself and replied to the master with a successful shutdown message
+message ReplyShutdownMessage
+{
+  required string master_ip=1;
+  required string slave_ip =2;
+  required bool  is_shutdown = 3;
+
+}

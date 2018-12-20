@@ -3,6 +3,18 @@
 
 
     var chameleon_app = angular.module('Chameleon');
+    chameleon_app.controller('ClusterOperationCtrl',function ($scope,$http) {
+        $scope.stop_cluster = function () {
+            $http({
+                method: 'GET',
+                url: 'http://172.20.110.228:6060/master/stop-cluster'
+            }).then(function successCallback(response) {
+                console.log(response);
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+            });
+        }
+    });
     chameleon_app.controller('HardwareCtrl', function($scope,$route, $http) {
         $scope.$route = $route;
 
@@ -17,6 +29,7 @@
         }, function errorCallback(response) {
             // 请求失败执行代码
         });
+
     });
 
     chameleon_app.controller('RuntimeCtrl', function($scope,$rootScope,$http) {

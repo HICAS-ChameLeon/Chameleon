@@ -20,6 +20,23 @@ namespace chameleon {
         output = const_cast<char*>(constc);
         return output;
     }
+    
+    /**
+     * construct a  UPID string.
+     * For example, construct_UPID_string("master", "127.0.0.1","6061") returns "master@127.0.0.1:6061"
+     * @param prefix 
+     * @param ip 
+     * @param port 
+     * @return  a  UPID string
+     */
+    inline string construct_UPID_string(const string prefix,const string ip, const string port ){
+            string result = prefix;
+            result.append("@");
+            result.append(ip);
+            result.append(":");
+            result.append(port);
+            return result;
+    }
 }
 
 #endif //CHAMELEON_CHAMELEON_STRING_HPP

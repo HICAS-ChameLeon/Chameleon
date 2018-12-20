@@ -43,13 +43,12 @@
 #include <monitor_info.pb.h>
 #include <job.pb.h>
 #include <runtime_resource.pb.h>
+#include <cluster_operation.pb.h>
 
 // chameleon headers
 #include <resource_collector.hpp>
 #include <configuration_glog.hpp>
 #include <runtime_resources_usage.hpp>
-
-
 
 
 using std::string;
@@ -122,6 +121,8 @@ namespace chameleon {
         string m_master;
 
         void heartbeat();
+
+        void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
     };
 
 
