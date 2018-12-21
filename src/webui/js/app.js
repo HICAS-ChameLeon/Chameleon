@@ -29,4 +29,51 @@
                 })
         })
 
+    angular.module('Chameleon', ['ngAnimate', 'ngSanitize', 'ui.bootstrap']);
+    angular.module('Chameleon').controller('ModalDemoCtrl', function ($modal, $log) {
+        var pc = this;
+        pc.data = "Lorem Name Test";
+
+        pc.open = function (size) {
+            var modalInstance = $modal.open({
+                animation: true,
+                ariaLabelledBy: 'modal-title',
+                ariaDescribedBy: 'modal-body',
+                templateUrl: '/Chameleon/src/webui/HTML/myModalContent.html',
+                controller: 'ModalInstanceCtrl',
+                controllerAs: 'pc',
+                //backdrop: true,
+                size: size,
+                resolve: {
+                    data: function () {
+                        return pc.data;
+                    }
+                }
+            });
+
+            modalInstance.result.then(function () {
+                alert("now I'll close the modal");
+            });
+        };
+    });
+
+    angular.module('Chameleon').controller('ModalInstanceCtrl', function ($modalInstance, data) {
+        var pc = this;
+        pc.data = data;
+        console.log(55 +data)
+
+        pc.ok = function () {
+            //{...}
+            alert("You clicked the ok button.");
+            $modalInstance.close();
+        };
+
+        pc.cancel = function () {
+            //{...}
+            alert("You clicked the cancel button.");
+            $modalInstance.dismiss('cancel');
+        };
+    });
+
+
 })();
