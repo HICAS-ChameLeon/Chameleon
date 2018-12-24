@@ -576,24 +576,24 @@
         });
     });
 
-    chameleon_app.controller('modalController', function($scope, $rootScope, $modal) {
-        var data = "what the fuck!";
+    chameleon_app.controller('ShutdownCtrl', function($scope,$modal) {
+        var alert_message = "Make sure to shutdown all slaves?";
         $scope.openModal = function() {
             var modalInstance = $modal.open({
-                templateUrl : 'Control.html',//script标签中定义的id
-                controller : 'modalCtrl',//modal对应的Controller
+                templateUrl : 'shutdown.html',
+                controller : 'ShutdownInstanceCtrl',   //shutdown modal对应的Controller
                 resolve : {
-                    data : function() {//data作为modal的controller传入的参数
-                        return data;//用于传递数据
+                    date : function() {           //date作为shutdown modal的controller传入的参数
+                        return alert_message;     //用于传递数据
                     }
                 }
             })
         }
-    })
+    });
 
 //模态框对应的Controller
-    chameleon_app.controller('modalCtrl', function($scope, $modalInstance,$http, data) {
-        $scope.data= data;
+    chameleon_app.controller('ShutdownInstanceCtrl', function($scope, $modalInstance,$http, date) {
+        $scope.date= date;
 
         //在这里处理要进行的操作
         $scope.ok = function() {
@@ -609,7 +609,7 @@
         $scope.cancel = function() {
             $modalInstance.dismiss('cancel');
         }
-    })
+    });
 
 
 
