@@ -576,49 +576,40 @@
         });
     });
 
-    // chameleon_app.controller('ModalDemoCtrl', function ($uibModal, $log) {
-    //
-    //     var pc = this;
-    //     pc.data = "Lorem Name Test";
-    //
-    //     pc.open = function (size) {
-    //         var modalInstance = $uibModal.open({
-    //             animation: true,
-    //             ariaLabelledBy: 'modal-title',
-    //             ariaDescribedBy: 'modal-body',
-    //             templateUrl: 'myModalContent.html',
-    //             controller: 'ModalInstanceCtrl',
-    //             controllerAs: 'pc',
-    //             size: size,
-    //             resolve: {
-    //                 data: function () {
-    //                     return pc.data;
-    //                 }
-    //             }
-    //         });
-    //
-    //         modalInstance.result.then(function () {
-    //             alert("now I'll close the modal");
-    //         });
-    //     };
-    // });
-    //
-    // chameleon_app.controller('ModalInstanceCtrl',function ($uibModalInstance, data) {
-    //     var pc = this;
-    //     pc.data = data;
-    //
-    //     pc.ok = function () {
-    //         //{...}
-    //         alert("You clicked the ok button.");
-    //         $uibModalInstance.close();
-    //     };
-    //
-    //     pc.cancel = function () {
-    //         //{...}
-    //         alert("You clicked the cancel button.");
-    //         $uibModalInstance.dismiss('cancel');
-    //     };
-    // });
+    chameleon_app.controller('modalController', function($scope, $rootScope, $modal) {
+        var data = "what the fuck!";
+        $scope.openModal = function() {
+            var modalInstance = $modal.open({
+                templateUrl : 'Control.html',//script标签中定义的id
+                controller : 'modalCtrl',//modal对应的Controller
+                resolve : {
+                    data : function() {//data作为modal的controller传入的参数
+                        return data;//用于传递数据
+                    }
+                }
+            })
+        }
+    })
+
+//模态框对应的Controller
+    chameleon_app.controller('modalCtrl', function($scope, $modalInstance,$http, data) {
+        $scope.data= data;
+
+        //在这里处理要进行的操作
+        $scope.ok = function() {
+            $http({
+                method: 'GET',
+                url: 'http://172.20.110.228:6060/master/stop-cluster'
+            }).then(function successCallback(response) {
+                console.log(response);
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+            });
+        };
+        $scope.cancel = function() {
+            $modalInstance.dismiss('cancel');
+        }
+    })
 
 
 
