@@ -15,6 +15,7 @@
             });
         }
     });
+
     chameleon_app.controller('HardwareCtrl', function($scope,$route, $http) {
         $scope.$route = $route;
 
@@ -574,6 +575,42 @@
             // 请求失败执行代码
         });
     });
+
+    chameleon_app.controller('modalController', function($scope, $rootScope, $modal) {
+        var data = "what the fuck!";
+        $scope.openModal = function() {
+            var modalInstance = $modal.open({
+                templateUrl : 'Control.html',//script标签中定义的id
+                controller : 'modalCtrl',//modal对应的Controller
+                resolve : {
+                    data : function() {//data作为modal的controller传入的参数
+                        return data;//用于传递数据
+                    }
+                }
+            })
+        }
+    })
+
+//模态框对应的Controller
+    chameleon_app.controller('modalCtrl', function($scope, $modalInstance,$http, data) {
+        $scope.data= data;
+
+        //在这里处理要进行的操作
+        $scope.ok = function() {
+            $http({
+                method: 'GET',
+                url: 'http://172.20.110.228:6060/master/stop-cluster'
+            }).then(function successCallback(response) {
+                console.log(response);
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+            });
+        };
+        $scope.cancel = function() {
+            $modalInstance.dismiss('cancel');
+        }
+    })
+
 
 
 })();
