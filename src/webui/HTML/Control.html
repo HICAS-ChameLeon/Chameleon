@@ -15,7 +15,7 @@
 
 </head>
 
-<body ng-app="Chameleon">
+<body ng-app="Chameleon" ng-controller="UpdateCtrl">
 
 <style type="text/css">
     .icon {
@@ -36,7 +36,7 @@
     }
 </style>
 
-<div class="container-fluid">
+<div  class="container-fluid">
 <div class="row">
     <!-- uncomment code for absolute positioning tweek see top comment in css -->
     <!-- <div class="absolute-wrapper"> </div> -->
@@ -123,6 +123,9 @@
                 </svg>
                 控制模块
             </p>
+
+
+
         </div>
         <ul id="myTab" class="nav nav-tabs">
             <li >
@@ -142,6 +145,8 @@
             <li><a href="#/topology" style="font-size: 100%">
                 网络拓扑图
             </a></li>
+            <div>
+            </div>
 
             <!--Indicates a dangerous or potentially negative action-->
             <div ng-controller = "ShutdownCtrl">
@@ -167,6 +172,8 @@
 
 <script src="../js/thirdparty/ui-bootstrap-tpls-0.11.2.min.js"></script>
 <script src="../js/thirdparty/angular-route-1.2.3.js"></script>
+<script src="../js/thirdparty/underscore-1.4.3.js"></script>
+
 
 <script type="text/javascript" src="../vis-4.21.0/dist/vis.js"></script>
 <link href="../vis-4.21.0/dist/vis-network.min.css" rel="stylesheet" type="text/css" />

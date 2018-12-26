@@ -1,8 +1,38 @@
 (function() {
     'use strict';
 
-
     var chameleon_app = angular.module('Chameleon');
+
+    //数据自动更新的Controller
+    chameleon_app.controller('UpdateCtrl',function($scope,$http,$timeout){
+
+        var pollState = function() {
+            $scope.delay = 2000;
+            $http({
+                method: 'GET',
+                url: 'http://172.20.110.228:6060/master/runtime-resources'
+            }).then(function successCallback(response) {
+                $scope.runtime = response.data.content;
+                $scope.quantities = response.data.quantity;
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+            });
+            $http({
+                method: 'GET',
+                url: 'http://172.20.110.228:6060/master/hardware-resources'
+            }).then(function successCallback(response) {
+                $scope.hardware = response.data.content;
+                $scope.quantities = response.data.quantity;
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+            });
+            $timeout(pollState, $scope.delay);
+        };
+        pollState();
+
+    });
+
+    //关闭所有节点的Controller
     chameleon_app.controller('ClusterOperationCtrl',function ($scope,$http) {
         $scope.stop_cluster = function () {
             $http({
@@ -17,37 +47,38 @@
     });
 
     chameleon_app.controller('HardwareCtrl', function($scope,$route, $http) {
-        $scope.$route = $route;
-
-        $http({
-            method: 'GET',
-            url: 'http://172.20.110.228:6060/master/hardware-resources'
-        }).then(function successCallback(response) {
-
-
-            $scope.hardware = response.data.content;
-            $scope.quantities = response.data.quantity;
-        }, function errorCallback(response) {
-            // 请求失败执行代码
-        });
+        // $scope.$route = $route;
+        //
+        // $http({
+        //     method: 'GET',
+        //     url: 'http://172.20.110.228:6060/master/hardware-resources'
+        // }).then(function successCallback(response) {
+        //
+        //
+        //     $scope.hardware = response.data.content;
+        //     $scope.quantities = response.data.quantity;
+        // }, function errorCallback(response) {
+        //     // 请求失败执行代码
+        // });
 
     });
 
     chameleon_app.controller('RuntimeCtrl', function($scope,$rootScope,$http) {
-        $http({
-            method: 'GET',
-            url: 'http://172.20.110.228:6060/master/runtime-resources'
-        }).then(function successCallback(response) {
-            $scope.runtime = response.data.content;
-            // console.log(response.data.content);
-            $scope.quantities = response.data.quantity;
-            // console.log(response.data.quantity);
-            $rootScope.runtime =  $scope.runtime;
-        }, function errorCallback(response) {
-            // 请求失败执行代码
-        });
+        // $http({
+        //     method: 'GET',
+        //     url: 'http://172.20.110.228:6060/master/runtime-resources'
+        // }).then(function successCallback(response) {
+        //     $scope.runtime = response.data.content;
+        //     // console.log(response.data.content);
+        //     $scope.quantities = response.data.quantity;
+        //     // console.log(response.data.quantity);
+        //     $rootScope.runtime =  $scope.runtime;
+        // }, function errorCallback(response) {
+        //     // 请求失败执行代码
+        // });
     });
 
+    //资源利用率饼图的Controller
     chameleon_app.controller('SlaveCtrl', function($scope,$rootScope, $http,$routeParams) {
         $scope.slave_uuid = $routeParams.slave_uuid;
         $scope.slave_id = $routeParams.slave_id;
@@ -398,7 +429,7 @@
 
     });
 
-
+    //网络拓扑图的Controller
     chameleon_app.controller('TopologyCtrl', function($scope, $http) {
         $http({
             method: 'GET',
@@ -576,6 +607,7 @@
         });
     });
 
+    //模态框对应的Controller
     chameleon_app.controller('ShutdownCtrl', function($scope,$modal) {
         var alert_message = "Make sure to shutdown all slaves?";
         $scope.openModal = function() {
@@ -591,7 +623,7 @@
         }
     });
 
-//模态框对应的Controller
+    //模态框对应的Controller
     chameleon_app.controller('ShutdownInstanceCtrl', function($scope, $modalInstance,$http, date) {
         $scope.date= date;
 
@@ -610,7 +642,6 @@
             $modalInstance.dismiss('cancel');
         }
     });
-
 
 
 })();
