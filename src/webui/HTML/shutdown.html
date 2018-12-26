@@ -1,25 +1,25 @@
 
-<script type="text/ng-template" >
+<div type="text/ng-template" >
     <div>
         <div class="modal-header">
             <h3 class="modal-title" align="center">
-                标题信息
+                Alert
             </h3>
         </div>
         <div class="modal-body">
             <div  align="center">
-                模态框内容 <br>
-                {{data}}
+                <!--date作为传入的参数,这里是alert_message的值-->
+                {{date}}
             </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-primary" ng-click="ok()">
-                确认
+                ok
             </button>
             <button class="btn btn-warning" ng-click="cancel()">
-                退出
+                cancel
             </button>
         </div>
     </div>
-</script>
+</div>
 
