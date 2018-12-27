@@ -38,10 +38,15 @@
 #include <job.pb.h>
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
+#include <mesos.pb.h>
+#include <scheduler.pb.h>
+#include <messages.pb.h>
 
 // chameleon headers
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
+#include "scheduler.hpp"
+
 
 using std::string;
 using std::set;
@@ -74,42 +79,53 @@ namespace chameleon {
             msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
         }
 
-        virtual ~Master(){
+        virtual ~Master() {
 
         }
 
         virtual void initialize();
 
 
-        void register_participant(const string& hostname);
+        void register_participant(const string &hostname);
+
         /**
          * get a hardware resource message from a slave, usually happens when a slave registered at the first time.
          * @param from slave UPID
          * @param hardware_resources_message
          */
-        void update_hardware_resources(const UPID& from, const HardwareResourcesMessage& hardware_resources_message);
+        void update_hardware_resources(const UPID &from, const HardwareResourcesMessage &hardware_resources_message);
 
         /**
          * a submitter submits a job to run
          * @param from
          * @param job_message
          */
-        void job_submited(const UPID& from, const JobMessage& job_message);
+        void job_submited(const UPID &from, const JobMessage &job_message);
 
         /**
          * get a heartbeat message from a slave. The heartbeat message contains the runtime resource usage statistics of the slave.
          * @param slave
          * @param runtime_resouces_message represents the runtime resource usage statistics for the slave
          */
-        void received_heartbeat(const UPID& slave, const RuntimeResourcesMessage& runtime_resouces_message);
+        void received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message);
 
+        /**
+         * @param call
+         * @param spark run on chameleon
+         * Author  : weiguow
+         * */
+        void receive(const process::UPID &from, const mesos::scheduler::Call &call);
+
+        void subscribe(const process::UPID &from, const mesos::scheduler::Call::Subscribe &subscribe);
+
+        void _subscribe(const process::UPID &from, const mesos::FrameworkInfo &frameworkInfo, bool force);
 
     private:
-        unordered_map<UPID,ParticipantInfo> m_participants;
-        unordered_map<string,JSON::Object> m_hardware_resources;
+        unordered_map<UPID, ParticipantInfo> m_participants;
+        unordered_map<string, JSON::Object> m_hardware_resources;
         set<string> m_alive_slaves;
-        unordered_map<string,JSON::Object> m_runtime_resources;
-        unordered_map<string,RuntimeResourcesMessage> m_proto_runtime_resources;
+        unordered_map<string, JSON::Object> m_runtime_resources;
+        unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
 //        unordered_map<string,HardwareResource> m_topology_resources;
         const string test_slave_UPID = "slave@172.20.110.79:6061";
         const string test_master_UPID = "slave@172.20.110.228:6061";
@@ -127,11 +143,9 @@ namespace chameleon {
          * get a ReplyShutdownMessage from the slave which belongs to the administration of the current master had shutdown.
          * @param ip  slave.ip
          */
-        void received_reply_shutdown_message(const string& ip,const bool& is_shutdown);
+        void received_reply_shutdown_message(const string &ip, const bool &is_shutdown);
     };
 }
-
-
 
 
 #endif //CHAMELEON_MASTER_HPP

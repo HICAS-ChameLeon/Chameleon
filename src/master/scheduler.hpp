@@ -9,7 +9,7 @@
 #define __SCHEDULER_PROTO_HPP__
 
 // ONLY USEFUL AFTER RUNNING PROTOC.
-#include ""
+#include "scheduler.pb.h"
 
 namespace mesos {
 namespace scheduler {
