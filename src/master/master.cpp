@@ -6,6 +6,8 @@
  */
 
 #include "master.hpp"
+#include "scheduler.hpp"
+
 
 DEFINE_int32(port, 0, "master port");
 
@@ -36,6 +38,13 @@ namespace chameleon {
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         install<JobMessage>(&Master::job_submited);
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
+
+        /**
+         * Function  :  install schedule
+         * Author    :  weiguow
+         * Date      :  2018-12-27
+         * */
+        install<scheduler::Call>(&Master::receive);
 
 
         // http://172.20.110.228:6060/master/hardware-resources
