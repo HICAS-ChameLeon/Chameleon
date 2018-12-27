@@ -37,9 +37,11 @@
 #include <hardware_resource.pb.h>
 #include <job.pb.h>
 #include <runtime_resource.pb.h>
+#include <cluster_operation.pb.h>
 
 // chameleon headers
 #include <configuration_glog.hpp>
+#include <chameleon_string.hpp>
 
 using std::string;
 using std::set;
@@ -67,8 +69,6 @@ namespace chameleon {
     class Master : public ProtobufProcess<Master> {
 
     public:
-        UPID slave;
-
         explicit Master() : ProcessBase("master") {
             msp_spark_slave = make_shared<UPID>(UPID(test_slave_UPID));
             msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
@@ -82,11 +82,25 @@ namespace chameleon {
 
 
         void register_participant(const string& hostname);
-
+        /**
+         * get a hardware resource message from a slave, usually happens when a slave registered at the first time.
+         * @param from slave UPID
+         * @param hardware_resources_message
+         */
         void update_hardware_resources(const UPID& from, const HardwareResourcesMessage& hardware_resources_message);
 
+        /**
+         * a submitter submits a job to run
+         * @param from
+         * @param job_message
+         */
         void job_submited(const UPID& from, const JobMessage& job_message);
 
+        /**
+         * get a heartbeat message from a slave. The heartbeat message contains the runtime resource usage statistics of the slave.
+         * @param slave
+         * @param runtime_resouces_message represents the runtime resource usage statistics for the slave
+         */
         void received_heartbeat(const UPID& slave, const RuntimeResourcesMessage& runtime_resouces_message);
 
 
@@ -102,7 +116,18 @@ namespace chameleon {
         shared_ptr<UPID> msp_spark_slave;
         shared_ptr<UPID> msp_spark_master;
 
+        /**
+         * a simple algorithm to find a slave which has the least usage rate of cpu and memory combination
+         * ( the formula is: combination =  cpu used rate * 50 + memory used rate * 50 )
+         * @return the slave ip or an Error if we have no slave
+         */
         Try<string> find_min_cpu_and_memory_rates();
+
+        /**
+         * get a ReplyShutdownMessage from the slave which belongs to the administration of the current master had shutdown.
+         * @param ip  slave.ip
+         */
+        void received_reply_shutdown_message(const string& ip,const bool& is_shutdown);
     };
 }
 

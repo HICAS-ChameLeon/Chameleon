@@ -54,6 +54,7 @@ namespace chameleon {
         msp_masterUPID = make_shared<UPID>(UPID(m_master));
         install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
         install<JobMessage>(&Slave::get_a_job);
+        install<ShutdownMessage>(&Slave::shutdown);
 
 
         HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
@@ -134,13 +135,22 @@ namespace chameleon {
 
     void Slave::finalize() {
         ProcessBase::finalize();
-        LOG(INFO) << "slave finalize()";
+        LOG(INFO) << self() <<" finalize()";
     }
 
     void Slave::heartbeat() {
         send_heartbeat_to_master();
         process::delay(m_interval, self(), &Self::heartbeat);
 
+    }
+
+    void Slave::shutdown(const UPID &master, const ShutdownMessage &shutdown_message){
+        ReplyShutdownMessage reply_message;
+        reply_message.set_master_ip(shutdown_message.master_ip());
+        reply_message.set_slave_ip(shutdown_message.slave_ip());
+        reply_message.set_is_shutdown(true);
+        send(master,reply_message);
+        terminate(self());
     }
 
     void Slave::send_heartbeat_to_master() {
@@ -155,7 +165,7 @@ namespace chameleon {
 
         // get cpu usage
         msp_runtime_resource_usage->get_cpu_used_info(&f_cpu);
-        usleep(100000); // we used 10^5 microseconds as the default duration for cpu usage calculation
+        usleep(1000000); // we used 1 second = 10^6  microseconds as the default duration for cpu usage calculation
         msp_runtime_resource_usage->get_cpu_used_info(&s_cpu);
         CPUUsage *cpu_usage = msp_runtime_resource_usage->cal_cpu_usage(&f_cpu, &s_cpu);
         rr_message->set_allocated_cpu_usage(cpu_usage);
