@@ -145,24 +145,25 @@ namespace chameleon {
         }
 //        Framework *framework = getFramework(call.framework_id());
 
-//        switch (call.type()) {
-//            case mesos::scheduler::Call::SUBSCRIBE:
-//                // SUBSCRIBE call should have been handled above.
-//                LOG(FATAL) << "Unexpected 'SUBSCRIBE' call";
-//
-//            case mesos::scheduler::Call::ACCEPT:
+        switch (call.type()) {
+            case mesos::scheduler::Call::SUBSCRIBE:
+                // SUBSCRIBE call should have been handled above.
+                LOG(FATAL) << "Unexpected 'SUBSCRIBE' call";
+
+            case mesos::scheduler::Call::ACCEPT:
+                LOG(INFO) << "Accept resource offer";
 //                accept(framework, call.accept());
-//                break;
-//
-//            case mesos::scheduler::Call::ACCEPT_INVERSE_OFFERS:
+                break;
+
+            case mesos::scheduler::Call::ACCEPT_INVERSE_OFFERS:
 //                acceptInverseOffers(framework, call.accept_inverse_offers());
-//                break;
-//
-//            case mesos::scheduler::Call::UNKNOWN:
-//                LOG(WARNING) << "'UNKNOWN' call";
-//                break;
-//
-//        }
+                break;
+
+            case mesos::scheduler::Call::UNKNOWN:
+                LOG(WARNING) << "'UNKNOWN' call";
+                break;
+
+        }
     }
 
     void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
@@ -188,30 +189,48 @@ namespace chameleon {
         LOG(INFO) << "WEIGUO Subscribing framework " << frameworkInfo.name()
                   << "Successful";
 
+        process::dispatch(self(),&Master::dispatch_offer, from);
+        return;
+    }
+
+    void Master::dispatch_offer(const UPID &from) {
+        LOG(INFO) << "WEIGUO Resource_offer" ;
+
+        mesos::Offer* offer = new mesos::Offer();
+
+        mesos::OfferID offerId;
+        offerId.set_value("12345678");
+        offer->mutable_id()->CopyFrom(offerId);
+
+        mesos::FrameworkID frameworkId;
+        frameworkId.set_value("12345");
+        offer->mutable_framework_id()->MergeFrom(frameworkId);
+
+        mesos::SlaveID* slaveID = new mesos::SlaveID();
+        slaveID->set_value("1234");
+        offer->mutable_slave_id()->MergeFrom(*slaveID);
+
+        offer->set_hostname("weiguow");
+
+//        offermessage->set_allocated_framework_id(frameworkId);
 //
-//        LOG(INFO) << "WEIGUO Resource_offer" ;
-//        mesos::Offer offermessage;
-//        offermessage.set_hostname("weiguow");
-//        offermessage.set_allocated_framework_id(frameworkId);
-//
-//        mesos::SlaveID* slaveID = new mesos::SlaveID();
-//
-//        slaveID->set_value("1234");
-//        offermessage.set_allocated_slave_id(slaveID);
+
 //
 //        mesos::OfferID* offerID = new mesos::OfferID();
 //        offerID->set_value("123456");
 //        offermessage.set_allocated_id(offerID);
-//
-//        mesos::internal::ResourceOffersMessage resourceOffersMessage;
-//        resourceOffersMessage.add_offers()->MergeFrom(offermessage);
-//        resourceOffersMessage.add_pids("2334");
-//
-//        send(from,resourceOffersMessage);
-//
+
+        mesos::internal::ResourceOffersMessage message;
+        message.add_offers()->MergeFrom(*offer);
+        message.add_pids("2334");
+
 //        delete offerID;
 //        delete slaveID;
-        delete frameworkId;
+
+        LOG(INFO) << "Sending " << message.offers().size();
+
+        send(from,message);
+
         return;
     }
 
@@ -219,12 +238,8 @@ namespace chameleon {
      * Function model  :  sprak run on chameleon
      * Author          :  weiguow
      * Date            :  2018-12-28
-     * Funtion name    :  resouce_offer
+     * Funtion name    :  Master::offer
      * */
-//     void Master::offer( const FrameworkID& frameworkId,
-//                         const hashmap<string, hashmap<SlaveID, Resources>>& resources) {
-//
-//     }
 
 
 
