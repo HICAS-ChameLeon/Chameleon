@@ -136,22 +136,39 @@ namespace chameleon {
      * Date            :  2018-12-27
      * Funtion name    :  receive, subscribe
      * */
+
     void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
+
         if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
             subscribe(from, call.subscribe());
             return;
         }
+//        Framework *framework = getFramework(call.framework_id());
+
+//        switch (call.type()) {
+//            case mesos::scheduler::Call::SUBSCRIBE:
+//                // SUBSCRIBE call should have been handled above.
+//                LOG(FATAL) << "Unexpected 'SUBSCRIBE' call";
+//
+//            case mesos::scheduler::Call::ACCEPT:
+//                accept(framework, call.accept());
+//                break;
+//
+//            case mesos::scheduler::Call::ACCEPT_INVERSE_OFFERS:
+//                acceptInverseOffers(framework, call.accept_inverse_offers());
+//                break;
+//
+//            case mesos::scheduler::Call::UNKNOWN:
+//                LOG(WARNING) << "'UNKNOWN' call";
+//                break;
+//
+//        }
     }
 
     void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
         mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
-        LOG(INFO) << "Received SUBSCRIBE call for"
+        LOG(INFO) << "WEIGUO Received SUBSCRIBE call for"
                   << " framework '" << frameworkInfo.name() << "' at " << from;
-
-//        void (Master::*_subscribe)(const UPID&, const mesos::FrameworkInfo&, bool) = &Self::_subscribe;
-        LOG(INFO) << "Subscribing framework " << frameworkInfo.name()
-                  << " with checkpointing "
-                  << (frameworkInfo.checkpoint() ? "enabled" : "disabled");
 
         mesos::internal::FrameworkRegisteredMessage message;
         mesos::MasterInfo masterInfo;
@@ -160,40 +177,63 @@ namespace chameleon {
         masterInfo.set_port(6060);
         masterInfo.set_id("1234");
 
-        // Assign a new FrameworkID.
-//        mesos::FrameworkInfo frameworkInfo_ = frameworkInfo;
-//        frameworkInfo_.mutable_id()->CopyFrom(mesos::newFrameworkId());
-
-        mesos::FrameworkID frameworkId;
-        frameworkId.set_value("123445");
-        message.mutable_framework_id()->MergeFrom(frameworkId);
+        // First subscribe
+        mesos::FrameworkID* frameworkId = new mesos::FrameworkID();
+        frameworkId->set_value("123445");
+        message.mutable_framework_id()->MergeFrom(*frameworkId);
 
         message.mutable_master_info()->MergeFrom(masterInfo);
-        send(from,message);
+        send(from, message);
+
+        LOG(INFO) << "WEIGUO Subscribing framework " << frameworkInfo.name()
+                  << "Successful";
+
+//
+//        LOG(INFO) << "WEIGUO Resource_offer" ;
+//        mesos::Offer offermessage;
+//        offermessage.set_hostname("weiguow");
+//        offermessage.set_allocated_framework_id(frameworkId);
+//
+//        mesos::SlaveID* slaveID = new mesos::SlaveID();
+//
+//        slaveID->set_value("1234");
+//        offermessage.set_allocated_slave_id(slaveID);
+//
+//        mesos::OfferID* offerID = new mesos::OfferID();
+//        offerID->set_value("123456");
+//        offermessage.set_allocated_id(offerID);
+//
+//        mesos::internal::ResourceOffersMessage resourceOffersMessage;
+//        resourceOffersMessage.add_offers()->MergeFrom(offermessage);
+//        resourceOffersMessage.add_pids("2334");
+//
+//        send(from,resourceOffersMessage);
+//
+//        delete offerID;
+//        delete slaveID;
+        delete frameworkId;
         return;
     }
 
-//    void Master::_subscribe(const UPID& from, const mesos::FrameworkInfo& frameworkInfo, bool force) {
-//        LOG(INFO) << "Subscribing framework " << frameworkInfo.name()
-//                  << " with checkpointing "
-//                  << (frameworkInfo.checkpoint() ? "enabled" : "disabled");
+    /**
+     * Function model  :  sprak run on chameleon
+     * Author          :  weiguow
+     * Date            :  2018-12-28
+     * Funtion name    :  resouce_offer
+     * */
+//     void Master::offer( const FrameworkID& frameworkId,
+//                         const hashmap<string, hashmap<SlaveID, Resources>>& resources) {
 //
-//        mesos::internal::FrameworkRegisteredMessage message;
-//        mesos::MasterInfo masterInfo;
-//
-//        masterInfo.set_ip(self().address.ip.in().get().s_addr);
-//        masterInfo.set_port(6060);
-//
-//        message.mutable_master_info()->MergeFrom(masterInfo);
-//        send(from,message);
-//        return;
-//    }
+//     }
+
+
 
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;
     }
 
-    void Master::update_hardware_resources(const UPID &from, const HardwareResourcesMessage &hardware_resources_message) {
+    void Master::update_hardware_resources(const UPID &from,
+                                           const HardwareResourcesMessage &hardware_resources_message) {
         DLOG(INFO) << "enter update_hardware_resources";
 
         auto slaveid = hardware_resources_message.slave_id();
@@ -228,7 +268,7 @@ namespace chameleon {
         slave_job_message.set_is_master(false);
 
         // find the best machine whose sum usage of cpu and memory is the lowest.
-        Try <string> best_machine = find_min_cpu_and_memory_rates();
+        Try<string> best_machine = find_min_cpu_and_memory_rates();
         if (best_machine.isError()) {
             LOG(FATAL) << " cannot find a appropriate machine to run the job!";
             return;
@@ -242,14 +282,15 @@ namespace chameleon {
         LOG(INFO) << "sent the job to the test slave " << str_spark_slave << " successfully!";
     }
 
-    void Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
+    void
+    Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
         LOG(INFO) << "received a heartbeat message from " << slave;
         auto slave_id = runtime_resouces_message.slave_id();
         m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
     }
 
-    Try <string> Master::find_min_cpu_and_memory_rates() {
+    Try<string> Master::find_min_cpu_and_memory_rates() {
         double min_sum_rate = 100.0;
         string res = "";
         for (auto it = m_proto_runtime_resources.begin(); it != m_proto_runtime_resources.end(); it++) {
@@ -318,10 +359,10 @@ int main(int argc, char **argv) {
             process::initialize("master");
 
             Master master;
-            PID <Master> cur_master = process::spawn(master);
+            PID<Master> cur_master = process::spawn(master);
             LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 
-            const PID <Master> master_pid = master.self();
+            const PID<Master> master_pid = master.self();
             LOG(INFO) << master_pid;
             process::wait(master.self());
         } else {

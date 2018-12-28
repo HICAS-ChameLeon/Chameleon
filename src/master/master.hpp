@@ -113,12 +113,17 @@ namespace chameleon {
          * @param call
          * @param spark run on chameleon
          * Author  : weiguow
+         * Date    : 2018-12-28
          * */
-        void receive(const process::UPID &from, const mesos::scheduler::Call &call);
+        void receive(const process::UPID &from,
+                     const mesos::scheduler::Call &call);
 
-        void subscribe(const process::UPID &from, const mesos::scheduler::Call::Subscribe &subscribe);
+        void subscribe(const process::UPID &from,
+                       const mesos::scheduler::Call::Subscribe &subscribe);
 
-        void _subscribe(const process::UPID &from, const mesos::FrameworkInfo &frameworkInfo, bool force);
+//        void offer(const mesos::FrameworkID& frameworkId,
+//                const hashmap<std::string, hashmap<SlaveID, Resources>>& resources);
+
 
     private:
         unordered_map<UPID, ParticipantInfo> m_participants;
@@ -131,6 +136,7 @@ namespace chameleon {
         const string test_master_UPID = "slave@172.20.110.228:6061";
         shared_ptr<UPID> msp_spark_slave;
         shared_ptr<UPID> msp_spark_master;
+
 
         /**
          * a simple algorithm to find a slave which has the least usage rate of cpu and memory combination
