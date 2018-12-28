@@ -54,6 +54,7 @@ using std::vector;
 using std::unordered_map;
 using std::shared_ptr;
 using std::make_shared;
+using std::list;
 
 using os::Process;
 using os::ProcessTree;
@@ -113,12 +114,15 @@ namespace chameleon {
          * @param call
          * @param spark run on chameleon
          * Author  : weiguow
+         * Date    : 2018-12-28
          * */
-        void receive(const process::UPID &from, const mesos::scheduler::Call &call);
+        void receive(const process::UPID &from,
+                     const mesos::scheduler::Call &call);
 
-        void subscribe(const process::UPID &from, const mesos::scheduler::Call::Subscribe &subscribe);
+        void subscribe(const process::UPID &from,
+                       const mesos::scheduler::Call::Subscribe &subscribe);
 
-        void _subscribe(const process::UPID &from, const mesos::FrameworkInfo &frameworkInfo, bool force);
+
 
     private:
         unordered_map<UPID, ParticipantInfo> m_participants;
@@ -131,6 +135,8 @@ namespace chameleon {
         const string test_master_UPID = "slave@172.20.110.228:6061";
         shared_ptr<UPID> msp_spark_slave;
         shared_ptr<UPID> msp_spark_master;
+
+        void dispatch_offer(const UPID &from);
 
         /**
          * a simple algorithm to find a slave which has the least usage rate of cpu and memory combination
