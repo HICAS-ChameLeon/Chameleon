@@ -36,7 +36,15 @@ namespace chameleon {
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         install<JobMessage>(&Master::job_submited);
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
-        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
+//        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
+
+        /**
+         * Function  :  install schedule
+         * Author    :  weiguow
+         * Date      :  2018-12-27
+         * */
+        install<mesos::scheduler::Call>(&Master::receive);
+
 
 
         // http://172.20.110.228:6060/master/hardware-resources
@@ -94,14 +102,15 @@ namespace chameleon {
                     JSON::Object result = JSON::Object();
 
                     //send a shutdown message to every slave
-                    LOG(INFO)<<"stopping the Chameleon cluster, we have "<< m_alive_slaves.size()<<" slaves to terminate";
-                    for(string ip : this->m_alive_slaves){
-                        const UPID current_slave(construct_UPID_string("slave",ip,"6061"));
+                    LOG(INFO) << "stopping the Chameleon cluster, we have " << m_alive_slaves.size()
+                              << " slaves to terminate";
+                    for (string ip : this->m_alive_slaves) {
+                        const UPID current_slave(construct_UPID_string("slave", ip, "6061"));
                         ShutdownMessage m;
                         m.set_master_ip(this->self().id);
                         m.set_slave_ip(ip);
-                        send(current_slave,m);
-                        LOG(INFO)<<self() <<"sent a shutdown message to "<<current_slave;
+                        send(current_slave, m);
+                        LOG(INFO) << self() << "sent a shutdown message to " << current_slave;
                     }
 
                     result.values["stop"] = "success";
@@ -121,12 +130,70 @@ namespace chameleon {
     }
 
 
+    /**
+     * Function model  :  sprak run on chameleon
+     * Author          :  weiguow
+     * Date            :  2018-12-27
+     * Funtion name    :  receive, subscribe
+     * */
+    void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
+        if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
+            subscribe(from, call.subscribe());
+            return;
+        }
+    }
+
+    void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
+        mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
+        LOG(INFO) << "Received SUBSCRIBE call for"
+                  << " framework '" << frameworkInfo.name() << "' at " << from;
+
+//        void (Master::*_subscribe)(const UPID&, const mesos::FrameworkInfo&, bool) = &Self::_subscribe;
+        LOG(INFO) << "Subscribing framework " << frameworkInfo.name()
+                  << " with checkpointing "
+                  << (frameworkInfo.checkpoint() ? "enabled" : "disabled");
+
+        mesos::internal::FrameworkRegisteredMessage message;
+        mesos::MasterInfo masterInfo;
+
+        masterInfo.set_ip(self().address.ip.in().get().s_addr);
+        masterInfo.set_port(6060);
+        masterInfo.set_id("1234");
+
+        // Assign a new FrameworkID.
+//        mesos::FrameworkInfo frameworkInfo_ = frameworkInfo;
+//        frameworkInfo_.mutable_id()->CopyFrom(mesos::newFrameworkId());
+
+        mesos::FrameworkID frameworkId;
+        frameworkId.set_value("123445");
+        message.mutable_framework_id()->MergeFrom(frameworkId);
+
+        message.mutable_master_info()->MergeFrom(masterInfo);
+        send(from,message);
+        return;
+    }
+
+//    void Master::_subscribe(const UPID& from, const mesos::FrameworkInfo& frameworkInfo, bool force) {
+//        LOG(INFO) << "Subscribing framework " << frameworkInfo.name()
+//                  << " with checkpointing "
+//                  << (frameworkInfo.checkpoint() ? "enabled" : "disabled");
+//
+//        mesos::internal::FrameworkRegisteredMessage message;
+//        mesos::MasterInfo masterInfo;
+//
+//        masterInfo.set_ip(self().address.ip.in().get().s_addr);
+//        masterInfo.set_port(6060);
+//
+//        message.mutable_master_info()->MergeFrom(masterInfo);
+//        send(from,message);
+//        return;
+//    }
+
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;
     }
 
-    void
-    Master::update_hardware_resources(const UPID &from, const HardwareResourcesMessage &hardware_resources_message) {
+    void Master::update_hardware_resources(const UPID &from, const HardwareResourcesMessage &hardware_resources_message) {
         DLOG(INFO) << "enter update_hardware_resources";
 
         auto slaveid = hardware_resources_message.slave_id();
@@ -161,7 +228,7 @@ namespace chameleon {
         slave_job_message.set_is_master(false);
 
         // find the best machine whose sum usage of cpu and memory is the lowest.
-        Try<string> best_machine = find_min_cpu_and_memory_rates();
+        Try <string> best_machine = find_min_cpu_and_memory_rates();
         if (best_machine.isError()) {
             LOG(FATAL) << " cannot find a appropriate machine to run the job!";
             return;
@@ -182,7 +249,7 @@ namespace chameleon {
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
     }
 
-    Try<string> Master::find_min_cpu_and_memory_rates() {
+    Try <string> Master::find_min_cpu_and_memory_rates() {
         double min_sum_rate = 100.0;
         string res = "";
         for (auto it = m_proto_runtime_resources.begin(); it != m_proto_runtime_resources.end(); it++) {
@@ -207,23 +274,23 @@ namespace chameleon {
         return res;
     }
 
-    void Master::received_reply_shutdown_message(const string& ip,const bool& is_shutdown){
-        if(is_shutdown){
-            for(auto it=m_alive_slaves.begin();it!=m_alive_slaves.end();it++){
-                if(*it == ip){
+    void Master::received_reply_shutdown_message(const string &ip, const bool &is_shutdown) {
+        if (is_shutdown) {
+            for (auto it = m_alive_slaves.begin(); it != m_alive_slaves.end(); it++) {
+                if (*it == ip) {
                     m_alive_slaves.erase(it);
                 }
             }
-            if(m_hardware_resources.count(ip)){
+            if (m_hardware_resources.count(ip)) {
                 m_hardware_resources.erase(ip);
             }
-            if(m_runtime_resources.count(ip)){
+            if (m_runtime_resources.count(ip)) {
                 m_runtime_resources.erase(ip);
             }
-            if(m_proto_runtime_resources.count(ip)){
+            if (m_proto_runtime_resources.count(ip)) {
                 m_proto_runtime_resources.erase(ip);
             }
-            LOG(INFO)<< "successfully shutdown a slave "<<ip;
+            LOG(INFO) << "successfully shutdown a slave " << ip;
         }
     }
 }
@@ -247,14 +314,14 @@ int main(int argc, char **argv) {
                      "\n read the notice " << google::ProgramUsage();
     } else {
         if (GetCommandLineFlagInfo("port", &info) && !info.is_default) {
-            os::setenv("LIBPROCESS_PORT",stringify(FLAGS_port));
+            os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
             process::initialize("master");
 
             Master master;
-            PID<Master> cur_master = process::spawn(master);
+            PID <Master> cur_master = process::spawn(master);
             LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 
-            const PID<Master> master_pid = master.self();
+            const PID <Master> master_pid = master.self();
             LOG(INFO) << master_pid;
             process::wait(master.self());
         } else {
