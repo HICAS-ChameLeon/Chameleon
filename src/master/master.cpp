@@ -149,10 +149,14 @@ namespace chameleon {
             case mesos::scheduler::Call::SUBSCRIBE:
                 // SUBSCRIBE call should have been handled above.
                 LOG(FATAL) << "Unexpected 'SUBSCRIBE' call";
+                break;
 
             case mesos::scheduler::Call::ACCEPT:
                 LOG(INFO) << "Accept resource offer";
 //                accept(framework, call.accept());
+                mesos::scheduler::Call* copy_call;
+                copy_call = new mesos::scheduler::Call();
+                copy_call->CopyFrom(call);
                 break;
 
             case mesos::scheduler::Call::ACCEPT_INVERSE_OFFERS:
@@ -196,7 +200,29 @@ namespace chameleon {
     void Master::dispatch_offer(const UPID &from) {
         LOG(INFO) << "WEIGUO Resource_offer" ;
 
+
         mesos::Offer* offer = new mesos::Offer();
+
+        // cpus
+        mesos::Resource* cpu_resource = new mesos::Resource();
+//        mesos::ResourceProviderID* resource_provider_id = new mesos::ResourceProviderID();
+//        resource_provider_id->set_value("weiguo_resource_1");
+//        cpu_resource->mutable_provider_id()->MergeFrom(*resource_provider_id);
+        cpu_resource->set_name("cpus");
+        cpu_resource->set_type(mesos::Value_Type_SCALAR);
+        mesos::Value_Scalar* cpu_scalar = new mesos::Value_Scalar();
+        cpu_scalar->set_value(4.0);
+        cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
+        offer->add_resources()->MergeFrom(*cpu_resource);
+
+        // memory
+        mesos::Resource* mem_resource = new mesos::Resource();
+        mem_resource->set_name("mem");
+        mem_resource->set_type(mesos::Value_Type_SCALAR);
+        mesos::Value_Scalar* mem_scalar = new mesos::Value_Scalar();
+        mem_scalar->set_value(1500.0);
+        mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
+        offer->add_resources()->MergeFrom(*mem_resource);
 
         mesos::OfferID offerId;
         offerId.set_value("12345678");
