@@ -15,11 +15,13 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <gflags/gflags.h>
 
 // stout dependencies
 #include <stout/os.hpp>
 #include <stout/os/pstree.hpp>
 #include <stout/path.hpp>
+#include <stout/uuid.hpp>
 
 #include <stout/os/getcwd.hpp>
 #include <stout/os/write.hpp>
@@ -41,16 +43,19 @@
 #include <monitor_info.pb.h>
 #include <job.pb.h>
 #include <runtime_resource.pb.h>
+#include <cluster_operation.pb.h>
 
 // chameleon headers
 #include <resource_collector.hpp>
 #include <configuration_glog.hpp>
 #include <runtime_resources_usage.hpp>
 
+
 using std::string;
 using std::unordered_map;
 using std::shared_ptr;
 using std::make_shared;
+using std::to_string;
 
 using os::Process;
 using os::ProcessTree;
@@ -64,21 +69,16 @@ using process::http::Request;
 using process::http::OK;
 using process::http::InternalServerError;
 
+
 namespace chameleon {
     // forward declations
     class SlaveHeartbeater;
 
-    constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(5);
-
-    const string DEFAULT_MASTER = "master@172.20.110.228:6060";
-
     class Slave : public ProtobufProcess<Slave> {
     public:
-        explicit Slave() : ProcessBase("slave"), m_interval(DEFAULT_HEARTBEAT_INTERVAL) {
+         explicit Slave() : ProcessBase("slave"), m_interval(){
             msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
             msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
-            LOG(INFO) << "The heartbeat interval is " << DEFAULT_HEARTBEAT_INTERVAL;
-
 //            msp_resource_collector = new ResourceCollector();
         }
 
@@ -87,6 +87,8 @@ namespace chameleon {
         virtual ~Slave() {
             LOG(INFO) << "~ Slave()";
         }
+
+
 
     protected:
         void finalize() override;
@@ -100,14 +102,27 @@ namespace chameleon {
 
         void send_heartbeat_to_master();
 
+        void setM_master(const string &m_master) {
+            Slave::m_master = m_master;
+        }
+
+        void setM_interval(const Duration &m_interval) {
+            Slave::m_interval = m_interval;
+        }
+
     private:
         shared_ptr<ResourceCollector> msp_resource_collector;
         shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
+
         shared_ptr<UPID> msp_masterUPID;
-        const Duration m_interval;
+        Duration m_interval;
+        string m_uuid;
+        string m_master;
 
         void heartbeat();
+
+        void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
     };
 
 
@@ -125,6 +140,10 @@ namespace chameleon {
 //        install<Offer>(&Master::report_from_client, &Offer::key,&Offer::value);
         }
 
+        void setM_interval(Duration &m_interval) {
+            SlaveHeartbeater::m_interval = m_interval;
+        }
+
     private:
 
         void heartbeat() {
@@ -133,9 +152,7 @@ namespace chameleon {
             // it's cyclical because "heartbeat invoke heartbeat"
             process::delay(m_interval, self(), &Self::heartbeat);
         }
-
-        const Duration m_interval;
-
+        Duration m_interval;
     };
 }
 

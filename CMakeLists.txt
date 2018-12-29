@@ -52,6 +52,7 @@ include_directories(${CMAKE_BINARY_DIR}/3rdparty/boost-1.53.0-prefix/src/boost-1
 
 include(cmake/protobuf_download.cmake)
 include(cmake/protobuf_compile.cmake)
+include(cmake/gflag.cmake)
 
 include_directories(${CMAKE_BINARY_DIR}/3rdparty/protobuf_2_6/include)
 # protobuf download and function
@@ -65,6 +66,12 @@ link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/lib/.libs)
 
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/gtest/include)
 link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/gtest/lib/.libs)
+
+include_directories(${PROJECT_SOURCE_DIR}/3rdparty/gflag-2.2.2/include)
+link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gflag-2.2.2/lib)
+
+include_directories(${CMAKE_BINARY_DIR}/3rdparty/gflag-2.2.2/include)
+link_directories(${CMAKE_BINARY_DIR}/3rdparty/gflag-2.2.2/lib)
 
 include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build/src/glog)
 include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build/src)

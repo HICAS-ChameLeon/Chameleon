@@ -1,33 +1,33 @@
-var app = angular.module('myApp', []);
+(function () {
+    'use strict';
 
-// app.controller('siteCtrl', function($scope, $http) {
-//     $http.get("http://172.20.110.228/master/runtime-resources")
-//         .then(function (response) {$scope.names = response.data.quantity;});
-// });
+    angular.module('Chameleon', ['ngRoute','ui.bootstrap'])
+    //配置$routeProvider用来定义路由规则
+    //$routeProvider为我们提供了when（path，object）& other(object)函数按顺序定义所有路由，函数包含两个参数：
+    //@param1:url或者url正则规则
+    //@param2：路由配置对象
+        .config(function ($routeProvider) {
+            $routeProvider.when('/hardware', {
+                //templateURL：插入ng-view的HTML模板文件
+                templateUrl: '/Chameleon/src/webui/HTML/hardware.html',
+                controller: 'HardwareCtrl'
 
-app.controller('hardware', function($scope, $http) {
-    $http({
-        method: 'GET',
-        url: 'http://172.20.110.228:6060/master/hardware-resources'
-    }).then(function successCallback(response) {
-        $scope.hardware = response.data.content;
-        console.log(response.data.content);
-        $scope.quantities = response.data.quantity;
-        console.log(response.data.quantity);
-    }, function errorCallback(response) {
-        // 请求失败执行代码
-    });
-});
-app.controller('runtime', function($scope, $http) {
-    $http({
-        method: 'GET',
-        url: 'http://172.20.110.228:6060/master/runtime-resources'
-    }).then(function successCallback(response) {
-        $scope.runtime = response.data.content;
-        console.log(response.data.content);
-        $scope.quantities = response.data.quantity;
-        console.log(response.data.quantity);
-    }, function errorCallback(response) {
-        // 请求失败执行代码
-    });
-});
+            })
+                .when('/runtime', {
+                    templateUrl: '/Chameleon/src/webui/HTML/runtime.html',
+                    controller: 'RuntimeCtrl'
+                })
+                // network_topology.html
+                .when('/topology', {
+                    templateUrl: '/Chameleon/src/webui/HTML/network_topology.html',
+                    controller: 'TopologyCtrl'
+                })
+                // slave.html
+                .when('/slaves/:slave_uuid/ip/:slave_id/cpu_usage/:cpu_used/mem_usage/:mem_used/disk_usage/:disk_used', {
+                    templateUrl: '/Chameleon/src/webui/HTML/slave.html',
+                    controller: 'SlaveCtrl'
+                })
+        })
+
+
+})();

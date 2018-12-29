@@ -12,10 +12,13 @@
 #include <string>
 #include <memory>
 
+// gflags dependencies
+#include <gflags/gflags.h>
 
 // stout dependencies
 #include <stout/os.hpp>
 #include <stout/uuid.hpp>
+#include <stout/flags/flag.hpp>
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -31,6 +34,7 @@
 // chameleon headers
 #include <configuration_glog.hpp>
 #include "../common/chameleon_file.hpp"
+
 using std::string;
 using std::unordered_map;
 using std::shared_ptr;
@@ -42,7 +46,9 @@ using os::ProcessTree;
 using process::UPID;
 using process::PID;
 
-namespace chameleon {
+using flags::Warnings;
+
+namespace chameleon{
     class Submitter :public ProtobufProcess<Submitter>{
     public:
         explicit Submitter() : ProcessBase("submitter") {}
@@ -52,14 +58,22 @@ namespace chameleon {
 
         virtual void initialize();
 
+        void setM_spark_path(const string &m_spark_path) {
+            Submitter::m_spark_path = m_spark_path;
+        }
+
+        void setDEFAULT_MASTER(const string &DEFAULT_MASTER) {
+            Submitter::DEFAULT_MASTER = DEFAULT_MASTER;
+        }
+
     protected:
         void finalize() override {
             LOG(INFO)<<"submitter finalized ";
         }
 
     private:
-         const string m_spark_path = "/home/lemaker/software/spark-2.3.0-bin-hadoop2.7.tgz";
-        const string DEFAULT_MASTER="master@172.20.110.228:6060";
+        string m_spark_path;
+        string DEFAULT_MASTER;
         shared_ptr<UPID> msp_masterUPID;
         id::UUID m_uuid = id::UUID::random();
     };
