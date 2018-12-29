@@ -46,7 +46,10 @@
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
 #include "scheduler.hpp"
-
+#include "resources.hpp"
+#include "allocator.hpp"
+#include "metrics.hpp"
+#include "protobuf_utils.hpp"
 
 using std::string;
 using std::set;
@@ -69,12 +72,15 @@ using process::http::Request;
 using process::http::OK;
 using process::http::InternalServerError;
 
+using namespace mesos;
 
 namespace chameleon {
+
 
     class Master : public ProtobufProcess<Master> {
 
     public:
+
         explicit Master() : ProcessBase("master") {
             msp_spark_slave = make_shared<UPID>(UPID(test_slave_UPID));
             msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
@@ -86,6 +92,7 @@ namespace chameleon {
 
         virtual void initialize();
 
+        struct Framework;
 
         void register_participant(const string &hostname);
 
@@ -116,12 +123,157 @@ namespace chameleon {
          * Author  : weiguow
          * Date    : 2018-12-28
          * */
+
+        Option<process::UPID> pid;
+
+        struct Framework {
+            enum State {
+                // Framework has never connected to this master. This implies the
+                // master failed over and the framework has not yet re-registered,
+                // but some framework state has been recovered from re-registering
+                // agents that are running tasks for the framework.
+                        RECOVERED,
+
+                // Framework was previously connected to this master. A framework
+                // becomes disconnected when there is a socket error.
+                        DISCONNECTED,
+
+                // The framework is connected but not active.
+                        INACTIVE,
+
+                // Framework is connected and eligible to receive offers. No
+                // offers will be made to frameworks that are not active.
+                        ACTIVE
+            };
+
+            Framework(Master *const master,
+                      const FrameworkInfo &info,
+                      const process::UPID &_pid,
+                      const process::Time &time = process::Clock::now())
+                    : Framework(master, info, ACTIVE, time)
+                    {
+                pid = _pid;
+            }
+
+            ~Framework() {}
+
+            // Sends a message to the connected framework.
+            template<typename Message>
+            void send(const Message &message) {
+                CHECK_SOME(pid);
+                master->send(pid.get(), message);
+            }
+
+            const FrameworkID id() const { return info.id(); }
+
+            // Update fields in 'info' using those in 'newInfo'. Currently this
+            // only updates `role`/`roles`, 'name', 'failover_timeout', 'hostname',
+            // 'webui_url', 'capabilities', and 'labels'.
+            void update(const FrameworkInfo &newInfo) {
+                // We only merge 'info' from the same framework 'id'.
+                CHECK_EQ(info.id(), newInfo.id());
+
+                // Save the old list of roles for later.
+                std::set<std::string> oldRoles = roles;
+
+                // TODO(jmlvanre): Merge other fields as per design doc in
+                // MESOS-703.
+
+                info.clear_role();
+                info.clear_roles();
+
+                if (newInfo.has_role()) {
+                    info.set_role(newInfo.role());
+                }
+
+                if (newInfo.roles_size() > 0) {
+                    info.mutable_roles()->CopyFrom(newInfo.roles());
+                }
+
+                roles = mesos::internal::protobuf::framework::getRoles(newInfo);
+
+                info.set_name(newInfo.name());
+
+                if (newInfo.has_failover_timeout()) {
+                    info.set_failover_timeout(newInfo.failover_timeout());
+                } else {
+                    info.clear_failover_timeout();
+                }
+
+                if (newInfo.has_hostname()) {
+                    info.set_hostname(newInfo.hostname());
+                } else {
+                    info.clear_hostname();
+                }
+
+
+                if (newInfo.has_labels()) {
+                    info.mutable_labels()->CopyFrom(newInfo.labels());
+                } else {
+                    info.clear_labels();
+                }
+
+                const std::set<std::string> &newRoles = roles;
+
+                const std::set<std::string> addedRoles = [&]() {
+                    std::set<std::string> result = newRoles;
+                    foreach (const std::string &role, oldRoles) {
+                        result.erase(role);
+                    }
+                    return result;
+                }();
+
+            }
+
+            bool active() const { return state == ACTIVE; }
+
+            bool connected() const { return state == ACTIVE || state == INACTIVE; }
+
+            bool recovered() const { return state == RECOVERED; }
+
+            bool isTrackedUnderRole(const std::string &role) const;
+
+
+            Master *const master;
+
+            FrameworkInfo info;
+
+            std::set<std::string> roles;
+
+            Option<process::UPID> pid;
+
+            State state;
+
+            hashmap<TaskID, Task *> tasks;
+
+            hashset<Offer *> offers; // Active offers for framework.
+
+        private:
+            Framework(Master *const _master,
+                      const FrameworkInfo &_info,
+                      State state,
+                      const process::Time &time)
+                    : master(_master),
+                      info(_info),
+                      roles(mesos::internal::protobuf::framework::getRoles(_info)),
+                      state(state) {
+            }
+
+            Framework(const Framework &);              // No copying.
+            Framework &operator=(const Framework &); // No assigning.
+        };
+
+        Framework* getFramework(const FrameworkID& frameworkId) const;
+
         void receive(const process::UPID &from,
                      const mesos::scheduler::Call &call);
 
         void subscribe(const process::UPID &from,
                        const mesos::scheduler::Call::Subscribe &subscribe);
 
+        void accept(const Framework& framework, mesos::scheduler::Call::Accept accept);
+
+        mesos::Offer *getOffer(const mesos::OfferID &offerId) const;
 
 
     private:
@@ -135,6 +287,15 @@ namespace chameleon {
         const string test_master_UPID = "slave@172.20.110.228:6061";
         shared_ptr<UPID> msp_spark_slave;
         shared_ptr<UPID> msp_spark_master;
+
+
+        /**
+         * @param spark run on chameleon
+         * Author  : weiguow
+         * Date    : 2018-12-29
+         * */
+        std::shared_ptr<mesos::internal::master::Metrics> metrics;
+        hashmap<mesos::OfferID, mesos::Offer *> offers;
 
         void dispatch_offer(const UPID &from);
 
