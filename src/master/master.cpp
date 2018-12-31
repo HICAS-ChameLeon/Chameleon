@@ -154,9 +154,7 @@ namespace chameleon {
             case mesos::scheduler::Call::ACCEPT:
                 LOG(INFO) << "Accept resource offer";
 //                accept(framework, call.accept());
-                mesos::scheduler::Call* copy_call;
-                copy_call = new mesos::scheduler::Call();
-                copy_call->CopyFrom(call);
+                handle_accept_call(call.accept());
                 break;
 
             case mesos::scheduler::Call::ACCEPT_INVERSE_OFFERS:
@@ -168,6 +166,55 @@ namespace chameleon {
                 break;
 
         }
+    }
+
+    void Master::handle_accept_call(mesos::scheduler::Call::Accept accept) {
+                int   offers_size= accept.offer_ids_size();
+                LOG(INFO)<<"lele handle_accept_call offers_size ="<<offers_size;
+                int operations_size = accept.operations_size();
+                LOG(INFO)<<" lele operations_size="<<operations_size;
+                for(mesos::Offer_Operation offer_operation:accept.operations()){
+                    LOG(INFO)<<"lele offer_operation.type "<<offer_operation.type();
+                    if(offer_operation.type() == mesos::Offer_Operation::LAUNCH){
+                        mesos::Offer_Operation_Launch launch_message = offer_operation.launch();
+                        int current_tasks_size = launch_message.task_infos_size();
+                        LOG(INFO)<<"lele launch_message "<<current_tasks_size;
+                        for(int i=0;i<current_tasks_size;i++){
+                            LOG(INFO)<<"lele at "<<i<< " task";
+                            mesos::TaskInfo current_task = launch_message.task_infos(i);
+                            LOG(INFO)<<" task name: "<<current_task.name();
+                            LOG(INFO)<<" task_id: "<<current_task.task_id().value();
+                            LOG(INFO)<<" slave_id: "<<current_task.slave_id().value();
+                            if(current_task.has_command()){
+                                mesos::CommandInfo command_info = current_task.command();
+                                LOG(INFO)<<" command value "<<command_info.value();
+                                int env_variables_size = command_info.environment().variables_size();
+                                LOG(INFO)<< " command environment.variables.size() "<<env_variables_size;
+                                for(int i=0;i<env_variables_size;i++){
+                                    mesos::Environment_Variable env_variable = command_info.environment().variables(i);
+                                    LOG(INFO)<<"environment variable "<<i<<" name is: "<<env_variable.name();
+                                    if(env_variable.type() == mesos::Environment_Variable_Type_VALUE){
+                                        LOG(INFO)<<"environment variable "<<i<<"'s type is VALUE";
+                                        LOG(INFO)<<"environment variable "<<i<<" value is : "<<env_variable.value();
+                                    }else if(env_variable.type() == mesos::Environment_Variable_Type_SECRET){
+                                        LOG(INFO)<<"environment variable "<<i<<"'s type is SECRET";
+                                        LOG(INFO)<<"environment variable "<<i<<" secret is : "<<env_variable.secret().SerializeAsString();
+                                    }
+                                }
+                                int uris_size = command_info.uris_size();
+                                LOG(INFO)<<" command commandInfo_uris.size() "<<uris_size;
+                                for(int i=0;i<uris_size;i++){
+                                    mesos::CommandInfo_URI commandInfo_uri = command_info.uris(i);
+                                    LOG(INFO)<<" commandInfo_uri.value "<<commandInfo_uri.value();
+                                    LOG(INFO)<<" commandInfo_uri.executable "<<commandInfo_uri.executable();
+                                    LOG(INFO)<<" commandInfo_uri.extract "<<commandInfo_uri.extract();
+                                    LOG(INFO)<<" commandInfo_uri.cache "<<commandInfo_uri.cache();
+                                    LOG(INFO)<<" commandInfo_uri.output_file "<<commandInfo_uri.output_file();
+                                }
+                            }
+                        }
+                    }
+                }
     }
 
     void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
