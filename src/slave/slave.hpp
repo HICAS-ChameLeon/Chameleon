@@ -45,6 +45,10 @@
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
 
+#include <scheduler.pb.h>
+#include <messages.pb.h>
+#include <mesos.pb.h>
+
 // chameleon headers
 #include <resource_collector.hpp>
 #include <configuration_glog.hpp>
@@ -76,7 +80,7 @@ namespace chameleon {
 
     class Slave : public ProtobufProcess<Slave> {
     public:
-         explicit Slave() : ProcessBase("slave"), m_interval(){
+        explicit Slave() : ProcessBase("slave"), m_interval() {
             msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
             msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
 //            msp_resource_collector = new ResourceCollector();
@@ -87,7 +91,6 @@ namespace chameleon {
         virtual ~Slave() {
             LOG(INFO) << "~ Slave()";
         }
-
 
 
     protected:
@@ -110,6 +113,18 @@ namespace chameleon {
             Slave::m_interval = m_interval;
         }
 
+        /**
+         * Funtion : runTask
+         * Date    : 2019-1-2
+         * Author  : weiguow
+         * */
+        void runTaskTest(const process::UPID& from,
+                const mesos::FrameworkInfo& frameworkInfo,
+                const mesos::FrameworkID& frameworkId,
+                const process::UPID& pid,
+                const mesos::TaskInfo& task);
+
+
     private:
         shared_ptr<ResourceCollector> msp_resource_collector;
         shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
@@ -119,6 +134,7 @@ namespace chameleon {
         Duration m_interval;
         string m_uuid;
         string m_master;
+
 
         void heartbeat();
 
@@ -152,6 +168,7 @@ namespace chameleon {
             // it's cyclical because "heartbeat invoke heartbeat"
             process::delay(m_interval, self(), &Self::heartbeat);
         }
+
         Duration m_interval;
     };
 }

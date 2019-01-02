@@ -55,6 +55,10 @@ list(APPEND slave_PROTOS hardware_resource)
 list(APPEND slave_PROTOS runtime_resource)
 list(APPEND slave_PROTOS job)
 list(APPEND slave_PROTOS cluster_operation)
+list(APPEND slave_PROTOS messages)
+list(APPEND slave_PROTOS scheduler)
+list(APPEND slave_PROTOS mesos)
+
 list(REMOVE_DUPLICATES slave_PROTOS)
 
 target_link_libraries(slave ${slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})
