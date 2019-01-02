@@ -100,7 +100,6 @@ endif (ENABLE_SSL)
 ##set(PROCESS_LIB_DIRS "/home/lemaker/open-source/libprocess-start/cmake-build-debug/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib/lib")
 ##set(PROCESS_LIB_DIRS ${PROCESS_LIB_DIRS} "/home/lemaker/open-source/libprocess-start/3rdparty/http-parser-2.6.2")
 ##list(APPEND PROCESS_LIB_DIRS "/home/lemaker/open-source/libprocess-start/3rdparty/http-parser-2.6.2")
-message(102 ${PROCESS_LIB_DIRS})
 
 #link_directories({PROCESS_LIB_DIRS})
 
