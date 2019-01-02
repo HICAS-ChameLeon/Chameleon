@@ -170,6 +170,8 @@ namespace chameleon {
         }
     }
 
+    //void Master::accept
+
     void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
         mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
         LOG(INFO) << "WEIGUO Received SUBSCRIBE call for"
@@ -229,7 +231,7 @@ namespace chameleon {
         offer->mutable_id()->CopyFrom(offerId);
 
         mesos::FrameworkID frameworkId;
-        frameworkId.set_value("12345");
+        frameworkId.set_value("123445");
         offer->mutable_framework_id()->MergeFrom(frameworkId);
 
         mesos::SlaveID* slaveID = new mesos::SlaveID();
