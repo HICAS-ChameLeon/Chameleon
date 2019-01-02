@@ -26,6 +26,18 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
 static const bool port_dummyInt = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 
 namespace chameleon {
+
+    Slave::Slave(
+            Master *const _master,
+            const SlaveInfo &_info,
+            const UPID &_pid)
+            : master(_master),
+              id(_info.id()),
+              info(_info),
+              pid(_pid) {
+
+    }
+
     void Master::initialize() {
         // Verify that the version of the library that we linked against is
         // compatible with the version of the headers we compiled against.
@@ -129,19 +141,35 @@ namespace chameleon {
 
     }
 
+    /**
+    * Function  : getFramework
+    * Anounce   : get framework by frameworkID
+    * @param    : frameworkID
+    * */
+    Framework* Master::getFramework(const FrameworkID& frameworkId) const {
+        if (frameworks.registered.contains(frameworkId)) {
+            return frameworks.registered.at(frameworkId);
+        } else {
+            return nullptr;
+        }
+    }
+
+    //Get offer by offerid
+    Offer *Master::getOffer(const OfferID &offerId) const {
+        if (offers.contains(offerId)) {
+            return offers.at(offerId);
+        } else {
+            return nullptr;
+        }
+    }
 
     /**
-     * Function model  :  sprak run on chameleon
-     * Author          :  weiguow
-     * Date            :  2018-12-27
-     * Funtion name    :  receive, subscribe
-     * */
-    Framework* chameleon::Master::getFramework(const mesos::FrameworkID& frameworkId) const
-    {
-        return frameworks.registered.contains(frameworkId)
-               ? frameworks.registered.at(frameworkId)
-               : nullptr;
-    }
+      * Function model  :  sprak run on chameleon
+      * Author          :  weiguow
+      * Date            :  2018-12-27
+      * Funtion name    :  receive
+      * @param         : UPID &from ,Call &call
+      * */
     void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
 
         //first call
@@ -150,22 +178,14 @@ namespace chameleon {
             return;
         }
 
-        Framework *framework = getFramework(call.framework_id());
-
         switch (call.type()) {
             case mesos::scheduler::Call::SUBSCRIBE:
-                // SUBSCRIBE call should have been handled above.
                 LOG(FATAL) << "Unexpected 'SUBSCRIBE' call";
                 break;
 
             case mesos::scheduler::Call::ACCEPT:
                 LOG(INFO) << "Accept resource offer";
-
-                accept(framework, call.accept());
-
-//                mesos::scheduler::Call *copy_call;
-//                copy_call = new mesos::scheduler::Call();
-//                copy_call->CopyFrom(call);
+                accept(call.accept());
                 break;
 
             case mesos::scheduler::Call::UNKNOWN:
@@ -174,30 +194,35 @@ namespace chameleon {
         }
     }
 
-    void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
-        mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
-        LOG(INFO) << "Weiguo Received SUBSCRIBE call for"
-                  << " framework '" << frameworkInfo.name() << "' at " << from;
+    void Master::subscribe(const UPID &from,
+                           const mesos::scheduler::Call::Subscribe &subscribe) {
+
+        FrameworkInfo frameworkInfo = subscribe.framework_info();
+
+        LOG(INFO) << "WEIGUO FRAMEWORK FROM" << from;
+        LOG(INFO) << "WEIGUO FRAMEWORK ROLE" << frameworkInfo.role();
+        LOG(INFO) << "WEIGUO FRAMEWORK PRINCAL" << frameworkInfo.principal();
+        LOG(INFO) << "WEIGUO FRAMEWORK SPACEUSED " << frameworkInfo.SpaceUsed();
+        LOG(INFO) << "WEIGUO FRAMEWORK USER " << frameworkInfo.user();
+
+        LOG(INFO) << "WEIGUO RECEIVED A SUBSCRIBE FRAMEWORK "
+                  << frameworkInfo.name() << "at" << from;
+
 
         mesos::internal::FrameworkRegisteredMessage message;
-        mesos::MasterInfo masterInfo;
+        message.mutable_framework_id()->MergeFrom(frameworkInfo.id());
 
+        //Masterinfo,we should get this infomation from struct
+        mesos::MasterInfo masterInfo;
+        masterInfo.set_id("11111111");
         masterInfo.set_ip(self().address.ip.in().get().s_addr);
         masterInfo.set_port(6060);
-        masterInfo.set_id("11111111");
 
-        // First subscribe
-        mesos::FrameworkID *frameworkId = new mesos::FrameworkID();
-        frameworkId->set_value("22222222");
-        message.mutable_framework_id()->MergeFrom(*frameworkId);
-
-        message.mutable_master_info()->MergeFrom(masterInfo);
         send(from, message);
 
-        LOG(INFO) << "Weiguo Subscribing framework " << frameworkInfo.name()
-                  << "Successful";
+        LOG(INFO) << "WEIGUO SUBCRIBING FRAMEWORK" << frameworkInfo.name() << "SUCCESSFULL !";
 
-        process::dispatch(self(), &Master::dispatch_offer, from);
+        process::dispatch(self(), &Master::Offer, from);
         return;
     }
 
@@ -207,7 +232,7 @@ namespace chameleon {
      * Date            :  2018-12-28
      * Funtion name    :  Master::offer
      * */
-    void Master::dispatch_offer(const UPID &from) {
+    void Master::Offer(const UPID &from) {
         LOG(INFO) << "WEIGUO Resource_offer";
         mesos::Offer *offer = new mesos::Offer();
 
@@ -244,7 +269,6 @@ namespace chameleon {
 
         offer->set_hostname("weiguow");
 
-
         mesos::internal::ResourceOffersMessage message;
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("55555555");
@@ -262,204 +286,104 @@ namespace chameleon {
     * Date            :  2018-12-29
     * Funtion name    :  Master::accept
     * */
-
-    mesos::Offer *Master::getOffer(const mesos::OfferID &offerId) const {
-        return offers.contains(offerId) ? offers.at(offerId) : nullptr;
-    }
-
-    void chameleon::Master::accept(const Framework& framework, mesos::scheduler::Call::Accept accept) {
-
-        mesos::FrameworkID frameworkId;
-        frameworkId.set_value("22222222");
-
-        mesos::OfferID offerId;
-        offerId.set_value("33333333");
-
-        mesos::SlaveID *slaveID = new mesos::SlaveID();
-        slaveID->set_value("44444444");
-
-        for (int i = 0; i < accept.operations_size(); ++i) {
-            mesos::Offer::Operation *operation = accept.mutable_operations(i);
-
-            if (operation->type() == mesos::Offer::Operation::LAUNCH) {
-                if (operation->launch().task_infos().size() > 0) {
-                    ++metrics->messages_launch_tasks;
-                } else {
-                    ++metrics->messages_decline_offers;
-                    LOG(WARNING) << " in ACCEPT call for framework " << frameworkId
-                                 << " as the launch operation specified no tasks";
-                }
-            } else if (operation->type() == mesos::Offer::Operation::LAUNCH_GROUP) {
-                const mesos::ExecutorInfo &executor = operation->launch_group().executor();
-
-                mesos::TaskGroupInfo *taskGroup = operation->mutable_launch_group()->mutable_task_group();
-
-                // Mutate `TaskInfo` to include `ExecutorInfo` to make it easy
-                // for operator API and WebUI to get access to the corresponding
-                // executor for tasks in the task group.
-                for (int j = 0; j < taskGroup->tasks().size(); ++j) {
-                    mesos::TaskInfo *task = taskGroup->mutable_tasks(j);
-                    if (!task->has_executor()) {
-                        task->mutable_executor()->CopyFrom(executor);
-                    }
-                }
-            }
-        }
-
-        mesos::Resources offeredResources;
-        Option<mesos::Resource::AllocationInfo> allocationInfo = None();
-
-        //for a single slave
-        if (accept.offer_ids().size() == 0) {
-            LOG(INFO) << "No offers specified";
-        } else {
-            // Compute offered resources and remove the offers. If the
-            // validation failed, return resources to the allocator.
-            foreach (const mesos::OfferID &offerId, accept.offer_ids()) {
-                mesos::Offer *offer = getOffer(offerId);
-                if (offer != nullptr) {
-                    allocationInfo = offer->allocation_info();
-                    offeredResources += offer->resources();
-                }
-                delete offer;
-                continue;
-            }
-            // If the offer was not in our offer set, then this offer is no
-            // longer valid.
-            LOG(WARNING) << "Ignoring accept of offer " << offerId
-                         << " since it is no longer valid";
-        }
-
-
-        mesos::Resources _offeredResources = offeredResources;
-        mesos::Resources offeredSharedResources = offeredResources.shared();
-        vector<mesos::Offer::Operation> operations;
-
-        foreach (const mesos::Offer::Operation &operation, accept.operations()) {
-            switch (operation.type()) {
-                case mesos::Offer::Operation::LAUNCH: {
-                    // For the LAUNCH operation we drop invalid tasks. Therefore
-                    // we create a new copy with only the valid tasks to pass to
-                    // the allocator.
-                    mesos::Offer::Operation _operation;
-                    _operation.set_type(mesos::Offer::Operation::LAUNCH);
-
-                    foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
-
-                        mesos::TaskInfo task_(task);
-
-                        // We add back offered shared resources for validation even if they
-                        // are already consumed by other tasks in the same ACCEPT call. This
-                        // allows these tasks to use more copies of the same shared resource
-                        // than those being offered. e.g., 2 tasks can be launched on 1 copy
-                        // of a shared persistent volume from the offer; 3 tasks can be
-                        // launched on 2 copies of a shared persistent volume from 2 offers.
-                        mesos::Resources available =
-                                _offeredResources.nonShared() + offeredSharedResources;
-
-
-                        // Add task.
-//                        const mesos::Resources consumed = addTask(task_, framework, slave);
-
+//    void chameleon::Master::accept(mesos::scheduler::Call::Accept accept) {
+//
+//        //judge the operation type
+//        for (int i = 0; i < accept.operations_size(); ++i) {
+//            mesos::Offer::Operation *operation = accept.mutable_operations(i);
+//            if (operation->type() == mesos::Offer::Operation::LAUNCH) {
+//                if (operation->launch().task_infos().size() > 0) {
+//                    LOG(INFO) << "WEIGUO get offer from scheduler";
+//                } else {
+//                    LOG(INFO) << "WEIGUO there is no task";
+//                }
+//            } else if (operation->type() == mesos::Offer::Operation::LAUNCH_GROUP) {
+//                const mesos::ExecutorInfo &executor = operation->launch_group().executor();
+//                mesos::TaskGroupInfo *taskGroup = operation->mutable_launch_group()->mutable_task_group();
+//                for (int j = 0; j < taskGroup->tasks().size(); ++j) {
+//                    TaskInfo *task = taskGroup->mutable_tasks(j);
+//                    if (!task->has_executor()) {
+//                        task->mutable_executor()->CopyFrom(executor);
+//                    }
+//                }
+//            }
+//        }
+//
+//        mesos::Resources offeredResources;
+//        mesos::SlaveID slaveID;
+//
+//        //for a single slave
+//        if (accept.offer_ids().size() == 0) {
+//            LOG(INFO) << "No offers specified";
+//        } else {
+//            foreach (const OfferID &offerId, accept.offer_ids()) {
+//                //get offer resource
+//                Offer *offer = getOffer(offerId);
+//                if (offer != nullptr) {
+//                    {
+//                        /*
+//                         * @param slaveID    :  for send to _accept
+//                         * @offeredResources :  for send to _accept
+//                         * */
+//                        slaveID = offer->slave_id();
+//                        offeredResources += offer->resources();
+//                    }
+//                    //actually,it's not right to delete offer
+//                    delete (offer);
+//                    continue;
+//                }
+//                // If the offer was not in our offer set, then this offer is no
+//                LOG(WARNING) << "WEIGUO there is no resource in offer";
+//            }
+//        }
+//
+//        mesos::Resources _offeredResources = offeredResources;
+//        Resources offeredSharedResources = offeredResources.shared();
+//        vector<mesos::Offer::Operation> operations;
+//
+//        foreach (const mesos::Offer::Operation &operation, accept.operations()) {
+//            switch (operation.type()) {
+//                case mesos::Offer::Operation::LAUNCH: {
+//
+//                    mesos::Offer::Operation _operation;
+//
+//                    _operation.set_type(mesos::Offer::Operation::LAUNCH);
+//
+//                    foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
+//                        mesos::TaskInfo task_(task);
+//                        mesos::Resources available = _offeredResources.nonShared() + offeredSharedResources;
+//
+//                        //send message to slave  consumed:消耗
+//                        const Resources consumed = addTask(task_, framework, slave);
+//
 //                        CHECK(available.contains(consumed))
 //                        << available << " does not contain " << consumed;
-
+//
 //                        _offeredResources -= consumed;
-
-                        // TODO(bmahler): Consider updating this log message to
-                        // indicate when the executor is also being launched.
-//                        LOG(INFO) << "Launching task " << mesos::task_.task_id()
-//                                  << " of framework " << framework
-//                                  << " with resources " << task_.resources()
-//                                  << " on agent " << *slave;
-
-                        mesos::internal::RunTaskMessage message;
-                        message.mutable_framework()->MergeFrom(framework.info);
-
-                        // TODO(anand): We set 'pid' to UPID() for http frameworks
-                        // as 'pid' was made optional in 0.24.0. In 0.25.0, we
-                        // no longer have to set pid here for http frameworks.
-                        message.set_pid(framework.pid.getOrElse(UPID()));
-                        message.mutable_task()->MergeFrom(task_);
-
-//                        if (HookManager::hooksAvailable()) {
-//                            // Set labels retrieved from label-decorator hooks.
-//                            message.mutable_task()->mutable_labels()->CopyFrom(
-//                                    HookManager::masterLaunchTaskLabelDecorator(
-//                                            task_,
-//                                            framework.info,
-//                                            slave->info));
-//                        }
-
-                        send(slave->pid, message);
-
-
-                        _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
-                    }
-
-                    operations.push_back(_operation);
-
-                    break;
-                }
-
-                case mesos::Offer::Operation::LAUNCH_GROUP: {
-                    // We must ensure that the entire group can be launched. This
-                    // means all tasks in the group must be authorized and valid.
-                    // If any tasks in the group have been killed in the interim
-                    // we must kill the entire group.
-                    const mesos::ExecutorInfo &executor = operation.launch_group().executor();
-                    const mesos::TaskGroupInfo &taskGroup = operation.launch_group().task_group();
-
-
-                    // Now launch the task group!
-                    mesos::internal::RunTaskGroupMessage message;
-                    message.mutable_framework()->CopyFrom(framework->info);
-                    message.mutable_executor()->CopyFrom(executor);
-                    message.mutable_task_group()->CopyFrom(taskGroup);
-
-                    set<TaskID> taskIds;
-                    Resources totalResources;
-
-                    for (int i = 0; i < message.task_group().tasks().size(); ++i) {
-                        TaskInfo *task = message.mutable_task_group()->mutable_tasks(i);
-
-                        taskIds.insert(task->task_id());
-                        totalResources += task->resources();
-
-                        const Resources consumed = addTask(*task, framework, slave);
-
-                        CHECK(_offeredResources.contains(consumed))
-                        << _offeredResources << " does not contain " << consumed;
-
-                        _offeredResources -= consumed;
-
-                        if (HookManager::hooksAvailable()) {
-                            // Set labels retrieved from label-decorator hooks.
-                            task->mutable_labels()->CopyFrom(
-                                    HookManager::masterLaunchTaskLabelDecorator(
-                                            *task,
-                                            framework->info,
-                                            slave->info));
-                        }
-                    }
-
-                    LOG(INFO) << "Launching task group " << stringify(taskIds)
-                              << " of framework " << *framework
-                              << " with resources " << totalResources
-                              << " on agent " << *slave;
-
-                    send(slave->pid, message);
-                    break;
-                }
-
-                case Offer::Operation::UNKNOWN: {
-                    LOG(WARNING) << "Ignoring unknown offer operation";
-                    break;
-                }
-            }
-        }
-    }
-
+//
+//                        LOG(INFO) << "WEIGUO send task to slave";
+//
+//                        mesos::internal::RunTaskMessage message;
+//                        message.mutable_framework()->MergeFrom(framework->info);
+//
+//                        message.set_pid(framework->pid.getOrElse(UPID()));
+//                        message.mutable_task()->MergeFrom(task_);
+//
+//
+//                        send(slave->pid, message);
+//
+//                        _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
+//                        break;
+//                    }
+//                }
+//                case Offer::Operation::UNKNOWN: {
+//                    LOG(WARNING) << "Ignoring unknown offer operation";
+//                    break;
+//                }
+//
+//            }
+//        }
+//    }
 
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;

@@ -25,11 +25,6 @@
 
 #include <google/protobuf/repeated_field.h>
 
-#include <mesos/resources.hpp>
-#include <mesos/roles.hpp>
-#include <mesos/values.hpp>
-#include <mesos/type_utils.hpp>
-
 #include <stout/foreach.hpp>
 #include <stout/hashmap.hpp>
 #include <stout/json.hpp>
@@ -37,6 +32,8 @@
 #include <stout/protobuf.hpp>
 #include <stout/strings.hpp>
 #include <stout/unreachable.hpp>
+
+#include "resources.hpp"
 
 using std::map;
 using std::ostream;

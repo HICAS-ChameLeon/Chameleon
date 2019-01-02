@@ -25,10 +25,6 @@
 
 #include <google/protobuf/repeated_field.h>
 
-#include <mesos/mesos.hpp>
-#include <mesos/type_utils.hpp>
-#include <mesos/values.hpp>
-
 #include <stout/bytes.hpp>
 #include <stout/check.hpp>
 #include <stout/error.hpp>
@@ -38,6 +34,8 @@
 #include <stout/lambda.hpp>
 #include <stout/option.hpp>
 #include <stout/try.hpp>
+
+#include "mesos.pb.h"
 
 
 // Resources come in three types: scalar, ranges, and sets. These are
