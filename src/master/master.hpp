@@ -257,6 +257,8 @@ namespace chameleon {
          * @param ip  slave.ip
          */
         void received_reply_shutdown_message(const string &ip, const bool &is_shutdown);
+
+        void handle_accept_call(mesos::scheduler::Call::Accept accept);
     };
 }
 
