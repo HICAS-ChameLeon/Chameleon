@@ -5,6 +5,7 @@
  * Description：slave codes
  */
 
+#include <messages.pb.h>
 #include "slave.hpp"
 
 DEFINE_string(minfo, "127.0.0.1:8080", "ip and port info");
@@ -56,6 +57,14 @@ namespace chameleon {
         install<JobMessage>(&Slave::get_a_job);
         install<ShutdownMessage>(&Slave::shutdown);
 
+        install<mesos::internal::RunTaskMessage>(&Slave::runTaskTest,
+                //frameworkinfo
+                &mesos::internal::RunTaskMessage::framework,
+                //frameworkid
+                &mesos::internal::RunTaskMessage::framework_id,
+                &mesos::internal::RunTaskMessage::pid,
+                &mesos::internal::RunTaskMessage::task);
+
 
         HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
         DLOG(INFO) << *msp_masterUPID;
@@ -73,6 +82,19 @@ namespace chameleon {
         heartbeat();
     }
 
+
+    /**
+     * Funtion  : runTask
+     * Author   : weiguow
+     * Date     : 2019-1-2
+     * */
+     void Slave::runTaskTest(const process::UPID& from,
+             const mesos::FrameworkInfo& frameworkInfo,
+             const mesos::FrameworkID& frameworkId,
+             const process::UPID& pid,
+             const mesos::TaskInfo& task) {
+         LOG(INFO) << "WEIGUO GET TASK FROM MASTER";
+     }
 
     void Slave::register_feedback(const string &hostname) {
         cout << " receive register feedback from master" << hostname << endl;

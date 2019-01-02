@@ -27,16 +27,16 @@ static const bool port_dummyInt = gflags::RegisterFlagValidator(&FLAGS_port, &Va
 
 namespace chameleon {
 
-    Slave::Slave(
-            Master *const _master,
-            const SlaveInfo &_info,
-            const UPID &_pid)
-            : master(_master),
-              id(_info.id()),
-              info(_info),
-              pid(_pid) {
-
-    }
+//    Slave::Slave(
+//            Master *const _master,
+//            const mesos::SlaveInfo &_info,
+//            const UPID &_pid)
+//            : master(_master),
+//              id(_info.id()),
+//              info(_info),
+//              pid(_pid) {
+//
+//    }
 
     void Master::initialize() {
         // Verify that the version of the library that we linked against is
@@ -142,26 +142,30 @@ namespace chameleon {
     }
 
     /**
-    * Function  : getFramework
-    * Anounce   : get framework by frameworkID
-    * @param    : frameworkID
+    * Function      : getFramework
+    * Description   : get framework by frameworkID
+    * @param       : frameworkID
     * */
-    Framework* Master::getFramework(const FrameworkID& frameworkId) const {
-        if (frameworks.registered.contains(frameworkId)) {
-            return frameworks.registered.at(frameworkId);
-        } else {
-            return nullptr;
-        }
-    }
+//    Framework* Master::getFramework(const mesos::FrameworkID& frameworkId) const {
+//        if (frameworks.registered.contains(frameworkId)) {
+//            return frameworks.registered.at(frameworkId);
+//        } else {
+//            return nullptr;
+//        }
+//    }
 
-    //Get offer by offerid
-    Offer *Master::getOffer(const OfferID &offerId) const {
-        if (offers.contains(offerId)) {
-            return offers.at(offerId);
-        } else {
-            return nullptr;
-        }
-    }
+    /**
+     * Function    : getOffer
+     * Description : get offerinfo by offerID
+     * @param      : offerID
+     * */
+//    mesos::Offer* Master::getOffer(const mesos::OfferID &offerId) const {
+//        if (offers.contains(offerId)) {
+//            return offers.at(offerId);
+//        } else {
+//            return nullptr;
+//        }
+//    }
 
     /**
       * Function model  :  sprak run on chameleon
@@ -184,8 +188,7 @@ namespace chameleon {
                 break;
 
             case mesos::scheduler::Call::ACCEPT:
-                LOG(INFO) << "Accept resource offer";
-                accept(call.accept());
+                accept(from, call.accept());
                 break;
 
             case mesos::scheduler::Call::UNKNOWN:
@@ -194,23 +197,41 @@ namespace chameleon {
         }
     }
 
+    /**
+      * Function model  :  sprak run on chameleon
+      * Author          :  weiguow
+      * Date            :  2018-12-28
+      * Funtion name    :  subscribe
+      * @param          : UPID &from ,Call::Subscribe &subscribe
+      * */
     void Master::subscribe(const UPID &from,
                            const mesos::scheduler::Call::Subscribe &subscribe) {
 
-        FrameworkInfo frameworkInfo = subscribe.framework_info();
+        mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
 
-        LOG(INFO) << "WEIGUO FRAMEWORK FROM" << from;
-        LOG(INFO) << "WEIGUO FRAMEWORK ROLE" << frameworkInfo.role();
-        LOG(INFO) << "WEIGUO FRAMEWORK PRINCAL" << frameworkInfo.principal();
-        LOG(INFO) << "WEIGUO FRAMEWORK SPACEUSED " << frameworkInfo.SpaceUsed();
-        LOG(INFO) << "WEIGUO FRAMEWORK USER " << frameworkInfo.user();
+        this->frameworkInfo = frameworkInfo;
 
+        /**
+         * WEIGUO FRAMEWORK FROM: scheduler-22b6d4f4-7003-4956-95f9-eaf955c2ba55@172.20.110.114:44151
+         * WEIGUO FRAMEWORK ROLE: *
+         * WEIGUO FRAMEWORK PRINCAL:
+         * WEIGUO FRAMEWORK SPACEUSED:  310
+         * WEIGUO FRAMEWORK USER: weiguow
+         * */
+//        LOG(INFO) << "WEIGUO FRAMEWORK FROM: " << from;
+//        LOG(INFO) << "WEIGUO FRAMEWORK ROLE: " << frameworkInfo.role();
+//        LOG(INFO) << "WEIGUO FRAMEWORK PRINCAL: " << frameworkInfo.principal();
+//        LOG(INFO) << "WEIGUO FRAMEWORK SPACEUSED:  " << frameworkInfo.SpaceUsed();
+//        LOG(INFO) << "WEIGUO FRAMEWORK USER: " << frameworkInfo.user();
+
+        //from == frameworkpid
         LOG(INFO) << "WEIGUO RECEIVED A SUBSCRIBE FRAMEWORK "
-                  << frameworkInfo.name() << "at" << from;
+                  << frameworkInfo.name() << "  at " << from;
 
+
+        //frameworkid WEIGUO NEWFRAMEWORKID:  79986764-d498-4d83-bfa2-8f4bd0da74f3-0000
 
         mesos::internal::FrameworkRegisteredMessage message;
-        message.mutable_framework_id()->MergeFrom(frameworkInfo.id());
 
         //Masterinfo,we should get this infomation from struct
         mesos::MasterInfo masterInfo;
@@ -218,9 +239,21 @@ namespace chameleon {
         masterInfo.set_ip(self().address.ip.in().get().s_addr);
         masterInfo.set_port(6060);
 
+        //frameworkID
+        std::ostringstream out;
+        int64_t nextFrameworkId;
+        mesos::FrameworkID* frameworkID = new mesos::FrameworkID();
+        out << masterInfo.id() << "-" << std::setw(4)
+            << std::setfill('0') << nextFrameworkId++;
+        frameworkID->set_value(out.str());
+        this->frameworkID = frameworkID;
+
+        message.mutable_framework_id()->MergeFrom(*frameworkID);
+        message.mutable_master_info()->MergeFrom(masterInfo);
+
         send(from, message);
 
-        LOG(INFO) << "WEIGUO SUBCRIBING FRAMEWORK" << frameworkInfo.name() << "SUCCESSFULL !";
+        LOG(INFO) << "WEIGUO SUBCRIBING FRAMEWORK " << frameworkInfo.name() << " SUCCESSFULL !";
 
         process::dispatch(self(), &Master::Offer, from);
         return;
@@ -258,9 +291,7 @@ namespace chameleon {
         offerId.set_value("33333333");
         offer->mutable_id()->CopyFrom(offerId);
 
-        mesos::FrameworkID frameworkId;
-        frameworkId.set_value("22222222");
-        offer->mutable_framework_id()->MergeFrom(frameworkId);
+        offer->mutable_framework_id()->MergeFrom(*this->frameworkID);
 
         mesos::SlaveID *slaveID = new mesos::SlaveID();
         slaveID->set_value("44444444");
@@ -273,7 +304,7 @@ namespace chameleon {
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("55555555");
 
-        LOG(INFO) << "Sending " << message.offers().size();
+        LOG(INFO) << "WEIGUO SENDING " << message.offers().size() << " OFFER TO SLAVE";
 
         send(from, message);
 
@@ -286,39 +317,39 @@ namespace chameleon {
     * Date            :  2018-12-29
     * Funtion name    :  Master::accept
     * */
-//    void chameleon::Master::accept(mesos::scheduler::Call::Accept accept) {
-//
-//        //judge the operation type
-//        for (int i = 0; i < accept.operations_size(); ++i) {
-//            mesos::Offer::Operation *operation = accept.mutable_operations(i);
-//            if (operation->type() == mesos::Offer::Operation::LAUNCH) {
-//                if (operation->launch().task_infos().size() > 0) {
-//                    LOG(INFO) << "WEIGUO get offer from scheduler";
-//                } else {
-//                    LOG(INFO) << "WEIGUO there is no task";
-//                }
-//            } else if (operation->type() == mesos::Offer::Operation::LAUNCH_GROUP) {
-//                const mesos::ExecutorInfo &executor = operation->launch_group().executor();
-//                mesos::TaskGroupInfo *taskGroup = operation->mutable_launch_group()->mutable_task_group();
-//                for (int j = 0; j < taskGroup->tasks().size(); ++j) {
-//                    TaskInfo *task = taskGroup->mutable_tasks(j);
-//                    if (!task->has_executor()) {
-//                        task->mutable_executor()->CopyFrom(executor);
-//                    }
-//                }
-//            }
-//        }
-//
-//        mesos::Resources offeredResources;
-//        mesos::SlaveID slaveID;
-//
-//        //for a single slave
+    void chameleon::Master::accept(const UPID &from, mesos::scheduler::Call::Accept accept) {
+
+        //judge the operation type
+        for (int i = 0; i < accept.operations_size(); ++i) {
+            mesos::Offer::Operation *operation = accept.mutable_operations(i);
+            if (operation->type() == mesos::Offer::Operation::LAUNCH) {
+                if (operation->launch().task_infos().size() > 0) {
+                    LOG(INFO) << "WEIGUO GET OFFER FROM SCHEDULER";
+                } else {
+                    LOG(INFO) << "WEIGUO THERE IS NO TASK";
+                }
+            } else if (operation->type() == mesos::Offer::Operation::LAUNCH_GROUP) {
+                const mesos::ExecutorInfo &executor = operation->launch_group().executor();
+                mesos::TaskGroupInfo *taskGroup = operation->mutable_launch_group()->mutable_task_group();
+                for (int j = 0; j < taskGroup->tasks().size(); ++j) {
+                    mesos::TaskInfo *task = taskGroup->mutable_tasks(j);
+                    if (!task->has_executor()) {
+                        task->mutable_executor()->CopyFrom(executor);
+                    }
+                }
+            }
+        }
+
+        mesos::Resources offeredResources;
+        mesos::SlaveID slaveID;
+
+        //for a single slave
 //        if (accept.offer_ids().size() == 0) {
 //            LOG(INFO) << "No offers specified";
 //        } else {
-//            foreach (const OfferID &offerId, accept.offer_ids()) {
+//            foreach (const mesos::OfferID &offerId, accept.offer_ids()) {
 //                //get offer resource
-//                Offer *offer = getOffer(offerId);
+//                mesos::Offer *offer = getOffer(offerId);
 //                if (offer != nullptr) {
 //                    {
 //                        /*
@@ -336,54 +367,54 @@ namespace chameleon {
 //                LOG(WARNING) << "WEIGUO there is no resource in offer";
 //            }
 //        }
-//
-//        mesos::Resources _offeredResources = offeredResources;
-//        Resources offeredSharedResources = offeredResources.shared();
-//        vector<mesos::Offer::Operation> operations;
-//
-//        foreach (const mesos::Offer::Operation &operation, accept.operations()) {
-//            switch (operation.type()) {
-//                case mesos::Offer::Operation::LAUNCH: {
-//
-//                    mesos::Offer::Operation _operation;
-//
-//                    _operation.set_type(mesos::Offer::Operation::LAUNCH);
-//
-//                    foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
-//                        mesos::TaskInfo task_(task);
-//                        mesos::Resources available = _offeredResources.nonShared() + offeredSharedResources;
-//
-//                        //send message to slave  consumed:消耗
-//                        const Resources consumed = addTask(task_, framework, slave);
-//
-//                        CHECK(available.contains(consumed))
-//                        << available << " does not contain " << consumed;
-//
-//                        _offeredResources -= consumed;
-//
-//                        LOG(INFO) << "WEIGUO send task to slave";
-//
-//                        mesos::internal::RunTaskMessage message;
-//                        message.mutable_framework()->MergeFrom(framework->info);
-//
-//                        message.set_pid(framework->pid.getOrElse(UPID()));
-//                        message.mutable_task()->MergeFrom(task_);
-//
-//
-//                        send(slave->pid, message);
-//
-//                        _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
-//                        break;
-//                    }
-//                }
-//                case Offer::Operation::UNKNOWN: {
-//                    LOG(WARNING) << "Ignoring unknown offer operation";
-//                    break;
-//                }
-//
-//            }
-//        }
-//    }
+
+        vector<mesos::Offer::Operation> operations;
+
+        foreach (const mesos::Offer::Operation &operation, accept.operations()) {
+            switch (operation.type()) {
+                case mesos::Offer::Operation::LAUNCH: {
+                    mesos::Offer::Operation _operation;
+
+                    _operation.set_type(mesos::Offer::Operation::LAUNCH);
+
+                    foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
+
+                        mesos::TaskInfo task_(task);
+                        LOG(INFO) << "WEIGUO SEND TASK TO SLAVE";
+
+                        mesos::internal::RunTaskMessage message;
+
+
+                        //FrameworkInfo
+                        message.mutable_framework()->MergeFrom(this->frameworkInfo);
+
+                        //FrameworkPid scheduler-6db9a175-a12d-4c96-85a1-2afd9561f0e2@172.20.110.152:37983
+                        LOG(INFO) << "WEIGUO SEND TO SLAVE FROM" << from;
+                        message.set_pid(from);
+
+                        //TaskInfo
+                        LOG(INFO) << "WEIGUO SEND TO SLAVE TASK" << task_.data();
+
+                        message.mutable_task()->MergeFrom(task_);
+
+                        message.set_allocated_framework_id(this->frameworkID);
+
+                        //SlavePID : slave(1)@172.20.110.152:5051
+                        string slavePID = "slave@172.20.110.114:6061";
+                        send(slavePID, message);
+
+                        _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
+                        break;
+                    }
+                }
+                case mesos::Offer::Operation::UNKNOWN: {
+                    LOG(WARNING) << "Ignoring unknown offer operation";
+                    break;
+                }
+
+            }
+        }
+    }
 
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;
