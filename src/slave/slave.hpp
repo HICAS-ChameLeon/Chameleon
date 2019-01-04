@@ -143,6 +143,9 @@ namespace chameleon {
         string m_uuid;
         string m_master;
 
+        mesos::FrameworkInfo m_frameworkInfo;
+        mesos::SlaveInfo m_slaveInfo;
+        mesos::FrameworkID  m_frameworkID;
 
         void heartbeat();
 

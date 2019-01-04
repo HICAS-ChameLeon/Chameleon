@@ -132,11 +132,11 @@ namespace chameleon {
                    << "' of framework " << frameworkId.value() << " from "
                    << stringify(from);
          mesos::internal::ExecutorRegisteredMessage message;
-//         message.mutable_executor_info()->MergeFrom(executor->info);
-//         message.mutable_framework_id()->MergeFrom(framework->id());
-//         message.mutable_framework_info()->MergeFrom(framework->info);
-//         message.mutable_slave_id()->MergeFrom(info.id());
-//         message.mutable_slave_info()->MergeFrom(info);
+         message.mutable_executor_info()->MergeFrom(executor->info);
+         message.mutable_framework_id()->MergeFrom(frameworkId);
+         message.mutable_framework_info()->MergeFrom(m_frameworkInfo);
+         message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
+         message.mutable_slave_info()->MergeFrom(m_slaveInfo);
      }
 
     void Slave::register_feedback(const string &hostname) {
