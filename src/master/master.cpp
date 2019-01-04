@@ -400,7 +400,7 @@ namespace chameleon {
                         message.set_allocated_framework_id(this->frameworkID);
 
                         //SlavePID : slave(1)@172.20.110.152:5051
-                        string slavePID = "slave@172.20.110.114:6061";
+                        string slavePID = "slave@172.20.110.228:6061";
                         send(slavePID, message);
 
                         _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
