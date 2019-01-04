@@ -131,6 +131,14 @@ namespace chameleon {
                 const mesos::FrameworkID& frameworkId,
                 const process::UPID& pid,
                 const mesos::TaskInfo& task);
+        /**
+         * Function  : getExecutorInfo
+         * Author    : weiguow
+         * Date      : 2019-1-4
+         * Description  : getExecutorInfo from FrameworkInfo & TaskInfo*/
+        mesos::ExecutorInfo getExecutorInfo(
+                const mesos::FrameworkInfo &frameworkInfo,
+                const mesos::TaskInfo &task) const;
 
 
     private:
@@ -143,6 +151,10 @@ namespace chameleon {
         string m_uuid;
         string m_master;
 
+        mesos::FrameworkInfo m_frameworkInfo;
+        mesos::SlaveInfo m_slaveInfo;
+        mesos::FrameworkID  m_frameworkID;
+        mesos::ExecutorInfo m_executorInfo;
 
         void heartbeat();
 
