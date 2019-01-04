@@ -65,6 +65,11 @@ namespace chameleon {
                 &mesos::internal::RunTaskMessage::pid,
                 &mesos::internal::RunTaskMessage::task);
 
+        install<mesos::internal::RegisterExecutorMessage>(
+                &Slave::registerExecutor,
+                &mesos::internal::RegisterExecutorMessage::framework_id,
+                &mesos::internal::RegisterExecutorMessage::executor_id);
+
 
         HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
         DLOG(INFO) << *msp_masterUPID;
@@ -93,7 +98,37 @@ namespace chameleon {
              const mesos::FrameworkID& frameworkId,
              const process::UPID& pid,
              const mesos::TaskInfo& task) {
-         LOG(INFO) << "WEIGUO GET TASK FROM MASTER";
+         LOG(INFO) << "WEIGUO GET TASK FROM MASTER, start the mesos executor first";
+            start_mesos_executor();
+     }
+
+     void Slave::start_mesos_executor(){
+         const std::map<string,string> environment =
+                 {
+                         {"MESOS_FRAMEWORK_ID", "1" },
+                         {"MESOS_EXECUTOR_ID","1"},
+                         {"MESOS_SLAVE_PID","slave@172.20.110.228:6061"},
+                         {"MESOS_SLAVE_ID","1"},
+                         {"MESOS_DIRECTORY","/home/lemaker/open-source/Chameleon/src/slave/mesos_executor/mesos_directory"},
+                         {"MESOS_CHECKPOINT","0"}
+         };
+         const string mesos_executor_path = "/home/lemaker/open-source/Chameleon/src/slave/mesos_executor/mesos-executor";
+         Try<Subprocess> child = subprocess(
+                 mesos_executor_path,
+                 Subprocess::FD(STDIN_FILENO),
+                 Subprocess::FD(STDOUT_FILENO),
+                 Subprocess::FD(STDERR_FILENO),
+                 environment
+                 );
+         if(child.isError()){
+             LOG(INFO)<<child.error();
+         }
+     }
+
+     void Slave::registerExecutor(const UPID& from,
+                                const mesos::FrameworkID& frameworkId,
+                                const mesos::ExecutorID& executorId){
+        LOG(INFO)<<"lele got a Regitstering message from executor ";
      }
 
     void Slave::register_feedback(const string &hostname) {

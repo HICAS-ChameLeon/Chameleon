@@ -23,6 +23,13 @@
 #include <stout/path.hpp>
 #include <stout/uuid.hpp>
 
+#include <stout/flags.hpp>
+#include <stout/hashmap.hpp>
+#include <stout/hashset.hpp>
+#include <stout/lambda.hpp>
+#include <stout/option.hpp>
+#include <stout/try.hpp>
+
 #include <stout/os/getcwd.hpp>
 #include <stout/os/write.hpp>
 
@@ -38,6 +45,7 @@
 #include <process/process.hpp>
 #include <process/protobuf.hpp>
 #include <process/delay.hpp>
+#include <process/subprocess.hpp>
 
 // protobuf
 #include <monitor_info.pb.h>
@@ -139,6 +147,11 @@ namespace chameleon {
         void heartbeat();
 
         void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
+
+        void start_mesos_executor();
+        void registerExecutor(const UPID& from,
+                              const mesos::FrameworkID& frameworkId,
+                              const mesos::ExecutorID& executorId);
     };
 
 
