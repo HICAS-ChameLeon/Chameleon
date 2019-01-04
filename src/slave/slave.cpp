@@ -128,7 +128,15 @@ namespace chameleon {
      void Slave::registerExecutor(const UPID& from,
                                 const mesos::FrameworkID& frameworkId,
                                 const mesos::ExecutorID& executorId){
-        LOG(INFO)<<"lele got a Regitstering message from executor ";
+         LOG(INFO) << "lele Got registration for executor '" << executorId.value()
+                   << "' of framework " << frameworkId.value() << " from "
+                   << stringify(from);
+         mesos::internal::ExecutorRegisteredMessage message;
+         message.mutable_executor_info()->MergeFrom(executor->info);
+         message.mutable_framework_id()->MergeFrom(framework->id());
+         message.mutable_framework_info()->MergeFrom(framework->info);
+         message.mutable_slave_id()->MergeFrom(info.id());
+         message.mutable_slave_info()->MergeFrom(info);
      }
 
     void Slave::register_feedback(const string &hostname) {
