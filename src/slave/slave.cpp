@@ -10,7 +10,7 @@
 
 DEFINE_string(minfo, "127.0.0.1:8080", "ip and port info");
 DEFINE_int32(port, 0, "port");
-DEFINE_uint32(ht,6,"Heartbeat interval");
+DEFINE_uint32(ht, 6, "Heartbeat interval");
 
 /*
  * Function name  : ValidateStr
@@ -33,8 +33,9 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
     printf("Invalid value for --%s: %d\n", flagname, (int) value);
     return false;
 }
+
 static bool ValidateUint(const char *flagname, gflags::uint32 value) {
-    if (value >= 2 ) {
+    if (value >= 2) {
         return true;
     }
     printf("Invalid value for --%s: %d\n", flagname, (int) value);
@@ -45,6 +46,8 @@ static const bool port_dummyUint = gflags::RegisterFlagValidator(&FLAGS_ht, &Val
 static const bool port_dummyInt = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 static const bool minfo_dummyStr = gflags::RegisterFlagValidator(&FLAGS_minfo, &ValidateStr);
 
+constexpr char MESOS_EXECUTOR[] = "mesos-executor";
+
 namespace chameleon {
 
     void Slave::initialize() {
@@ -53,17 +56,29 @@ namespace chameleon {
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
         msp_masterUPID = make_shared<UPID>(UPID(m_master));
+
+        m_slaveInfo.set_hostname(self().address.hostname().get());
+        m_slaveInfo.mutable_id()->set_value("44444444");
+        m_slaveInfo.set_port(self().address.port);
+
+//        LOG(INFO) << "WEIGUOW TEST INFO ID: " << m_slaveInfo.id().value();
+//        LOG(INFO) << "WEIGUOW TEST INFO HOSTNAME: " << m_slaveInfo.hostname();
+//        LOG(INFO) << "WEIGUOW TEST INFO RESOURCE: " << m_slaveInfo.resources().size();
+//        LOG(INFO) << "WEIGUOW TEST INFO ATTRIBUTES: " << m_slaveInfo.attributes().size();
+//        LOG(INFO) << "WEIGUOW TEST INFO CHECKPOINT: " << m_slaveInfo.checkpoint();
+
+
         install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
         install<JobMessage>(&Slave::get_a_job);
         install<ShutdownMessage>(&Slave::shutdown);
 
         install<mesos::internal::RunTaskMessage>(&Slave::runTaskTest,
                 //frameworkinfo
-                &mesos::internal::RunTaskMessage::framework,
+                                                 &mesos::internal::RunTaskMessage::framework,
                 //frameworkid
-                &mesos::internal::RunTaskMessage::framework_id,
-                &mesos::internal::RunTaskMessage::pid,
-                &mesos::internal::RunTaskMessage::task);
+                                                 &mesos::internal::RunTaskMessage::framework_id,
+                                                 &mesos::internal::RunTaskMessage::pid,
+                                                 &mesos::internal::RunTaskMessage::task);
 
         install<mesos::internal::RegisterExecutorMessage>(
                 &Slave::registerExecutor,
@@ -93,51 +108,154 @@ namespace chameleon {
      * Author   : weiguow
      * Date     : 2019-1-2
      * */
-     void Slave::runTaskTest(const process::UPID& from,
-             const mesos::FrameworkInfo& frameworkInfo,
-             const mesos::FrameworkID& frameworkId,
-             const process::UPID& pid,
-             const mesos::TaskInfo& task) {
-         LOG(INFO) << "WEIGUO GET TASK FROM MASTER, start the mesos executor first";
-            start_mesos_executor();
-     }
+    void Slave::runTaskTest(const process::UPID &from,
+                            const mesos::FrameworkInfo &frameworkInfo,
+                            const mesos::FrameworkID &frameworkId,
+                            const process::UPID &pid,
+                            const mesos::TaskInfo &task) {
+        LOG(INFO) << "WEIGUO GET TASK FROM MASTER, start the mesos executor first";
+        const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, task);
+        m_frameworkInfo = frameworkInfo;
+        m_frameworkID = frameworkId;
+        m_executorInfo = executorInfo;
+        start_mesos_executor();
+    }
 
-     void Slave::start_mesos_executor(){
-         const std::map<string,string> environment =
-                 {
-                         {"MESOS_FRAMEWORK_ID", "1" },
-                         {"MESOS_EXECUTOR_ID","1"},
-                         {"MESOS_SLAVE_PID","slave@172.20.110.228:6061"},
-                         {"MESOS_SLAVE_ID","1"},
-                         {"MESOS_DIRECTORY","/home/lemaker/open-source/Chameleon/src/slave/mesos_executor/mesos_directory"},
-                         {"MESOS_CHECKPOINT","0"}
-         };
-         const string mesos_executor_path = "/home/lemaker/open-source/Chameleon/src/slave/mesos_executor/mesos-executor";
-         Try<Subprocess> child = subprocess(
-                 mesos_executor_path,
-                 Subprocess::FD(STDIN_FILENO),
-                 Subprocess::FD(STDOUT_FILENO),
-                 Subprocess::FD(STDERR_FILENO),
-                 environment
-                 );
-         if(child.isError()){
-             LOG(INFO)<<child.error();
-         }
-     }
+    void Slave::start_mesos_executor() {
+        const std::map<string, string> environment =
+                {
+                        {"MESOS_FRAMEWORK_ID", "1"},
+                        {"MESOS_EXECUTOR_ID",  "1"},
+                        {"MESOS_SLAVE_PID",    "slave@172.20.110.113:6061"},
+                        {"MESOS_SLAVE_ID",     "1"},
+                        {"MESOS_DIRECTORY",    "/home/weiguow/project/chameleon/src/slave/mesos_executor/mesos_directory"},
+                        {"MESOS_CHECKPOINT",   "0"}
+                };
+        const string mesos_executor_path = "/home/weiguow/project/chameleon/src/slave/mesos_executor/mesos-executor";
+        Try<Subprocess> child = subprocess(
+                mesos_executor_path,
+                Subprocess::FD(STDIN_FILENO),
+                Subprocess::FD(STDOUT_FILENO),
+                Subprocess::FD(STDERR_FILENO),
+                environment
+        );
+        if (child.isError()) {
+            LOG(INFO) << child.error();
+        }
+    }
 
-     void Slave::registerExecutor(const UPID& from,
-                                const mesos::FrameworkID& frameworkId,
-                                const mesos::ExecutorID& executorId){
-         LOG(INFO) << "lele Got registration for executor '" << executorId.value()
-                   << "' of framework " << frameworkId.value() << " from "
-                   << stringify(from);
-         mesos::internal::ExecutorRegisteredMessage message;
-         message.mutable_executor_info()->MergeFrom(executor->info);
-         message.mutable_framework_id()->MergeFrom(frameworkId);
-         message.mutable_framework_info()->MergeFrom(m_frameworkInfo);
-         message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
-         message.mutable_slave_info()->MergeFrom(m_slaveInfo);
-     }
+    void Slave::registerExecutor(const UPID &from,
+                                 const mesos::FrameworkID &frameworkId,
+                                 const mesos::ExecutorID &executorId) {
+        LOG(INFO) << "lele Got registration for executor '" << executorId.value()
+                  << "' of framework " << frameworkId.value() << " from "
+                  << stringify(from);
+        mesos::internal::ExecutorRegisteredMessage message;
+        message.mutable_executor_info()->MergeFrom(m_executorInfo);
+        message.mutable_framework_id()->MergeFrom(m_frameworkID);
+        message.mutable_framework_info()->MergeFrom(m_frameworkInfo);
+        message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
+        message.mutable_slave_info()->MergeFrom(m_slaveInfo);
+    }
+
+
+    /**
+     * Function  : getExecutorInfo
+     * Author    : weiguow
+     * Date      : 2019-1-4
+     * Description  : getExecutorInfo from FrameworkInfo & TaskInfo*/
+     const string flags_laucher_dir = "/home/weiguow/project/mesos/mesos-1.3.2/build/src";
+    mesos::ExecutorInfo Slave::getExecutorInfo(
+            const mesos::FrameworkInfo &frameworkInfo,
+            const mesos::TaskInfo &task) const {
+
+        if (task.has_executor()) {
+            return task.executor();
+        }
+
+        mesos::ExecutorInfo executorInfo;
+
+        // Command executors share the same id as the task.
+        executorInfo.mutable_executor_id()->set_value(task.task_id().value());
+        executorInfo.mutable_framework_id()->CopyFrom(frameworkInfo.id());
+
+        if (task.has_container()) {
+            executorInfo.mutable_container()->CopyFrom(task.container());
+        }
+
+        string name = "(Task: " + task.task_id().value() + ") ";
+
+        if (task.command().shell()) {
+            if (!task.command().has_value()) {
+                name += "(Command: NO COMMAND)";
+            } else {
+                name += "(Command: sh -c '";
+                if (task.command().value().length() > 15) {
+                    name += task.command().value().substr(0, 12) + "...')";
+                } else {
+                    name += task.command().value() + "')";
+                }
+            }
+        } else {
+            if (!task.command().has_value()) {
+                name += "(Command: NO EXECUTABLE)";
+            } else {
+                string args =
+                        task.command().value() + ", " +
+                        strings::join(", ", task.command().arguments());
+
+                if (args.length() > 15) {
+                    name += "(Command: [" + args.substr(0, 12) + "...])";
+                } else {
+                    name += "(Command: [" + args + "])";
+                }
+            }
+        }
+
+        executorInfo.set_name("Command Executor " + name);
+        executorInfo.set_source(task.task_id().value());
+
+        executorInfo.mutable_command()->mutable_uris()->MergeFrom(
+                task.command().uris());
+
+        if (task.command().has_environment()) {
+            executorInfo.mutable_command()->mutable_environment()->MergeFrom(
+                    task.command().environment());
+        }
+
+        // Add fields which can be relevant (depending on Authorizer) for
+        // authorization.
+
+        if (task.has_labels()) {
+            executorInfo.mutable_labels()->MergeFrom(task.labels());
+        }
+
+        if (task.has_discovery()) {
+            executorInfo.mutable_discovery()->MergeFrom(task.discovery());
+        }
+
+        if (task.command().has_user()) {
+            executorInfo.mutable_command()->set_user(task.command().user());
+        }
+
+        Result<string> path = os::realpath(
+                path::join(flags_laucher_dir, MESOS_EXECUTOR));
+
+        if (path.isSome()) {
+            executorInfo.mutable_command()->set_shell(false);
+            executorInfo.mutable_command()->set_value(path.get());
+            executorInfo.mutable_command()->add_arguments(MESOS_EXECUTOR);
+            executorInfo.mutable_command()->add_arguments(
+                    "--launcher_dir=" + flags_laucher_dir);
+        } else {
+            executorInfo.mutable_command()->set_shell(true);
+            executorInfo.mutable_command()->set_value(
+                    "echo '" +
+                    (path.isError() ? path.error() : "No such file or directory") +
+                    "'; exit 1");
+        }
+        return executorInfo;
+    }
 
     void Slave::register_feedback(const string &hostname) {
         cout << " receive register feedback from master" << hostname << endl;
@@ -200,7 +318,7 @@ namespace chameleon {
 
     void Slave::finalize() {
         ProcessBase::finalize();
-        LOG(INFO) << self() <<" finalize()";
+        LOG(INFO) << self() << " finalize()";
     }
 
     void Slave::heartbeat() {
@@ -209,12 +327,12 @@ namespace chameleon {
 
     }
 
-    void Slave::shutdown(const UPID &master, const ShutdownMessage &shutdown_message){
+    void Slave::shutdown(const UPID &master, const ShutdownMessage &shutdown_message) {
         ReplyShutdownMessage reply_message;
         reply_message.set_master_ip(shutdown_message.master_ip());
         reply_message.set_slave_ip(shutdown_message.slave_ip());
         reply_message.set_is_shutdown(true);
-        send(master,reply_message);
+        send(master, reply_message);
         terminate(self());
     }
 
@@ -288,7 +406,7 @@ int main(int argc, char *argv[]) {
             GetCommandLineFlagInfo("minfo", &info) && !info.is_default) {
 
             os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
-            os::setenv("FLAGS_ht",stringify(FLAGS_ht));
+            os::setenv("FLAGS_ht", stringify(FLAGS_ht));
 
             process::initialize("slave");
 
