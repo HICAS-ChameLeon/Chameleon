@@ -408,8 +408,9 @@ namespace chameleon {
 //                        send(slavePID, message);
 
                         _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
-                        break;
+
                     }
+                    break;
                 }
                 case mesos::Offer::Operation::UNKNOWN: {
                     LOG(WARNING) << "Ignoring unknown offer operation";

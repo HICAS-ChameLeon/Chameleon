@@ -151,11 +151,14 @@ namespace chameleon {
                   << "' of framework " << frameworkId.value() << " from "
                   << stringify(from);
         mesos::internal::ExecutorRegisteredMessage message;
+        message.mutable_executor_info()->mutable_framework_id()->MergeFrom(m_frameworkID);
         message.mutable_executor_info()->MergeFrom(m_executorInfo);
         message.mutable_framework_id()->MergeFrom(m_frameworkID);
         message.mutable_framework_info()->MergeFrom(m_frameworkInfo);
         message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
         message.mutable_slave_info()->MergeFrom(m_slaveInfo);
+
+        send(from, message);
     }
 
 
