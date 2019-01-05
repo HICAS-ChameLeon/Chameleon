@@ -132,12 +132,12 @@ namespace chameleon {
                 {
                         {"MESOS_FRAMEWORK_ID", "1"},
                         {"MESOS_EXECUTOR_ID",  "1"},
-                        {"MESOS_SLAVE_PID",    "slave@172.20.110.228:6061"},
+                        {"MESOS_SLAVE_PID",    "slave@172.20.110.113:6061"},
                         {"MESOS_SLAVE_ID",     "1"},
-                        {"MESOS_DIRECTORY",    "/home/lemaker/open-source/Chameleon/src/slave/mesos_executor/mesos_directory"},
+                        {"MESOS_DIRECTORY",    "/home/weiguow/project/mesos/mesos-1.3.2/build/src/mesos_executor/mesos_directory"},
                         {"MESOS_CHECKPOINT",   "0"}
                 };
-        const string mesos_executor_path = "/home/lemaker/open-source/Chameleon/src/slave/mesos_executor/mesos-executor";
+        const string mesos_executor_path = "/home/weiguow/project/mesos/mesos-1.3.2/build/src/mesos-executor";
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,
                 Subprocess::FD(STDIN_FILENO),
@@ -163,18 +163,8 @@ namespace chameleon {
         message.mutable_framework_info()->MergeFrom(m_frameworkInfo);
         message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
         message.mutable_slave_info()->MergeFrom(m_slaveInfo);
-<<<<<<< HEAD
 
-        send(from, message);
-=======
         send(from,message);
-
-        mesos::internal::RunTaskMessage run_task_message;
-        run_task_message.mutable_framework()->MergeFrom(m_frameworkInfo);
-        run_task_message.mutable_task()->MergeFrom(m_task);
-        run_task_message.set_pid(from);
-        send(from, run_task_message);
->>>>>>> 5c027a6a3deb5f006a9b18afd8fd0f07273c0300
     }
 
 

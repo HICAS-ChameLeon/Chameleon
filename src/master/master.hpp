@@ -217,8 +217,8 @@ namespace chameleon {
         void receive(const process::UPID &from,
                      const mesos::scheduler::Call &call);
 
-        mesos::FrameworkInfo frameworkInfo;
-        mesos::FrameworkID* frameworkID;
+        mesos::FrameworkInfo m_frameworkInfo;
+        mesos::FrameworkID* m_frameworkID;
 
 //        void Master::handle_accept_call(mesos::scheduler::Call::Accept accept);
 

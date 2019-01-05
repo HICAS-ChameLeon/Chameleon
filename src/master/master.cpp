@@ -209,7 +209,7 @@ namespace chameleon {
     void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
         mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
 
-        this->frameworkInfo = frameworkInfo;
+        m_frameworkInfo = frameworkInfo;
 
         /**
          * WEIGUO FRAMEWORK FROM: scheduler-22b6d4f4-7003-4956-95f9-eaf955c2ba55@172.20.110.114:44151
@@ -246,7 +246,7 @@ namespace chameleon {
         out << masterInfo.id() << "-" << std::setw(4)
             << std::setfill('0') << nextFrameworkId++;
         frameworkID->set_value(out.str());
-        this->frameworkID = frameworkID;
+        m_frameworkID = frameworkID;
 
         message.mutable_framework_id()->MergeFrom(*frameworkID);
         message.mutable_master_info()->MergeFrom(masterInfo);
@@ -291,7 +291,7 @@ namespace chameleon {
         offerId.set_value("33333333");
         offer->mutable_id()->CopyFrom(offerId);
 
-        offer->mutable_framework_id()->MergeFrom(*this->frameworkID);
+        offer->mutable_framework_id()->MergeFrom(*m_frameworkID);
 
         mesos::SlaveID *slaveID = new mesos::SlaveID();
         slaveID->set_value("44444444");
@@ -386,7 +386,7 @@ namespace chameleon {
 
 
                         //FrameworkInfo
-                        message.mutable_framework()->MergeFrom(this->frameworkInfo);
+                        message.mutable_framework()->MergeFrom(m_frameworkInfo);
 
                         //FrameworkPid scheduler-6db9a175-a12d-4c96-85a1-2afd9561f0e2@172.20.110.152:37983
                         LOG(INFO) << "WEIGUO SEND TO SLAVE FROM" << from;
@@ -397,7 +397,7 @@ namespace chameleon {
 
                         message.mutable_task()->MergeFrom(task_);
 
-                        message.set_allocated_framework_id(this->frameworkID);
+                        message.set_allocated_framework_id(m_frameworkID);
 
                         //SlavePID : slave(1)@172.20.110.152:5051
                         for(auto it=this->m_alive_slaves.begin();it!=this->m_alive_slaves.end();it++){
