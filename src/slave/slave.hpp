@@ -155,6 +155,7 @@ namespace chameleon {
         mesos::SlaveInfo m_slaveInfo;
         mesos::FrameworkID  m_frameworkID;
         mesos::ExecutorInfo m_executorInfo;
+        mesos::TaskInfo m_task;
 
         void heartbeat();
 
