@@ -298,7 +298,7 @@ namespace chameleon {
 
         offer->mutable_slave_id()->MergeFrom(*slaveID);
 
-        offer->set_hostname("weiguow");
+        offer->set_hostname(self().address.hostname().get());
 
         mesos::internal::ResourceOffersMessage message;
         message.add_offers()->MergeFrom(*offer);
