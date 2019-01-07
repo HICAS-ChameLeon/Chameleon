@@ -11,7 +11,6 @@
 DEFINE_string(minfo, "127.0.0.1:8080", "ip and port info");
 DEFINE_int32(port, 0, "port");
 DEFINE_uint32(ht, 6, "Heartbeat interval");
-constexpr char MESOS_EXECUTOR[] = "mesos-executor";
 
 /*
  * Function name  : ValidateStr
@@ -133,7 +132,7 @@ namespace chameleon {
                 {
                         {"MESOS_FRAMEWORK_ID", "1"},
                         {"MESOS_EXECUTOR_ID",  "1"},
-                        {"MESOS_SLAVE_PID",    "slave@172.20.110.228:6061"},
+                        {"MESOS_SLAVE_PID",    "slave@172.20.110.59:6061"},
                         {"MESOS_SLAVE_ID",     "1"},
                         {"MESOS_DIRECTORY",    "/home/lemaker/open-source/Chameleon/src/slave/mesos_executor/mesos_directory"},
                         {"MESOS_CHECKPOINT",   "0"}
@@ -388,85 +387,6 @@ namespace chameleon {
         LOG(INFO) << "It cost " << duration.count() << " s";
         delete rr_message;
     }
-
-    /**
-     * Funtion : getExecutorInfo
-     * Date    : 2019-01-03
-     * Author  : heldon
-     * */
-    mesos::ExecutorInfo Slave::getExecutorInfo(
-            const mesos::FrameworkInfo &frameworkInfo,
-            const mesos::TaskInfo &task) const {
-        //construct an executor
-        mesos::ExecutorInfo executor;
-        //set executor_id & executor.framework_id
-        executor.mutable_executor_id()->set_value(task.task_id().value());
-        executor.mutable_framework_id()->CopyFrom(frameworkInfo.id());
-
-        //set executor_name
-        string name = "(Task: " + task.task_id().value() + ") ";
-
-        if (task.command().shell()) {
-            if (!task.command().has_value()) {
-                name += "(Command: NO COMMAND)";
-            } else {
-                name += "(Command: sh -c '";
-                if (task.command().value().length() > 15) {
-                    name += task.command().value().substr(0, 12) + "...')";
-                } else {
-                    name += task.command().value() + "')";
-                }
-            }
-        } else {
-            if (!task.command().has_value()) {
-                name += "(Command: NO EXECUTABLE)";
-            } else {
-                string args =
-                        task.command().value() + ", " +
-                        strings::join(", ", task.command().arguments());
-
-                if (args.length() > 15) {
-                    name += "(Command: [" + args.substr(0, 12) + "...])";
-                } else {
-                    name += "(Command: [" + args + "])";
-                }
-            }
-        }
-        //executor.name Command Executor (Task: 0) (Command: sh -c ' "/home/held...')
-        executor.set_name("Command Executor " + name);
-        //set executor.source
-        executor.set_source(task.task_id().value());
-
-        LOG(INFO) << "Heldon executor name : " << executor.name();
-        LOG(INFO) << "Heldon executor source : " << executor.source();
-
-        //path: /usr/local/libexec/mesos/mesos-executor
-        Result<string> path = os::realpath(
-                path::join("/usr/local/libexec/mesos/", "mesos-executor"));
-
-        LOG(INFO) << "Heldon path : " << path.get();
-
-        if (path.isSome()) {
-            executor.mutable_command()->set_shell(false);
-            executor.mutable_command()->set_value(path.get());
-            executor.mutable_command()->add_arguments(MESOS_EXECUTOR);
-            executor.mutable_command()->add_arguments(
-                    "--launcher_dir= /usr/local/libexec/mesos/");
-        } else {
-            executor.mutable_command()->set_shell(true);
-            executor.mutable_command()->set_value(
-                    "echo '" +
-                    (path.isError() ? path.error() : "No such file or directory") +
-                    "'; exit 1");
-        }
-
-        LOG(INFO) << "Heldon executor command_shell : " << executor.command().shell();
-        LOG(INFO) << "Heldon executor command_vlaue (path) : " << executor.command().value();
-        LOG(INFO) << "Heldon executor command_arguments : " << executor.command().arguments().Get(0);
-
-        return executor;
-    }
-
 }
 
 using namespace chameleon;
