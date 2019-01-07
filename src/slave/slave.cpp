@@ -72,7 +72,7 @@ namespace chameleon {
         install<JobMessage>(&Slave::get_a_job);
         install<ShutdownMessage>(&Slave::shutdown);
 
-        install<mesos::internal::RunTaskMessage>(&Slave::runTask,
+        install<mesos::internal::RunTaskMessage>(&Slave::runTaskTest,
                 //frameworkinfo
                                                  &mesos::internal::RunTaskMessage::framework,
                 //frameworkid
@@ -128,16 +128,18 @@ namespace chameleon {
     }
 
     void Slave::start_mesos_executor() {
+        const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
+        const string mesos_directory = path::join(os::getcwd(), "/mesos_executor/mesos-directory");
         const std::map<string, string> environment =
                 {
                         {"MESOS_FRAMEWORK_ID", "1"},
                         {"MESOS_EXECUTOR_ID",  "1"},
-                        {"MESOS_SLAVE_PID",    "slave@172.20.110.59:6061"},
+                        {"MESOS_SLAVE_PID",    slave_upid},
                         {"MESOS_SLAVE_ID",     "1"},
-                        {"MESOS_DIRECTORY",    "/home/lemaker/open-source/Chameleon/src/slave/mesos_executor/mesos_directory"},
+                        {"MESOS_DIRECTORY",    mesos_directory},
                         {"MESOS_CHECKPOINT",   "0"}
                 };
-        const string mesos_executor_path = "/home/lemaker/open-source/Chameleon/src/slave/mesos_executor/mesos-executor";
+        const string mesos_executor_path = path::join(os::getcwd(), "/mesos_executor/mesos-executor");
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,
                 Subprocess::FD(STDIN_FILENO),
@@ -177,7 +179,7 @@ namespace chameleon {
      * Author    : weiguow
      * Date      : 2019-1-4
      * Description  : getExecutorInfo from FrameworkInfo & TaskInfo*/
-     const string flags_laucher_dir = "/home/lemaker/Lab/chameleon/mesos-1.3.2/build/src";
+    const string flags_laucher_dir = setting::FLAGS_LAUCHER_DIR;
     mesos::ExecutorInfo Slave::getExecutorInfo(
             const mesos::FrameworkInfo &frameworkInfo,
             const mesos::TaskInfo &task) const {

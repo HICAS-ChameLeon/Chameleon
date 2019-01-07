@@ -61,7 +61,8 @@
 #include <resource_collector.hpp>
 #include <configuration_glog.hpp>
 #include <runtime_resources_usage.hpp>
-
+#include <chameleon_os.hpp>
+#include <chameleon_string.hpp>
 
 using std::string;
 using std::unordered_map;
