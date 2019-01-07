@@ -126,7 +126,7 @@ namespace chameleon {
          * Date    : 2019-1-2
          * Author  : weiguow
          * */
-        void runTaskTest(const process::UPID& from,
+        void runTask(const process::UPID& from,
                 const mesos::FrameworkInfo& frameworkInfo,
                 const mesos::FrameworkID& frameworkId,
                 const process::UPID& pid,
@@ -140,7 +140,26 @@ namespace chameleon {
                 const mesos::FrameworkInfo &frameworkInfo,
                 const mesos::TaskInfo &task) const;
 
+        /**
+         * Funtion : run
+         * Date    : 2019-01-04
+         * Author  : heldon
+         * */
+        void run(
+                const mesos::FrameworkInfo& frameworkInfo,
+                mesos::ExecutorInfo executorInfo,
+                Option<mesos::TaskInfo> task,
+                Option<mesos::TaskGroupInfo> taskGroup,
+                const process::UPID& pid);
 
+        /**
+         * Funtion : getExecutorInfo
+         * Date    : 2019-01-03
+         * Author  : heldon
+         * */
+        mesos::ExecutorInfo getExecutorInfo(
+                const mesos::FrameworkInfo& frameworkInfo,
+                const mesos::TaskInfo& task) const;
     private:
         shared_ptr<ResourceCollector> msp_resource_collector;
         shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
