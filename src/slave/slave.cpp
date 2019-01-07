@@ -132,7 +132,7 @@ namespace chameleon {
                 {
                         {"MESOS_FRAMEWORK_ID", "1"},
                         {"MESOS_EXECUTOR_ID",  "1"},
-                        {"MESOS_SLAVE_PID",    "slave@172.20.110.113:6061"},
+                        {"MESOS_SLAVE_PID",    "slave@172.20.擦的110.99:6061"},
                         {"MESOS_SLAVE_ID",     "1"},
                         {"MESOS_DIRECTORY",    "/home/weiguow/project/mesos/mesos-1.3.2/build/src/mesos_executor/mesos_directory"},
                         {"MESOS_CHECKPOINT",   "0"}
