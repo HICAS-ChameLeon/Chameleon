@@ -12,7 +12,7 @@ DEFINE_string(minfo, "127.0.0.1:8080", "ip and port info");
 DEFINE_int32(port, 0, "port");
 DEFINE_uint32(ht, 6, "Heartbeat interval");
 
-/*
+/**
  * Function name  : ValidateStr
  * Author         : weiguow
  * Date           : 2018-12-13
@@ -59,26 +59,33 @@ namespace chameleon {
 
         m_slaveInfo.set_hostname(self().address.hostname().get());
         m_slaveInfo.mutable_id()->set_value("44444444");
+        m_slaveID.set_value("44444444");
         m_slaveInfo.set_port(self().address.port);
-
-//        LOG(INFO) << "WEIGUOW TEST INFO ID: " << m_slaveInfo.id().value();
-//        LOG(INFO) << "WEIGUOW TEST INFO HOSTNAME: " << m_slaveInfo.hostname();
-//        LOG(INFO) << "WEIGUOW TEST INFO RESOURCE: " << m_slaveInfo.resources().size();
-//        LOG(INFO) << "WEIGUOW TEST INFO ATTRIBUTES: " << m_slaveInfo.attributes().size();
-//        LOG(INFO) << "WEIGUOW TEST INFO CHECKPOINT: " << m_slaveInfo.checkpoint();
-
 
         install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
         install<JobMessage>(&Slave::get_a_job);
         install<ShutdownMessage>(&Slave::shutdown);
 
-        install<mesos::internal::RunTaskMessage>(&Slave::runTaskTest,
-                //frameworkinfo
-                                                 &mesos::internal::RunTaskMessage::framework,
-                //frameworkid
-                                                 &mesos::internal::RunTaskMessage::framework_id,
-                                                 &mesos::internal::RunTaskMessage::pid,
-                                                 &mesos::internal::RunTaskMessage::task);
+        //get from executor
+        install<mesos::internal::StatusUpdateMessage>(
+                &Slave::statusUpdate,
+                &mesos::internal::StatusUpdateMessage::update,
+                &mesos::internal::StatusUpdateMessage::pid);
+
+        install<mesos::internal::StatusUpdateAcknowledgementMessage>(
+                &Slave::statusUpdateAcknowledgement,
+                &mesos::internal::StatusUpdateAcknowledgementMessage::slave_id,
+                &mesos::internal::StatusUpdateAcknowledgementMessage::framework_id,
+                &mesos::internal::StatusUpdateAcknowledgementMessage::task_id,
+                &mesos::internal::StatusUpdateAcknowledgementMessage::uuid);
+
+
+        install<mesos::internal::RunTaskMessage>(
+                &Slave::runTask,
+                &mesos::internal::RunTaskMessage::framework,
+                &mesos::internal::RunTaskMessage::framework_id,
+                &mesos::internal::RunTaskMessage::pid,
+                &mesos::internal::RunTaskMessage::task);
 
         install<mesos::internal::RegisterExecutorMessage>(
                 &Slave::registerExecutor,
@@ -102,42 +109,42 @@ namespace chameleon {
         heartbeat();
     }
 
-
     /**
      * Funtion  : runTask
      * Author   : weiguow
      * Date     : 2019-1-2
      * */
-    void Slave::runTaskTest(const process::UPID &from,
-                            const mesos::FrameworkInfo &frameworkInfo,
-                            const mesos::FrameworkID &frameworkId,
-                            const process::UPID &pid,
-                            const mesos::TaskInfo &task) {
+    void Slave::runTask(
+            const process::UPID &from,
+            const mesos::FrameworkInfo &frameworkInfo,
+            const mesos::FrameworkID &frameworkId,
+            const process::UPID &pid,
+            const mesos::TaskInfo &task) {
         LOG(INFO) << "WEIGUO GET TASK FROM MASTER, start the mesos executor first";
         const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, task);
-        m_frameworkInfo = frameworkInfo;
+
+        m_frameworkInfo = frameworkInfo;  //missing framework.user framework.name
         m_task = task;
         m_frameworkID = frameworkId;
         m_executorInfo = executorInfo;
         m_executorInfo.mutable_framework_id()->CopyFrom(frameworkId);
-        LOG(INFO)<<"lele executorInfo.framework_id(): "<<executorInfo.framework_id().value();
 
         start_mesos_executor();
-
-
     }
 
     void Slave::start_mesos_executor() {
         const std::map<string, string> environment =
                 {
-                        {"MESOS_FRAMEWORK_ID", "1"},
+                        {"MESOS_FRAMEWORK_ID", m_frameworkID.value()},
                         {"MESOS_EXECUTOR_ID",  "1"},
-                        {"MESOS_SLAVE_PID",    "slave@172.20.擦的110.99:6061"},
-                        {"MESOS_SLAVE_ID",     "1"},
-                        {"MESOS_DIRECTORY",    "/home/weiguow/project/mesos/mesos-1.3.2/build/src/mesos_executor/mesos_directory"},
+                        {"MESOS_SLAVE_PID",    "slave@172.20.110.168:6061"},
+                        {"MESOS_SLAVE_ID",     m_slaveInfo.id().value()},
+                        {"MESOS_DIRECTORY",    "/home/weiguow/project/chameleon/src/slave/mesos_executor"},
                         {"MESOS_CHECKPOINT",   "0"}
                 };
-        const string mesos_executor_path = "/home/weiguow/project/mesos/mesos-1.3.2/build/src/mesos-executor";
+
+        //e.a: the mesos-executor exists in the chameleon
+        const string mesos_executor_path = "/home/weiguow/project/chameleon/src/slave/mesos_executor/mesos-executor";
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,
                 Subprocess::FD(STDIN_FILENO),
@@ -153,9 +160,10 @@ namespace chameleon {
     void Slave::registerExecutor(const UPID &from,
                                  const mesos::FrameworkID &frameworkId,
                                  const mesos::ExecutorID &executorId) {
-        LOG(INFO) << "lele Got registration for executor '" << executorId.value()
+        LOG(INFO) << "got registration for executor '" << executorId.value()
                   << "' of framework " << frameworkId.value() << " from "
                   << stringify(from);
+
         mesos::internal::ExecutorRegisteredMessage message;
         message.mutable_executor_info()->mutable_framework_id()->MergeFrom(m_frameworkID);
         message.mutable_executor_info()->MergeFrom(m_executorInfo);
@@ -163,8 +171,14 @@ namespace chameleon {
         message.mutable_framework_info()->MergeFrom(m_frameworkInfo);
         message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
         message.mutable_slave_info()->MergeFrom(m_slaveInfo);
+        send(from, message);
 
-        send(from,message);
+        mesos::internal::RunTaskMessage run_task_message;
+        run_task_message.mutable_framework()->MergeFrom(m_frameworkInfo);
+        run_task_message.mutable_task()->MergeFrom(m_task);
+        run_task_message.set_pid(from);
+
+        send(from, run_task_message);
     }
 
 
@@ -172,8 +186,10 @@ namespace chameleon {
      * Function  : getExecutorInfo
      * Author    : weiguow
      * Date      : 2019-1-4
-     * Description  : getExecutorInfo from FrameworkInfo & TaskInfo*/
-     const string flags_laucher_dir = "/home/lemaker/Lab/chameleon/mesos-1.3.2/build/src";
+     * Description  : getExecutorInfo from FrameworkInfo & TaskInfo
+     * */
+    const string flags_laucher_dir = "/home/weiguow/project/chameleon/src/slave/mesos_executor";
+
     mesos::ExecutorInfo Slave::getExecutorInfo(
             const mesos::FrameworkInfo &frameworkInfo,
             const mesos::TaskInfo &task) const {
@@ -265,6 +281,101 @@ namespace chameleon {
         }
         return executorInfo;
     }
+
+    /**
+     * Function    : statusUpdate
+     * Author      : weiguow
+     * Date        : 2019-1-8
+     * Description : Encapsulates the statusUpdate message and uses dispatch call _statusUpdate
+     * @param      : update & pid
+     * */
+    void Slave::statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
+
+        LOG(INFO) << "Handling status update " << update.status().state() << "(UUID: "
+                  << update.status().uuid() << ")"
+                  << " for task 0 of framework " << update.framework_id().value();
+
+        update.mutable_status()->set_uuid(update.uuid());
+        update.mutable_status()->set_source(
+                pid == UPID() ? mesos::TaskStatus::SOURCE_SLAVE : mesos::TaskStatus::SOURCE_EXECUTOR);
+        update.mutable_status()->mutable_executor_id()->CopyFrom(update.executor_id());
+
+        LOG(INFO) << "Received status update " << update.status().state() << "(UUID: " << update.mutable_uuid() << ")"
+                  << " for task 0 of framework " << update.framework_id().value();
+
+//        process::dispatch(self(), &Slave::_statusUpdate, update, pid);
+        process::dispatch(self(), &Slave::forward, update);
+    }
+
+    /**
+     * Functio     : _statusUpdate
+     * Author      : weiguow
+     * Date        : 2019-1-8
+     * Description : this function is invoked by the updateStatus and
+     *               encapsulation StatusUpdateAcknowledgementMessage message
+     * @param      : update & pid
+     * */
+    void Slave::_statusUpdate(
+            const mesos::internal::StatusUpdate &update,
+            const Option<UPID> &pid) {
+
+        mesos::internal::StatusUpdateAcknowledgementMessage message;
+        message.mutable_framework_id()->MergeFrom(update.framework_id());
+        message.mutable_slave_id()->MergeFrom(update.slave_id());
+        message.mutable_task_id()->MergeFrom(update.status().task_id());
+        message.set_uuid(update.uuid());
+
+        if (pid.isSome()) {
+            LOG(INFO) << "Sending acknowledgement for status update " << update.status().state() << "(UUID: "
+                      << update.uuid() << ")"
+                      << " for task 0 of framework " << update.framework_id().value()
+                      << " to " << pid.get();
+            send(pid.get(), message);
+        } else {
+            LOG(INFO) << "Ignoring update status ";
+        }
+    }
+
+    void Slave::forward(mesos::internal::StatusUpdate update) {
+
+        if (update.status().state() != RUNNING) {
+            LOG(WARNING) << "Dropping status update " << update.status().state() << "(UUID: "
+                         << update.uuid() << ")"
+                         << " for task 0 of framework " << update.framework_id().value()
+                         << " sent by status update manager because the agent"
+                         << " is in " << state << " state";
+            return;
+        }
+
+        LOG(INFO) << "Forwarding the update " << update.status().state() << "(UUID: "
+                  << update.uuid() << ")"
+                  << " for task 0 of framework " << update.framework_id().value() << " to " << m_master;
+
+        mesos::internal::StatusUpdateMessage message;
+        message.mutable_update()->MergeFrom(update);
+        message.set_pid(self()); // The ACK will be first received by the slave.
+
+        LOG(INFO) << "what is m_master: " << m_master;
+        send(m_master, message);
+    }
+
+    void Slave::statusUpdateAcknowledgement(
+            const UPID &from,
+            const mesos::SlaveID &slaveId,
+            const mesos::FrameworkID &frameworkId,
+            const mesos::TaskID &taskId,
+            const string &uuid) {
+
+    }
+
+    //example:TASK_FINISHED (UUID: 25ec471e-d227-458c-be94-4693a92ba081) for task 0 of
+    //framework 24a76fea-d50d-4795-a108-7a15cf11c5b6-0001
+//    std::ostream &operator<<(std::ostream &stream, mesos::internal::StatusUpdate &update) {
+//        stream << update.status().state() << "(UUID: " << update.uuid() << ")"
+//               << " for task 0 of framework " << update.framework_id().value();
+//        return stream;
+//    }
+
 
     void Slave::register_feedback(const string &hostname) {
         cout << " receive register feedback from master" << hostname << endl;
@@ -384,7 +495,19 @@ namespace chameleon {
         delete rr_message;
     }
 
+    std::ostream& operator<<(std::ostream& stream, Slave::State state)
+    {
+        switch (state) {
+            case Slave::RECOVERING:   return stream << "RECOVERING";
+            case Slave::DISCONNECTED: return stream << "DISCONNECTED";
+            case Slave::RUNNING:      return stream << "RUNNING";
+            case Slave::TERMINATING:  return stream << "TERMINATING";
+            default:                  return stream << "UNKNOWN";
+        }
+    }
 }
+
+
 
 using namespace chameleon;
 

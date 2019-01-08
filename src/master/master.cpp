@@ -48,6 +48,12 @@ namespace chameleon {
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         install<JobMessage>(&Master::job_submited);
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
+
+        install<mesos::internal::StatusUpdateMessage>(
+                &Master::statusUpdate,
+                &mesos::internal::StatusUpdateMessage::update,
+                &mesos::internal::StatusUpdateMessage::pid);
+
 //        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
 
         /**
@@ -56,8 +62,6 @@ namespace chameleon {
          * Date      :  2018-12-27
          * */
         install<mesos::scheduler::Call>(&Master::receive);
-
-
 
         // http://172.20.110.228:6060/master/hardware-resources
         route(
@@ -207,42 +211,26 @@ namespace chameleon {
      * @param          : UPID &from ,Call::Subscribe &subscribe
      * */
     void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
+
         mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
+
+        LOG(INFO) << "Received a subscribe framework "
+                  << frameworkInfo.name() << "  at " << from;
 
         m_frameworkInfo = frameworkInfo;
 
-        /**
-         * WEIGUO FRAMEWORK FROM: scheduler-22b6d4f4-7003-4956-95f9-eaf955c2ba55@172.20.110.114:44151
-         * WEIGUO FRAMEWORK ROLE: *
-         * WEIGUO FRAMEWORK PRINCAL:
-         * WEIGUO FRAMEWORK SPACEUSED:  310
-         * WEIGUO FRAMEWORK USER: weiguow
-         * */
-//        LOG(INFO) << "WEIGUO FRAMEWORK FROM: " << from;
-//        LOG(INFO) << "WEIGUO FRAMEWORK ROLE: " << frameworkInfo.role();
-//        LOG(INFO) << "WEIGUO FRAMEWORK PRINCAL: " << frameworkInfo.principal();
-//        LOG(INFO) << "WEIGUO FRAMEWORK SPACEUSED:  " << frameworkInfo.SpaceUsed();
-//        LOG(INFO) << "WEIGUO FRAMEWORK USER: " << frameworkInfo.user();
-
-        //from == frameworkpid
-        LOG(INFO) << "WEIGUO RECEIVED A SUBSCRIBE FRAMEWORK "
-                  << frameworkInfo.name() << "  at " << from;
-
-
-        //frameworkid WEIGUO NEWFRAMEWORKID:  79986764-d498-4d83-bfa2-8f4bd0da74f3-0000
+        this->m_frameworkPID = from;
 
         mesos::internal::FrameworkRegisteredMessage message;
 
-        //Masterinfo,we should get this infomation from struct
         mesos::MasterInfo masterInfo;
         masterInfo.set_id("11111111");
         masterInfo.set_ip(self().address.ip.in().get().s_addr);
         masterInfo.set_port(6060);
 
-        //frameworkID
         std::ostringstream out;
         int64_t nextFrameworkId;
-        mesos::FrameworkID* frameworkID = new mesos::FrameworkID();
+        mesos::FrameworkID *frameworkID = new mesos::FrameworkID();
         out << masterInfo.id() << "-" << std::setw(4)
             << std::setfill('0') << nextFrameworkId++;
         frameworkID->set_value(out.str());
@@ -253,7 +241,7 @@ namespace chameleon {
 
         send(from, message);
 
-        LOG(INFO) << "WEIGUO SUBCRIBING FRAMEWORK " << frameworkInfo.name() << " SUCCESSFULL !";
+        LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful !";
 
         process::dispatch(self(), &Master::Offer, from);
         return;
@@ -266,7 +254,6 @@ namespace chameleon {
      * Funtion name    :  Master::offer
      * */
     void Master::Offer(const UPID &from) {
-        LOG(INFO) << "WEIGUO Resource_offer";
         mesos::Offer *offer = new mesos::Offer();
 
         // cpus
@@ -304,7 +291,7 @@ namespace chameleon {
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("55555555");
 
-        LOG(INFO) << "WEIGUO SENDING " << message.offers().size() << " OFFER TO SLAVE";
+        LOG(INFO) << "Sending " << message.offers().size() << " offer to slave";
 
         send(from, message);
 
@@ -324,9 +311,9 @@ namespace chameleon {
             mesos::Offer::Operation *operation = accept.mutable_operations(i);
             if (operation->type() == mesos::Offer::Operation::LAUNCH) {
                 if (operation->launch().task_infos().size() > 0) {
-                    LOG(INFO) << "WEIGUO GET OFFER FROM SCHEDULER";
+                    LOG(INFO) << "Get offer from scheduler";
                 } else {
-                    LOG(INFO) << "WEIGUO THERE IS NO TASK";
+                    LOG(INFO) << "There is no task to run";
                 }
             } else if (operation->type() == mesos::Offer::Operation::LAUNCH_GROUP) {
                 const mesos::ExecutorInfo &executor = operation->launch_group().executor();
@@ -343,31 +330,6 @@ namespace chameleon {
         mesos::Resources offeredResources;
         mesos::SlaveID slaveID;
 
-        //for a single slave
-//        if (accept.offer_ids().size() == 0) {
-//            LOG(INFO) << "No offers specified";
-//        } else {
-//            foreach (const mesos::OfferID &offerId, accept.offer_ids()) {
-//                //get offer resource
-//                mesos::Offer *offer = getOffer(offerId);
-//                if (offer != nullptr) {
-//                    {
-//                        /*
-//                         * @param slaveID    :  for send to _accept
-//                         * @offeredResources :  for send to _accept
-//                         * */
-//                        slaveID = offer->slave_id();
-//                        offeredResources += offer->resources();
-//                    }
-//                    //actually,it's not right to delete offer
-//                    delete (offer);
-//                    continue;
-//                }
-//                // If the offer was not in our offer set, then this offer is no
-//                LOG(WARNING) << "WEIGUO there is no resource in offer";
-//            }
-//        }
-
         vector<mesos::Offer::Operation> operations;
 
         foreach (const mesos::Offer::Operation &operation, accept.operations()) {
@@ -380,33 +342,19 @@ namespace chameleon {
                     foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
 
                         mesos::TaskInfo task_(task);
-                        LOG(INFO) << "WEIGUO SEND TASK TO SLAVE";
+                        LOG(INFO) << "send task to slave ";
 
                         mesos::internal::RunTaskMessage message;
-
-
-                        //FrameworkInfo
                         message.mutable_framework()->MergeFrom(m_frameworkInfo);
-
-                        //FrameworkPid scheduler-6db9a175-a12d-4c96-85a1-2afd9561f0e2@172.20.110.152:37983
-                        LOG(INFO) << "WEIGUO SEND TO SLAVE FROM" << from;
                         message.set_pid(from);
-
-                        //TaskInfo
-                        LOG(INFO) << "WEIGUO SEND TO SLAVE TASK" << task_.data();
-
                         message.mutable_task()->MergeFrom(task_);
-
                         message.set_allocated_framework_id(m_frameworkID);
 
                         //SlavePID : slave(1)@172.20.110.152:5051
-                        for(auto it=this->m_alive_slaves.begin();it!=this->m_alive_slaves.end();it++){
-                            string slavePID = "slave@"+stringify(*it)+":6061";
+                        for (auto it = this->m_alive_slaves.begin(); it != this->m_alive_slaves.end(); it++) {
+                            string slavePID = "slave@" + stringify(*it) + ":6061";
                             send(slavePID, message);
                         }
-//                        string slavePID = "slave@172.20.110.228:6061";
-//                        send(slavePID, message);
-
                         _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
 
                     }
@@ -421,55 +369,78 @@ namespace chameleon {
         }
     }
 
+    void Master::statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid) {
+        LOG(INFO) << "Status update " << update.status().state() << "(UUID: "
+                  << update.uuid() << ")"
+                  << " for task 0 of framework " << update.framework_id().value()
+                  << " from agent " << update.slave_id().value();
+
+        if (update.has_uuid()) {
+            update.mutable_status()->set_uuid(update.uuid());
+        }
+
+        if (update.has_framework_id()) {
+            LOG(INFO) << "Forwarding status update " << update.status().state() << "(UUID: "
+                      << update.uuid() << ")"
+                      << " for task 0 of framework " << update.framework_id().value();
+
+            mesos::internal::StatusUpdateMessage message;
+            message.mutable_update()->MergeFrom(update);
+            message.set_pid(pid);   //pid is slavePID;
+            send(m_frameworkPID, message);
+        }
+    }
 
     void Master::handle_accept_call(mesos::scheduler::Call::Accept accept) {
-        int   offers_size= accept.offer_ids_size();
-        LOG(INFO)<<"lele handle_accept_call offers_size ="<<offers_size;
+        int offers_size = accept.offer_ids_size();
+        LOG(INFO) << "lele handle_accept_call offers_size =" << offers_size;
         int operations_size = accept.operations_size();
-        LOG(INFO)<<" lele operations_size="<<operations_size;
-        for(mesos::Offer_Operation offer_operation:accept.operations()){
-            LOG(INFO)<<"lele offer_operation.type "<<offer_operation.type();
-            if(offer_operation.type() == mesos::Offer_Operation::LAUNCH){
+        LOG(INFO) << " lele operations_size=" << operations_size;
+        for (mesos::Offer_Operation offer_operation:accept.operations()) {
+            LOG(INFO) << "lele offer_operation.type " << offer_operation.type();
+            if (offer_operation.type() == mesos::Offer_Operation::LAUNCH) {
                 mesos::Offer_Operation_Launch launch_message = offer_operation.launch();
                 int current_tasks_size = launch_message.task_infos_size();
-                LOG(INFO)<<"lele launch_message "<<current_tasks_size;
-                for(int i=0;i<current_tasks_size;i++){
-                    LOG(INFO)<<"lele at "<<i<< " task";
+                LOG(INFO) << "lele launch_message " << current_tasks_size;
+                for (int i = 0; i < current_tasks_size; i++) {
+                    LOG(INFO) << "lele at " << i << " task";
                     mesos::TaskInfo current_task = launch_message.task_infos(i);
-                    LOG(INFO)<<" task name: "<<current_task.name();
-                    LOG(INFO)<<" task_id: "<<current_task.task_id().value();
-                    LOG(INFO)<<" slave_id: "<<current_task.slave_id().value();
-                    if(current_task.has_command()){
+                    LOG(INFO) << " task name: " << current_task.name();
+                    LOG(INFO) << " task_id: " << current_task.task_id().value();
+                    LOG(INFO) << " slave_id: " << current_task.slave_id().value();
+                    if (current_task.has_command()) {
                         mesos::CommandInfo command_info = current_task.command();
-                        LOG(INFO)<<" command value "<<command_info.value();
+                        LOG(INFO) << " command value " << command_info.value();
                         int env_variables_size = command_info.environment().variables_size();
-                        LOG(INFO)<< " command environment.variables.size() "<<env_variables_size;
-                        for(int i=0;i<env_variables_size;i++){
+                        LOG(INFO) << " command environment.variables.size() " << env_variables_size;
+                        for (int i = 0; i < env_variables_size; i++) {
                             mesos::Environment_Variable env_variable = command_info.environment().variables(i);
-                            LOG(INFO)<<"environment variable "<<i<<" name is: "<<env_variable.name();
-                            if(env_variable.type() == mesos::Environment_Variable_Type_VALUE){
-                                LOG(INFO)<<"environment variable "<<i<<"'s type is VALUE";
-                                LOG(INFO)<<"environment variable "<<i<<" value is : "<<env_variable.value();
-                            }else if(env_variable.type() == mesos::Environment_Variable_Type_SECRET){
-                                LOG(INFO)<<"environment variable "<<i<<"'s type is SECRET";
-                                LOG(INFO)<<"environment variable "<<i<<" secret is : "<<env_variable.secret().SerializeAsString();
+                            LOG(INFO) << "environment variable " << i << " name is: " << env_variable.name();
+                            if (env_variable.type() == mesos::Environment_Variable_Type_VALUE) {
+                                LOG(INFO) << "environment variable " << i << "'s type is VALUE";
+                                LOG(INFO) << "environment variable " << i << " value is : " << env_variable.value();
+                            } else if (env_variable.type() == mesos::Environment_Variable_Type_SECRET) {
+                                LOG(INFO) << "environment variable " << i << "'s type is SECRET";
+                                LOG(INFO) << "environment variable " << i << " secret is : "
+                                          << env_variable.secret().SerializeAsString();
                             }
                         }
                         int uris_size = command_info.uris_size();
-                        LOG(INFO)<<" command commandInfo_uris.size() "<<uris_size;
-                        for(int i=0;i<uris_size;i++){
+                        LOG(INFO) << " command commandInfo_uris.size() " << uris_size;
+                        for (int i = 0; i < uris_size; i++) {
                             mesos::CommandInfo_URI commandInfo_uri = command_info.uris(i);
-                            LOG(INFO)<<" commandInfo_uri.value "<<commandInfo_uri.value();
-                            LOG(INFO)<<" commandInfo_uri.executable "<<commandInfo_uri.executable();
-                            LOG(INFO)<<" commandInfo_uri.extract "<<commandInfo_uri.extract();
-                            LOG(INFO)<<" commandInfo_uri.cache "<<commandInfo_uri.cache();
-                            LOG(INFO)<<" commandInfo_uri.output_file "<<commandInfo_uri.output_file();
+                            LOG(INFO) << " commandInfo_uri.value " << commandInfo_uri.value();
+                            LOG(INFO) << " commandInfo_uri.executable " << commandInfo_uri.executable();
+                            LOG(INFO) << " commandInfo_uri.extract " << commandInfo_uri.extract();
+                            LOG(INFO) << " commandInfo_uri.cache " << commandInfo_uri.cache();
+                            LOG(INFO) << " commandInfo_uri.output_file " << commandInfo_uri.output_file();
                         }
                     }
                 }
             }
         }
     }
+
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;
     }

@@ -74,8 +74,8 @@ namespace chameleon {
 
 //    struct Slave;
     struct Framework;
-    class Master;
 
+    class Master;
     /*
      * Struct : Slave
      * Author : weiguow
@@ -104,38 +104,40 @@ namespace chameleon {
      * Author : weiguow
      * Date   : 2018-12-31
      * */
-    struct Framework {
-    public:
-        enum State {
-            RECOVERED,
-            DISCONNECTED,
-            INACTIVE,
-            ACTIVE
-        };
-
-        Framework(Master *const master, const mesos::FrameworkInfo &info, const process::UPID &_pid)
-        : Framework(master, info, ACTIVE) { pid = _pid; }
-
-        ~Framework() {}
-
-        mesos::FrameworkInfo info;
-
-        Master* master;
-        Option<process::UPID> pid;
-        State state;
-
-        const mesos::FrameworkID id() const { return info.id(); }
-    private:
-        Framework(Master *const _master,
-                  const mesos::FrameworkInfo &_info,
-                  State state)
-                : master(_master),
-                  info(_info),
-                  state(state) {}
-
-        Framework(const Framework &);
-        Framework &operator=(const Framework &);
-    };
+//    struct Framework {
+//    public:
+//        enum State {
+//            RECOVERED,
+//            DISCONNECTED,
+//            INACTIVE,
+//            ACTIVE
+//        };
+//
+//        Framework(Master *const master, const mesos::FrameworkInfo &info, const process::UPID &_pid)
+//                : Framework(master, info, ACTIVE) { pid = _pid; }
+//
+//        ~Framework() {}
+//
+//        mesos::FrameworkInfo info;
+//
+//        Master *master;
+//        Option<process::UPID> pid;
+//        State state;
+//
+//        const mesos::FrameworkID id() const { return info.id(); }
+//
+//    private:
+////        Framework(Master *const _master,
+////                  const mesos::FrameworkInfo &_info,
+////                  State state)
+////                : master(_master),
+////                  info(_info),
+////                  state(state) {}
+////
+////        Framework(const Framework &);
+//
+//        Framework &operator=(const Framework &);
+//    };
 
     class Master : public ProtobufProcess<Master> {
 
@@ -186,6 +188,18 @@ namespace chameleon {
 //            hashmap<mesos::FrameworkID, Framework*> registered;
 //        } frameworks;
 
+        void Offer(const UPID &from);
+
+        void receive(const process::UPID &from,
+                     const mesos::scheduler::Call &call);
+
+        void subscribe(const process::UPID &from,
+                       const mesos::scheduler::Call::Subscribe &subscribe);
+
+        void accept(const UPID &from, mesos::scheduler::Call::Accept accept);
+
+        void statusUpdate(mesos::internal::StatusUpdate update, const UPID& pid);
+
     private:
         unordered_map<UPID, ParticipantInfo> m_participants;
         unordered_map<string, JSON::Object> m_hardware_resources;
@@ -200,50 +214,14 @@ namespace chameleon {
         shared_ptr<UPID> msp_spark_slave;
         shared_ptr<UPID> msp_spark_master;
 
-        /**
-         * Function :Offer
-         * @param   : UPID from
-         * Author   : weiguow
-         * Date     : 2018-12-29
-         * */
-        void Offer(const UPID &from);
+        mesos::FrameworkInfo  m_frameworkInfo;
+        mesos::FrameworkID  *m_frameworkID;
+        UPID m_frameworkPID;
 
-        /**
-        * Function    : receive
-        * Description : get call from spark
-        * Author      : weiguow
-        * Date        : 2018-12-28
-        * */
-        void receive(const process::UPID &from,
-                     const mesos::scheduler::Call &call);
-
-        mesos::FrameworkInfo m_frameworkInfo;
-        mesos::FrameworkID* m_frameworkID;
-
-//        void Master::handle_accept_call(mesos::scheduler::Call::Accept accept);
-
-       /**
-        * Function    : subcribe
-        * Description : subscribe framework on chameloen
-        * Author      : weiguow
-        * Date        : 2018-12-28
-        * */
-        void subscribe(const process::UPID &from,
-                       const mesos::scheduler::Call::Subscribe &subscribe);
-
-        /**
-        * Function    : accpet
-        * Description : get resource_offer from spark and send task to slave
-        * Author      : weiguow
-        * Date        : 2019-1-1
-        * */
-        void accept(const UPID &from, mesos::scheduler::Call::Accept accept);
-
-//        hashmap<mesos::OfferID, mesos::Offer*> offers;
-
-//        Framework* getFramework(const mesos::FrameworkID& frameworkId) const;
-
-//        mesos::Offer* getOffer(const mesos::OfferID& offerId) const;
+        //void Master::handle_accept_call(mesos::scheduler::Call::Accept accept);
+        //hashmap<mesos::OfferID, mesos::Offer*> offers;
+        //Framework* getFramework(const mesos::FrameworkID& frameworkId) const;
+        //mesos::Offer* getOffer(const mesos::OfferID& offerId) const;
 
         /**
          * a simple algorithm to find a slave which has the least usage rate of cpu and memory combination
