@@ -54,6 +54,13 @@ namespace chameleon {
                 &mesos::internal::StatusUpdateMessage::update,
                 &mesos::internal::StatusUpdateMessage::pid);
 
+        install<mesos::internal::StatusUpdateAcknowledgementMessage>(
+                &Master::statusUpdateAcknowledgement,
+                &mesos::internal::StatusUpdateAcknowledgementMessage::slave_id,
+                &mesos::internal::StatusUpdateAcknowledgementMessage::framework_id,
+                &mesos::internal::StatusUpdateAcknowledgementMessage::task_id,
+                &mesos::internal::StatusUpdateAcknowledgementMessage::uuid);
+
 //        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
 
         /**
@@ -193,9 +200,17 @@ namespace chameleon {
 
             case mesos::scheduler::Call::ACCEPT:
                 accept(from, call.accept());
-//              handle_accept_call(call.accept());
                 break;
 
+            case mesos::scheduler::Call::ACKNOWLEDGE: {
+                Try<UUID> uuid = UUID::fromBytes(call.acknowledge().uuid());
+                if (uuid.isError()) {
+                    LOG(INFO) << "Ignoring unknow uuid" << uuid.get();
+                    return;
+                }
+                acknowledge(call.acknowledge());
+                break;
+            }
 
             case mesos::scheduler::Call::UNKNOWN:
                 LOG(WARNING) << "'UNKNOWN' call";
@@ -218,9 +233,7 @@ namespace chameleon {
                   << frameworkInfo.name() << "  at " << from;
 
         m_frameworkInfo = frameworkInfo;
-
-        this->m_frameworkPID = from;
-        LOG(INFO) << "m_frameworkPID " << m_frameworkPID;
+        this->m_frameworkPID = from;  //scheduler-a8426d29-07c4-4b5b-9dc7-2daf941b4893@172.20.110.77:34803
 
         mesos::internal::FrameworkRegisteredMessage message;
 
@@ -235,7 +248,7 @@ namespace chameleon {
         out << masterInfo.id() << "-" << std::setw(4)
             << std::setfill('0') << nextFrameworkId++;
         frameworkID->set_value(out.str());
-        m_frameworkID = frameworkID;
+        m_frameworkID = *frameworkID;
 
         message.mutable_framework_id()->MergeFrom(*frameworkID);
         message.mutable_master_info()->MergeFrom(masterInfo);
@@ -279,7 +292,7 @@ namespace chameleon {
         offerId.set_value("33333333");
         offer->mutable_id()->CopyFrom(offerId);
 
-        offer->mutable_framework_id()->MergeFrom(*m_frameworkID);
+        offer->mutable_framework_id()->MergeFrom(m_frameworkID);
 
         mesos::SlaveID *slaveID = new mesos::SlaveID();
         slaveID->set_value("44444444");
@@ -306,7 +319,6 @@ namespace chameleon {
     * Funtion name    :  Master::accept
     * */
     void chameleon::Master::accept(const UPID &from, mesos::scheduler::Call::Accept accept) {
-
         //judge the operation type
         for (int i = 0; i < accept.operations_size(); ++i) {
             mesos::Offer::Operation *operation = accept.mutable_operations(i);
@@ -328,9 +340,6 @@ namespace chameleon {
             }
         }
 
-        mesos::Resources offeredResources;
-        mesos::SlaveID slaveID;
-
         vector<mesos::Offer::Operation> operations;
 
         foreach (const mesos::Offer::Operation &operation, accept.operations()) {
@@ -349,12 +358,13 @@ namespace chameleon {
                         message.mutable_framework()->MergeFrom(m_frameworkInfo);
                         message.set_pid(from);
                         message.mutable_task()->MergeFrom(task_);
-                        message.set_allocated_framework_id(m_frameworkID);
+//                        message.set_allocated_framework_id(*m_frameworkId);
+                        message.mutable_framework_id()->MergeFrom(m_frameworkID);
 
                         //SlavePID : slave(1)@172.20.110.152:5051
                         for (auto it = this->m_alive_slaves.begin(); it != this->m_alive_slaves.end(); it++) {
-                            string slavePID = "slave@" + stringify(*it) + ":6061";
-                            send(slavePID, message);
+                            m_slavePID = "slave@" + stringify(*it) + ":6061";
+                            send(m_slavePID, message);
                         }
                         _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
 
@@ -370,6 +380,12 @@ namespace chameleon {
         }
     }
 
+    /**
+     * Function     : statusUpdate
+     * Author       : weiguow
+     * Date         : 2019-1-10
+     * Description  : get statusUpdate message from slave and send it to framework
+     * */
     void Master::statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid) {
         LOG(INFO) << "Status update " << update.status().state() << "(UUID: "
                   <<  update.mutable_uuid() << ")"
@@ -387,60 +403,57 @@ namespace chameleon {
 
             mesos::internal::StatusUpdateMessage message;
             message.mutable_update()->MergeFrom(update);
-            message.set_pid(pid);   //pid is slavePID
+            message.set_pid(pid);   //this pid is slavePID
             // m_frameworkPID scheduler-26009ec4-1787-446d-916f-e32fd9baa26a@172.20.110.77:36297;
             send(m_frameworkPID, message);
         }
     }
 
-    void Master::handle_accept_call(mesos::scheduler::Call::Accept accept) {
-        int offers_size = accept.offer_ids_size();
-        LOG(INFO) << "lele handle_accept_call offers_size =" << offers_size;
-        int operations_size = accept.operations_size();
-        LOG(INFO) << " lele operations_size=" << operations_size;
-        for (mesos::Offer_Operation offer_operation:accept.operations()) {
-            LOG(INFO) << "lele offer_operation.type " << offer_operation.type();
-            if (offer_operation.type() == mesos::Offer_Operation::LAUNCH) {
-                mesos::Offer_Operation_Launch launch_message = offer_operation.launch();
-                int current_tasks_size = launch_message.task_infos_size();
-                LOG(INFO) << "lele launch_message " << current_tasks_size;
-                for (int i = 0; i < current_tasks_size; i++) {
-                    LOG(INFO) << "lele at " << i << " task";
-                    mesos::TaskInfo current_task = launch_message.task_infos(i);
-                    LOG(INFO) << " task name: " << current_task.name();
-                    LOG(INFO) << " task_id: " << current_task.task_id().value();
-                    LOG(INFO) << " slave_id: " << current_task.slave_id().value();
-                    if (current_task.has_command()) {
-                        mesos::CommandInfo command_info = current_task.command();
-                        LOG(INFO) << " command value " << command_info.value();
-                        int env_variables_size = command_info.environment().variables_size();
-                        LOG(INFO) << " command environment.variables.size() " << env_variables_size;
-                        for (int i = 0; i < env_variables_size; i++) {
-                            mesos::Environment_Variable env_variable = command_info.environment().variables(i);
-                            LOG(INFO) << "environment variable " << i << " name is: " << env_variable.name();
-                            if (env_variable.type() == mesos::Environment_Variable_Type_VALUE) {
-                                LOG(INFO) << "environment variable " << i << "'s type is VALUE";
-                                LOG(INFO) << "environment variable " << i << " value is : " << env_variable.value();
-                            } else if (env_variable.type() == mesos::Environment_Variable_Type_SECRET) {
-                                LOG(INFO) << "environment variable " << i << "'s type is SECRET";
-                                LOG(INFO) << "environment variable " << i << " secret is : "
-                                          << env_variable.secret().SerializeAsString();
-                            }
-                        }
-                        int uris_size = command_info.uris_size();
-                        LOG(INFO) << " command commandInfo_uris.size() " << uris_size;
-                        for (int i = 0; i < uris_size; i++) {
-                            mesos::CommandInfo_URI commandInfo_uri = command_info.uris(i);
-                            LOG(INFO) << " commandInfo_uri.value " << commandInfo_uri.value();
-                            LOG(INFO) << " commandInfo_uri.executable " << commandInfo_uri.executable();
-                            LOG(INFO) << " commandInfo_uri.extract " << commandInfo_uri.extract();
-                            LOG(INFO) << " commandInfo_uri.cache " << commandInfo_uri.cache();
-                            LOG(INFO) << " commandInfo_uri.output_file " << commandInfo_uri.output_file();
-                        }
-                    }
-                }
-            }
-        }
+    /**
+     * Function     : statusUpdateAcknowledge
+     * Author       : weiguow
+     * Date         : 2019-1-10
+     * Description  : get statusUpdateAcknowledge message from ??? and send it to slave
+     * */
+    void Master::statusUpdateAcknowledgement(
+            const UPID& from,
+            const mesos::SlaveID& slaveId,
+            const mesos::FrameworkID& frameworkId,
+            const mesos::TaskID& taskId,
+            const string& uuid)
+    {
+        mesos::scheduler::Call::Acknowledge message;
+        message.mutable_slave_id()->CopyFrom(slaveId);
+        message.mutable_task_id()->CopyFrom(taskId);
+        message.set_uuid(uuid);
+
+        acknowledge(message);
+    }
+
+    /**
+    * Function     : acknowledge
+    * Author       : weiguow
+    * Date         : 2019-1-10
+    * Description  : send StatusUpdateAcknowledgementMessage message to
+     * slave make sure the status
+    * */
+    void Master::acknowledge(const mesos::scheduler::Call::Acknowledge& acknowledge)
+    {
+        const mesos::SlaveID& slaveId = acknowledge.slave_id();
+        const mesos::TaskID& taskId = acknowledge.task_id();
+        const UUID uuid = UUID::fromBytes(acknowledge.uuid()).get();
+
+        mesos::internal::StatusUpdateAcknowledgementMessage message;
+        message.mutable_slave_id()->CopyFrom(slaveId);
+
+        message.mutable_framework_id()->MergeFrom(m_frameworkID);
+        message.mutable_task_id()->CopyFrom(taskId);
+        message.set_uuid(uuid.toBytes());
+
+        LOG(INFO) << "Processing ACKNOWLEDGE call " << uuid << " for task " << taskId.value()
+                  << " of framework " << m_frameworkInfo.name() << " on agent " << slaveId.value();
+        send(m_slavePID, message);
+
     }
 
     void Master::register_participant(const string &hostname) {

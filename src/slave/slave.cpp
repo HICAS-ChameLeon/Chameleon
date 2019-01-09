@@ -100,7 +100,7 @@ namespace chameleon {
 
         m_uuid = UUID::random().toString();
         hr_message->set_slave_uuid(m_uuid);
-        DLOG(INFO) << "before send message to master";
+        DLOG(INFO) << "Before send message to master";
 
         send(*msp_masterUPID, *hr_message);
         delete hr_message;
@@ -120,7 +120,7 @@ namespace chameleon {
             const mesos::FrameworkID &frameworkId,
             const process::UPID &pid,
             const mesos::TaskInfo &task) {
-        LOG(INFO) << "WEIGUO GET TASK FROM MASTER, start the mesos executor first";
+        LOG(INFO) << "Get task from master, start the mesos executor first";
         const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, task);
 
         m_frameworkInfo = frameworkInfo;  //missing framework.user framework.name
@@ -161,7 +161,7 @@ namespace chameleon {
     void Slave::registerExecutor(const UPID &from,
                                  const mesos::FrameworkID &frameworkId,
                                  const mesos::ExecutorID &executorId) {
-        LOG(INFO) << "got registration for executor '" << executorId.value()
+        LOG(INFO) << "Got registration for executor '" << executorId.value()
                   << "' of framework " << frameworkId.value() << " from "
                   << stringify(from);
 
@@ -251,7 +251,6 @@ namespace chameleon {
 
         // Add fields which can be relevant (depending on Authorizer) for
         // authorization.
-
         if (task.has_labels()) {
             executorInfo.mutable_labels()->MergeFrom(task.labels());
         }
@@ -292,7 +291,6 @@ namespace chameleon {
      * */
     void Slave::statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
 
-        LOG(INFO) << "get weiguow: " << update.status().message() << " : " << pid.get();
         LOG(INFO) << "Handling status update " << update.status().state() << "(UUID: "
                   << update.status().uuid() << ")"
                   << " for task 0 of framework " << update.framework_id().value();
@@ -305,7 +303,6 @@ namespace chameleon {
         LOG(INFO) << "Received status update " << update.status().state() << "(UUID: " << update.mutable_uuid() << ")"
                   << " for task 0 of framework " << update.framework_id().value();
 
-//        process::dispatch(self(), &Slave::_statusUpdate, update, pid);
         process::dispatch(self(), &Slave::_statusUpdate, update, pid);
     }
 
@@ -331,7 +328,7 @@ namespace chameleon {
             LOG(INFO) << "Sending acknowledgement for status update " << update.status().state() << "(UUID: "
                       << update.uuid() << ")"
                       << " for task 0 of framework " << update.framework_id().value()
-                      << " to " << pid.get();
+                      << " to " << pid.get();  //executor(1)@172.20.110.77:39343
             send(pid.get(), message);
         } else {
             LOG(INFO) << "Ignoring update status ";
@@ -349,7 +346,6 @@ namespace chameleon {
         message.mutable_update()->MergeFrom(update);
         message.set_pid(self()); // The ACK will be first received by the slave.
 
-        LOG(INFO) << "what is m_master: " << m_master;
         send(m_master, message);
     }
 
@@ -360,16 +356,18 @@ namespace chameleon {
             const mesos::TaskID &taskId,
             const string &uuid) {
 
+        if (UPID(m_master) != from) {
+            LOG(WARNING) << "Ignoring status update acknowledgement message from "
+                         << from << " because it is not the expected master: "
+                         << m_master << " is None";
+            return;
+        }
+
+        LOG(INFO) << "Status update manager successfully handled status update"
+                  << " acknowledgement (UUID: " << uuid
+                  << ") for task " << taskId.value()
+                  << " of framework " << frameworkId.value();
     }
-
-    //example:TASK_FINISHED (UUID: 25ec471e-d227-458c-be94-4693a92ba081) for task 0 of
-    //framework 24a76fea-d50d-4795-a108-7a15cf11c5b6-0001
-//    std::ostream &operator<<(std::ostream &stream, mesos::internal::StatusUpdate &update) {
-//        stream << update.status().state() << "(UUID: " << update.uuid() << ")"
-//               << " for task 0 of framework " << update.framework_id().value();
-//        return stream;
-//    }
-
 
     void Slave::register_feedback(const string &hostname) {
         cout << " receive register feedback from master" << hostname << endl;
@@ -489,18 +487,21 @@ namespace chameleon {
         delete rr_message;
     }
 
-    std::ostream& operator<<(std::ostream& stream, Slave::State state)
-    {
+    std::ostream &operator<<(std::ostream &stream, Slave::State state) {
         switch (state) {
-            case Slave::RECOVERING:   return stream << "RECOVERING";
-            case Slave::DISCONNECTED: return stream << "DISCONNECTED";
-            case Slave::RUNNING:      return stream << "RUNNING";
-            case Slave::TERMINATING:  return stream << "TERMINATING";
-            default:                  return stream << "UNKNOWN";
+            case Slave::RECOVERING:
+                return stream << "RECOVERING";
+            case Slave::DISCONNECTED:
+                return stream << "DISCONNECTED";
+            case Slave::RUNNING:
+                return stream << "RUNNING";
+            case Slave::TERMINATING:
+                return stream << "TERMINATING";
+            default:
+                return stream << "UNKNOWN";
         }
     }
 }
-
 
 
 using namespace chameleon;

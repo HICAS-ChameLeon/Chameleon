@@ -24,6 +24,7 @@
 #include <stout/os.hpp>
 #include <stout/os/pstree.hpp>
 #include <stout/hashmap.hpp>
+#include <stout/uuid.hpp>
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -47,7 +48,6 @@
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
 #include "scheduler.hpp"
-#include "resources.hpp"
 
 using std::string;
 using std::set;
@@ -200,6 +200,15 @@ namespace chameleon {
 
         void statusUpdate(mesos::internal::StatusUpdate update, const UPID& pid);
 
+        void statusUpdateAcknowledgement(
+                const UPID& from,
+                const mesos::SlaveID& slaveId,
+                const mesos::FrameworkID& frameworkId,
+                const mesos::TaskID& taskId,
+                const string& uuid);
+
+        void acknowledge(const mesos::scheduler::Call::Acknowledge& acknowledge);
+
     private:
         unordered_map<UPID, ParticipantInfo> m_participants;
         unordered_map<string, JSON::Object> m_hardware_resources;
@@ -215,8 +224,9 @@ namespace chameleon {
         shared_ptr<UPID> msp_spark_master;
 
         mesos::FrameworkInfo  m_frameworkInfo;
-        mesos::FrameworkID  *m_frameworkID;
+        mesos::FrameworkID m_frameworkID;
         UPID m_frameworkPID;
+        string m_slavePID;
 
         //void Master::handle_accept_call(mesos::scheduler::Call::Accept accept);
         //hashmap<mesos::OfferID, mesos::Offer*> offers;
