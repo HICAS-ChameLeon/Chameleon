@@ -220,6 +220,7 @@ namespace chameleon {
         m_frameworkInfo = frameworkInfo;
 
         this->m_frameworkPID = from;
+        LOG(INFO) << "m_frameworkPID " << m_frameworkPID;
 
         mesos::internal::FrameworkRegisteredMessage message;
 
@@ -342,8 +343,8 @@ namespace chameleon {
                     foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
 
                         mesos::TaskInfo task_(task);
-                        LOG(INFO) << "send task to slave ";
 
+                        LOG(INFO) << "Send task to slave ";
                         mesos::internal::RunTaskMessage message;
                         message.mutable_framework()->MergeFrom(m_frameworkInfo);
                         message.set_pid(from);
@@ -371,7 +372,7 @@ namespace chameleon {
 
     void Master::statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid) {
         LOG(INFO) << "Status update " << update.status().state() << "(UUID: "
-                  << update.uuid() << ")"
+                  <<  update.mutable_uuid() << ")"
                   << " for task 0 of framework " << update.framework_id().value()
                   << " from agent " << update.slave_id().value();
 
@@ -386,7 +387,8 @@ namespace chameleon {
 
             mesos::internal::StatusUpdateMessage message;
             message.mutable_update()->MergeFrom(update);
-            message.set_pid(pid);   //pid is slavePID;
+            message.set_pid(pid);   //pid is slavePID
+            // m_frameworkPID scheduler-26009ec4-1787-446d-916f-e32fd9baa26a@172.20.110.77:36297;
             send(m_frameworkPID, message);
         }
     }

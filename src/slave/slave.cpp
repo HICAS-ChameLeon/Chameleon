@@ -133,11 +133,12 @@ namespace chameleon {
     }
 
     void Slave::start_mesos_executor() {
+        string MESOS_SLAVE_PID = "slave@" + stringify(self().address.ip) + ":6061";
         const std::map<string, string> environment =
                 {
                         {"MESOS_FRAMEWORK_ID", m_frameworkID.value()},
                         {"MESOS_EXECUTOR_ID",  "1"},
-                        {"MESOS_SLAVE_PID",    "slave@172.20.110.168:6061"},
+                        {"MESOS_SLAVE_PID",    MESOS_SLAVE_PID},
                         {"MESOS_SLAVE_ID",     m_slaveInfo.id().value()},
                         {"MESOS_DIRECTORY",    "/home/weiguow/project/chameleon/src/slave/mesos_executor"},
                         {"MESOS_CHECKPOINT",   "0"}
@@ -291,6 +292,7 @@ namespace chameleon {
      * */
     void Slave::statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
 
+        LOG(INFO) << "get weiguow: " << update.status().message() << " : " << pid.get();
         LOG(INFO) << "Handling status update " << update.status().state() << "(UUID: "
                   << update.status().uuid() << ")"
                   << " for task 0 of framework " << update.framework_id().value();
@@ -304,7 +306,7 @@ namespace chameleon {
                   << " for task 0 of framework " << update.framework_id().value();
 
 //        process::dispatch(self(), &Slave::_statusUpdate, update, pid);
-        process::dispatch(self(), &Slave::forward, update);
+        process::dispatch(self(), &Slave::_statusUpdate, update, pid);
     }
 
     /**
@@ -334,18 +336,10 @@ namespace chameleon {
         } else {
             LOG(INFO) << "Ignoring update status ";
         }
+        process::dispatch(self(), &Slave::forward, update);
     }
 
     void Slave::forward(mesos::internal::StatusUpdate update) {
-
-        if (update.status().state() != RUNNING) {
-            LOG(WARNING) << "Dropping status update " << update.status().state() << "(UUID: "
-                         << update.uuid() << ")"
-                         << " for task 0 of framework " << update.framework_id().value()
-                         << " sent by status update manager because the agent"
-                         << " is in " << state << " state";
-            return;
-        }
 
         LOG(INFO) << "Forwarding the update " << update.status().state() << "(UUID: "
                   << update.uuid() << ")"
