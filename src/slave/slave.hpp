@@ -134,15 +134,6 @@ namespace chameleon {
                 const mesos::FrameworkInfo &frameworkInfo,
                 const mesos::TaskInfo &task) const;
 
-
-        enum State
-        {
-            RECOVERING,   // Slave is doing recovery.
-            DISCONNECTED, // Slave is not connected to the master.
-            RUNNING,      // Slave has (re-)registered.
-            TERMINATING,  // Slave is shutting down.
-        } state;
-
         void statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID>& pid);
 
         void forward(mesos::internal::StatusUpdate update);
@@ -187,7 +178,7 @@ namespace chameleon {
 
     };
 
-    std::ostream& operator<<(std::ostream& stream, Slave::State state);
+    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state);
 
     class SlaveHeartbeater : public process::Process<SlaveHeartbeater> {
 

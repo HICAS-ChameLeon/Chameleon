@@ -95,7 +95,7 @@ namespace chameleon {
 //        process::UPID pid;
 //
 //    private:
-////        Slave(const Slave &);
+//        Slave(const Slave &);
 //        Slave &operator=(const Slave &);
 //
 //    };
@@ -128,14 +128,14 @@ namespace chameleon {
 //        const mesos::FrameworkID id() const { return info.id(); }
 //
 //    private:
-////        Framework(Master *const _master,
-////                  const mesos::FrameworkInfo &_info,
-////                  State state)
-////                : master(_master),
-////                  info(_info),
-////                  state(state) {}
-////
-////        Framework(const Framework &);
+//        Framework(Master *const _master,
+//                  const mesos::FrameworkInfo &_info,
+//                  State state)
+//                : master(_master),
+//                  info(_info),
+//                  state(state) {}
+//
+//        Framework(const Framework &);
 //
 //        Framework &operator=(const Framework &);
 //    };
@@ -219,7 +219,7 @@ namespace chameleon {
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
 //        unordered_map<string,HardwareResource> m_topology_resources;
 
-        const string test_slave_UPID = "slave@172.20.110.79:6061";
+        const string test_slave_UPID = "slave@172.20.110.69:6061";
         const string test_master_UPID = "slave@172.20.110.228:6061";
         shared_ptr<UPID> msp_spark_slave;
         shared_ptr<UPID> msp_spark_master;
@@ -249,6 +249,9 @@ namespace chameleon {
 
         void handle_accept_call(mesos::scheduler::Call::Accept accept);
     };
+
+    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state);
+
 }
 
 

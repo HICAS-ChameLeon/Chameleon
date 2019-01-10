@@ -13,9 +13,9 @@ namespace chameleon {
     namespace setting{
         const string kx86Arch="x86_64";
         const string kArmArch="armv7l";
-        const string MESOS_DIRECTORY="/home/heldon/chameleon/Chameleon/src/slave/mesos_executor/mesos-directory";
-        const string MESOS_EXECUTOR_PATH="/home/heldon/chameleon/Chameleon/src/slave/mesos_executor/mesos-executor";
-        const string FLAGS_LAUCHER_DIR="/home/heldon/chameleon/mesos/mesos-1.3.2/build/src";
+        const string MESOS_DIRECTORY="/home/weiguow/project/chameleon/src/slave/mesos_executor/mesos-directory";
+        const string MESOS_EXECUTOR_PATH="/home/weiguow/project/chameleon/src/slave/mesos_executor/mesos-executor";
+        const string FLAGS_LAUCHER_DIR="/home/weiguow/project/mesos/mesos-1.3.2/build/src";
     }
 }
 

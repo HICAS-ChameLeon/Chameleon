@@ -305,7 +305,8 @@ namespace chameleon {
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("55555555");
 
-        LOG(INFO) << "Sending " << message.offers().size() << " offer to slave";
+        LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
+                  << from ;
 
         send(from, message);
 
@@ -324,7 +325,7 @@ namespace chameleon {
             mesos::Offer::Operation *operation = accept.mutable_operations(i);
             if (operation->type() == mesos::Offer::Operation::LAUNCH) {
                 if (operation->launch().task_infos().size() > 0) {
-                    LOG(INFO) << "Get offer from scheduler";
+                    LOG(INFO) << "Get offer from scheduler ";
                 } else {
                     LOG(INFO) << "There is no task to run";
                 }
@@ -351,23 +352,23 @@ namespace chameleon {
 
                     foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
 
+                        for (auto it = this->m_alive_slaves.begin(); it != this->m_alive_slaves.end(); it++) {
+                            m_slavePID = "slave@" + stringify(*it) + ":6061";
+
+                        }
                         mesos::TaskInfo task_(task);
 
-                        LOG(INFO) << "Send task to slave ";
+                        LOG(INFO) << "Sending task to slave " << m_slavePID ; //slave(1)@172.20.110.152:5051
+
                         mesos::internal::RunTaskMessage message;
                         message.mutable_framework()->MergeFrom(m_frameworkInfo);
                         message.set_pid(from);
                         message.mutable_task()->MergeFrom(task_);
-//                        message.set_allocated_framework_id(*m_frameworkId);
                         message.mutable_framework_id()->MergeFrom(m_frameworkID);
 
-                        //SlavePID : slave(1)@172.20.110.152:5051
-                        for (auto it = this->m_alive_slaves.begin(); it != this->m_alive_slaves.end(); it++) {
-                            m_slavePID = "slave@" + stringify(*it) + ":6061";
-                            send(m_slavePID, message);
-                        }
-                        _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
+                        send(m_slavePID, message);
 
+                        _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
                     }
                     break;
                 }
@@ -387,9 +388,8 @@ namespace chameleon {
      * Description  : get statusUpdate message from slave and send it to framework
      * */
     void Master::statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid) {
-        LOG(INFO) << "Status update " << update.status().state() << "(UUID: "
-                  <<  update.mutable_uuid() << ")"
-                  << " for task 0 of framework " << update.framework_id().value()
+        LOG(INFO) << "Status update " << update.status().state()
+                  << " of framework " << update.framework_id().value()
                   << " from agent " << update.slave_id().value();
 
         if (update.has_uuid()) {
@@ -397,9 +397,8 @@ namespace chameleon {
         }
 
         if (update.has_framework_id()) {
-            LOG(INFO) << "Forwarding status update " << update.status().state() << "(UUID: "
-                      << update.uuid() << ")"
-                      << " for task 0 of framework " << update.framework_id().value();
+            LOG(INFO) << "Forwarding status update " << update.status().state()
+                      << " of framework " << update.framework_id().value();
 
             mesos::internal::StatusUpdateMessage message;
             message.mutable_update()->MergeFrom(update);
@@ -413,7 +412,7 @@ namespace chameleon {
      * Function     : statusUpdateAcknowledge
      * Author       : weiguow
      * Date         : 2019-1-10
-     * Description  : get statusUpdateAcknowledge message from ??? and send it to slave
+     * Description  : get statusUpdateAcknowledge message from  and send it to slave
      * */
     void Master::statusUpdateAcknowledgement(
             const UPID& from,
@@ -422,6 +421,7 @@ namespace chameleon {
             const mesos::TaskID& taskId,
             const string& uuid)
     {
+        LOG(INFO) << "statusUpdateAcknowledgement from " << from ;
         mesos::scheduler::Call::Acknowledge message;
         message.mutable_slave_id()->CopyFrom(slaveId);
         message.mutable_task_id()->CopyFrom(taskId);
@@ -560,6 +560,11 @@ namespace chameleon {
             }
             LOG(INFO) << "successfully shutdown a slave " << ip;
         }
+    }
+
+    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)
+    {
+        return stream << TaskState_Name(state);
     }
 }
 
