@@ -32,6 +32,7 @@
 #include <process/http.hpp>
 #include <process/process.hpp>
 #include <process/protobuf.hpp>
+#include <process/delay.hpp>
 
 // protobuf
 #include <participant_info.pb.h>

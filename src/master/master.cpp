@@ -255,7 +255,10 @@ namespace chameleon {
 
         LOG(INFO) << "WEIGUO SUBCRIBING FRAMEWORK " << frameworkInfo.name() << " SUCCESSFULL !";
 
-        process::dispatch(self(), &Master::Offer, from);
+//        process::dispatch(self(), &Master::Offer, from);
+        const Duration temp_duration = Seconds(20);
+        process::delay(temp_duration, self(), &Master::Offer,from);
+
         return;
     }
 
@@ -283,7 +286,7 @@ namespace chameleon {
         mem_resource->set_name("mem");
         mem_resource->set_type(mesos::Value_Type_SCALAR);
         mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
-        mem_scalar->set_value(1500.0);
+        mem_scalar->set_value(15000.0);
         mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
         offer->add_resources()->MergeFrom(*mem_resource);
 
@@ -304,7 +307,7 @@ namespace chameleon {
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("55555555");
 
-        LOG(INFO) << "WEIGUO SENDING " << message.offers().size() << " OFFER TO SLAVE";
+        LOG(INFO) << "WEIGUO SENDING " << message.offers().size() << " OFFER TO framework";
 
         send(from, message);
 

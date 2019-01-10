@@ -124,7 +124,6 @@ namespace chameleon {
 
         start_mesos_executor();
 
-
     }
 
     void Slave::start_mesos_executor() {
