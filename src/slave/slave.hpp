@@ -61,7 +61,8 @@
 #include <resource_collector.hpp>
 #include <configuration_glog.hpp>
 #include <runtime_resources_usage.hpp>
-
+#include <chameleon_os.hpp>
+#include <chameleon_string.hpp>
 
 using std::string;
 using std::unordered_map;
@@ -85,6 +86,8 @@ using process::http::InternalServerError;
 namespace chameleon {
     // forward declations
     class SlaveHeartbeater;
+
+    class Slave;
 
     class Slave : public ProtobufProcess<Slave> {
     public:
@@ -121,25 +124,26 @@ namespace chameleon {
             Slave::m_interval = m_interval;
         }
 
-        /**
-         * Funtion : runTask
-         * Date    : 2019-1-2
-         * Author  : weiguow
-         * */
-        void runTaskTest(const process::UPID& from,
+        void runTask(const process::UPID& from,
                 const mesos::FrameworkInfo& frameworkInfo,
                 const mesos::FrameworkID& frameworkId,
                 const process::UPID& pid,
                 const mesos::TaskInfo& task);
-        /**
-         * Function  : getExecutorInfo
-         * Author    : weiguow
-         * Date      : 2019-1-4
-         * Description  : getExecutorInfo from FrameworkInfo & TaskInfo*/
+
         mesos::ExecutorInfo getExecutorInfo(
                 const mesos::FrameworkInfo &frameworkInfo,
                 const mesos::TaskInfo &task) const;
 
+        void statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID>& pid);
+
+        void forward(mesos::internal::StatusUpdate update);
+
+        void statusUpdateAcknowledgement(
+                const UPID& from,
+                const mesos::SlaveID& slaveId,
+                const mesos::FrameworkID& frameworkId,
+                const mesos::TaskID& taskId,
+                const string& uuid);
 
     private:
         shared_ptr<ResourceCollector> msp_resource_collector;
@@ -149,24 +153,32 @@ namespace chameleon {
         shared_ptr<UPID> msp_masterUPID;
         Duration m_interval;
         string m_uuid;
-        string m_master;
+        string m_master;  //master@127.0.0.1：1080
 
         mesos::FrameworkInfo m_frameworkInfo;
         mesos::SlaveInfo m_slaveInfo;
         mesos::FrameworkID  m_frameworkID;
         mesos::ExecutorInfo m_executorInfo;
         mesos::TaskInfo m_task;
+        mesos::SlaveID m_slaveID;
 
         void heartbeat();
 
         void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
 
         void start_mesos_executor();
+
         void registerExecutor(const UPID& from,
                               const mesos::FrameworkID& frameworkId,
                               const mesos::ExecutorID& executorId);
+
+        void _statusUpdate(
+                const mesos::internal::StatusUpdate& update,
+                const Option<UPID>& pid);
+
     };
 
+    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state);
 
     class SlaveHeartbeater : public process::Process<SlaveHeartbeater> {
 
@@ -194,9 +206,9 @@ namespace chameleon {
             // it's cyclical because "heartbeat invoke heartbeat"
             process::delay(m_interval, self(), &Self::heartbeat);
         }
-
         Duration m_interval;
     };
+
 }
 
 
