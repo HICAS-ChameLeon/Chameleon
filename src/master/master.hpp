@@ -47,6 +47,7 @@
 // chameleon headers
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
+#include <chameleon_os.hpp>
 #include "scheduler.hpp"
 
 using std::string;

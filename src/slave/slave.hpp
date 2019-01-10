@@ -61,7 +61,8 @@
 #include <resource_collector.hpp>
 #include <configuration_glog.hpp>
 #include <runtime_resources_usage.hpp>
-
+#include <chameleon_os.hpp>
+#include <chameleon_string.hpp>
 
 using std::string;
 using std::unordered_map;
@@ -133,6 +134,7 @@ namespace chameleon {
                 const mesos::FrameworkInfo &frameworkInfo,
                 const mesos::TaskInfo &task) const;
 
+
         enum State
         {
             RECOVERING,   // Slave is doing recovery.
@@ -140,8 +142,6 @@ namespace chameleon {
             RUNNING,      // Slave has (re-)registered.
             TERMINATING,  // Slave is shutting down.
         } state;
-
-
 
         void statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID>& pid);
 
@@ -153,8 +153,6 @@ namespace chameleon {
                 const mesos::FrameworkID& frameworkId,
                 const mesos::TaskID& taskId,
                 const string& uuid);
-
-
 
     private:
         shared_ptr<ResourceCollector> msp_resource_collector;

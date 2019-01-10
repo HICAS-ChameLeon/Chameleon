@@ -510,8 +510,7 @@ namespace chameleon {
         LOG(INFO) << "sent the job to the test slave " << str_spark_slave << " successfully!";
     }
 
-    void
-    Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
+    void Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
         LOG(INFO) << "received a heartbeat message from " << slave;
         auto slave_id = runtime_resouces_message.slave_id();
         m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);

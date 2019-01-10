@@ -133,19 +133,21 @@ namespace chameleon {
     }
 
     void Slave::start_mesos_executor() {
-        string MESOS_SLAVE_PID = "slave@" + stringify(self().address.ip) + ":6061";
+
+        const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
+        const string mesos_directory = path::join(os::getcwd(), "/mesos_executor/mesos-directory");
+
         const std::map<string, string> environment =
                 {
                         {"MESOS_FRAMEWORK_ID", m_frameworkID.value()},
                         {"MESOS_EXECUTOR_ID",  "1"},
-                        {"MESOS_SLAVE_PID",    MESOS_SLAVE_PID},
-                        {"MESOS_SLAVE_ID",     m_slaveInfo.id().value()},
-                        {"MESOS_DIRECTORY",    "/home/weiguow/project/chameleon/src/slave/mesos_executor"},
+                        {"MESOS_SLAVE_PID",    slave_upid},
+                        {"MESOS_SLAVE_ID",     "1"},
+                        {"MESOS_DIRECTORY",    mesos_directory},
                         {"MESOS_CHECKPOINT",   "0"}
                 };
+        const string mesos_executor_path = path::join(os::getcwd(), "/mesos_executor/mesos-executor");
 
-        //e.a: the mesos-executor exists in the chameleon
-        const string mesos_executor_path = "/home/weiguow/project/chameleon/src/slave/mesos_executor/mesos-executor";
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,
                 Subprocess::FD(STDIN_FILENO),
@@ -189,7 +191,7 @@ namespace chameleon {
      * Date      : 2019-1-4
      * Description  : getExecutorInfo from FrameworkInfo & TaskInfo
      * */
-    const string flags_laucher_dir = "/home/weiguow/project/chameleon/src/slave/mesos_executor";
+    const string flags_laucher_dir = setting::FLAGS_LAUCHER_DIR;
 
     mesos::ExecutorInfo Slave::getExecutorInfo(
             const mesos::FrameworkInfo &frameworkInfo,
@@ -486,6 +488,7 @@ namespace chameleon {
         LOG(INFO) << "It cost " << duration.count() << " s";
         delete rr_message;
     }
+<<<<<<< HEAD
 
     std::ostream &operator<<(std::ostream &stream, Slave::State state) {
         switch (state) {
@@ -501,6 +504,8 @@ namespace chameleon {
                 return stream << "UNKNOWN";
         }
     }
+=======
+>>>>>>> 6ed56965a1c88ba89641b3ad28bb1e3492189f24
 }
 
 
