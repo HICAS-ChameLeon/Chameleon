@@ -6,17 +6,13 @@
 <head>
     <meta charset="utf-8">
 
-    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../css/navbar.css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 
-    <script src="https://cdn.staticfile.org/angular.js/1.6.3/angular.min.js"></script>
-    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
-
-
 </head>
 
-<body>
+<body ng-app="Chameleon" ng-controller="UpdateCtrl">
 <style type="text/css">
     .icon {
         font-size: 30px;
@@ -107,101 +103,47 @@
     <!-- Main Content -->
     <div class="col-lg-9 col-md-9">
         <div style="margin-top: 15px; height:50px">
-        <p style="font-size: 200%;">
-            <svg class="icon" aria-hidden="true">
+            <img src="../icon/HICAS.png" style="float: right;width: 80px;height: 100px" alt="">
+            <p style="font-size: 200%;">
+                <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-zuoye"></use>
             </svg>
             作业
         </p>
     </div>
         <ul id="myTab" class="nav nav-tabs">
-        <li class="active">
-            <a href="#submit_work" data-toggle="tab" style="font-size: 150%">
-                提交新作业
+        <li>
+            <a href="#/frameworks"  style="font-size: 120%">
+                框架
             </a>
         </li>
-        <li><a href="#completed" data-toggle="tab" style="font-size: 150%">
-            已完成
-        </a></li>
-        <li><a href="#failed" data-toggle="tab" style="font-size: 150%">
-            失败
-        </a></li>
+        <!--<li><a href="#completed"  style="font-size: 120%">-->
+            <!--已完成-->
+        <!--</a></li>-->
+        <!--<li><a href="#failed"  style="font-size: 120%">-->
+            <!--失败-->
+        <!--</a></li>-->
     </ul>
-        <div id="myTabContent" class="tab-content" style="font-size: 150%; margin-top: 15px">
-        <div class="tab-pane fade in active" id="submit_work">
-            <div class="container-fluid">
-                <h1> Main Content here </h1>
-                <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
-
-            </div>
+        <div id="myTabContent"  style="margin-top: 15px">
+            <div ng-view=""></div>
         </div>
-        <div class="tab-pane fade" id="completed">
-            <div class="container-fluid">
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th>id</th>
-                        <th>作业名字</th>
-                        <th>CPU使用</th>
-                        <th>内存</th>
-                        <th>硬盘</th>
-                        <th>端口</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>2</td>
-                        <td>1核</td>
-                        <td>1G</td>
-                        <td>5G</td>
-                        <td>123.12.23.2/</td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>3</td>
-                        <td>1核</td>
-                        <td>1G</td>
-                        <td>5G</td>
-                        <td>123.12.23.2/</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="tab-pane fade" id="failed">
-            <div class="container-fluid">
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th>id</th>
-                        <th>作业名字</th>
-                        <th>CPU使用</th>
-                        <th>内存</th>
-                        <th>硬盘</th>
-                        <th>端口</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>0</td>
-                        <td>1</td>
-                        <td>1核</td>
-                        <td>1G</td>
-                        <td>5G</td>
-                        <td>123.12.23.2/</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
     </div>
 </div>
 
-<script src="../js/thirdparty/bootstrap.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+
+<script src="../js/thirdparty/angular-1.5.5.min.js"></script>
+<script src="../js/thirdparty/bootstrap.js"></script>
+
+<script src="../js/thirdparty/ui-bootstrap-tpls-0.11.2.min.js"></script>
+<script src="../js/thirdparty/angular-route-1.2.3.js"></script>
+<script src="../js/thirdparty/underscore-1.4.3.js"></script>
+
 <script src="../js/thirdparty/navbar.js"></script>
 <script src="../js/thirdparty/iconfont.js"></script>
+
+<script src="../js/app.js"></script>
+<script src="../js/controllers.js"></script>
 
 </body>
 

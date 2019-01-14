@@ -643,5 +643,12 @@
         }
     });
 
+    //spark框架对应的Controller
+    chameleon_app.controller('FrameworksCtrl', function() {});
+
+    chameleon_app.controller('FrameworkCtrl',function () {
+
+    });
+
 
 })();
