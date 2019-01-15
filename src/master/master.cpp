@@ -265,7 +265,7 @@ namespace chameleon {
     }
 
     /**
-     * Function model  :  sprak run on chameleon
+     * Function model  :  spark run on chameleon
      * Author          :  weiguow
      * Date            :  2018-12-28
      * Funtion name    :  Master::offer
@@ -312,7 +312,11 @@ namespace chameleon {
 
         offer->mutable_slave_id()->MergeFrom(*slaveID);
 
-        offer->set_hostname(self().address.hostname().get());
+        if(m_alive_slaves.size()>0){
+            offer->set_hostname(*m_alive_slaves.begin());
+        }else{
+            offer->set_hostname(self().address.hostname().get());
+        }
 
         mesos::internal::ResourceOffersMessage message;
         message.add_offers()->MergeFrom(*offer);

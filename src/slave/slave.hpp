@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
+#include <queue>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -65,6 +66,7 @@
 #include <chameleon_string.hpp>
 
 using std::string;
+using std::queue;
 using std::unordered_map;
 using std::shared_ptr;
 using std::make_shared;
@@ -159,7 +161,10 @@ namespace chameleon {
         mesos::SlaveInfo m_slaveInfo;
         mesos::FrameworkID  m_frameworkID;
         mesos::ExecutorInfo m_executorInfo;
-        mesos::TaskInfo m_task;
+
+        // used a queue to keep track of the tasks awaiting to run
+//        mesos::TaskInfo m_task;
+        queue<mesos::TaskInfo> m_tasks;
         mesos::SlaveID m_slaveID;
 
         void heartbeat();
