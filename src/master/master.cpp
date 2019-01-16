@@ -331,7 +331,7 @@ namespace chameleon {
     }
 
     /**
-    * Function model  :  sprak run on chameleon
+    * Function model  :  spark run on chameleon
     * Author          :  weiguow
     * Date            :  2018-12-29
     * Funtion name    :  Master::accept
