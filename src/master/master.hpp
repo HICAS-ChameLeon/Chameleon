@@ -214,7 +214,7 @@ namespace chameleon {
     private:
         unordered_map<UPID, ParticipantInfo> m_participants;
         unordered_map<string, JSON::Object> m_hardware_resources;
-        set<string> m_alive_slaves;
+        vector<string> m_alive_slaves;
 
         unordered_map<string, JSON::Object> m_runtime_resources;
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
@@ -248,7 +248,9 @@ namespace chameleon {
          */
         void received_reply_shutdown_message(const string &ip, const bool &is_shutdown);
 
-        void handle_accept_call(mesos::scheduler::Call::Accept accept);
+        // a test: a executor running on x86 machine and a executor running on Arm machine
+        static bool first_slave;
+
     };
 
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state);

@@ -37,6 +37,7 @@ namespace chameleon {
 //              pid(_pid) {
 //
 //    }
+bool Master::first_slave = true;
 
     void Master::initialize() {
         // Verify that the version of the library that we linked against is
@@ -312,11 +313,22 @@ namespace chameleon {
 
         offer->mutable_slave_id()->MergeFrom(*slaveID);
 
-        if(m_alive_slaves.size()>0){
-            offer->set_hostname(*m_alive_slaves.begin());
-        }else{
-            offer->set_hostname(self().address.hostname().get());
+        // a test: a executor running on x86 machine and a executor running on Arm machine
+        if(m_alive_slaves.size() == 2){
+            if(first_slave){
+                offer->set_hostname(*m_alive_slaves.begin());
+                first_slave = false;
+            }else{
+                offer->set_hostname(m_alive_slaves[1]);
+                first_slave = true;
+            }
         }
+
+//        if(m_alive_slaves.size()>0){
+//            offer->set_hostname(*m_alive_slaves.begin());
+//        }else{
+//            offer->set_hostname(self().address.hostname().get());
+//        }
 
         mesos::internal::ResourceOffersMessage message;
         message.add_offers()->MergeFrom(*offer);
@@ -369,9 +381,17 @@ namespace chameleon {
 
                     foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
 
-                        for (auto it = this->m_alive_slaves.begin(); it != this->m_alive_slaves.end(); it++) {
-                            m_slavePID = "slave@" + stringify(*it) + ":6061";
-
+//                        for (auto it = this->m_alive_slaves.begin(); it != this->m_alive_slaves.end(); it++) {
+//                            m_slavePID = "slave@" + stringify(*it) + ":6061";
+//
+//                        }
+// a test: a executor running on x86 machine and a executor running on Arm machine
+                        if(first_slave){
+                            m_slavePID = "slave@" + m_alive_slaves[0] + ":6061";
+                            first_slave=false;
+                        }else{
+                            m_slavePID = "slave@" + m_alive_slaves[1] + ":6061";
+                            first_slave = true;
                         }
                         mesos::TaskInfo task_(task);
 
@@ -487,7 +507,7 @@ namespace chameleon {
 //                string object_str = stringify(object);
 //                DLOG(INFO) << object_str;
             m_hardware_resources.insert({slaveid, object});
-            m_alive_slaves.insert(slaveid);
+            m_alive_slaves.push_back(slaveid);
         }
     }
 
