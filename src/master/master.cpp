@@ -46,6 +46,7 @@ namespace chameleon {
         install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
 
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
+        //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
         install<JobMessage>(&Master::job_submited);
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
 
@@ -115,6 +116,31 @@ namespace chameleon {
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
                 });
+
+        // http://172.20.110.228.6060/master/frameworks
+        route(
+                "/frameworks",
+                "get the frameworks of the whole topology",
+                [this](Request request) {
+                    //JSON::Object result = JSON::Object();
+                    JSON::Object result = JSON::protobuf(m_frameworkInfo);
+                    if (!this->m_json_frameworkInfo.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_json_frameworkInfo.begin();
+                             it != this->m_json_frameworkInfo.end(); it++) {
+                            array.values.push_back(it->second);
+                        }
+                        result.values["quantity"] = array.values.size();
+                        result.values["content"] = array;
+                    }else {
+                            result.values["quantity"] = 0;
+                            result.values["content"] = JSON::Object();
+                        }
+                        OK ok_response(stringify(result));
+                        ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                        return ok_response;
+
+                    });
 
 
         // http://172.20.110.228:6060/master/stop-cluster
@@ -486,6 +512,17 @@ namespace chameleon {
             m_alive_slaves.insert(slaveid);
         }
     }
+
+//    void Master::change_frameworks(const UPID &from, const mesos::FrameworkInfo &frameworkInfo) {
+//        DLOG(INFO)<<"change protobuf message to JSON";
+//        //auto frameworkid = frameworkInfo.id();
+//        JSON::Object framework_result = JSON::protobuf(frameworkInfo);
+//        //string object_str = stringify(object);
+//        //LOG(INFO)<<object_str;
+//        // m_json_frameworkInfo
+//
+//    }
+
 
 //    void Master::job_submited(const UPID &from, const JobMessage &job_message) {
 //        LOG(INFO) << "got a job from " << from;
