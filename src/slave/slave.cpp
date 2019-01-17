@@ -150,6 +150,10 @@ namespace chameleon {
         if (child.isError()) {
             LOG(INFO) << child.error();
         }
+
+        //TODO:launchExecutor
+        //launch the container
+        Future<bool> launch = true;
     }
 
     void Slave::registerExecutor(const UPID &from,
@@ -196,6 +200,7 @@ namespace chameleon {
 
         if (task.has_container()) {
             executorInfo.mutable_container()->CopyFrom(task.container());
+            LOG(INFO)<<"Heldon taks has a container" ;
         }
 
         string name = "(Task: " + task.task_id().value() + ") ";

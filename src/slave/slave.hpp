@@ -169,6 +169,8 @@ namespace chameleon {
         mesos::ExecutorInfo m_executorInfo;
         mesos::TaskInfo m_task;
 
+        //DockerContainerizer* m_dockerContainerizer;
+
         void heartbeat();
 
         void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);

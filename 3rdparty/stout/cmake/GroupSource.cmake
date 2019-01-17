@@ -41,8 +41,8 @@ function(GROUP_SOURCE GROUP_NAME ROOT_DIRECTORY RELATIVE_TO SOURCE_PATTERN)
 
   # Extremely inefficient method of recursively creating a source group for
   # every subdirectory that contains a source file. In other words, if we have
-  # a folder structure like `slave/containerizer/`, we want a source group for
-  # both `slave/` and `slave/containerizer/`, so that the IDE structures the
+  # a folder structure like `slave/docker/`, we want a source group for
+  # both `slave/` and `slave/docker/`, so that the IDE structures the
   # source tree hierarchically. This loop is so inefficient because CMake does
   # not support a set data structure, it is hard to do better than this and
   # still be cross-platform.
@@ -51,12 +51,12 @@ function(GROUP_SOURCE GROUP_NAME ROOT_DIRECTORY RELATIVE_TO SOURCE_PATTERN)
   # (1) Loop over every source file found in any subdirectory rooted at
   #     `ROOT_DIRECTORY`
   # (2) For each source file, obtain the directory it exists in. For example if
-  #     the source file is `slave/containerizer/containerizer.cpp`, then the
-  #     directory `slave/containerizer/`.
+  #     the source file is `slave/docker/docker.cpp`, then the
+  #     directory `slave/docker/`.
   # (3) Create a source group for the directory. The source group for the
   #     directory consists of any file that is in the directory, not including
   #     files that are in subdirectories. In the example above, this would be
-  #     something like `slave/containerizer/*.cpp`.
+  #     something like `slave/docker/*.cpp`.
   #
   #     NOTE: This operation is so inefficient because it occurs for every
   #     source file, rather than every unique directory. So, every time we

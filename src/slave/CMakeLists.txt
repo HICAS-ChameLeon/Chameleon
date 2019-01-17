@@ -3,6 +3,7 @@ PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages monitor_info ${CMAKE_BINARY_DIR}
 include_directories(${CMAKE_BINARY_DIR}/message)
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
+
 # set the gtest 1.7 relevant library names.
 set(GTEST_LIBS gmock gtest gflags)
 
