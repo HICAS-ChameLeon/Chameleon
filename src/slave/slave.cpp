@@ -46,7 +46,7 @@ static const bool port_dummyUint = gflags::RegisterFlagValidator(&FLAGS_ht, &Val
 static const bool port_dummyInt = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 static const bool minfo_dummyStr = gflags::RegisterFlagValidator(&FLAGS_minfo, &ValidateStr);
 
-constexpr char MESOS_EXECUTOR[] = "mesos-executor";
+constexpr char MESOS_EXECUTOR[] = "chameleon-executor";
 
 namespace chameleon {
 
@@ -148,7 +148,7 @@ namespace chameleon {
                         {"MESOS_DIRECTORY",    mesos_directory},
                         {"MESOS_CHECKPOINT",   "0"}
                 };
-        const string mesos_executor_path = path::join(os::getcwd(), "/mesos_executor/mesos-executor");
+        const string mesos_executor_path = path::join(os::getcwd(), "/chameleon-executor");
 
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,
