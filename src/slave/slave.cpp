@@ -148,7 +148,7 @@ namespace chameleon {
                         {"MESOS_DIRECTORY",    mesos_directory},
                         {"MESOS_CHECKPOINT",   "0"}
                 };
-        const string mesos_executor_path = path::join(os::getcwd(), "/chameleon-executor");
+        const string mesos_executor_path = path::join(os::getcwd(), "../launcher/chameleon-executor");
 
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,

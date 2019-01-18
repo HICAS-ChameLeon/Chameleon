@@ -35,6 +35,7 @@
 #include "executor.hpp"
 
 namespace chameleon{
+
     class ExecutorDriver
     {
     public:
@@ -43,7 +44,7 @@ namespace chameleon{
 
         // Starts the executor driver. This needs to be called before any
         // other driver calls are made.
-        virtual mesos::Status start() = 0;
+        virtual mesos::Status start(process::UPID commandExecutorPid) = 0;
 
         // Stops the executor driver.
         //virtual mesos::Status stop() = 0;
@@ -62,7 +63,7 @@ namespace chameleon{
 
         virtual ~ChameleonExecutorDriver();
 
-        virtual mesos::Status start();
+        mesos::Status start(process::UPID commandExecutorPid);
 
         virtual mesos::Status sendStatusUpdate(const mesos::TaskStatus& status);
 
@@ -71,10 +72,14 @@ namespace chameleon{
         friend class chameleon::ExecutorProcess;
         // Libprocess process for communicating with slave.
         ExecutorProcess* process;
-
         // Current status of the driver.
         mesos::Status status;
+
+        process::UPID commandExecutor;
+
+        void launch(const mesos::TaskInfo &info);
     };
+
 
     class ExecutorProcess : public ProtobufProcess<ExecutorProcess>{
     public:
@@ -83,7 +88,8 @@ namespace chameleon{
                 ChameleonExecutorDriver* _driver,
                 const mesos::SlaveID& _slaveId,
                 const mesos::FrameworkID& _frameworkId,
-                const mesos::ExecutorID& _executorId) ;
+                const mesos::ExecutorID& _executorId,
+                process::UPID& _commandExecutor) ;
     protected:
         virtual void initialize();
 
@@ -101,18 +107,18 @@ namespace chameleon{
     private:
         friend class chameleon::ChameleonExecutorDriver;
 
+
+
         process::UPID slave;
         chameleon::ChameleonExecutorDriver* driver;
         mesos::SlaveID slaveId;
         mesos::FrameworkID frameworkId;
         mesos::ExecutorID executorId;
 
-    //    chameleon::CommandExecutor executor;
-       // bool connected; // Registered with the slave.
-        //UUID connection; // UUID to identify the connection instance.
-        bool local;
-    //    LinkedHashMap<TaskID, TaskInfo> tasks; // Unacknowledged tasks.
+        process::UPID commandExecutor;
+        //chameleon::CommandExecutor* m_executor;
 
+        bool local;
     };
 
 

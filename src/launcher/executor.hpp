@@ -37,6 +37,8 @@
 
 using std::string;
 
+
+
 namespace chameleon {
     class ChameleonExecutorDriver;
 
@@ -58,8 +60,18 @@ namespace chameleon {
 
         void launch(const mesos::TaskInfo& task);
 
-    private:
+        static pid_t launchTaskSubprocess(
+                const mesos::CommandInfo& command,
+                const string& launcherDir,
+                const mesos::Environment& environment,
+                const Option<string>& user,
+                const Option<string>& rootfs,
+                const Option<string>& sandboxDirectory,
+                const Option<string>& workingDirectory);
 
+    private:
+       // Option<TaskData> taskData;
+        pid_t pid;
         Option<mesos::FrameworkInfo> frameworkInfo;
         Option<mesos::TaskID> taskId;
         string launcherDir;

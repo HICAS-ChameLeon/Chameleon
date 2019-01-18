@@ -6,6 +6,7 @@
 
 using std::string;
 
+
 namespace chameleon{
 
     std::ostream& operator<<(std::ostream& stream, const mesos::SlaveID& slaveId)
@@ -14,15 +15,15 @@ namespace chameleon{
     }
 
 
-
     ChameleonExecutorDriver::ChameleonExecutorDriver() {
 
     }
 
     ChameleonExecutorDriver::~ChameleonExecutorDriver() {}
 
-    mesos::Status ChameleonExecutorDriver::start() {
+    mesos::Status ChameleonExecutorDriver::start(process::UPID commandExecutorPid) {
             std::cout<<"yxxxx ChameleonExecutorDriver start"<<std::endl;
+            commandExecutor = commandExecutorPid;
 /*            if (status != mesos::DRIVER_NOT_STARTED) {
                 return status;
             }*/
@@ -30,6 +31,9 @@ namespace chameleon{
             mesos::SlaveID slaveId;
             mesos::FrameworkID frameworkId;
             mesos::ExecutorID executorId;
+
+
+            std::cout<<"commandExecutorPid:  "<<commandExecutor<<std::endl;
 
             Option<string> value;
 
@@ -42,7 +46,7 @@ namespace chameleon{
 
             slave = process::UPID(value.get());
 
-            std::cout<<"slavePID"<<slave<<std::endl;
+            std::cout<<"slaveUPID"<<slave<<std::endl;
 
             CHECK(slave) << "Cannot parse MESOS_SLAVE_PID '" << value.get() << "'";
 
@@ -79,7 +83,8 @@ namespace chameleon{
                     this,
                     slaveId,
                     frameworkId,
-                    executorId);
+                    executorId,
+                    commandExecutor);
 
             spawn(process);
 
@@ -91,15 +96,21 @@ namespace chameleon{
 
     }
 
+    void ChameleonExecutorDriver::launch(const mesos::TaskInfo &info) {
+
+    }
+
+
     ExecutorProcess::ExecutorProcess(const process::UPID &_slave, ChameleonExecutorDriver *_driver,
                                      const mesos::SlaveID &_slaveId, const mesos::FrameworkID &_frameworkId,
-                                     const mesos::ExecutorID &_executorId)
+                                     const mesos::ExecutorID &_executorId,process::UPID& _commandExecutor)
                                      : ProcessBase("executor"),
                                      slave(_slave),
                                      driver(_driver),
                                      slaveId(_slaveId),
                                      frameworkId(_frameworkId),
-                                     executorId(_executorId)
+                                     executorId(_executorId),
+                                     commandExecutor(_commandExecutor)
                                      {
         install<mesos::internal::ExecutorRegisteredMessage>(
                 &ExecutorProcess::registered,
@@ -141,11 +152,11 @@ namespace chameleon{
 
     void ExecutorProcess::runTask(const mesos::TaskInfo &task) {
 
-/*        std::cout<<"yxxxxxxx ExecutorProcess begin runTask "<<slaveId<<std::endl;
+        std::cout<<"yxxxxxxx ExecutorProcess begin runTask "<<slaveId<<std::endl;
         LOG(INFO) << "yxxxxxxx ExecutorProcess runTask " << slaveId;
-        LOG(INFO) << "yxxxxxxx Executor asked to run task '" << task.task_id() << "'";*/
+//        LOG(INFO) << "yxxxxxxx Executor asked to run task '" << task.task_id() << "'"<<"on"<<commandExecutor;
 
-       // executor->launch(task);
+        send(commandExecutor, task);
     }
 
     void ExecutorProcess::sendStatusUpdate(const mesos::TaskStatus &status) {

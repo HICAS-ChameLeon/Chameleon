@@ -2,10 +2,16 @@
 // Created by root on 19-1-11.
 //
 
+#include <stout/protobuf.hpp>
 #include "executor.hpp"
 
 
 namespace chameleon {
+    std::ostream& operator<<(std::ostream& stream, const mesos::TaskID& taskId)
+    {
+        return stream << taskId.value();
+    }
+
     CommandExecutor::CommandExecutor(
             const string& _launcherDir,
             const Option<string>& _rootfs,
@@ -17,14 +23,142 @@ namespace chameleon {
             const mesos::ExecutorID& _executorId) : ProcessBase("CommandExecutor")
             {
                 std::cout<<"yxxxx CommandExecutor Construct start"<<std::endl;
+
+                install<mesos::TaskInfo>(
+                        &CommandExecutor::launch);
             }
 
     void CommandExecutor::initialize() {
         std::cout<<"yxxxx CommandExecutor initialize"<<std::endl;
-        m_driver->start();
+        process::UPID commandExecutorPid = self();
+        std::cout<<commandExecutorPid<<std::endl;
+        m_driver = new ChameleonExecutorDriver();
+        m_driver->start(commandExecutorPid);
     }
 
+/*
+    pid_t CommandExecutor::launchTaskSubprocess(
+            const mesos::CommandInfo& command,
+            const string& launcherDir,
+            const mesos::Environment& environment,
+            const Option<string>& user,
+            const Option<string>& rootfs,
+            const Option<string>& sandboxDirectory,
+            const Option<string>& workingDirectory){
+
+//        string commandString = strings::format(
+//                "%s %s <POSSIBLY-SENSITIVE-DATA>",
+//                path::join(launcherDir, MESOS_CONTAINERIZER),
+//                MesosContainerizerLaunch::NAME).get();
+
+*/
+/*        std::cout << "yxxxxx  Running '" << commandString << "'" << std::endl;
+
+        Try<process::Subprocess> s = subprocess(
+                path::join(launcherDir, MESOS_CONTAINERIZER),
+                process::Subprocess::FD(STDIN_FILENO),
+                process::Subprocess::FD(STDOUT_FILENO),
+                process::Subprocess::FD(STDERR_FILENO),
+                None(),
+                None(),
+                {process::Subprocess::ChildHook::SETSID()});*//*
+
+
+
+        return s->pid();
+    }
+*/
+
     void CommandExecutor::launch(const mesos::TaskInfo &task) {
+        LOG(INFO) << "yxxxxxxx CommandExecutor asked to run task '" << task.task_id()<< "'";
+       // taskData = TaskData(task);
+        taskId = task.task_id();
+        // Determine the command to launch the task.
+        mesos::CommandInfo command;
+
+        //----------------------------------------------------
+        if (taskCommand.isSome()) {
+            // Get CommandInfo from a JSON string.
+            std::cout << "\n taskCommand.isSome " << std::endl;
+
+            Try<JSON::Object> object = JSON::parse<JSON::Object>(taskCommand.get());
+            if (object.isError()) {
+                ABORT("Failed to parse JSON: " + object.error());
+            }
+
+            Try<mesos::CommandInfo> parse = ::protobuf::parse<mesos::CommandInfo>(object.get());
+
+            if (parse.isError()) {
+                ABORT("Failed to parse protobuf: " + parse.error());
+            }
+
+            command = parse.get();
+        } else if (task.has_command()) {
+            command = task.command();
+        } else {
+            LOG(FATAL) << "Expecting task '" << taskId.get() << "' to have a command";
+        }
+
+        //-------------------------------------------------------------
+        hashmap<string, mesos::Environment::Variable> environment;
+
+        foreachpair (const string& name, const string& value, os::environment()) {
+                                mesos::Environment::Variable variable;
+                                variable.set_name(name);
+                                variable.set_type(mesos::Environment::Variable::VALUE);
+                                variable.set_value(value);
+                                environment[name] = variable;
+                            }
+
+        if (taskEnvironment.isSome()) {
+            foreach (const mesos::Environment::Variable& variable,
+                     taskEnvironment->variables()) {
+                const string& name = variable.name();
+                if (environment.contains(name) &&
+                    environment[name].value() != variable.value()) {
+                    std::cout << "Overwriting environment variable '" << name << "'" << std::endl;
+                }
+                environment[name] = variable;
+            }
+        }
+
+        if (command.has_environment()) {
+            foreach (const mesos::Environment::Variable& variable,
+                     command.environment().variables()) {
+                const string& name = variable.name();
+                if (environment.contains(name) &&
+                    environment[name].value() != variable.value()) {
+                    std::cout << "Overwriting environment variable '" << name << "'" << std::endl;
+                }
+                environment[name] = variable;
+            }
+        }
+
+        mesos::Environment launchEnvironment;
+        foreachvalue (const mesos::Environment::Variable& variable, environment) {
+                                launchEnvironment.add_variables()->CopyFrom(variable);
+        }
+
+        //--------------------------------------------------
+
+        std::cout << "\n yxxxxxx Starting task " << taskId.get() << std::endl;
+
+/*        pid = launchTaskSubprocess(
+                command,
+                launcherDir,
+                launchEnvironment,
+                user,
+                rootfs,
+                sandboxDirectory,
+                workingDirectory);*/
+     //   const string *com = command.mutable_value();
+        Try<process::Subprocess> exec = process::subprocess(
+                *command.mutable_value(),
+                process::Subprocess::FD(STDIN_FILENO),
+                process::Subprocess::FD(STDOUT_FILENO),
+                process::Subprocess::FD(STDERR_FILENO) );
+
+        std::cout << "\n yxxxxx  Forked command at " << pid << std::endl;
 
     }
 
