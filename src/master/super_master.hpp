@@ -11,7 +11,7 @@
 #include <vector>
 #include <set>
 
-# google
+// google
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 
@@ -20,6 +20,7 @@
 #include <stout/json.hpp>
 #include <stout/jsonify.hpp>
 #include <stout/protobuf.hpp>
+#include <stout/os.hpp>
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -29,6 +30,9 @@
 #include <process/process.hpp>
 #include <process/protobuf.hpp>
 #include <process/delay.hpp>
+
+// protobuf
+#include <super_master_related.pb.h>
 
 // chameleon headers
 #include <configuration_glog.hpp>
@@ -48,7 +52,24 @@ using process::Promise;
 namespace chameleon {
 
     class SuperMaster :public ProtobufProcess<SuperMaster>{
+    public:
+        explicit SuperMaster():ProcessBase("super_master"){
 
+        }
+
+        void registered_master(const UPID &forom, const MasterRegisteredMessage &master_registered_message);
+
+        Future<bool> is_repeated_registered(const UPID& upid);
+
+        void record_master(const Future<bool>& future,const MasterRegisteredMessage &master_registered_message);
+
+        virtual ~SuperMaster(){}
+
+        virtual void initialize() override;
+
+    private:
+        // represent the super masters or masters administered by the current node.
+        vector<UPID> m_nodes;
     };
 
 }
