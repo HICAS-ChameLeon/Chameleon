@@ -1,0 +1,6 @@
+syntax = "proto2";
+message MasterRegisteredMessage
+{
+    required string slave_id =1;
+    required string slave_uuid=2;
+}
