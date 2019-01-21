@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
+#include <queue>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -22,6 +23,13 @@
 #include <stout/os/pstree.hpp>
 #include <stout/path.hpp>
 #include <stout/uuid.hpp>
+
+#include <stout/flags.hpp>
+#include <stout/hashmap.hpp>
+#include <stout/hashset.hpp>
+#include <stout/lambda.hpp>
+#include <stout/option.hpp>
+#include <stout/try.hpp>
 
 #include <stout/os/getcwd.hpp>
 #include <stout/os/write.hpp>
@@ -38,6 +46,7 @@
 #include <process/process.hpp>
 #include <process/protobuf.hpp>
 #include <process/delay.hpp>
+#include <process/subprocess.hpp>
 
 // protobuf
 #include <monitor_info.pb.h>
@@ -45,13 +54,19 @@
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
 
+#include <scheduler.pb.h>
+#include <messages.pb.h>
+#include <mesos.pb.h>
+
 // chameleon headers
 #include <resource_collector.hpp>
 #include <configuration_glog.hpp>
 #include <runtime_resources_usage.hpp>
-
+#include <chameleon_os.hpp>
+#include <chameleon_string.hpp>
 
 using std::string;
+using std::queue;
 using std::unordered_map;
 using std::shared_ptr;
 using std::make_shared;
@@ -74,9 +89,11 @@ namespace chameleon {
     // forward declations
     class SlaveHeartbeater;
 
+    class Slave;
+
     class Slave : public ProtobufProcess<Slave> {
     public:
-         explicit Slave() : ProcessBase("slave"), m_interval(){
+        explicit Slave() : ProcessBase("slave"), m_interval() {
             msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
             msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
 //            msp_resource_collector = new ResourceCollector();
@@ -87,7 +104,6 @@ namespace chameleon {
         virtual ~Slave() {
             LOG(INFO) << "~ Slave()";
         }
-
 
 
     protected:
@@ -110,6 +126,27 @@ namespace chameleon {
             Slave::m_interval = m_interval;
         }
 
+        void runTask(const process::UPID& from,
+                const mesos::FrameworkInfo& frameworkInfo,
+                const mesos::FrameworkID& frameworkId,
+                const process::UPID& pid,
+                const mesos::TaskInfo& task);
+
+        mesos::ExecutorInfo getExecutorInfo(
+                const mesos::FrameworkInfo &frameworkInfo,
+                const mesos::TaskInfo &task) const;
+
+        void statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID>& pid);
+
+        void forward(mesos::internal::StatusUpdate update);
+
+        void statusUpdateAcknowledgement(
+                const UPID& from,
+                const mesos::SlaveID& slaveId,
+                const mesos::FrameworkID& frameworkId,
+                const mesos::TaskID& taskId,
+                const string& uuid);
+
     private:
         shared_ptr<ResourceCollector> msp_resource_collector;
         shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
@@ -118,13 +155,35 @@ namespace chameleon {
         shared_ptr<UPID> msp_masterUPID;
         Duration m_interval;
         string m_uuid;
-        string m_master;
+        string m_master;  //master@127.0.0.1：1080
+
+        mesos::FrameworkInfo m_frameworkInfo;
+        mesos::SlaveInfo m_slaveInfo;
+        mesos::FrameworkID  m_frameworkID;
+        mesos::ExecutorInfo m_executorInfo;
+
+        // used a queue to keep track of the tasks awaiting to run
+//        mesos::TaskInfo m_task;
+        queue<mesos::TaskInfo> m_tasks;
+        mesos::SlaveID m_slaveID;
 
         void heartbeat();
 
         void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
+
+        void start_mesos_executor();
+
+        void registerExecutor(const UPID& from,
+                              const mesos::FrameworkID& frameworkId,
+                              const mesos::ExecutorID& executorId);
+
+        void _statusUpdate(
+                const mesos::internal::StatusUpdate& update,
+                const Option<UPID>& pid);
+
     };
 
+    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state);
 
     class SlaveHeartbeater : public process::Process<SlaveHeartbeater> {
 
@@ -154,6 +213,7 @@ namespace chameleon {
         }
         Duration m_interval;
     };
+
 }
 
 

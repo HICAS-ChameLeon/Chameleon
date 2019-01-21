@@ -7,6 +7,9 @@ PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages cluster_operation ${CMAKE_BINARY
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages mesos ${CMAKE_BINARY_DIR}/src/messages mesos)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages scheduler ${CMAKE_BINARY_DIR}/src/messages scheduler)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages messages ${CMAKE_BINARY_DIR}/src/messages messages)
+PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages super_master_related ${CMAKE_BINARY_DIR}/src/messages super_master_related)
+
+
 
 
 

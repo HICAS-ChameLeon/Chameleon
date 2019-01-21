@@ -227,11 +227,7 @@ if test "${this_bindir}" = "${this_bindir%${bindir}}"; then
   gmock_cxxflags=""
 
   # Directly invoke the gtest-config script used during the build process.
-<<<<<<< HEAD
-  gtest_config="/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/scripts/gtest-config"
-=======
-  gtest_config="/home/marcie/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/scripts/gtest-config"
->>>>>>> dev
+  gtest_config="/home/zyx/Chameleon/3rdparty/gmock-1.7.0/gtest/scripts/gtest-config"
 else
   # We're using an installed gmock, although it may be staged under some
   # prefix. Assume (as our own libraries do) that we can resolve the prefix,

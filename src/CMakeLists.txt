@@ -2,7 +2,6 @@
 include_directories(${CMAKE_BINARY_DIR}/src/messages)
 
 # the global configuration for glog
-message(5 ${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/src/log)
 include_directories(${CMAKE_SOURCE_DIR}/src/common)
 
@@ -24,5 +23,6 @@ add_subdirectory(slave)
 
 add_subdirectory(submitter)
 
+add_subdirectory(launcher)
 
 #add_subdirectory(my_hello)
