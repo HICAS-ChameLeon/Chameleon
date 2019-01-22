@@ -63,7 +63,9 @@ namespace chameleon {
 
         void record_master(const Future<bool>& future,const MasterRegisteredMessage &master_registered_message);
 
-        virtual ~SuperMaster(){}
+        virtual ~SuperMaster(){
+            LOG(INFO)<<" ~SuperMaster";
+        }
 
         virtual void initialize() override;
 
