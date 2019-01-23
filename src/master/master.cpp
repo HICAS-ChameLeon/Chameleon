@@ -287,7 +287,7 @@ namespace chameleon {
         mem_resource->set_name("mem");
         mem_resource->set_type(mesos::Value_Type_SCALAR);
         mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
-        mem_scalar->set_value(15000.0);
+        mem_scalar->set_value(1200.0);
         mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
         offer->add_resources()->MergeFrom(*mem_resource);
 
