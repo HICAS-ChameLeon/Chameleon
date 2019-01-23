@@ -58,7 +58,8 @@ int main(int argc, char **argv) {
 
             SuperMaster super_master;
             PID<SuperMaster> cur_super_master = process::spawn(super_master);
-            LOG(INFO) << "Running super_master on " << process::address().ip << ":" << process::address().port;
+
+    LOG(INFO) << "Running super_master on " << process::address().ip << ":" << process::address().port;
 
             const PID<SuperMaster> super_master_pid = super_master.self();
             LOG(INFO) << super_master_pid;
