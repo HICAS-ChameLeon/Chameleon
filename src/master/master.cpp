@@ -264,13 +264,7 @@ namespace chameleon {
         return;
     }
 
-    /**
-     * Function model  :  spark run on chameleon
-     * Author          :  weiguow
-     * Date            :  2018-12-28
-     * Funtion name    :  Master::offer
-     * */
-    void Master::Offer(const UPID &from) {
+    mesos::Offer* Master::create_a_offer(){
         mesos::Offer *offer = new mesos::Offer();
 
         // cpus
@@ -302,25 +296,88 @@ namespace chameleon {
         offer->add_resources()->MergeFrom(*port_resource);
 
         mesos::OfferID offerId;
-        offerId.set_value("33333333");
+        offerId.set_value("22222222");
         offer->mutable_id()->CopyFrom(offerId);
 
         offer->mutable_framework_id()->MergeFrom(m_frameworkID);
 
         mesos::SlaveID *slaveID = new mesos::SlaveID();
-        slaveID->set_value("44444444");
+        slaveID->set_value("22222222222");
 
         offer->mutable_slave_id()->MergeFrom(*slaveID);
 
-        if(m_alive_slaves.size()>0){
-            offer->set_hostname(*m_alive_slaves.begin());
-        }else{
-            offer->set_hostname(self().address.hostname().get());
-        }
+//        if(m_alive_slaves.size()>0){
+//            offer->set_hostname(*m_alive_slaves.begin());
+//        }else{
+//            offer->set_hostname(self().address.hostname().get());
+//        }
+        offer->set_hostname("221b");
+        return offer;
+    }
+
+    /**
+     * Function model  :  spark run on chameleon
+     * Author          :  weiguow
+     * Date            :  2018-12-28
+     * Funtion name    :  Master::offer
+     * */
+    void Master::Offer(const UPID &from) {
+        mesos::Offer *offer = new mesos::Offer();
+
+        // cpus
+        mesos::Resource *cpu_resource = new mesos::Resource();
+        cpu_resource->set_name("cpus");
+        cpu_resource->set_type(mesos::Value_Type_SCALAR);
+        mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
+        cpu_scalar->set_value(4.0);
+        cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
+        offer->add_resources()->MergeFrom(*cpu_resource);
+
+        // memory
+        mesos::Resource *mem_resource = new mesos::Resource();
+        mem_resource->set_name("mem");
+        mem_resource->set_type(mesos::Value_Type_SCALAR);
+        mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
+        mem_scalar->set_value(1000.0);
+        mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
+        offer->add_resources()->MergeFrom(*mem_resource);
+
+        // port
+        mesos::Resource *port_resource = new mesos::Resource();
+        port_resource->set_name("ports");
+        port_resource->set_type(mesos::Value_Type_RANGES);
+
+        mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
+        port_range->set_begin(31000);
+        port_range->set_end(32000);
+        offer->add_resources()->MergeFrom(*port_resource);
+
+        mesos::OfferID offerId;
+        offerId.set_value("111111111");
+        offer->mutable_id()->CopyFrom(offerId);
+
+        offer->mutable_framework_id()->MergeFrom(m_frameworkID);
+
+        mesos::SlaveID *slaveID = new mesos::SlaveID();
+        slaveID->set_value("11111111");
+
+        offer->mutable_slave_id()->MergeFrom(*slaveID);
+
+//        if(m_alive_slaves.size()>0){
+//            offer->set_hostname(*m_alive_slaves.begin());
+//        }else{
+//            offer->set_hostname(self().address.hostname().get());
+//        }
+        offer->set_hostname("AMD-V");
+
 
         mesos::internal::ResourceOffersMessage message;
         message.add_offers()->MergeFrom(*offer);
-        message.add_pids("55555555");
+        message.add_pids("1");
+
+        mesos::Offer* second_offer = create_a_offer();
+        message.add_offers()->MergeFrom(*second_offer);
+        message.add_pids("2");
 
         LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
                   << from ;
@@ -369,13 +426,19 @@ namespace chameleon {
 
                     foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
 
-                        for (auto it = this->m_alive_slaves.begin(); it != this->m_alive_slaves.end(); it++) {
-                            m_slavePID = "slave@" + stringify(*it) + ":6061";
-
+//                        for (auto it = this->m_alive_slaves.begin(); it != this->m_alive_slaves.end(); it++) {
+//                            m_slavePID = "slave@" + stringify(*it) + ":6061";
+//
+//                        }
+                        string cur_slavePID="slave@";
+                        if(task.slave_id().value() ==  "11111111"){
+                            cur_slavePID.append("172.20.110.228:6061");
+                        }else{
+                            cur_slavePID.append("172.20.110.53:6061");
                         }
                         mesos::TaskInfo task_(task);
 
-                        LOG(INFO) << "Sending task to slave " << m_slavePID ; //slave(1)@172.20.110.152:5051
+                        LOG(INFO) << "Sending task to slave " << cur_slavePID ; //slave(1)@172.20.110.152:5051
 
                         mesos::internal::RunTaskMessage message;
                         message.mutable_framework()->MergeFrom(m_frameworkInfo);
@@ -383,7 +446,7 @@ namespace chameleon {
                         message.mutable_task()->MergeFrom(task_);
                         message.mutable_framework_id()->MergeFrom(m_frameworkID);
 
-                        send(m_slavePID, message);
+                        send(cur_slavePID, message);
 
                         _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
                     }

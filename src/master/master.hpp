@@ -249,6 +249,8 @@ namespace chameleon {
         void received_reply_shutdown_message(const string &ip, const bool &is_shutdown);
 
         void handle_accept_call(mesos::scheduler::Call::Accept accept);
+
+        mesos::Offer* create_a_offer();
     };
 
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state);
