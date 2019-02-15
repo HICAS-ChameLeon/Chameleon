@@ -5,6 +5,7 @@
  * Description：super_master
  */
 
+#include <super_master_related.pb.h>
 #include "super_master.hpp"
 namespace chameleon {
     void SuperMaster::initialize(){
@@ -13,6 +14,7 @@ namespace chameleon {
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
         install<MasterRegisteredMessage>(&SuperMaster::registered_master);
+        install<OwnedSlavesMessage>(&SuperMaster::terminating_master);
 
         // change from one level to two levels
         cluster_levels = 2;
@@ -49,19 +51,47 @@ namespace chameleon {
 
     void SuperMaster::record_master(const Future<bool>& future,const UPID &from,const MasterRegisteredMessage &master_registered_message){
         CHECK(!future.isDiscarded());
+        AcceptRegisteredMessage* accept_registered = new AcceptRegisteredMessage();
+        accept_registered->set_master_id(stringify(from.address.ip));
+
         if(!future.isReady()){
+            accept_registered->set_status(AcceptRegisteredMessage_Status_FAILURE);
+            send(from, *accept_registered);
+            delete  accept_registered;
             LOG(ERROR)<<"Failed to record master for this super master due to "<<(future.isFailed() ? future.failure() : "future discarded");
+
             return;
         }
         if(!future.get()){
+            accept_registered->set_status(AcceptRegisteredMessage_Status_FAILURE);
+            send(from, *accept_registered);
+            delete  accept_registered;
             LOG(INFO)<<" master registered repeatedly!";
             return;
         }
 
         m_masters.push_back(from);
         LOG(INFO)<<"record a registered master "<<from;
+        accept_registered->set_status(AcceptRegisteredMessage_Status_SUCCESS);
+        send(from, *accept_registered);
+        delete  accept_registered;
+        return;
+    }
 
+    void SuperMaster::terminating_master(const UPID& from,const OwnedSlavesMessage& message){
+        LOG(INFO)<<" get an OwnedSlavesMessage from "<< from;
+        LOG(INFO)<<message.slave_infos().size();
 
+        std::copy(message.slave_infos().begin(),message.slave_infos().end(),std::back_inserter(m_admin_slaves));
+        LOG(INFO)<<m_admin_slaves.size();
+        for(SlaveInfo& slaveInfo: m_admin_slaves){
+            LOG(INFO)<<slaveInfo.hardware_resources().cpu_collection().cpu_infos_size();
+        }
+        TerminatingMasterMessage* terminating_master = new TerminatingMasterMessage();
+        terminating_master->set_master_id(stringify(from.address.ip));
+        send(from,*terminating_master);
+        delete terminating_master;
+        LOG(INFO)<<" send a TerminatingMasterMessage to master "<<from<<" since the super master has receive the owned slaves of that master";
     }
 
 

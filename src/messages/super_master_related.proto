@@ -42,3 +42,7 @@ message OwnedSlavesMessage{
   repeated SlaveInfo slave_infos = 1;
   required uint32 quantity  = 2;
 }
+
+message TerminatingMasterMessage{
+    required string master_id = 1;
+}

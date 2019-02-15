@@ -10,7 +10,7 @@
 // C++ 11 dependencies
 #include <vector>
 #include <set>
-
+#include<iterator>
 // google
 #include <glog/logging.h>
 #include <gflags/gflags.h>
@@ -61,17 +61,19 @@ namespace chameleon {
 
         }
 
+        virtual void initialize() override;
+
         void registered_master(const UPID &forom, const MasterRegisteredMessage &master_registered_message);
 
         Future<bool> is_repeated_registered(const UPID& upid);
 
         void record_master(const Future<bool>& future,const UPID &from, const MasterRegisteredMessage &master_registered_message);
 
+        void terminating_master(const UPID& from,const OwnedSlavesMessage& message);
         virtual ~SuperMaster(){
             LOG(INFO)<<" ~SuperMaster";
         }
 
-        virtual void initialize() override;
 
     private:
 
@@ -85,6 +87,8 @@ namespace chameleon {
         // represent the current number of level
         int32_t m_levels;
         string m_first_to_second_master;
+
+        vector<SlaveInfo> m_admin_slaves;
     };
 
 }

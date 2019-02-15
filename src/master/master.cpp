@@ -66,6 +66,7 @@ namespace chameleon {
                 &mesos::internal::StatusUpdateAcknowledgementMessage::uuid);
 
         install<SuperMasterControlMessage>(&Master::super_master_control);
+        install<TerminatingMasterMessage>(&Master::received_terminating_master_message);
 
 //        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
 
@@ -692,10 +693,22 @@ namespace chameleon {
             send(super_master,*owned_slaves);
             delete owned_slaves;
             LOG(INFO)<<" send owned slaves of "<<self()<<" to super_master "<<super_master;
+
+
+
         }else{
             LOG(INFO)<<self()<<"cannot registered to "<<super_master<<". Maybe it has registered to other supermaster before";
 
         }
+    }
+
+    void Master::received_terminating_master_message(const UPID& super_master, const TerminatingMasterMessage& message){
+        LOG(INFO)<<" receive a TerminatingMasterMessage from "<<super_master;
+        if(message.master_id() == stringify(self().address.ip)){
+            LOG(INFO)<<self()<<"  is terminating due to new super_master was deteched";
+            terminate(self());
+        }
+
     }
 
     // end of super_mater related

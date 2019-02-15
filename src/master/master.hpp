@@ -276,6 +276,8 @@ namespace chameleon {
         void super_master_control(const UPID &super_master, const SuperMasterControlMessage &super_master_control_message);
 
         void received_registered_message_from_super_master(const UPID& super_master, const AcceptRegisteredMessage& message);
+
+        void received_terminating_master_message(const UPID& super_master, const TerminatingMasterMessage& message);
     };
 
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state);
