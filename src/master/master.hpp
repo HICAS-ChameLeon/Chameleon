@@ -25,6 +25,7 @@
 #include <stout/os/pstree.hpp>
 #include <stout/hashmap.hpp>
 #include <stout/uuid.hpp>
+#include <stout/check.hpp>
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -229,6 +230,7 @@ namespace chameleon {
 
         unordered_map<UPID, ParticipantInfo> m_participants;
         unordered_map<string, JSON::Object> m_hardware_resources;
+        unordered_map<string, HardwareResourcesMessage> m_proto_hardware_resources;
         set<string> m_alive_slaves;
 
         unordered_map<string, JSON::Object> m_runtime_resources;
@@ -272,6 +274,8 @@ namespace chameleon {
 
         // super_master related
         void super_master_control(const UPID &super_master, const SuperMasterControlMessage &super_master_control_message);
+
+        void received_registered_message_from_super_master(const UPID& super_master, const AcceptRegisteredMessage& message);
     };
 
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state);

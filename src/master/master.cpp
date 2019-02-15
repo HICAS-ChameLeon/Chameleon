@@ -51,6 +51,7 @@ namespace chameleon {
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         install<JobMessage>(&Master::job_submited);
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
+        install<AcceptRegisteredMessage>(&Master::received_registered_message_from_super_master);
 
         install<mesos::internal::StatusUpdateMessage>(
                 &Master::statusUpdate,
@@ -562,6 +563,7 @@ namespace chameleon {
 //                string object_str = stringify(object);
 //                DLOG(INFO) << object_str;
             m_hardware_resources.insert({slaveid, object});
+            m_proto_hardware_resources.insert({slaveid, hardware_resources_message});
             m_alive_slaves.insert(slaveid);
         }
     }
@@ -661,6 +663,8 @@ namespace chameleon {
 
       is_passive = super_master_control_message.passive();
       if(!is_passive){
+          // change current status to REGISTERRING to register from supermaster.
+          m_state = REGISTERING;
           MasterRegisteredMessage* master_registered_message = new MasterRegisteredMessage();
           master_registered_message->set_master_id(stringify(self().address.ip));
           master_registered_message->set_master_uuid(m_uuid);
@@ -670,6 +674,28 @@ namespace chameleon {
           LOG(INFO)<<" send a master_registered_message to "<<super_master;
       }
 
+    }
+
+    void Master::received_registered_message_from_super_master(const UPID& super_master, const AcceptRegisteredMessage& message){
+        LOG(INFO)<<"get a AcceptRegisteredMessage from super_master"<<super_master;
+        if(message.status()==AcceptRegisteredMessage_Status_SUCCESS){
+            LOG(INFO)<<self()<<" registered from super_master "<<super_master<<" successfully";
+            OwnedSlavesMessage* owned_slaves = new OwnedSlavesMessage();
+            for(const string& slave_ip:m_alive_slaves){
+                SlaveInfo* t_slave = owned_slaves->add_slave_infos();
+                HardwareResourcesMessage* hardware_resources = new HardwareResourcesMessage(m_proto_hardware_resources[slave_ip]);
+                t_slave->set_allocated_hardware_resources(hardware_resources);
+                RuntimeResourcesMessage* runtime_Resources = new RuntimeResourcesMessage(m_proto_runtime_resources[slave_ip]);
+                t_slave->set_allocated_runtime_resources(runtime_Resources);
+            }
+            owned_slaves->set_quantity(owned_slaves->slave_infos_size());
+            send(super_master,*owned_slaves);
+            delete owned_slaves;
+            LOG(INFO)<<" send owned slaves of "<<self()<<" to super_master "<<super_master;
+        }else{
+            LOG(INFO)<<self()<<"cannot registered to "<<super_master<<". Maybe it has registered to other supermaster before";
+
+        }
     }
 
     // end of super_mater related
