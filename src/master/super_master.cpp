@@ -13,17 +13,33 @@ namespace chameleon {
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
         install<MasterRegisteredMessage>(&SuperMaster::registered_master);
+
+        // change from one level to two levels
+        cluster_levels = 2;
+        m_uuid = UUID::random().toString();
+        m_first_to_second_master = "master@172.20.110.228:6060";
+        SuperMasterControlMessage* super_master_control_message = new SuperMasterControlMessage();
+        super_master_control_message->set_super_master_id(m_first_to_second_master);
+        super_master_control_message->set_super_master_uuid(m_uuid);
+        super_master_control_message->set_passive(false);
+
+        UPID t_master(m_first_to_second_master);
+        send(t_master,*super_master_control_message);
+        LOG(INFO)<<" sends a super_master_constrol_message to a master: "<< m_first_to_second_master;
+        delete super_master_control_message;
+
     }
 
     void SuperMaster::registered_master(const UPID &from, const MasterRegisteredMessage &master_registered_message){
+        LOG(INFO)<<"accept a mater_registered_message from "<<from;
         Future<bool> distinctive = true;
         distinctive = distinctive.then(defer(self(),&Self::is_repeated_registered,from));
-        distinctive.onAny(defer(self(),&Self::record_master,lambda::_1,master_registered_message));
+        distinctive.onAny(defer(self(),&Self::record_master,lambda::_1,from,master_registered_message));
 
     }
 
     Future<bool> SuperMaster::is_repeated_registered(const UPID& upid){
-        if(std::find(m_nodes.begin(),m_nodes.end(),upid)!=m_nodes.end()){
+        if(std::find(m_masters.begin(),m_masters.end(),upid)!=m_masters.end()){
             LOG(INFO)<<" master "<<upid<<" registered repeatedly!";
 
             return false;
@@ -31,7 +47,7 @@ namespace chameleon {
         return true;
     }
 
-    void SuperMaster::record_master(const Future<bool>& future,const MasterRegisteredMessage &master_registered_message){
+    void SuperMaster::record_master(const Future<bool>& future,const UPID &from,const MasterRegisteredMessage &master_registered_message){
         CHECK(!future.isDiscarded());
         if(!future.isReady()){
             LOG(ERROR)<<"Failed to record master for this super master due to "<<(future.isFailed() ? future.failure() : "future discarded");
@@ -41,6 +57,10 @@ namespace chameleon {
             LOG(INFO)<<" master registered repeatedly!";
             return;
         }
+
+        m_masters.push_back(from);
+        LOG(INFO)<<"record a registered master "<<from;
+
 
     }
 

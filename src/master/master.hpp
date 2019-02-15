@@ -44,6 +44,8 @@
 #include <mesos.pb.h>
 #include <scheduler.pb.h>
 #include <messages.pb.h>
+#include <super_master_related.pb.h>
+
 
 // chameleon headers
 #include <configuration_glog.hpp>
@@ -150,6 +152,7 @@ namespace chameleon {
         explicit Master() : ProcessBase("master") {
             msp_spark_slave = make_shared<UPID>(UPID(test_slave_UPID));
             msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
+            m_state = INITIALIZING;
         }
 
         virtual ~Master() {}
@@ -211,7 +214,19 @@ namespace chameleon {
 
         void acknowledge(const mesos::scheduler::Call::Acknowledge& acknowledge);
 
+
     private:
+
+        string m_uuid;
+
+        // master states.
+        enum
+        {
+           REGISTERING, // is registering from a super_master
+           INITIALIZING,
+           RUNNING
+        } m_state;
+
         unordered_map<UPID, ParticipantInfo> m_participants;
         unordered_map<string, JSON::Object> m_hardware_resources;
         set<string> m_alive_slaves;
@@ -229,6 +244,9 @@ namespace chameleon {
         mesos::FrameworkID m_frameworkID;
         UPID m_frameworkPID;
         string m_slavePID;
+
+        // super_master_related
+        bool is_passive;
 
         //void Master::handle_accept_call(mesos::scheduler::Call::Accept accept);
         //hashmap<mesos::OfferID, mesos::Offer*> offers;
@@ -251,6 +269,9 @@ namespace chameleon {
         void handle_accept_call(mesos::scheduler::Call::Accept accept);
 
         mesos::Offer* create_a_offer();
+
+        // super_master related
+        void super_master_control(const UPID &super_master, const SuperMasterControlMessage &super_master_control_message);
     };
 
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state);

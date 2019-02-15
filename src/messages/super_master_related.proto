@@ -1,6 +1,20 @@
 syntax = "proto2";
 message MasterRegisteredMessage
 {
-    required string slave_id =1;
-    required string slave_uuid=2;
+    required string master_id =1;
+    required string master_uuid=2;
+
+    enum Status{
+        FIRST_REGISTERING = 0;
+        REREGISTERING =1;
+    }
+
+    required Status status = 3 [default = FIRST_REGISTERING];
+}
+
+message SuperMasterControlMessage{
+    required string super_master_id = 1;
+    required string super_master_uuid = 2;
+    required bool passive = 3;
+
 }

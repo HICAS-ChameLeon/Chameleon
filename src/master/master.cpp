@@ -5,6 +5,7 @@
  * Description：master
  */
 
+#include <super_master_related.pb.h>
 #include "master.hpp"
 
 DEFINE_int32(port, 0, "master port");
@@ -39,6 +40,8 @@ namespace chameleon {
 //    }
 
     void Master::initialize() {
+
+        m_uuid = UUID::random().toString();
         // Verify that the version of the library that we linked against is
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -60,6 +63,8 @@ namespace chameleon {
                 &mesos::internal::StatusUpdateAcknowledgementMessage::framework_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::task_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::uuid);
+
+        install<SuperMasterControlMessage>(&Master::super_master_control);
 
 //        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
 
@@ -149,6 +154,13 @@ namespace chameleon {
         install("stop", [=](const UPID &from, const string &body) {
             terminate(self());
         });
+
+        // super_master related
+        // when we have only one level (i.e. we have no super_master),
+        // is_passive = true stands fro that the master is started initiatively.
+        is_passive = false;
+
+        m_state = RUNNING;
 
     }
 
@@ -641,6 +653,26 @@ namespace chameleon {
             LOG(INFO) << "successfully shutdown a slave " << ip;
         }
     }
+
+    // super_master related
+    void Master::super_master_control(const UPID &super_master, const SuperMasterControlMessage &super_master_control_message){
+      LOG(INFO)<<" get a super_master_control_message from super_master"<<super_master;
+      LOG(INFO)<<" passive in super_master_control_message is "<< super_master_control_message.passive();
+
+      is_passive = super_master_control_message.passive();
+      if(!is_passive){
+          MasterRegisteredMessage* master_registered_message = new MasterRegisteredMessage();
+          master_registered_message->set_master_id(stringify(self().address.ip));
+          master_registered_message->set_master_uuid(m_uuid);
+          master_registered_message->set_status(MasterRegisteredMessage_Status_FIRST_REGISTERING);
+          send(super_master, *master_registered_message);
+          delete master_registered_message;
+          LOG(INFO)<<" send a master_registered_message to "<<super_master;
+      }
+
+    }
+
+    // end of super_mater related
 
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)
     {
