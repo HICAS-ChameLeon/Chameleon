@@ -17,11 +17,17 @@ message MasterRegisteredMessage
     required Status status = 3 [default = FIRST_REGISTERING];
 }
 
+message SlavesInfoControlledByMaster{
+    required string ip = 1;
+    required string port = 2;
+
+}
+
 message SuperMasterControlMessage{
     required string super_master_id = 1;
-    required string super_master_uuid = 2;
+    optional string super_master_uuid = 2;
     required bool passive = 3;
-
+    repeated SlavesInfoControlledByMaster my_slaves=4;
 }
 
 message AcceptRegisteredMessage{
@@ -45,4 +51,14 @@ message OwnedSlavesMessage{
 
 message TerminatingMasterMessage{
     required string master_id = 1;
+}
+
+
+
+message AdministeredSlavesMessage{
+    required string master_id = 1;
+    required string master_uuid =2 ;
+    required string super_master_uuid = 3;
+
+    repeated SlavesInfoControlledByMaster my_slaves = 4;
 }

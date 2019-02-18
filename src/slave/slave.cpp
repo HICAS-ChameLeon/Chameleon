@@ -92,6 +92,8 @@ namespace chameleon {
                 &mesos::internal::RegisterExecutorMessage::framework_id,
                 &mesos::internal::RegisterExecutorMessage::executor_id);
 
+        install<ReregisterMasterMessage>(&Slave::reregister_to_master);
+
 
         HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
         DLOG(INFO) << *msp_masterUPID;
@@ -507,6 +509,17 @@ namespace chameleon {
         std::chrono::duration<double> duration = t2 - t1;
         LOG(INFO) << "It cost " << duration.count() << " s";
         delete rr_message;
+    }
+
+    void Slave::reregister_to_master(const UPID& from, const ReregisterMasterMessage& message){
+
+        LOG(INFO)<<"got a ReregisteredMasterMessage from "<<from;
+        if(message.slave_ip() == stringify(self().address.ip)){
+            m_master = "master@"+message.master_ip()+":"+message.port();
+            msp_masterUPID.reset(new UPID(m_master));
+            LOG(INFO)<<" prepare to  a  heartbeat to the new master "<<m_master<<" ";
+            send_heartbeat_to_master();
+        }
     }
 
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)

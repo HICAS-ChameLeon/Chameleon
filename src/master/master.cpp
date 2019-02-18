@@ -673,6 +673,11 @@ namespace chameleon {
           send(super_master, *master_registered_message);
           delete master_registered_message;
           LOG(INFO)<<" send a master_registered_message to "<<super_master;
+      } else{
+          // is_passive = true means the master was evoked by a super_master,
+          // so repeated SlavesInfoControlledByMaster my_slaves=4 is not empty
+
+
       }
 
     }
