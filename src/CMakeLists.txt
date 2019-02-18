@@ -27,6 +27,7 @@ add_subdirectory(slave)
 
 add_subdirectory(submitter)
 
+add_subdirectory(launcher)
 add_subdirectory(docker)
 
 
