@@ -46,7 +46,7 @@ static const bool port_dummyUint = gflags::RegisterFlagValidator(&FLAGS_ht, &Val
 static const bool port_dummyInt = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 static const bool minfo_dummyStr = gflags::RegisterFlagValidator(&FLAGS_minfo, &ValidateStr);
 
-constexpr char MESOS_EXECUTOR[] = "mesos-executor";
+constexpr char MESOS_EXECUTOR[] = "chameleon-executor";
 
 namespace chameleon {
 
@@ -124,7 +124,10 @@ namespace chameleon {
         const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, task);
 
         m_frameworkInfo = frameworkInfo;  //missing framework.user framework.name
-        m_task = task;
+//        m_task = task;
+       // push the task to back of the queue
+        m_tasks.push(task);
+
         m_frameworkID = frameworkId;
         m_executorInfo = executorInfo;
 
@@ -145,7 +148,7 @@ namespace chameleon {
                         {"MESOS_DIRECTORY",    mesos_directory},
                         {"MESOS_CHECKPOINT",   "0"}
                 };
-        const string mesos_executor_path = path::join(os::getcwd(), "/mesos_executor/mesos-executor");
+        const string mesos_executor_path = path::join(os::getcwd(), "../launcher/chameleon-executor");
 
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,
@@ -177,7 +180,13 @@ namespace chameleon {
 
         mesos::internal::RunTaskMessage run_task_message;
         run_task_message.mutable_framework()->MergeFrom(m_frameworkInfo);
-        run_task_message.mutable_task()->MergeFrom(m_task);
+        if(!m_tasks.empty()){
+            mesos::TaskInfo current_task = m_tasks.front();
+            run_task_message.mutable_task()->MergeFrom(current_task);
+            m_tasks.pop();
+        }else{
+            LOG(FATAL)<<" No task left for new executor to run ";
+        }
         run_task_message.set_pid(from);
 
         send(from, run_task_message);
@@ -204,6 +213,7 @@ namespace chameleon {
 
         // Command executors share the same id as the task.
         executorInfo.mutable_executor_id()->set_value(task.task_id().value());
+        LOG(INFO)<<" generate new executorInfo, its executor_id is "<<executorInfo.mutable_executor_id()->value();
         executorInfo.mutable_framework_id()->CopyFrom(frameworkInfo.id());
 
         if (task.has_container()) {

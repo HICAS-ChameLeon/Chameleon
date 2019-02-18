@@ -1,0 +1,48 @@
+syntax = "proto2";
+
+import "hardware_resource.proto";
+import "runtime_resource.proto";
+
+
+message MasterRegisteredMessage
+{
+    required string master_id =1;
+    required string master_uuid=2;
+
+    enum Status{
+        FIRST_REGISTERING = 0;
+        REREGISTERING =1;
+    }
+
+    required Status status = 3 [default = FIRST_REGISTERING];
+}
+
+message SuperMasterControlMessage{
+    required string super_master_id = 1;
+    required string super_master_uuid = 2;
+    required bool passive = 3;
+
+}
+
+message AcceptRegisteredMessage{
+    required string master_id = 1;
+    enum Status{
+        SUCCESS = 0;
+        FAILURE = 1;
+    }
+    required Status status = 2;
+}
+
+message SlaveInfo{
+    required HardwareResourcesMessage hardware_resources = 1;
+    required RuntimeResourcesMessage  runtime_resources = 2;
+}
+
+message OwnedSlavesMessage{
+  repeated SlaveInfo slave_infos = 1;
+  required uint32 quantity  = 2;
+}
+
+message TerminatingMasterMessage{
+    required string master_id = 1;
+}
