@@ -5,6 +5,7 @@
  * Description：master
  */
 
+#include <super_master_related.pb.h>
 #include "master.hpp"
 
 DEFINE_int32(port, 0, "master port");
@@ -39,6 +40,8 @@ namespace chameleon {
 //    }
 
     void Master::initialize() {
+
+        m_uuid = UUID::random().toString();
         // Verify that the version of the library that we linked against is
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -48,6 +51,7 @@ namespace chameleon {
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         install<JobMessage>(&Master::job_submited);
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
+        install<AcceptRegisteredMessage>(&Master::received_registered_message_from_super_master);
 
         install<mesos::internal::StatusUpdateMessage>(
                 &Master::statusUpdate,
@@ -60,6 +64,9 @@ namespace chameleon {
                 &mesos::internal::StatusUpdateAcknowledgementMessage::framework_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::task_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::uuid);
+
+        install<SuperMasterControlMessage>(&Master::super_master_control);
+        install<TerminatingMasterMessage>(&Master::received_terminating_master_message);
 
 //        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
 
@@ -149,6 +156,13 @@ namespace chameleon {
         install("stop", [=](const UPID &from, const string &body) {
             terminate(self());
         });
+
+        // super_master related
+        // when we have only one level (i.e. we have no super_master),
+        // is_passive = true stands fro that the master is started initiatively.
+        is_passive = false;
+
+        m_state = RUNNING;
 
     }
 
@@ -264,6 +278,57 @@ namespace chameleon {
         return;
     }
 
+    mesos::Offer* Master::create_a_offer(){
+        mesos::Offer *offer = new mesos::Offer();
+
+        // cpus
+        mesos::Resource *cpu_resource = new mesos::Resource();
+        cpu_resource->set_name("cpus");
+        cpu_resource->set_type(mesos::Value_Type_SCALAR);
+        mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
+        cpu_scalar->set_value(4.0);
+        cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
+        offer->add_resources()->MergeFrom(*cpu_resource);
+
+        // memory
+        mesos::Resource *mem_resource = new mesos::Resource();
+        mem_resource->set_name("mem");
+        mem_resource->set_type(mesos::Value_Type_SCALAR);
+        mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
+        mem_scalar->set_value(1200.0);
+        mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
+        offer->add_resources()->MergeFrom(*mem_resource);
+
+        // port
+        mesos::Resource *port_resource = new mesos::Resource();
+        port_resource->set_name("ports");
+        port_resource->set_type(mesos::Value_Type_RANGES);
+
+        mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
+        port_range->set_begin(31000);
+        port_range->set_end(32000);
+        offer->add_resources()->MergeFrom(*port_resource);
+
+        mesos::OfferID offerId;
+        offerId.set_value("22222222");
+        offer->mutable_id()->CopyFrom(offerId);
+
+        offer->mutable_framework_id()->MergeFrom(m_frameworkID);
+
+        mesos::SlaveID *slaveID = new mesos::SlaveID();
+        slaveID->set_value("22222222222");
+
+        offer->mutable_slave_id()->MergeFrom(*slaveID);
+
+//        if(m_alive_slaves.size()>0){
+//            offer->set_hostname(*m_alive_slaves.begin());
+//        }else{
+//            offer->set_hostname(self().address.hostname().get());
+//        }
+        offer->set_hostname("221b");
+        return offer;
+    }
+
     /**
      * Function model  :  spark run on chameleon
      * Author          :  weiguow
@@ -287,7 +352,7 @@ namespace chameleon {
         mem_resource->set_name("mem");
         mem_resource->set_type(mesos::Value_Type_SCALAR);
         mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
-        mem_scalar->set_value(15000.0);
+        mem_scalar->set_value(1000.0);
         mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
         offer->add_resources()->MergeFrom(*mem_resource);
 
@@ -302,25 +367,31 @@ namespace chameleon {
         offer->add_resources()->MergeFrom(*port_resource);
 
         mesos::OfferID offerId;
-        offerId.set_value("33333333");
+        offerId.set_value("111111111");
         offer->mutable_id()->CopyFrom(offerId);
 
         offer->mutable_framework_id()->MergeFrom(m_frameworkID);
 
         mesos::SlaveID *slaveID = new mesos::SlaveID();
-        slaveID->set_value("44444444");
+        slaveID->set_value("11111111");
 
         offer->mutable_slave_id()->MergeFrom(*slaveID);
 
-        if(m_alive_slaves.size()>0){
-            offer->set_hostname(*m_alive_slaves.begin());
-        }else{
-            offer->set_hostname(self().address.hostname().get());
-        }
+//        if(m_alive_slaves.size()>0){
+//            offer->set_hostname(*m_alive_slaves.begin());
+//        }else{
+//            offer->set_hostname(self().address.hostname().get());
+//        }
+        offer->set_hostname("AMD-V");
+
 
         mesos::internal::ResourceOffersMessage message;
         message.add_offers()->MergeFrom(*offer);
-        message.add_pids("55555555");
+        message.add_pids("1");
+
+        mesos::Offer* second_offer = create_a_offer();
+        message.add_offers()->MergeFrom(*second_offer);
+        message.add_pids("2");
 
         LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
                   << from ;
@@ -369,13 +440,19 @@ namespace chameleon {
 
                     foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
 
-                        for (auto it = this->m_alive_slaves.begin(); it != this->m_alive_slaves.end(); it++) {
-                            m_slavePID = "slave@" + stringify(*it) + ":6061";
-
+//                        for (auto it = this->m_alive_slaves.begin(); it != this->m_alive_slaves.end(); it++) {
+//                            m_slavePID = "slave@" + stringify(*it) + ":6061";
+//
+//                        }
+                        string cur_slavePID="slave@";
+                        if(task.slave_id().value() ==  "11111111"){
+                            cur_slavePID.append("172.20.110.228:6061");
+                        }else{
+                            cur_slavePID.append("172.20.110.53:6061");
                         }
                         mesos::TaskInfo task_(task);
 
-                        LOG(INFO) << "Sending task to slave " << m_slavePID ; //slave(1)@172.20.110.152:5051
+                        LOG(INFO) << "Sending task to slave " << cur_slavePID ; //slave(1)@172.20.110.152:5051
 
                         mesos::internal::RunTaskMessage message;
                         message.mutable_framework()->MergeFrom(m_frameworkInfo);
@@ -383,7 +460,7 @@ namespace chameleon {
                         message.mutable_task()->MergeFrom(task_);
                         message.mutable_framework_id()->MergeFrom(m_frameworkID);
 
-                        send(m_slavePID, message);
+                        send(cur_slavePID, message);
 
                         _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
                     }
@@ -487,6 +564,7 @@ namespace chameleon {
 //                string object_str = stringify(object);
 //                DLOG(INFO) << object_str;
             m_hardware_resources.insert({slaveid, object});
+            m_proto_hardware_resources.insert({slaveid, hardware_resources_message});
             m_alive_slaves.insert(slaveid);
         }
     }
@@ -578,6 +656,77 @@ namespace chameleon {
             LOG(INFO) << "successfully shutdown a slave " << ip;
         }
     }
+
+    // super_master related
+    void Master::super_master_control(const UPID &super_master, const SuperMasterControlMessage &super_master_control_message){
+      LOG(INFO)<<" get a super_master_control_message from super_master"<<super_master;
+      LOG(INFO)<<" passive in super_master_control_message is "<< super_master_control_message.passive();
+
+      is_passive = super_master_control_message.passive();
+      if(!is_passive){
+          // change current status to REGISTERRING to register from supermaster.
+          m_state = REGISTERING;
+          MasterRegisteredMessage* master_registered_message = new MasterRegisteredMessage();
+          master_registered_message->set_master_id(stringify(self().address.ip));
+          master_registered_message->set_master_uuid(m_uuid);
+          master_registered_message->set_status(MasterRegisteredMessage_Status_FIRST_REGISTERING);
+          send(super_master, *master_registered_message);
+          delete master_registered_message;
+          LOG(INFO)<<" send a master_registered_message to "<<super_master;
+      } else{
+          // is_passive = true means the master was evoked by a super_master,
+          // so in super_master_related.proto at line 30 repeated SlavesInfoControlledByMaster my_slaves=4 is not empty
+          for(auto &slave_info:super_master_control_message.my_slaves()){
+              UPID slave_upid("slave@"+slave_info.ip()+":"+slave_info.port());
+              ReregisterMasterMessage* register_message = new ReregisterMasterMessage();
+              register_message->set_port("6060");
+              register_message->set_master_ip(stringify(self().address.ip));
+              register_message->set_slave_ip(slave_info.ip());
+
+              send(slave_upid,*register_message);
+              LOG(INFO)<<"sent a ReregisterMasterMessage to slave "<<slave_info.ip();
+              delete register_message;
+          }
+
+      }
+
+    }
+
+    void Master::received_registered_message_from_super_master(const UPID& super_master, const AcceptRegisteredMessage& message){
+        LOG(INFO)<<"get a AcceptRegisteredMessage from super_master"<<super_master;
+        if(message.status()==AcceptRegisteredMessage_Status_SUCCESS){
+            LOG(INFO)<<self()<<" registered from super_master "<<super_master<<" successfully";
+            OwnedSlavesMessage* owned_slaves = new OwnedSlavesMessage();
+            for(const string& slave_ip:m_alive_slaves){
+                SlaveInfo* t_slave = owned_slaves->add_slave_infos();
+                HardwareResourcesMessage* hardware_resources = new HardwareResourcesMessage(m_proto_hardware_resources[slave_ip]);
+                t_slave->set_allocated_hardware_resources(hardware_resources);
+                RuntimeResourcesMessage* runtime_Resources = new RuntimeResourcesMessage(m_proto_runtime_resources[slave_ip]);
+                t_slave->set_allocated_runtime_resources(runtime_Resources);
+            }
+            owned_slaves->set_quantity(owned_slaves->slave_infos_size());
+            send(super_master,*owned_slaves);
+            delete owned_slaves;
+            LOG(INFO)<<" send owned slaves of "<<self()<<" to super_master "<<super_master;
+
+
+
+        }else{
+            LOG(INFO)<<self()<<"cannot registered to "<<super_master<<". Maybe it has registered to other supermaster before";
+
+        }
+    }
+
+    void Master::received_terminating_master_message(const UPID& super_master, const TerminatingMasterMessage& message){
+        LOG(INFO)<<" receive a TerminatingMasterMessage from "<<super_master;
+        if(message.master_id() == stringify(self().address.ip)){
+            LOG(INFO)<<self()<<"  is terminating due to new super_master was deteched";
+            terminate(self());
+        }
+
+    }
+
+    // end of super_mater related
 
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)
     {
