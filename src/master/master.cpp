@@ -675,8 +675,18 @@ namespace chameleon {
           LOG(INFO)<<" send a master_registered_message to "<<super_master;
       } else{
           // is_passive = true means the master was evoked by a super_master,
-          // so repeated SlavesInfoControlledByMaster my_slaves=4 is not empty
+          // so in super_master_related.proto at line 30 repeated SlavesInfoControlledByMaster my_slaves=4 is not empty
+          for(auto &slave_info:super_master_control_message.my_slaves()){
+              UPID slave_upid("slave@"+slave_info.ip()+":"+slave_info.port());
+              ReregisterMasterMessage* register_message = new ReregisterMasterMessage();
+              register_message->set_port("6060");
+              register_message->set_master_ip(stringify(self().address.ip));
+              register_message->set_slave_ip(slave_info.ip());
 
+              send(slave_upid,*register_message);
+              LOG(INFO)<<"sent a ReregisterMasterMessage to slave "<<slave_info.ip();
+              delete register_message;
+          }
 
       }
 

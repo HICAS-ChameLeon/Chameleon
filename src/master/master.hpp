@@ -46,6 +46,7 @@
 #include <scheduler.pb.h>
 #include <messages.pb.h>
 #include <super_master_related.pb.h>
+#include <slave_related.pb.h>
 
 
 // chameleon headers
