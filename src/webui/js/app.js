@@ -26,10 +26,11 @@
                 .when('/frameworks',{
                     templateUrl:
  '/Chameleon/src/webui/HTML/frameworks.html',
-                    controller:'FrameworksCtrl'
+                    controller:'FrameworkCtrl'
                 })
+
                 // framework.html
-                .when('/frameworks/:id',{
+                .when('/frameworks/:frameworksID',{
             templateUrl:
                 '/Chameleon/src/webui/HTML/framework.html',
                     controller:'FrameworkCtrl'

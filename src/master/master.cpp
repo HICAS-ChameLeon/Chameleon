@@ -131,23 +131,26 @@ namespace chameleon {
                 [this](Request request) {
                     //JSON::Object result = JSON::Object();
                     JSON::Object result = JSON::protobuf(m_frameworkInfo);
-                    if (!this->m_json_frameworkInfo.empty()) {
-                        JSON::Array array;
-                        for (auto it = this->m_json_frameworkInfo.begin();
-                             it != this->m_json_frameworkInfo.end(); it++) {
-                            array.values.push_back(it->second);
-                        }
-                        result.values["quantity"] = array.values.size();
-                        result.values["content"] = array;
-                    }else {
-                            result.values["quantity"] = 0;
-                            result.values["content"] = JSON::Object();
-                        }
                         OK ok_response(stringify(result));
+                        //OK ok_id_response(stringify(id));
                         ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                        return ok_response;
+                        //ok_id_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                        return ok_response ;
 
                     });
+
+        route(
+                "/frameworksID",
+                "get the frameworks of the whole topology",
+                [this](Request request) {
+                    //JSON::Object result = JSON::Object();
+                    JSON::Object result = JSON::protobuf(m_frameworkID);
+                    OK ok_response(stringify(result));
+                    //OK ok_id_response(stringify(id));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response ;
+
+                });
 
 
         // http://172.20.110.228:6060/master/stop-cluster
@@ -303,6 +306,45 @@ namespace chameleon {
 
         return;
     }
+//    void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
+//
+//        mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
+//
+//        LOG(INFO) << "Received a subscribe framework "
+//                  << frameworkInfo.name() << "  at " << from;
+//
+//        m_frameworkInfo = frameworkInfo;
+//
+//        this->m_frameworkPID = from;  //scheduler-a8426d29-07c4-4b5b-9dc7-2daf941b4893@172.20.110.77:34803
+//
+//        mesos::internal::FrameworkRegisteredMessage message;
+//
+//        mesos::MasterInfo masterInfo;
+//        masterInfo.set_id("11111111");
+//        masterInfo.set_ip(self().address.ip.in().get().s_addr);
+//        masterInfo.set_port(6060);
+//
+//        std::ostringstream out;
+//        int64_t nextFrameworkId;
+//        mesos::FrameworkID *frameworkID = new mesos::FrameworkID();
+//        out << masterInfo.id() << "-" << std::setw(4)
+//            << std::setfill('0') << nextFrameworkId++;
+//        frameworkID->set_value(out.str());
+//        m_frameworkID = *frameworkID;
+//
+//        message.mutable_framework_id()->MergeFrom(*frameworkID);
+//        message.mutable_master_info()->MergeFrom(masterInfo);
+//
+//        send(from, message);
+//
+//        LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful !";
+//
+////        process::dispatch(self(), &Master::Offer, from);
+//        const Duration temp_duration = Seconds(20);
+//        process::delay(temp_duration, self(), &Master::Offer,from);
+//
+//        return;
+//    }
 
     mesos::Offer* Master::create_a_offer(){
         mesos::Offer *offer = new mesos::Offer();
@@ -597,7 +639,7 @@ namespace chameleon {
 
 //    void Master::change_frameworks(const UPID &from, const mesos::FrameworkInfo &frameworkInfo) {
 //        DLOG(INFO)<<"change protobuf message to JSON";
-//        //auto frameworkid = frameworkInfo.id();
+//        auto frameworkid = frameworkInfo.;
 //        JSON::Object framework_result = JSON::protobuf(frameworkInfo);
 //        //string object_str = stringify(object);
 //        //LOG(INFO)<<object_str;

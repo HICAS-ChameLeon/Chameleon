@@ -646,8 +646,30 @@
     //spark框架对应的Controller
     chameleon_app.controller('FrameworksCtrl', function() {});
 
-    chameleon_app.controller('FrameworkCtrl',function () {
+    chameleon_app.controller('FrameworkCtrl',function ($scope, $http) {
+        $http({
+            method: 'GET',
+            url: 'http://172.20.110.53:6061/master/frameworks'
+        }).then(function successCallback(response) {
+            $scope.hostname = response.data.hostname;
+            console.log(response.data.hostname);
+            $scope.user = response.data.user;
+            // console.log(response.data.quantity);
+            $scope.name = response.data.name;
+            $scope.webui_url = response.data.webui_url;
+        }, function errorCallback(response) {
+            // 请求失败执行代码
+        });
 
+        $http({
+            method: 'GET',
+            url: 'http://172.20.110.53:6061/master/frameworksID'
+        }).then(function successCallback(response) {
+            $scope.frameworksID = response.data.value;
+            console.log(response.data.value);
+        }, function errorCallback(response) {
+            // 请求失败执行代码
+        });
     });
 
 

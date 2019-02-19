@@ -251,8 +251,8 @@ namespace chameleon {
 
         mesos::FrameworkInfo  m_frameworkInfo;
         mesos::FrameworkID m_frameworkID;
-        unordered_map<string,JSON::Object> m_json_frameworkInfo;
-        unordered_map<string,JSON::Object> m_json_frameworkID;
+//        unordered_map<string,JSON::Object> m_json_frameworkInfo;
+//        unordered_map<string,JSON::Object> m_json_frameworkID;
         UPID m_frameworkPID;
         string m_slavePID;
 
