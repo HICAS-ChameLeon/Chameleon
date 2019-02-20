@@ -20,6 +20,7 @@ namespace chameleon {
         // change from one level to two levels
         cluster_levels = 2;
         m_masters_size = 2;
+//        if(cluster_levels)
         m_uuid = UUID::random().toString();
         m_first_to_second_master = "master@172.20.110.228:6060";
         SuperMasterControlMessage *super_master_control_message = new SuperMasterControlMessage();
@@ -121,13 +122,13 @@ namespace chameleon {
 
         int32_t current_cluster_number = 0;
 
+        string master_ip;
         for (auto iter = m_admin_slaves.begin(); iter != m_admin_slaves.end(); iter++) {
             SlaveInfo &current_slave = *iter;
             string current_ip = current_slave.hardware_resources().slave_id();
 //            int32_t cpus = current_slave.hardware_resources().cpu_collection().cpu_infos_size();
 
-            string master_ip;
-            if(count >= cluster_size){
+            if(count > cluster_size){
                 count = 1;
             }
             if (count == 1) {
@@ -150,6 +151,14 @@ namespace chameleon {
             m_classification_slaves[master_ip].push_back(a_slave);
             count++;
 
+        }
+
+        for(auto iter = m_classification_masters.begin();iter!=m_classification_masters.end();iter++){
+            vector<SlavesInfoControlledByMaster> slaves_of_master = m_classification_slaves[*iter];
+            std::cout<<slaves_of_master.size()<<std::endl;
+            for(SlavesInfoControlledByMaster s:slaves_of_master){
+                std::cout<<s.ip()<<std::endl;
+            }
         }
     }
 
