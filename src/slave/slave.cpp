@@ -106,7 +106,7 @@ namespace chameleon {
 
         send(*msp_masterUPID, *hr_message);
         delete hr_message;
-        LOG(INFO) << "The initialization if slave itself finished.";
+        LOG(INFO) << "The initialization of slave itself finished.";
         LOG(INFO) << self() << " starts to send heartbeat message to the master";
         heartbeat();
     }
