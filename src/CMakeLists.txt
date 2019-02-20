@@ -12,6 +12,7 @@ PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages mesos ${CMAKE_BINARY_DIR}/src/me
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages hardware_resource ${CMAKE_BINARY_DIR}/src/messages hardware_resource)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages runtime_resource ${CMAKE_BINARY_DIR}/src/messages runtime_resource)
 
+
 # libprocess .so .a libraries directories
 link_directories(${PROCESS_LIB_DIRS})
 
