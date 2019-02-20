@@ -131,7 +131,9 @@ namespace chameleon {
                 [this](Request request) {
                     //JSON::Object result = JSON::Object();
                     JSON::Object result = JSON::protobuf(m_frameworkInfo);
-                        OK ok_response(stringify(result));
+                    JSON::Array array;
+                    array.values.push_back(result);
+                        OK ok_response(stringify(array));
                         //OK ok_id_response(stringify(id));
                         ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                         //ok_id_response.headers.insert({"Access-Control-Allow-Origin", "*"});
