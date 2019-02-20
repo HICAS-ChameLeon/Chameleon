@@ -13,6 +13,7 @@ list(APPEND master_PROTOS scheduler)
 list(APPEND master_PROTOS mesos)
 list(APPEND master_PROTOS messages)
 list(APPEND master_PROTOS super_master_related)
+list(APPEND master_PROTOS slave_related)
 list(REMOVE_DUPLICATES master_PROTOS)
 
 add_executable(master ${master_SRCS})
