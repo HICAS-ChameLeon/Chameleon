@@ -649,21 +649,22 @@
     chameleon_app.controller('FrameworkCtrl',function ($scope, $http) {
         $http({
             method: 'GET',
-            url: 'http://172.20.110.53:6061/master/frameworks'
+            url: 'http://172.20.110.53:6060/master/frameworks'
         }).then(function successCallback(response) {
-            $scope.hostname = response.data.hostname;
-            console.log(response.data.hostname);
-            $scope.user = response.data.user;
-            // console.log(response.data.quantity);
-            $scope.name = response.data.name;
-            $scope.webui_url = response.data.webui_url;
+            $scope.framework = response.data.framework_content;
+            // $scope.hostname = response.data.hostname;
+            // console.log(response.data.hostname);
+            // $scope.user = response.data.user;
+            // // console.log(response.data.quantity);
+            // $scope.name = response.data.name;
+            // $scope.webui_url = response.data.webui_url;
         }, function errorCallback(response) {
             // 请求失败执行代码
         });
 
         $http({
             method: 'GET',
-            url: 'http://172.20.110.53:6061/master/frameworksID'
+            url: 'http://172.20.110.53:6060/master/frameworksID'
         }).then(function successCallback(response) {
             $scope.frameworksID = response.data.value;
             console.log(response.data.value);

@@ -133,12 +133,12 @@ namespace chameleon {
                     JSON::Object result = JSON::protobuf(m_frameworkInfo);
                     JSON::Array array;
                     array.values.push_back(result);
-                    result.values["frame_work_content"] = array;
-                        OK ok_response(stringify(result));
-                        //OK ok_id_response(stringify(id));
-                        ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                        //ok_id_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                        return ok_response ;
+                    result.values["framework_content"] = array;
+                    OK ok_response(stringify(result));
+                    //OK ok_id_response(stringify(id));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    //ok_id_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
 
                 });
 

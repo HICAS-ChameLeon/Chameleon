@@ -3,8 +3,8 @@
     <thead>
     <caption>活动中任务</caption>
     <tr>
-        <th>ID</th>
-        <th>Host</th>
+        <th data-key ="id"> ID</th>
+        <th data-key = "hostname">Host</th>
         <th>User</th>
         <th>Name</th>
         <th>Roles</th>
@@ -13,20 +13,20 @@
     </tr>
     </thead>
     <tbody>
-    <tr>
+    <tr ng-repeat="x in framework | filter :{ active :true}">
         <th><a href="#/frameworks/{{frameworksID}}">{{frameworksID}}</a>
         </th>
         <th>
-            {{hostname}}
+            {{x.hostname | uppercase}}
         </th>
         <th>
-            {{user}}
+            {{x.user}}
         </th>
         <th>
-            {{name}}
+            {{x.name}}
         </th>
         <th>
-            *
+            {{x.princple}}
         </th>
         <th>
             {{user}}
@@ -52,6 +52,30 @@
         <th>Register</th>
     </tr>
     </thead>
+    <tbody>
+    <tr ng-repeat="x in framework | filter :{active :false}">
+        <th><a href="#/frameworks/{{frameworksID}}">{{frameworksID}}</a>
+        </th>
+        <th>
+            {{x.hostname}}
+        </th>
+        <th>
+            {{x.user}}
+        </th>
+        <th>
+            {{x.name}}
+        </th>
+        <th>
+            {{x.princple}}
+        </th>
+        <th>
+            {{user}}
+        </th>
+        <th>
+            {{user}}
+        </th>
+    </tr>
+    </tbody>
 </table>
 
 <table m-table table-content="completed_frameworks" title="Completed Frameworks"
@@ -69,9 +93,26 @@
     </tr>
     </thead>
     <tbody>
-    <tr>
+    <tr ng-repeat="x in framework">
+        <th><a href="#/frameworks/{{frameworksID}}">{{frameworksID}}</a>
+        </th>
         <th>
-
+            {{x.hostname}}
+        </th>
+        <th>
+            {{x.user}}
+        </th>
+        <th>
+            {{x.name}}
+        </th>
+        <th>
+            {{x.princple}}
+        </th>
+        <th>
+            {{user}}
+        </th>
+        <th>
+            {{user}}
         </th>
     </tr>
     </tbody>
