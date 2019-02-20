@@ -58,6 +58,7 @@
 
 #include "linux/cgroups.hpp"
 #include "linux/fs.hpp"
+#include "linux/fs.cpp"
 
 using namespace process;
 
@@ -207,7 +208,7 @@ static Try<Nothing> mount(const string& hierarchy, const string& subsystems)
 
   // Mount the virtual file system (attach subsystems).
   Try<Nothing> result =
-    fs::mount(subsystems, hierarchy, "cgroup", 0, subsystems.c_str());
+          chameleon::fs::mount(subsystems, hierarchy, "cgroup", 0, subsystems.c_str());
   if (result.isError()) {
     // Do a best effort rmdir of hierarchy (ignoring success or failure).
     os::rmdir(hierarchy);
@@ -227,7 +228,7 @@ static Try<Nothing> mount(const string& hierarchy, const string& subsystems)
 //          Error if the operation fails.
 static Try<Nothing> unmount(const string& hierarchy)
 {
-  return fs::unmount(hierarchy);
+  return chameleon::fs::unmount(hierarchy);
 }
 
 
@@ -523,13 +524,13 @@ bool enabled()
 Try<set<string>> hierarchies()
 {
   // Read currently mounted file systems from /proc/mounts.
-  Try<fs::MountTable> table = fs::MountTable::read("/proc/mounts");
+  Try<chameleon::fs::MountTable> table = chameleon::fs::MountTable::read("/proc/mounts");
   if (table.isError()) {
     return Error(table.error());
   }
 
   set<string> results;
-  foreach (const fs::MountTable::Entry& entry, table.get().entries) {
+  foreach (const chameleon::fs::MountTable::Entry& entry, table.get().entries) {
     if (entry.type == "cgroup") {
       Result<string> realpath = os::realpath(entry.dir);
       if (!realpath.isSome()) {
@@ -658,14 +659,14 @@ Try<set<string>> subsystems(const string& hierarchy)
   }
 
   // Read currently mounted file systems from /proc/mounts.
-  Try<fs::MountTable> table = fs::MountTable::read("/proc/mounts");
+  Try<chameleon::fs::MountTable> table = chameleon::fs::MountTable::read("/proc/mounts");
   if (table.isError()) {
     return Error("Failed to read mount table: " + table.error());
   }
 
   // Check if hierarchy is a mount point of type cgroup.
-  Option<fs::MountTable::Entry> hierarchyEntry;
-  foreach (const fs::MountTable::Entry& entry, table.get().entries) {
+  Option<chameleon::fs::MountTable::Entry> hierarchyEntry;
+  foreach (const chameleon::fs::MountTable::Entry& entry, table.get().entries) {
     if (entry.type == "cgroup") {
       Result<string> dirAbsPath = os::realpath(entry.dir);
       if (!dirAbsPath.isSome()) {

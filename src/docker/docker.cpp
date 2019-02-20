@@ -24,8 +24,8 @@
 //#include "common/status_utils.hpp"
 
 #include "docker.hpp"
-
 #include "linux/cgroups.hpp"
+#include "common/resources.cpp"
 
 using namespace mesos;
 
@@ -37,6 +37,16 @@ using std::string;
 using std::vector;
 
 constexpr size_t DOCKER_PS_MAX_INSPECT_CALLS = 100;
+
+// CPU subsystem constants.
+const uint64_t CPU_SHARES_PER_CPU = 1024;
+const uint64_t CPU_SHARES_PER_CPU_REVOCABLE = 10;
+const uint64_t MIN_CPU_SHARES = 2; // Linux constant.
+const Duration CPU_CFS_PERIOD = Milliseconds(100); // Linux default.
+const Duration MIN_CPU_CFS_QUOTA = Milliseconds(1);
+
+// Memory subsystem constants.
+const Bytes MIN_MEMORY = Megabytes(32);
 
 template <typename T>
 static Future<T> failure(
@@ -95,6 +105,523 @@ Try<Owned<Docker>> Docker::create(
 
   return docker;
 }
+
+Try<Docker::Image> Docker::Image::create(const JSON::Object& json)
+{
+    Result<JSON::Value> entrypoint =
+            json.find<JSON::Value>("ContainerConfig.Entrypoint");
+
+    if (entrypoint.isError()) {
+        return Error("Failed to find 'ContainerConfig.Entrypoint': " +
+                     entrypoint.error());
+
+    } else if (entrypoint.isNone()) {
+        return Error("Unable to find 'ContainerConfig.Entrypoint'");
+    }
+
+    Option<vector<string>> entrypointOption = None();
+
+    if (!entrypoint.get().is<JSON::Null>()) {
+        if (!entrypoint.get().is<JSON::Array>()) {
+            return Error("Unexpected type found for 'ContainerConfig.Entrypoint'");
+        }
+
+        const vector<JSON::Value>& values =
+                entrypoint.get().as<JSON::Array>().values;
+        if (values.size() != 0) {
+            vector<string> result;
+
+            foreach (const JSON::Value& value, values) {
+                if (!value.is<JSON::String>()) {
+                    return Error("Expecting entrypoint value to be type string");
+                }
+                result.push_back(value.as<JSON::String>().value);
+            }
+
+            entrypointOption = result;
+        }
+    }
+
+    Result<JSON::Value> env =
+            json.find<JSON::Value>("ContainerConfig.Env");
+
+    if (env.isError()) {
+        return Error("Failed to find 'ContainerConfig.Env': " +
+                     env.error());
+    } else if (env.isNone()) {
+        return Error("Unable to find 'ContainerConfig.Env'");
+    }
+
+    Option<map<string, string>> envOption = None();
+
+    if (!env.get().is<JSON::Null>()) {
+        if (!env.get().is<JSON::Array>()) {
+            return Error("Unexpected type found for 'ContainerConfig.Env'");
+        }
+
+        const vector<JSON::Value>& values = env.get().as<JSON::Array>().values;
+        if (values.size() != 0) {
+            map<string, string> result;
+
+            foreach (const JSON::Value& value, values) {
+                if (!value.is<JSON::String>()) {
+                    return Error("Expecting environment value to be type string");
+                }
+
+                const vector<string> tokens =
+                        strings::split(value.as<JSON::String>().value, "=", 2);
+
+                if (tokens.size() != 2) {
+                    return Error("Unexpected Env format for 'ContainerConfig.Env'");
+                }
+
+                if (result.count(tokens[0]) > 0) {
+                    return Error("Unexpected duplicate environment variables '"
+                                 + tokens[0] + "'");
+                }
+
+                result[tokens[0]] = tokens[1];
+            }
+
+            envOption = result;
+        }
+    }
+
+    return Docker::Image(entrypointOption, envOption);
+}
+
+Try<Docker::Container> Docker::Container::create(const string& output)
+{
+    Try<JSON::Array> parse = JSON::parse<JSON::Array>(output);
+    if (parse.isError()) {
+        return Error("Failed to parse JSON: " + parse.error());
+    }
+
+    // TODO(benh): Handle the case where the short container ID was
+    // not sufficiently unique and 'array.values.size() > 1'.
+    JSON::Array array = parse.get();
+    if (array.values.size() != 1) {
+        return Error("Failed to find container");
+    }
+
+    CHECK(array.values.front().is<JSON::Object>());
+
+    JSON::Object json = array.values.front().as<JSON::Object>();
+
+    Result<JSON::String> idValue = json.find<JSON::String>("Id");
+    if (idValue.isNone()) {
+        return Error("Unable to find Id in container");
+    } else if (idValue.isError()) {
+        return Error("Error finding Id in container: " + idValue.error());
+    }
+
+    string id = idValue.get().value;
+
+    Result<JSON::String> nameValue = json.find<JSON::String>("Name");
+    if (nameValue.isNone()) {
+        return Error("Unable to find Name in container");
+    } else if (nameValue.isError()) {
+        return Error("Error finding Name in container: " + nameValue.error());
+    }
+
+    string name = nameValue.get().value;
+
+    Result<JSON::Object> stateValue = json.find<JSON::Object>("State");
+    if (stateValue.isNone()) {
+        return Error("Unable to find State in container");
+    } else if (stateValue.isError()) {
+        return Error("Error finding State in container: " + stateValue.error());
+    }
+
+    Result<JSON::Number> pidValue = stateValue.get().find<JSON::Number>("Pid");
+    if (pidValue.isNone()) {
+        return Error("Unable to find Pid in State");
+    } else if (pidValue.isError()) {
+        return Error("Error finding Pid in State: " + pidValue.error());
+    }
+
+    pid_t pid = pid_t(pidValue.get().as<int64_t>());
+
+    Option<pid_t> optionalPid;
+    if (pid != 0) {
+        optionalPid = pid;
+    }
+
+    Result<JSON::String> startedAtValue =
+            stateValue.get().find<JSON::String>("StartedAt");
+    if (startedAtValue.isNone()) {
+        return Error("Unable to find StartedAt in State");
+    } else if (startedAtValue.isError()) {
+        return Error("Error finding StartedAt in State: " + startedAtValue.error());
+    }
+
+    bool started = startedAtValue.get().value != "0001-01-01T00:00:00Z";
+
+    Option<string> ipAddress;
+    bool findDeprecatedIP = false;
+    Result<JSON::String> networkMode =
+            json.find<JSON::String>("HostConfig.NetworkMode");
+    if (!networkMode.isSome()) {
+        // We need to fail back to the old field as Docker added NetworkMode
+        // since Docker remote API 1.15.
+        VLOG(1) << "Unable to detect HostConfig.NetworkMode, "
+                << "attempting deprecated IP field";
+        findDeprecatedIP = true;
+    } else {
+        // We currently rely on the fact that we always set --net when
+        // we shell out to docker run, and therefore the network mode
+        // matches what --net is. Without --net, the network mode would be set
+        // to 'default' and we won't be able to find the IP address as
+        // it will be in 'Networks.bridge' key.
+        string addressLocation = "NetworkSettings.Networks." +
+                                 networkMode->value + ".IPAddress";
+
+        Result<JSON::String> ipAddressValue =
+                json.find<JSON::String>(addressLocation);
+
+        if (!ipAddressValue.isSome()) {
+            // We also need to failback to the old field as the IP Address
+            // field location also changed since Docker remote API 1.20.
+            VLOG(1) << "Unable to detect IP Address at '" << addressLocation << "',"
+                    << " attempting deprecated field";
+            findDeprecatedIP = true;
+        } else if (!ipAddressValue->value.empty()) {
+            ipAddress = ipAddressValue->value;
+        }
+    }
+
+    if (findDeprecatedIP) {
+        Result<JSON::String> ipAddressValue =
+                json.find<JSON::String>("NetworkSettings.IPAddress");
+
+        if (ipAddressValue.isNone()) {
+            return Error("Unable to find NetworkSettings.IPAddress in container");
+        } else if (ipAddressValue.isError()) {
+            return Error(
+                    "Error finding NetworkSettings.IPAddress in container: " +
+                    ipAddressValue.error());
+        } else if (!ipAddressValue->value.empty()) {
+            ipAddress = ipAddressValue->value;
+        }
+    }
+
+    vector<Device> devices;
+
+    Result<JSON::Array> devicesArray =
+            json.find<JSON::Array>("HostConfig.Devices");
+
+    if (devicesArray.isError()) {
+        return Error("Failed to parse HostConfig.Devices: " + devicesArray.error());
+    }
+
+    if (devicesArray.isSome()) {
+        foreach (const JSON::Value& entry, devicesArray->values) {
+            if (!entry.is<JSON::Object>()) {
+                return Error("Malformed HostConfig.Devices"
+                             " entry '" + stringify(entry) + "'");
+            }
+
+            JSON::Object object = entry.as<JSON::Object>();
+
+            Result<JSON::String> hostPath =
+                    object.at<JSON::String>("PathOnHost");
+            Result<JSON::String> containerPath =
+                    object.at<JSON::String>("PathInContainer");
+            Result<JSON::String> permissions =
+                    object.at<JSON::String>("CgroupPermissions");
+
+            if (!hostPath.isSome() ||
+                !containerPath.isSome() ||
+                !permissions.isSome()) {
+                return Error("Malformed HostConfig.Devices entry"
+                             " '" + stringify(object) + "'");
+            }
+
+            Device device;
+            device.hostPath = Path(hostPath->value);
+            device.containerPath = Path(containerPath->value);
+            device.access.read = strings::contains(permissions->value, "r");
+            device.access.write = strings::contains(permissions->value, "w");
+            device.access.mknod = strings::contains(permissions->value, "m");
+
+            devices.push_back(device);
+        }
+    }
+
+    return Container(output, id, name, optionalPid, started, ipAddress, devices);
+}
+
+Try<Docker::RunOptions> Docker::RunOptions::create(
+        const ContainerInfo& containerInfo,
+        const CommandInfo& commandInfo,
+        const string& name,
+        const string& sandboxDirectory,
+        const string& mappedDirectory,
+        const Option<Resources>& resources,
+        bool enableCfsQuota,
+        const Option<map<string, string>>& env,
+        const Option<vector<Device>>& devices)
+{
+    if (!containerInfo.has_docker()) {
+        return Error("No docker info found in container info");
+    }
+
+    const ContainerInfo::DockerInfo& dockerInfo = containerInfo.docker();
+
+    RunOptions options;
+    options.privileged = dockerInfo.privileged();
+
+    if (resources.isSome()) {
+        // TODO(yifan): Support other resources (e.g. disk).
+        Option<double> cpus = resources.get().cpus();
+        if (cpus.isSome()) {
+            options.cpuShares =
+                    std::max((uint64_t) (CPU_SHARES_PER_CPU * cpus.get()), MIN_CPU_SHARES);
+
+
+            if (enableCfsQuota) {
+                const Duration quota =
+                        std::max(CPU_CFS_PERIOD * cpus.get(), MIN_CPU_CFS_QUOTA);
+
+
+                options.cpuQuota = quota.us();
+            }
+        }
+
+        Option<Bytes> mem = resources.get().mem();
+        if (mem.isSome()) {
+            options.memory = std::max(mem.get(), MIN_MEMORY);
+        }
+    }
+
+    if (env.isSome()) {
+        foreachpair (const string& key, const string& value, env.get()) {
+                                options.env[key] = value;
+                            }
+    }
+
+    foreach (const Environment::Variable& variable,
+             commandInfo.environment().variables()) {
+        if (env.isSome() &&
+            env.get().find(variable.name()) != env.get().end()) {
+            // Skip to avoid duplicate environment variables.
+            continue;
+        }
+        options.env[variable.name()] = variable.value();
+    }
+
+    options.env["MESOS_SANDBOX"] = mappedDirectory;
+    options.env["MESOS_CONTAINER_NAME"] = name;
+
+    Option<string> volumeDriver;
+    foreach (const Volume& volume, containerInfo.volumes()) {
+        // The 'container_path' can be either an absolute path or a
+        // relative path. If it is a relative path, it would be prefixed
+        // with the container sandbox directory.
+        string volumeConfig = path::absolute(volume.container_path())
+                              ? volume.container_path()
+                              : path::join(mappedDirectory, volume.container_path());
+
+        // TODO(gyliu513): Set `host_path` as source.
+        if (volume.has_host_path()) {
+            // If both 'host_path' and 'container_path' are relative paths,
+            // return a failure because the user can just directly access the
+            // volume in the sandbox.
+            if (!path::absolute(volume.host_path()) &&
+                !path::absolute(volume.container_path())) {
+                return Error(
+                        "Both host_path '" + volume.host_path() + "' " +
+                        "and container_path '" + volume.container_path() + "' " +
+                        "of a volume are relative");
+            }
+
+            if (!path::absolute(volume.host_path()) &&
+                !dockerInfo.has_volume_driver()) {
+                // When volume driver is empty and host path is a relative path, mapping
+                // host path from the sandbox.
+                volumeConfig =
+                        path::join(sandboxDirectory, volume.host_path()) + ":" + volumeConfig;
+            } else {
+                volumeConfig = volume.host_path() + ":" + volumeConfig;
+            }
+
+            switch (volume.mode()) {
+                case Volume::RW: volumeConfig += ":rw"; break;
+                case Volume::RO: volumeConfig += ":ro"; break;
+                default: return Error("Unsupported volume mode");
+            }
+        } else if (volume.has_source()) {
+            if (volume.source().type() != Volume::Source::DOCKER_VOLUME) {
+                VLOG(1) << "Ignored volume type '" << volume.source().type()
+                        << "' for container '" << name << "' as only "
+                        << "'DOCKER_VOLUME' was supported by docker";
+                continue;
+            }
+
+            volumeConfig = volume.source().docker_volume().name() +
+                           ":" + volumeConfig;
+
+            if (volume.source().docker_volume().has_driver()) {
+                const string& currentDriver = volume.source().docker_volume().driver();
+
+                if (volumeDriver.isSome() &&
+                    volumeDriver.get() != currentDriver) {
+                    return Error("Only one volume driver is supported");
+                }
+
+                volumeDriver = currentDriver;
+            }
+
+            switch (volume.mode()) {
+                case Volume::RW: volumeConfig += ":rw"; break;
+                case Volume::RO: volumeConfig += ":ro"; break;
+                default: return Error("Unsupported volume mode");
+            }
+        } else {
+            return Error("Host path or volume source is required");
+        }
+
+        options.volumes.push_back(volumeConfig);
+    }
+
+    // Mapping sandbox directory into the container mapped directory.
+    options.volumes.push_back(sandboxDirectory + ":" + mappedDirectory);
+
+    // TODO(gyliu513): Deprecate this after the release cycle of 1.0.
+    // It will be replaced by Volume.Source.DockerVolume.driver.
+    if (dockerInfo.has_volume_driver()) {
+        if (volumeDriver.isSome() &&
+            volumeDriver.get() != dockerInfo.volume_driver()) {
+            return Error("Only one volume driver per task is supported");
+        }
+
+        volumeDriver = dockerInfo.volume_driver();
+    }
+
+    options.volumeDriver = volumeDriver;
+
+    switch (dockerInfo.network()) {
+        case ContainerInfo::DockerInfo::HOST: options.network = "host"; break;
+        case ContainerInfo::DockerInfo::BRIDGE: options.network = "bridge"; break;
+        case ContainerInfo::DockerInfo::NONE: options.network = "none"; break;
+        case ContainerInfo::DockerInfo::USER: {
+            if (containerInfo.network_infos_size() == 0) {
+                return Error("No network info found in container info");
+            }
+
+            if (containerInfo.network_infos_size() > 1) {
+                return Error("Only a single network can be defined in Docker run");
+            }
+
+            const NetworkInfo& networkInfo = containerInfo.network_infos(0);
+            if(!networkInfo.has_name()){
+                return Error("No network name found in network info");
+            }
+
+            options.network = networkInfo.name();
+            break;
+        }
+        default: return Error("Unsupported Network mode: " +
+                              stringify(dockerInfo.network()));
+    }
+
+    if (containerInfo.has_hostname()) {
+        if (options.network.isSome() && options.network.get() == "host") {
+            return Error("Unable to set hostname with host network mode");
+        }
+
+        options.hostname = containerInfo.hostname();
+    }
+
+    if (dockerInfo.port_mappings().size() > 0) {
+        if (options.network.isSome() &&
+            (options.network.get() == "host" || options.network.get() == "none")) {
+            return Error("Port mappings are only supported for bridge and "
+                         "user-defined networks");
+        }
+
+        if (!resources.isSome()) {
+            return Error("Port mappings require resources");
+        }
+
+        Option<Value::Ranges> portRanges = resources.get().ports();
+
+        if (!portRanges.isSome()) {
+            return Error("Port mappings require port resources");
+        }
+
+        foreach (const ContainerInfo::DockerInfo::PortMapping& mapping,
+                 dockerInfo.port_mappings()) {
+            bool found = false;
+            foreach (const Value::Range& range, portRanges.get().range()) {
+                if (mapping.host_port() >= range.begin() &&
+                    mapping.host_port() <= range.end()) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                return Error("Port [" + stringify(mapping.host_port()) + "] not " +
+                             "included in resources");
+            }
+
+            Docker::PortMapping portMapping;
+            portMapping.hostPort = mapping.host_port();
+            portMapping.containerPort = mapping.container_port();
+
+            if (mapping.has_protocol()) {
+                portMapping.protocol = mapping.protocol();
+            }
+
+            options.portMappings.push_back(portMapping);
+        }
+    }
+
+    if (devices.isSome()) {
+        options.devices = devices.get();
+    }
+
+    options.name = name;
+
+    foreach (const Parameter& parameter, dockerInfo.parameters()) {
+        options.additionalOptions.push_back(
+                "--" + parameter.key() + "=" + parameter.value());
+    }
+
+    options.image = dockerInfo.image();
+
+    if (commandInfo.shell()) {
+        // We override the entrypoint if shell is enabled because we
+        // assume the user intends to run the command within a shell
+        // and not the default entrypoint of the image. View MESOS-1770
+        // for more details.
+        options.entrypoint = "/bin/sh";
+    }
+
+    if (commandInfo.shell()) {
+        if (!commandInfo.has_value()) {
+            return Error("Shell specified but no command value provided");
+        }
+
+        // The Docker CLI only supports a single word for overriding the
+        // entrypoint, so we must specify `-c` (or `/c` on Windows)
+        // for the other parts of the command.
+        options.arguments.push_back("-c");
+        options.arguments.push_back(commandInfo.value());
+    } else {
+        if (commandInfo.has_value()) {
+            options.arguments.push_back(commandInfo.value());
+        }
+
+        foreach (const string& argument, commandInfo.arguments()) {
+            options.arguments.push_back(argument);
+        }
+    }
+
+    return options;
+}
+
 
 void commandDiscarded(const Subprocess& s, const string& cmd)
 {

@@ -491,9 +491,9 @@ Try<Nothing> unmountAll(const string& target, int flags)
         return ErrnoError(message);
       }
 
-      if (!WSUCCEEDED(status)) {
-        return Error(message + ": " + WSTRINGIFY(status));
-      }
+//      if (!WSUCCEEDED(status)) {
+//        return Error(message + ": " + WSTRINGIFY(status));
+//      }
     }
   }
 
