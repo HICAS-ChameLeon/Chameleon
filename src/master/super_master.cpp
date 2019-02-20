@@ -19,7 +19,7 @@ namespace chameleon {
 
         // change from one level to two levels
         cluster_levels = 2;
-        m_masters_size = 1;
+        m_masters_size = 2;
         m_uuid = UUID::random().toString();
         m_first_to_second_master = "master@172.20.110.228:6060";
         SuperMasterControlMessage *super_master_control_message = new SuperMasterControlMessage();
