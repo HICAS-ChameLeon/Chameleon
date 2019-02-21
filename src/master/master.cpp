@@ -49,6 +49,7 @@ namespace chameleon {
         install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
 
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
+        //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
         install<JobMessage>(&Master::job_submited);
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
         install<AcceptRegisteredMessage>(&Master::received_registered_message_from_super_master);
@@ -121,6 +122,34 @@ namespace chameleon {
                     OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
+                });
+
+        // http://172.20.110.228.6060/master/frameworks
+        route(
+                "/frameworks",
+                "get the frameworks of the whole topology",
+                [this](Request request) {
+                    //JSON::Object result = JSON::Object();
+                    JSON::Object result = JSON::protobuf(m_frameworkInfo);
+                    OK ok_response(stringify(result));
+                    //OK ok_id_response(stringify(id));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    //ok_id_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+
+                });
+
+        route(
+                "/frameworksID",
+                "get the frameworks of the whole topology",
+                [this](Request request) {
+                    //JSON::Object result = JSON::Object();
+                    JSON::Object result = JSON::protobuf(m_frameworkID);
+                    OK ok_response(stringify(result));
+                    //OK ok_id_response(stringify(id));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+
                 });
 
 
@@ -273,12 +302,51 @@ namespace chameleon {
 
 //        process::dispatch(self(), &Master::Offer, from);
         const Duration temp_duration = Seconds(20);
-        process::delay(temp_duration, self(), &Master::Offer,from);
+        process::delay(temp_duration, self(), &Master::Offer, from);
 
         return;
     }
+//    void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
+//
+//        mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
+//
+//        LOG(INFO) << "Received a subscribe framework "
+//                  << frameworkInfo.name() << "  at " << from;
+//
+//        m_frameworkInfo = frameworkInfo;
+//
+//        this->m_frameworkPID = from;  //scheduler-a8426d29-07c4-4b5b-9dc7-2daf941b4893@172.20.110.77:34803
+//
+//        mesos::internal::FrameworkRegisteredMessage message;
+//
+//        mesos::MasterInfo masterInfo;
+//        masterInfo.set_id("11111111");
+//        masterInfo.set_ip(self().address.ip.in().get().s_addr);
+//        masterInfo.set_port(6060);
+//
+//        std::ostringstream out;
+//        int64_t nextFrameworkId;
+//        mesos::FrameworkID *frameworkID = new mesos::FrameworkID();
+//        out << masterInfo.id() << "-" << std::setw(4)
+//            << std::setfill('0') << nextFrameworkId++;
+//        frameworkID->set_value(out.str());
+//        m_frameworkID = *frameworkID;
+//
+//        message.mutable_framework_id()->MergeFrom(*frameworkID);
+//        message.mutable_master_info()->MergeFrom(masterInfo);
+//
+//        send(from, message);
+//
+//        LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful !";
+//
+////        process::dispatch(self(), &Master::Offer, from);
+//        const Duration temp_duration = Seconds(20);
+//        process::delay(temp_duration, self(), &Master::Offer,from);
+//
+//        return;
+//    }
 
-    mesos::Offer* Master::create_a_offer(){
+    mesos::Offer *Master::create_a_offer() {
         mesos::Offer *offer = new mesos::Offer();
 
         // cpus
@@ -389,12 +457,12 @@ namespace chameleon {
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("1");
 
-        mesos::Offer* second_offer = create_a_offer();
+        mesos::Offer *second_offer = create_a_offer();
         message.add_offers()->MergeFrom(*second_offer);
         message.add_pids("2");
 
         LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
-                  << from ;
+                  << from;
 
         send(from, message);
 
@@ -444,15 +512,15 @@ namespace chameleon {
 //                            m_slavePID = "slave@" + stringify(*it) + ":6061";
 //
 //                        }
-                        string cur_slavePID="slave@";
-                        if(task.slave_id().value() ==  "11111111"){
+                        string cur_slavePID = "slave@";
+                        if (task.slave_id().value() == "11111111") {
                             cur_slavePID.append("172.20.110.228:6061");
-                        }else{
+                        } else {
                             cur_slavePID.append("172.20.110.53:6061");
                         }
                         mesos::TaskInfo task_(task);
 
-                        LOG(INFO) << "Sending task to slave " << cur_slavePID ; //slave(1)@172.20.110.152:5051
+                        LOG(INFO) << "Sending task to slave " << cur_slavePID; //slave(1)@172.20.110.152:5051
 
                         mesos::internal::RunTaskMessage message;
                         message.mutable_framework()->MergeFrom(m_frameworkInfo);
@@ -509,13 +577,12 @@ namespace chameleon {
      * Description  : get statusUpdateAcknowledge message from  and send it to slave
      * */
     void Master::statusUpdateAcknowledgement(
-            const UPID& from,
-            const mesos::SlaveID& slaveId,
-            const mesos::FrameworkID& frameworkId,
-            const mesos::TaskID& taskId,
-            const string& uuid)
-    {
-        LOG(INFO) << "statusUpdateAcknowledgement from " << from ;
+            const UPID &from,
+            const mesos::SlaveID &slaveId,
+            const mesos::FrameworkID &frameworkId,
+            const mesos::TaskID &taskId,
+            const string &uuid) {
+        LOG(INFO) << "statusUpdateAcknowledgement from " << from;
         mesos::scheduler::Call::Acknowledge message;
         message.mutable_slave_id()->CopyFrom(slaveId);
         message.mutable_task_id()->CopyFrom(taskId);
@@ -531,10 +598,9 @@ namespace chameleon {
     * Description  : send StatusUpdateAcknowledgementMessage message to
      * slave make sure the status
     * */
-    void Master::acknowledge(const mesos::scheduler::Call::Acknowledge& acknowledge)
-    {
-        const mesos::SlaveID& slaveId = acknowledge.slave_id();
-        const mesos::TaskID& taskId = acknowledge.task_id();
+    void Master::acknowledge(const mesos::scheduler::Call::Acknowledge &acknowledge) {
+        const mesos::SlaveID &slaveId = acknowledge.slave_id();
+        const mesos::TaskID &taskId = acknowledge.task_id();
         const UUID uuid = UUID::fromBytes(acknowledge.uuid()).get();
 
         mesos::internal::StatusUpdateAcknowledgementMessage message;
@@ -568,6 +634,17 @@ namespace chameleon {
             m_alive_slaves.insert(slaveid);
         }
     }
+
+//    void Master::change_frameworks(const UPID &from, const mesos::FrameworkInfo &frameworkInfo) {
+//        DLOG(INFO)<<"change protobuf message to JSON";
+//        auto frameworkid = frameworkInfo.;
+//        JSON::Object framework_result = JSON::protobuf(frameworkInfo);
+//        //string object_str = stringify(object);
+//        //LOG(INFO)<<object_str;
+//        // m_json_frameworkInfo
+//
+//    }
+
 
 //    void Master::job_submited(const UPID &from, const JobMessage &job_message) {
 //        LOG(INFO) << "got a job from " << from;
@@ -658,54 +735,79 @@ namespace chameleon {
     }
 
     // super_master related
-    void Master::super_master_control(const UPID &super_master, const SuperMasterControlMessage &super_master_control_message){
-      LOG(INFO)<<" get a super_master_control_message from super_master"<<super_master;
-      LOG(INFO)<<" passive in super_master_control_message is "<< super_master_control_message.passive();
+    void Master::super_master_control(const UPID &super_master,
+                                      const SuperMasterControlMessage &super_master_control_message) {
+        LOG(INFO) << " get a super_master_control_message from super_master" << super_master;
+        LOG(INFO) << " passive in super_master_control_message is " << super_master_control_message.passive();
 
-      is_passive = super_master_control_message.passive();
-      if(!is_passive){
-          // change current status to REGISTERRING to register from supermaster.
-          m_state = REGISTERING;
-          MasterRegisteredMessage* master_registered_message = new MasterRegisteredMessage();
-          master_registered_message->set_master_id(stringify(self().address.ip));
-          master_registered_message->set_master_uuid(m_uuid);
-          master_registered_message->set_status(MasterRegisteredMessage_Status_FIRST_REGISTERING);
-          send(super_master, *master_registered_message);
-          delete master_registered_message;
-          LOG(INFO)<<" send a master_registered_message to "<<super_master;
-      }
+        // change current status to REGISTERRING to register from supermaster.
+        m_state = REGISTERING;
+        is_passive = super_master_control_message.passive();
+
+
+        MasterRegisteredMessage *master_registered_message = new MasterRegisteredMessage();
+        master_registered_message->set_master_id(stringify(self().address.ip));
+        master_registered_message->set_master_uuid(m_uuid);
+        master_registered_message->set_status(MasterRegisteredMessage_Status_FIRST_REGISTERING);
+        send(super_master, *master_registered_message);
+        delete master_registered_message;
+        LOG(INFO) << " send a master_registered_message to " << super_master;
+
+        if (is_passive) {
+            // is_passive = true means the master was evoked by a super_master,
+            // so in super_master_related.proto at line 30 repeated SlavesInfoControlledByMaster my_slaves=4 is not empty
+            for (auto &slave_info:super_master_control_message.my_slaves()) {
+                UPID slave_upid("slave@" + slave_info.ip() + ":" + slave_info.port());
+                ReregisterMasterMessage *register_message = new ReregisterMasterMessage();
+                register_message->set_port("6060");
+                register_message->set_master_ip(stringify(self().address.ip));
+                register_message->set_slave_ip(slave_info.ip());
+
+                send(slave_upid, *register_message);
+                LOG(INFO) << "sent a ReregisterMasterMessage to slave " << slave_info.ip();
+                delete register_message;
+            }
+        }
 
     }
 
-    void Master::received_registered_message_from_super_master(const UPID& super_master, const AcceptRegisteredMessage& message){
-        LOG(INFO)<<"get a AcceptRegisteredMessage from super_master"<<super_master;
-        if(message.status()==AcceptRegisteredMessage_Status_SUCCESS){
-            LOG(INFO)<<self()<<" registered from super_master "<<super_master<<" successfully";
-            OwnedSlavesMessage* owned_slaves = new OwnedSlavesMessage();
-            for(const string& slave_ip:m_alive_slaves){
-                SlaveInfo* t_slave = owned_slaves->add_slave_infos();
-                HardwareResourcesMessage* hardware_resources = new HardwareResourcesMessage(m_proto_hardware_resources[slave_ip]);
-                t_slave->set_allocated_hardware_resources(hardware_resources);
-                RuntimeResourcesMessage* runtime_Resources = new RuntimeResourcesMessage(m_proto_runtime_resources[slave_ip]);
-                t_slave->set_allocated_runtime_resources(runtime_Resources);
+
+    void Master::received_registered_message_from_super_master(const UPID &super_master,
+                                                               const AcceptRegisteredMessage &message) {
+        LOG(INFO) << "get a AcceptRegisteredMessage from super_master" << super_master;
+        if (message.status() == AcceptRegisteredMessage_Status_SUCCESS) {
+            m_state = RUNNING; // change status of current master from REGISTERING to RUNNING
+            LOG(INFO) << self() << " registered from super_master " << super_master << " successfully";
+            if (!is_passive) {
+                OwnedSlavesMessage *owned_slaves = new OwnedSlavesMessage();
+                for (const string &slave_ip:m_alive_slaves) {
+                    SlaveInfo *t_slave = owned_slaves->add_slave_infos();
+                    HardwareResourcesMessage *hardware_resources = new HardwareResourcesMessage(
+                            m_proto_hardware_resources[slave_ip]);
+                    t_slave->set_allocated_hardware_resources(hardware_resources);
+                    RuntimeResourcesMessage *runtime_Resources = new RuntimeResourcesMessage(
+                            m_proto_runtime_resources[slave_ip]);
+                    t_slave->set_allocated_runtime_resources(runtime_Resources);
+                }
+                owned_slaves->set_quantity(owned_slaves->slave_infos_size());
+                send(super_master, *owned_slaves);
+                delete owned_slaves;
+                LOG(INFO) << " send owned slaves of " << self() << " to super_master " << super_master;
             }
-            owned_slaves->set_quantity(owned_slaves->slave_infos_size());
-            send(super_master,*owned_slaves);
-            delete owned_slaves;
-            LOG(INFO)<<" send owned slaves of "<<self()<<" to super_master "<<super_master;
 
 
-
-        }else{
-            LOG(INFO)<<self()<<"cannot registered to "<<super_master<<". Maybe it has registered to other supermaster before";
+        } else {
+            LOG(INFO) << self() << "cannot registered to " << super_master
+                      << ". Maybe it has registered to other supermaster before";
 
         }
     }
 
-    void Master::received_terminating_master_message(const UPID& super_master, const TerminatingMasterMessage& message){
-        LOG(INFO)<<" receive a TerminatingMasterMessage from "<<super_master;
-        if(message.master_id() == stringify(self().address.ip)){
-            LOG(INFO)<<self()<<"  is terminating due to new super_master was deteched";
+    void
+    Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
+        LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
+        if (message.master_id() == stringify(self().address.ip)) {
+            LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
             terminate(self());
         }
 
@@ -713,8 +815,7 @@ namespace chameleon {
 
     // end of super_mater related
 
-    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)
-    {
+    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
         return stream << TaskState_Name(state);
     }
 }

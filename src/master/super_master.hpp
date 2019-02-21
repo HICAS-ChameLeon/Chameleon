@@ -11,6 +11,7 @@
 #include <vector>
 #include <set>
 #include<iterator>
+#include <unordered_map>
 // google
 #include <glog/logging.h>
 #include <gflags/gflags.h>
@@ -32,6 +33,7 @@
 #include <process/process.hpp>
 #include <process/protobuf.hpp>
 #include <process/delay.hpp>
+#include <process/subprocess.hpp>
 
 // protobuf
 #include <super_master_related.pb.h>
@@ -42,6 +44,7 @@
 using std::string;
 using std::set;
 using std::vector;
+using std::unordered_map;
 
 using os::Process;
 using os::ProcessTree;
@@ -50,6 +53,9 @@ using process::UPID;
 using process::PID;
 using process::Future;
 using process::Promise;
+using process::Subprocess;
+using process::subprocess;
+
 
 namespace chameleon {
 
@@ -67,6 +73,8 @@ namespace chameleon {
 
         Future<bool> is_repeated_registered(const UPID& upid);
 
+        bool launch_masters();
+
         void record_master(const Future<bool>& future,const UPID &from, const MasterRegisteredMessage &master_registered_message);
 
         void terminating_master(const UPID& from,const OwnedSlavesMessage& message);
@@ -78,7 +86,7 @@ namespace chameleon {
     private:
 
         string m_uuid;
-        // represent the super masters or masters administered by the current node.
+        // represent the masters administered by the current super_master.
         vector<UPID> m_masters;
 
         // if the next level of the current master are occupied by masters, then is _next_level_master is true.
@@ -89,6 +97,18 @@ namespace chameleon {
         string m_first_to_second_master;
 
         vector<SlaveInfo> m_admin_slaves;
+
+        // represent the current number of masters
+        int32_t m_masters_size;
+
+        // key: master:ip , value: vector<SlavesInfoControlledByMaster>
+        unordered_map<string,vector<SlavesInfoControlledByMaster>> m_classification_slaves;
+        vector<string> m_classification_masters;
+        void classify_masters();
+
+        void create_masters();
+        void send_super_master_control_message();
+
     };
 
 }

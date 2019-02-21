@@ -53,6 +53,7 @@
 #include <job.pb.h>
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
+#include <slave_related.pb.h>
 
 #include <scheduler.pb.h>
 #include <messages.pb.h>
@@ -182,6 +183,8 @@ namespace chameleon {
         void _statusUpdate(
                 const mesos::internal::StatusUpdate& update,
                 const Option<UPID>& pid);
+
+        void reregister_to_master(const UPID& from, const ReregisterMasterMessage& message);
 
     };
 

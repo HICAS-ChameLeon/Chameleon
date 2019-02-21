@@ -46,6 +46,7 @@
 #include <scheduler.pb.h>
 #include <messages.pb.h>
 #include <super_master_related.pb.h>
+#include <slave_related.pb.h>
 
 
 // chameleon headers
@@ -170,6 +171,13 @@ namespace chameleon {
         void update_hardware_resources(const UPID &from, const HardwareResourcesMessage &hardware_resources_message);
 
         /**
+           *change framework protobuf to JSON
+           * @param from slave UPID
+           * @param hardware_resources_message
+           */
+        void change_frameworks(const UPID &from, const mesos::FrameworkInfo &frameworkInfo);
+
+        /**
          * a submitter submits a job to run
          * @param from
          * @param job_message
@@ -244,6 +252,8 @@ namespace chameleon {
 
         mesos::FrameworkInfo  m_frameworkInfo;
         mesos::FrameworkID m_frameworkID;
+//        unordered_map<string,JSON::Object> m_json_frameworkInfo;
+//        unordered_map<string,JSON::Object> m_json_frameworkID;
         UPID m_frameworkPID;
         string m_slavePID;
 
