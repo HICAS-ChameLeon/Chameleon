@@ -133,7 +133,9 @@ namespace chameleon {
         m_frameworkID = frameworkId;
         m_executorInfo = executorInfo;
 
+        LOG(INFO) << "weiguow start mesos executor ";
         start_mesos_executor();
+
     }
 
     void Slave::start_mesos_executor() {
@@ -152,6 +154,7 @@ namespace chameleon {
                 };
         const string mesos_executor_path = path::join(os::getcwd(), "../launcher/chameleon-executor");
 
+        LOG(INFO) << "start mesos executor finished ";
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,
                 Subprocess::FD(STDIN_FILENO),
