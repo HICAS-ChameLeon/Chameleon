@@ -747,6 +747,8 @@ Future<Option<int>> Docker::run(
     argv.push_back(argument);
   }
 
+  LOG(INFO) << "Heldon docker run's arguments : " << options.arguments.front() << options.arguments.at(1) ;
+
   string cmd = strings::join(" ", argv);
 
   LOG(INFO) << "Running " << cmd;
