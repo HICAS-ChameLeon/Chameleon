@@ -8,7 +8,8 @@
 #include <super_master_related.pb.h>
 #include "master.hpp"
 
-DEFINE_int32(port, 0, "master port");
+//The following has default value
+DEFINE_int32(port, 6060, "master run on this port");
 
 /*
  * Function name  : ValidateInt
@@ -24,7 +25,7 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
     return false;
 }
 
-static const bool port_dummyInt = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
+static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 
 namespace chameleon {
 
@@ -301,7 +302,7 @@ namespace chameleon {
         LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful !";
 
 //        process::dispatch(self(), &Master::Offer, from);
-        const Duration temp_duration = Seconds(20);
+        const Duration temp_duration = Seconds(0);
         process::delay(temp_duration, self(), &Master::Offer, from);
 
         return;
@@ -834,25 +835,21 @@ int main(int argc, char **argv) {
 
     google::CommandLineFlagInfo info;
 
-    if (GetCommandLineFlagInfo("port", &info) && info.is_default) {
-        LOG(INFO) << "To run this program , must set parameters correctly "
-                     "\n read the notice " << google::ProgramUsage();
+    if (port_Int) {
+        os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
+
+        process::initialize("master");
+        Master master;
+
+        PID<Master> cur_master = process::spawn(master);
+        LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
+
+        const PID<Master> master_pid = master.self();
+        LOG(INFO) << master_pid;
+        process::wait(master.self());
     } else {
-        if (GetCommandLineFlagInfo("port", &info) && !info.is_default) {
-            os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
-            process::initialize("master");
-
-            Master master;
-            PID<Master> cur_master = process::spawn(master);
-            LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
-
-            const PID<Master> master_pid = master.self();
-            LOG(INFO) << master_pid;
-            process::wait(master.self());
-        } else {
-            LOG(INFO) << "To run this program , must set all parameters correctly "
-                         "\n read the notice " << google::ProgramUsage();
-        }
+        LOG(INFO) << "To run this program , must set all parameters correctly "
+                     "\n read the notice " << google::ProgramUsage();
     }
     return 0;
 }

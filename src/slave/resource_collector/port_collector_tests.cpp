@@ -4,7 +4,7 @@
 #include <gmock/gmock.h>
 
 #include <port_collector.hpp>
-#include "runtime_resources_usage.hpp"
+#include <runtime_resources_usage.hpp>
 
 TEST(PortCollectionTests, GetPortInfo) {
     chameleon::PortCollector portCollector;

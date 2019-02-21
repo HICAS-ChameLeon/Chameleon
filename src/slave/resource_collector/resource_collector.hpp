@@ -20,8 +20,6 @@
 #include <stout/os.hpp>
 #include <stout/tests/utils.hpp>
 
-#include <hardware_resource.pb.h>
-
 #include <cpu_collector.hpp>
 #include <disk_collector.hpp>
 #include <gpu_collector.hpp>

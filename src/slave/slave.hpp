@@ -127,6 +127,10 @@ namespace chameleon {
             Slave::m_interval = m_interval;
         }
 
+        void setM_work_dir(const string &m_work_dir) {
+            Slave::m_work_dir = m_work_dir;
+        }
+
         void runTask(const process::UPID& from,
                 const mesos::FrameworkInfo& frameworkInfo,
                 const mesos::FrameworkID& frameworkId,
@@ -162,6 +166,13 @@ namespace chameleon {
         mesos::SlaveInfo m_slaveInfo;
         mesos::FrameworkID  m_frameworkID;
         mesos::ExecutorInfo m_executorInfo;
+        mesos::ExecutorID m_executorID;
+
+        mesos::TaskInfo m_task;
+
+        string m_work_dir;
+
+//        BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completedFrameworks;
 
         // used a queue to keep track of the tasks awaiting to run
 //        mesos::TaskInfo m_task;
