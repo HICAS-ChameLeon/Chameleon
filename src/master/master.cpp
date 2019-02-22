@@ -5,7 +5,6 @@
  * Description：master
  */
 
-#include <super_master_related.pb.h>
 #include "master.hpp"
 
 //The following has default value
@@ -28,17 +27,6 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
 static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 
 namespace chameleon {
-
-//    Slave::Slave(
-//            Master *const _master,
-//            const mesos::SlaveInfo &_info,
-//            const UPID &_pid)
-//            : master(_master),
-//              id(_info.id()),
-//              info(_info),
-//              pid(_pid) {
-//
-//    }
 
     void Master::initialize() {
 
@@ -222,6 +210,35 @@ namespace chameleon {
 //        }
 //    }
 
+
+    //create slaveID,frameworkID,masterID
+    mesos::SlaveID Master::newSlaveId()
+    {
+        mesos::SlaveID slaveId;
+        slaveId.set_value(m_masterInfo.id() + "-S" + stringify(nextSlaveId++));
+        return slaveId;
+    }
+
+    mesos::FrameworkID Master::newFrameworkId()
+    {
+        std::ostringstream out;
+        out << m_masterInfo.id() << "-" << std::setw(4)
+            << std::setfill('0') << nextFrameworkId++;
+
+        mesos::FrameworkID frameworkId;
+        frameworkId.set_value(out.str());
+
+        return frameworkId;
+    }
+
+    mesos::OfferID Master::newOfferId()
+    {
+        mesos::OfferID offerId;
+        offerId.set_value(m_masterInfo.id() + "-O" + stringify(nextOfferId++));
+        return offerId;
+    }
+
+
     /**
       * Function model  :  sprak run on chameleon
       * Author          :  weiguow
@@ -230,22 +247,18 @@ namespace chameleon {
       * @param         : UPID &from ,Call &call
       * */
     void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
-
         //first call
         if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
             subscribe(from, call.subscribe());
             return;
         }
-
         switch (call.type()) {
             case mesos::scheduler::Call::SUBSCRIBE:
                 LOG(FATAL) << "Unexpected 'SUBSCRIBE' call";
                 break;
-
             case mesos::scheduler::Call::ACCEPT:
                 accept(from, call.accept());
                 break;
-
             case mesos::scheduler::Call::ACKNOWLEDGE: {
                 Try<UUID> uuid = UUID::fromBytes(call.acknowledge().uuid());
                 if (uuid.isError()) {
@@ -255,7 +268,6 @@ namespace chameleon {
                 acknowledge(call.acknowledge());
                 break;
             }
-
             case mesos::scheduler::Call::UNKNOWN:
                 LOG(WARNING) << "'UNKNOWN' call";
                 break;
@@ -451,8 +463,7 @@ namespace chameleon {
 //        }else{
 //            offer->set_hostname(self().address.hostname().get());
 //        }
-        offer->set_hostname("AMD-V");
-
+        offer->set_hostname(self().address.hostname().get());
 
         mesos::internal::ResourceOffersMessage message;
         message.add_offers()->MergeFrom(*offer);
@@ -515,9 +526,9 @@ namespace chameleon {
 //                        }
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
-                            cur_slavePID.append("172.20.110.77:6061");
+                            cur_slavePID.append("172.20.110.232:6061");
                         } else {
-                            cur_slavePID.append("172.20.110.77:6061");
+                            cur_slavePID.append("172.20.110.232:6061");
                         }
                         mesos::TaskInfo task_(task);
 
@@ -539,7 +550,6 @@ namespace chameleon {
                     LOG(WARNING) << "Ignoring unknown offer operation";
                     break;
                 }
-
             }
         }
     }
@@ -616,6 +626,8 @@ namespace chameleon {
         send(m_slavePID, message);
 
     }
+
+
 
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;
@@ -804,8 +816,7 @@ namespace chameleon {
         }
     }
 
-    void
-    Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
+    void Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
         LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
         if (message.master_id() == stringify(self().address.ip)) {
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
@@ -822,7 +833,6 @@ namespace chameleon {
 }
 
 using namespace chameleon;
-
 
 int main(int argc, char **argv) {
     chameleon::set_storage_paths_of_glog("master");// provides the program name

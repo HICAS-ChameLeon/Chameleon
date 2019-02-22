@@ -50,7 +50,7 @@ static bool ValidateUint(const char *flagname, gflags::uint32 value) {
 static const bool ht_Uint = gflags::RegisterFlagValidator(&FLAGS_ht, &ValidateUint);
 static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 static const bool master_Str = gflags::RegisterFlagValidator(&FLAGS_master, &ValidateStr);
-static const bool work_dir_Str = gflags::RegisterFlagValidator(&FLAGS_work_dir, &ValidateStr);
+//static const bool work_dir_Str = gflags::RegisterFlagValidator(&FLAGS_work_dir, &ValidateStr);
 
 constexpr char MESOS_EXECUTOR[] = "chameleon-executor";
 
@@ -158,7 +158,7 @@ namespace chameleon {
                         {"MESOS_DIRECTORY",    mesos_directory},
                         {"MESOS_CHECKPOINT",   "0"}
                 };
-        const string mesos_executor_path = path::join(os::getcwd(), "../launcher/chameleon-executor");
+        const string mesos_executor_path = path::join(os::getcwd(), "mesos_executor/mesos-executor");
 
         LOG(INFO) << "start mesos executor finished ";
         Try<Subprocess> child = subprocess(
@@ -557,7 +557,7 @@ int main(int argc, char *argv[]) {
     google::CommandLineFlagInfo info;
 
 
-    if (master_Str && port_Int && work_dir_Str) {
+    if (master_Str && port_Int ) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
         process::initialize("slave");

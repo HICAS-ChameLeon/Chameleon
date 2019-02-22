@@ -48,7 +48,6 @@
 #include <super_master_related.pb.h>
 #include <slave_related.pb.h>
 
-
 // chameleon headers
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
@@ -155,6 +154,10 @@ namespace chameleon {
             msp_spark_slave = make_shared<UPID>(UPID(test_slave_UPID));
             msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
             m_state = INITIALIZING;
+
+            nextFrameworkId = 0;
+            nextSlaveId = 0;
+            nextOfferId = 0;
         }
 
         virtual ~Master() {}
@@ -191,6 +194,15 @@ namespace chameleon {
          */
         void received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message);
 
+
+
+        // Create a new framework ID. We format the ID as MASTERID-FWID, where
+        // MASTERID is the ID of the master (randomly generated UUID) and FWID
+        // is an increasing integer.
+        mesos::SlaveID newSlaveId();
+        mesos::FrameworkID newFrameworkId();
+        mesos::OfferID newOfferId();
+
         /**
          * Struct      : Frameworks
          * Description : set hashmap
@@ -212,16 +224,16 @@ namespace chameleon {
 
         void accept(const UPID &from, mesos::scheduler::Call::Accept accept);
 
-        void statusUpdate(mesos::internal::StatusUpdate update, const UPID& pid);
+        void statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid);
 
         void statusUpdateAcknowledgement(
-                const UPID& from,
-                const mesos::SlaveID& slaveId,
-                const mesos::FrameworkID& frameworkId,
-                const mesos::TaskID& taskId,
-                const string& uuid);
+                const UPID &from,
+                const mesos::SlaveID &slaveId,
+                const mesos::FrameworkID &frameworkId,
+                const mesos::TaskID &taskId,
+                const string &uuid);
 
-        void acknowledge(const mesos::scheduler::Call::Acknowledge& acknowledge);
+        void acknowledge(const mesos::scheduler::Call::Acknowledge &acknowledge);
 
 
     private:
@@ -229,11 +241,10 @@ namespace chameleon {
         string m_uuid;
 
         // master states.
-        enum
-        {
-           REGISTERING, // is registering from a super_master
-           INITIALIZING,
-           RUNNING
+        enum {
+            REGISTERING, // is registering from a super_master
+            INITIALIZING,
+            RUNNING
         } m_state;
 
         unordered_map<UPID, ParticipantInfo> m_participants;
@@ -250,7 +261,7 @@ namespace chameleon {
         shared_ptr<UPID> msp_spark_slave;
         shared_ptr<UPID> msp_spark_master;
 
-        mesos::FrameworkInfo  m_frameworkInfo;
+        mesos::FrameworkInfo m_frameworkInfo;
         mesos::FrameworkID m_frameworkID;
 //        unordered_map<string,JSON::Object> m_json_frameworkInfo;
 //        unordered_map<string,JSON::Object> m_json_frameworkID;
@@ -280,17 +291,90 @@ namespace chameleon {
 
         void handle_accept_call(mesos::scheduler::Call::Accept accept);
 
-        mesos::Offer* create_a_offer();
+        int64_t nextFrameworkId;
+        int64_t nextOfferId;
+        int64_t nextSlaveId;
+
+        mesos::Offer *create_a_offer();
 
         // super_master related
-        void super_master_control(const UPID &super_master, const SuperMasterControlMessage &super_master_control_message);
+        void
+        super_master_control(const UPID &super_master, const SuperMasterControlMessage &super_master_control_message);
 
-        void received_registered_message_from_super_master(const UPID& super_master, const AcceptRegisteredMessage& message);
+        void
+        received_registered_message_from_super_master(const UPID &super_master, const AcceptRegisteredMessage &message);
 
-        void received_terminating_master_message(const UPID& super_master, const TerminatingMasterMessage& message);
+        void received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message);
     };
 
-    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state);
+    class Framework {
+    public:
+        enum State {
+            //re-registered
+                    RECOVERED,
+
+            //Framwork not connected
+                    DISCONNECTED,
+
+            //Framework connected, but doesn't have offer
+                    INACTIVE,
+
+            //Framework connected, has offer
+                    ACTIVE
+        };
+
+        Framework(Master *const master,
+                  const mesos::FrameworkInfo &info,
+                  const process::UPID &_pid
+        ) : Framework(master, info, ACTIVE) {
+            pid = _pid;
+        }
+
+        template<typename Message>
+        void send(const Message &message) {
+            if (!connected()) {
+                LOG(WARNING) << "Master attempted to send message to disconnected"
+                             << " framework " << this->state;
+            } else {
+                master->send(pid.get(), message);
+            }
+        }
+
+        bool active() const { return state == ACTIVE; }
+        bool connected() const { return state == ACTIVE || state == INACTIVE; }
+        bool recovered() const { return state == RECOVERED; }
+
+        const mesos::FrameworkID id() const { return info.id(); }
+
+        Master *const master;
+        mesos::FrameworkInfo info;
+        Option<process::UPID> pid;
+        State state;
+
+    private:
+        Framework(Master *const _master,
+                  const mesos::FrameworkInfo &_info,
+                  State state
+        )
+                : master(_master),
+                  info(_info),
+                  state(state) {}
+
+        Framework(const Framework&);
+
+        Framework &operator=(const Framework &);
+
+    };
+
+    inline std::ostream &operator<<(std::ostream &stream, const Framework &framework) {
+        stream << framework.id().value() << " (" << framework.info.name() << ")";
+        if (framework.pid.isSome()) {
+            stream << " at " << framework.pid.get();
+        }
+        return stream;
+    }
+
+    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state);
 
 }
 
