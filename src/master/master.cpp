@@ -309,45 +309,6 @@ namespace chameleon {
 
         return;
     }
-//    void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
-//
-//        mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
-//
-//        LOG(INFO) << "Received a subscribe framework "
-//                  << frameworkInfo.name() << "  at " << from;
-//
-//        m_frameworkInfo = frameworkInfo;
-//
-//        this->m_frameworkPID = from;  //scheduler-a8426d29-07c4-4b5b-9dc7-2daf941b4893@172.20.110.77:34803
-//
-//        mesos::internal::FrameworkRegisteredMessage message;
-//
-//        mesos::MasterInfo masterInfo;
-//        masterInfo.set_id("11111111");
-//        masterInfo.set_ip(self().address.ip.in().get().s_addr);
-//        masterInfo.set_port(6060);
-//
-//        std::ostringstream out;
-//        int64_t nextFrameworkId;
-//        mesos::FrameworkID *frameworkID = new mesos::FrameworkID();
-//        out << masterInfo.id() << "-" << std::setw(4)
-//            << std::setfill('0') << nextFrameworkId++;
-//        frameworkID->set_value(out.str());
-//        m_frameworkID = *frameworkID;
-//
-//        message.mutable_framework_id()->MergeFrom(*frameworkID);
-//        message.mutable_master_info()->MergeFrom(masterInfo);
-//
-//        send(from, message);
-//
-//        LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful !";
-//
-////        process::dispatch(self(), &Master::Offer, from);
-//        const Duration temp_duration = Seconds(20);
-//        process::delay(temp_duration, self(), &Master::Offer,from);
-//
-//        return;
-//    }
 
     mesos::Offer *Master::create_a_offer() {
         mesos::Offer *offer = new mesos::Offer();
@@ -453,7 +414,7 @@ namespace chameleon {
 //        }else{
 //            offer->set_hostname(self().address.hostname().get());
 //        }
-        offer->set_hostname("AMD-V");
+        offer->set_hostname(self().address.hostname().get());
 
 
         mesos::internal::ResourceOffersMessage message;
@@ -517,7 +478,7 @@ namespace chameleon {
 //                        }
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
-                            cur_slavePID.append("172.20.110.228:6061");
+                            cur_slavePID.append("172.20.110.53:6061");
                         } else {
                             cur_slavePID.append("172.20.110.53:6061");
                         }
@@ -646,20 +607,6 @@ namespace chameleon {
 //        //LOG(INFO)<<object_str;
 //        // m_json_frameworkInfo
 //
-//    }
-
-
-//    void Master::job_submited(const UPID &from, const JobMessage &job_message) {
-//        LOG(INFO) << "got a job from " << from;
-//        send(*msp_spark_master, job_message);
-//        LOG(INFO) << "sent the job to the test master 172.20.110.228 successfully!";
-//        JobMessage slave_job_message;
-//        slave_job_message.CopyFrom(job_message);
-//        slave_job_message.set_master_ip("172.20.110.228");
-//        slave_job_message.set_is_master(false);
-//        LOG(INFO) << "slave_job_message.is_master = " << slave_job_message.is_master();
-//        send(*msp_spark_slave, slave_job_message);
-//        LOG(INFO) << "sent the job to the test slave 172.20.110.79 successfully!";
 //    }
 
     void Master::job_submited(const UPID &from, const JobMessage &job_message) {

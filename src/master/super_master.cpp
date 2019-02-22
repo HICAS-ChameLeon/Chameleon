@@ -19,9 +19,9 @@ namespace chameleon {
 
         // change from one level to two levels
         cluster_levels = 2;
-        m_masters_size = 2;
+        m_masters_size = 1;
         m_uuid = UUID::random().toString();
-        m_first_to_second_master = "master@172.20.110.228:6060";
+        m_first_to_second_master = "master@172.20.110.53:6060";
         SuperMasterControlMessage *super_master_control_message = new SuperMasterControlMessage();
         super_master_control_message->set_super_master_id(m_first_to_second_master);
         super_master_control_message->set_super_master_uuid(m_uuid);
@@ -31,6 +31,69 @@ namespace chameleon {
         send(t_master, *super_master_control_message);
         LOG(INFO) << " sends a super_master_constrol_message to a master: " << m_first_to_second_master;
         delete super_master_control_message;
+
+
+
+        route(
+                "/super_slave",
+                "start super_master and change from one level to two levels",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_classification_slaves.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_classification_slaves.begin();
+                             it != this->m_classification_slaves.end(); it++) {
+                            vector<SlavesInfoControlledByMaster> slaveinfo = it->second;
+                            for (int j = 0; j < slaveinfo.size(); ++j) {
+                                array.values.push_back(JSON::protobuf(slaveinfo[j]));
+                            }
+
+                        }
+                        result.values["quantity"] = array.values.size();
+                        result.values["content"] = array;
+
+                    } else {
+                        result.values["quantity"] = 0;
+                        result.values["content"] = JSON::Object();
+                    }
+
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+        route(
+                "/super_master",
+                "start super_master and change from one level to two levels",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_classification_masters.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_classification_masters.begin();
+                             it != this->m_classification_masters.end(); it++) {
+                            for (int j = 0; j < m_classification_masters.size(); ++j) {
+
+                                //JSON::Object result2 = JSON::Object(stringify(result));
+                                result.values["ip"] = m_classification_masters[0];
+                                //array.values.push_back(JSON::String(m_classification_masters[j]));
+                                array.values.push_back(result);
+                            }
+
+                        }
+                        result.values["quantity"] = array.values.size();
+                        result.values["content"] = array;
+
+
+                    } else {
+                        result.values["quantity"] = 0;
+                        result.values["content"] = JSON::Object();
+                    }
+
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
 
     }
 
@@ -161,7 +224,7 @@ namespace chameleon {
 //                Subprocess::FD(STDERR_FILENO));
 
         for(const string& master_ip:m_classification_masters){
-            string ssh_command = "ssh "+master_ip+" /home/lemaker/open-source/Chameleon/build/src/master/master --port=6060";
+            string ssh_command = "ssh "+master_ip+" /home/wqn/Chameleon/build/src/master/master --port=6060";
             Try<Subprocess> s = subprocess(
                     ssh_command,
                     Subprocess::FD(STDIN_FILENO),
