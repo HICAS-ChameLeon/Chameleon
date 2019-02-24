@@ -515,9 +515,9 @@ namespace chameleon {
 //                        }
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
-                            cur_slavePID.append("172.20.110.228:6061");
+                            cur_slavePID.append("172.16.101.246:6061");
                         } else {
-                            cur_slavePID.append("172.20.110.53:6061");
+                            cur_slavePID.append("172.16.101.246:6061");
                         }
                         mesos::TaskInfo task_(task);
 
