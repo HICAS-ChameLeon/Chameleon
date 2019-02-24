@@ -26,7 +26,7 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
 
 static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 
-namespace chameleon {
+namespace master {
 
     void Master::initialize() {
 
@@ -43,7 +43,7 @@ namespace chameleon {
 
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
-        install<JobMessage>(&Master::job_submited);
+
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
         install<AcceptRegisteredMessage>(&Master::received_registered_message_from_super_master);
 
@@ -117,34 +117,6 @@ namespace chameleon {
                     return ok_response;
                 });
 
-        // http://172.20.110.228.6060/master/frameworks
-//        route(
-//                "/frameworks",
-//                "get the frameworks of the whole topology",
-//                [this](Request request) {
-//                    //JSON::Object result = JSON::Object();
-//                    JSON::Object result = JSON::protobuf(m_frameworkInfo);
-//                    OK ok_response(stringify(result));
-//                    //OK ok_id_response(stringify(id));
-//                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-//                    //ok_id_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-//                    return ok_response;
-//
-//                });
-//
-//        route(
-//                "/frameworksID",
-//                "get the frameworks of the whole topology",
-//                [this](Request request) {
-//                    //JSON::Object result = JSON::Object();
-//                    JSON::Object result = JSON::protobuf(m_frameworkID);
-//                    OK ok_response(stringify(result));
-//                    //OK ok_id_response(stringify(id));
-//                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-//                    return ok_response;
-//
-//                });
-
 
         // http://172.20.110.228:6060/master/stop-cluster
         route(
@@ -157,7 +129,7 @@ namespace chameleon {
                     LOG(INFO) << "stopping the Chameleon cluster, we have " << m_alive_slaves.size()
                               << " slaves to terminate";
                     for (string ip : this->m_alive_slaves) {
-                        const UPID current_slave(construct_UPID_string("slave", ip, "6061"));
+                        const UPID current_slave(chameleon::construct_UPID_string("slave", ip, "6061"));
                         ShutdownMessage m;
                         m.set_master_ip(this->self().id);
                         m.set_slave_ip(ip);
@@ -343,7 +315,7 @@ namespace chameleon {
     * Date            :  2018-12-29
     * Funtion name    :  Master::accept
     * */
-    void chameleon::Master::accept(Framework* framework, mesos::scheduler::Call::Accept accept) {
+    void Master::accept(Framework* framework, mesos::scheduler::Call::Accept accept) {
         //judge the operation type
         for (int i = 0; i < accept.operations_size(); ++i) {
             mesos::Offer::Operation *operation = accept.mutable_operations(i);
@@ -376,10 +348,6 @@ namespace chameleon {
 
                     foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
 
-//                        for (auto it = this->m_alive_slaves.begin(); it != this->m_alive_slaves.end(); it++) {
-//                            m_slavePID = "slave@" + stringify(*it) + ":6061";
-//
-//                        }
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
                             cur_slavePID.append("172.20.110.232:6061");
@@ -434,8 +402,7 @@ namespace chameleon {
             mesos::internal::StatusUpdateMessage message;
             message.mutable_update()->MergeFrom(update);
             message.set_pid(pid);   //this pid is slavePID
-            // m_frameworkPID scheduler-26009ec4-1787-446d-916f-e32fd9baa26a@172.20.110.77:36297;
-//            send(framework.pid.get(), message);
+
             framework->send(message);
         }
     }
@@ -548,7 +515,8 @@ namespace chameleon {
                                            const HardwareResourcesMessage &hardware_resources_message) {
         DLOG(INFO) << "enter update_hardware_resources";
 
-        auto slaveid = hardware_resources_message.slave_id();
+//        auto slaveid = hardware_resources_message.slave_id();
+
         if (m_hardware_resources.find(slaveid) == m_hardware_resources.end()) {
             JSON::Object object = JSON::protobuf(hardware_resources_message);
 //                string object_str = stringify(object);
@@ -568,43 +536,6 @@ namespace chameleon {
 //        // m_json_frameworkInfo
 //
 //    }
-
-
-//    void Master::job_submited(const UPID &from, const JobMessage &job_message) {
-//        LOG(INFO) << "got a job from " << from;
-//        send(*msp_spark_master, job_message);
-//        LOG(INFO) << "sent the job to the test master 172.20.110.228 successfully!";
-//        JobMessage slave_job_message;
-//        slave_job_message.CopyFrom(job_message);
-//        slave_job_message.set_master_ip("172.20.110.228");
-//        slave_job_message.set_is_master(false);
-//        LOG(INFO) << "slave_job_message.is_master = " << slave_job_message.is_master();
-//        send(*msp_spark_slave, slave_job_message);
-//        LOG(INFO) << "sent the job to the test slave 172.20.110.79 successfully!";
-//    }
-
-    void Master::job_submited(const UPID &from, const JobMessage &job_message) {
-        LOG(INFO) << "got a job from " << from;
-
-        JobMessage slave_job_message;
-        slave_job_message.CopyFrom(job_message);
-        slave_job_message.set_master_ip("172.20.110.228");
-        slave_job_message.set_is_master(false);
-
-        // find the best machine whose sum usage of cpu and memory is the lowest.
-        Try<string> best_machine = find_min_cpu_and_memory_rates();
-        if (best_machine.isError()) {
-            LOG(FATAL) << " cannot find a appropriate machine to run the job!";
-            return;
-        }
-        string str_spark_slave = "slave@";
-        str_spark_slave.append(best_machine.get());
-        str_spark_slave.append(":6061");
-        UPID spark_slave(str_spark_slave);
-        LOG(INFO) << "slave_job_message.is_master = " << slave_job_message.is_master();
-        send(spark_slave, slave_job_message);
-        LOG(INFO) << "sent the job to the test slave " << str_spark_slave << " successfully!";
-    }
 
     void Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
         LOG(INFO) << "received a heartbeat message from " << slave;
@@ -742,7 +673,7 @@ namespace chameleon {
     }
 }
 
-using namespace chameleon;
+using namespace master;
 
 int main(int argc, char **argv) {
     chameleon::set_storage_paths_of_glog("master");// provides the program name

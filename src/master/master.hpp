@@ -75,13 +75,44 @@ using process::http::Request;
 using process::http::OK;
 using process::http::InternalServerError;
 
-namespace chameleon {
+namespace master {
 
     class Framework;
-
-//    class Slave;
-
     class Master;
+
+    class Slave {
+    public:
+        Slave(Master *const _master,
+              const mesos::SlaveInfo &_info,
+              const process::UPID &_pid) :
+                master(_master),
+                info(_info),
+                id(_info.id()),
+                pid(_pid) {
+        };
+
+        ~Slave();
+
+        Master *const master;
+        const mesos::SlaveID id;
+        const mesos::SlaveInfo info;
+        process::UPID pid;
+
+    private:
+
+        //Constructor cannot be redeclared
+//        Slave(Master *const _master,
+//              const mesos::SlaveInfo &_info)
+//                : master(_master),
+//                  info(_info),
+//                  id(info.id()){}
+
+        Slave(const Slave&);
+
+        Slave &operator=(const Slave&);
+
+    };
+
 
     class Master : public ProtobufProcess<Master> {
 
@@ -129,60 +160,66 @@ namespace chameleon {
         void change_frameworks(const UPID &from, const mesos::FrameworkInfo &frameworkInfo);
 
         /**
-         * a submitter submits a job to run
-         * @param from
-         * @param job_message
-         */
-        void job_submited(const UPID &from, const JobMessage &job_message);
-
-        /**
          * get a heartbeat message from a slave. The heartbeat message contains the runtime resource usage statistics of the slave.
          * @param slave
          * @param runtime_resouces_message represents the runtime resource usage statistics for the slave
          */
         void received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message);
 
-
+        /**
+         * make random ID-weiguow-2019/2/24
+         * */
         mesos::SlaveID newSlaveId();
         mesos::FrameworkID newFrameworkId();
         mesos::OfferID newOfferId();
 
-        Framework* getFramework(const mesos::FrameworkID& frameworkId);
-
-//        struct Slaves {
-//            struct {
-//                Slave *get(const mesos::SlaveID &slaveId) const {
-//                    return ids.get(slaveId).getOrElse(nullptr);
-//                }
-//
-//                Slave *get(const process::UPID &pid) const {
-//                    return pids.get(pid).getOrElse(nullptr);
-//                }
-//
-//                void put(Slave* slave)
-//                {
-//                    CHECK_NOTNULL(slave);
-//                    ids[slave->id] = slave;
-//                    pids[slave->pid] = slave;
-//                }
-//
-//            private:
-//                unordered_map<string, Slave *> ids;
-//                unordered_map<process::UPID, Slave *> pids;
-//            } registered;
-//
-//
-//        } slaves;
+        Framework *getFramework(const mesos::FrameworkID &frameworkId);
 
         /**
-         * Struct      : Frameworks
-         * Description : Use this struct to save Frameworkinfo
-         * Author      : weiguow
-         * Date        : 2019-2-22
+         * save slaveinfo-weiguow-2019-2-24*/
+        struct Slaves {
+            struct {
+                Slave* get(const mesos::SlaveID &slaveId) const {
+                    return ids.get(slaveId.value()).getOrElse(nullptr);
+                }
+
+                Slave* get(const process::UPID &pid) const {
+                    return pids.get(pid).getOrElse(nullptr);
+                }
+
+                void put(Slave* slave)
+                {
+                    CHECK_NOTNULL(slave);
+
+                    ids[slave->id.value()] = slave;
+                    pids[slave->pid] = slave;
+                }
+
+
+                size_t size() const { return ids.size(); }
+
+                typedef hashmap<string, Slave*>::iterator iterator;
+                typedef hashmap<string, Slave*>::const_iterator const_iterator;
+
+                iterator begin() { return ids.begin(); }
+                iterator end()   { return ids.end();   }
+
+                const_iterator begin() const { return ids.begin(); }
+                const_iterator end()   const { return ids.end();   }
+
+            public:
+                hashmap<string, Slave*> ids;
+                hashmap<process::UPID, Slave*> pids;
+            } registered;
+
+
+        } slaves;
+
+        /**
+         * save Frameworkinfo-weiguow-2019-2-22
          * */
         struct Frameworks {
-            Frameworks() {}
-            hashmap<string, Framework *> registered;
+            hashmap<string, Framework*> registered;
         } frameworks;
 
         void Offer(const mesos::FrameworkID &frameworkId);
@@ -195,7 +232,7 @@ namespace chameleon {
                 const process::UPID &from,
                 const mesos::scheduler::Call::Subscribe &subscribe);
 
-        void accept(Framework* framework, mesos::scheduler::Call::Accept accept);
+        void accept(Framework *framework, mesos::scheduler::Call::Accept accept);
 
         void statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid);
 
@@ -206,7 +243,7 @@ namespace chameleon {
                 const mesos::TaskID &taskId,
                 const string &uuid);
 
-        void acknowledge(Framework* framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
+        void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
 
         void addFramework(Framework *framework);
 
@@ -272,47 +309,6 @@ namespace chameleon {
         void received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message);
     };
 
-//    class Slave {
-//    public:
-//        Slave(Master
-//              *const _master,
-//              const mesos::SlaveInfo &_info,
-//              const process::UPID &_pid,
-//              const std::vector<mesos::ExecutorInfo> &executorInfos =
-//              std::vector<mesos::ExecutorInfo>(),
-//              const std::vector<mesos::Task> &tasks =
-//              std::vector<mesos::Task>()
-//        );
-//
-//        ~Slave();
-//
-//        Master *const master;
-//        const mesos::SlaveID id;
-//        const mesos::SlaveInfo info;
-//
-//        process::UPID pid;
-//
-////        hashmap<FrameworkID, hashmap<ExecutorID, ExecutorInfo>> executors;
-////        hashmap<FrameworkID, hashmap<TaskID, Task*>> tasks;
-////        hashset<Offer*> offers;
-//
-//    private:
-//        Slave(Master *const _master,
-//              const mesos::SlaveInfo &_info,
-//              const UPID &_pid,
-//              const vector<mesos::ExecutorInfo> &executorInfos,
-//              const vector<mesos::Task> &tasks)
-//                : master(_master),
-//                  id(_info.id()),
-//                  info(_info) {}
-//
-//
-//        Slave(const Slave &);
-//
-//        Slave &operator=(const Slave &);
-//
-//    };
-
     class Framework {
     public:
         enum State {
@@ -331,8 +327,9 @@ namespace chameleon {
 
         Framework(Master *const master,
                   const mesos::FrameworkInfo &info,
-                  const process::UPID &_pid
-        ) : Framework(master, info, ACTIVE) {
+                  const process::UPID &_pid,
+                  const process::Time& time = process::Clock::now()
+        ) : Framework(master, info, ACTIVE, time) {
             pid = _pid;
         }
 
@@ -361,14 +358,17 @@ namespace chameleon {
         Option<process::UPID> pid;
         State state;
 
+        process::Time registeredTime;
+
     private:
         Framework(Master *const _master,
                   const mesos::FrameworkInfo &_info,
-                  State state
-        )
-                : master(_master),
-                  info(_info),
-                  state(state) {}
+                  State state,
+                  const process::Time& time
+        ) : master(_master),
+            info(_info),
+            state(state),
+            registeredTime(time){}
 
         Framework(const Framework &);
 
@@ -376,10 +376,10 @@ namespace chameleon {
 
     };
 
-//    inline std::ostream &operator<<(std::ostream &stream, const Slave &slave) {
-//        return stream << << " at " << slave.pid
-//                      << " (" << slave.info.hostname() << ")";
-//    }
+    inline std::ostream &operator<<(std::ostream &stream, const Slave &slave) {
+        return stream << slave.id.value() << " at " << slave.pid
+                      << " (" << slave.info.hostname() << ")";
+    }
 
     inline std::ostream &operator<<(std::ostream &stream, const Framework &framework) {
         stream << framework.id().value() << " (" << framework.info.name() << ")";
