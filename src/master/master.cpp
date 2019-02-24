@@ -312,7 +312,7 @@ bool Master::first_slave = true;
         slaveID->set_value("44444444");
 
         offer->mutable_slave_id()->MergeFrom(*slaveID);
-
+        offer->set_hostname(m_alive_slaves[0]);
         // a test: a executor running on x86 machine and a executor running on Arm machine
         if(m_alive_slaves.size() == 2){
             if(first_slave){
