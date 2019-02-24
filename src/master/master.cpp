@@ -515,12 +515,12 @@ namespace master {
                                            const HardwareResourcesMessage &hardware_resources_message) {
         DLOG(INFO) << "enter update_hardware_resources";
 
-//        auto slaveid = hardware_resources_message.slave_id();
+        auto slaveid = hardware_resources_message.slave_id();
+
+        slaves.registering.insert(from);
 
         if (m_hardware_resources.find(slaveid) == m_hardware_resources.end()) {
             JSON::Object object = JSON::protobuf(hardware_resources_message);
-//                string object_str = stringify(object);
-//                DLOG(INFO) << object_str;
             m_hardware_resources.insert({slaveid, object});
             m_proto_hardware_resources.insert({slaveid, hardware_resources_message});
             m_alive_slaves.insert(slaveid);
@@ -598,7 +598,6 @@ namespace master {
         // change current status to REGISTERRING to register from supermaster.
         m_state = REGISTERING;
         is_passive = super_master_control_message.passive();
-
 
         MasterRegisteredMessage *master_registered_message = new MasterRegisteredMessage();
         master_registered_message->set_master_id(stringify(self().address.ip));

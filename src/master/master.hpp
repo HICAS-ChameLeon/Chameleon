@@ -118,7 +118,6 @@ namespace master {
 
     public:
         friend class Framework;
-
         friend class Slave;
 
         explicit Master() : ProcessBase("master") {
@@ -178,6 +177,9 @@ namespace master {
         /**
          * save slaveinfo-weiguow-2019-2-24*/
         struct Slaves {
+
+            hashset<process::UPID> registering;
+
             struct {
                 Slave* get(const mesos::SlaveID &slaveId) const {
                     return ids.get(slaveId.value()).getOrElse(nullptr);
