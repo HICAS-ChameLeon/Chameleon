@@ -10,7 +10,7 @@
             $scope.delay = 2000;
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/runtime-resources'
+                url: 'http://172.20.110.53:6060/master/runtime-resources'
             }).then(function successCallback(response) {
                 $scope.runtime = response.data.content;
                 $scope.quantities = response.data.quantity;
@@ -19,7 +19,7 @@
             });
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/hardware-resources'
+                url: 'http://172.20.110.53:6060/master/hardware-resources'
             }).then(function successCallback(response) {
                 $scope.hardware = response.data.content;
                 $scope.quantities = response.data.quantity;
@@ -433,7 +433,7 @@
     chameleon_app.controller('TopologyCtrl', function($scope, $http) {
         $http({
             method: 'GET',
-            url: 'http://172.20.110.228:6060/master/runtime-resources'
+            url: 'http://172.20.110.53:6060/master/runtime-resources'
         }).then(function successCallback(response) {
             $scope.runtime = response.data.content;
             // console.log(response.data.content);
@@ -605,6 +605,82 @@
         }, function errorCallback(response) {
             // 请求失败执行代码
         });
+
+
+        $http({
+            method: 'GET',
+            url: 'http://172.20.110.53:7000/super_master/super_master'
+        }).then(function successCallback(response) {
+            $scope.supermaster = response.data.content;
+            // console.log(response.data.content);
+            $scope.super_quantities = response.data.quantity;
+            // console.log(response.data.quantity);
+            var DIR = '../icon/refresh-cl/';
+
+            var vertexes_super = new Array()
+
+            var my_supermaster = {};
+            vertexes_super[0] = my_supermaster;
+            my_supermaster.id =0;
+            my_supermaster.label = "super_master";
+            my_supermaster.shape = 'image';
+            my_supermaster.image =DIR + 'Hardware-WQN-main.png';
+            my_supermaster.title = '超级节点';
+
+            var index_master =1;
+            var index_superedge = -1;
+            var my_superedges = [];
+            var cur_masterindex=0;
+
+            if ($scope.super_quantities>=1) {
+                my_superedges = [];
+                console.log('77');
+                for (var i in $scope.supermaster){
+                    var master = $scope.supermaster[i];
+
+                    var temp_master = {};  //
+                    cur_masterindex++;
+                    temp_master.label = "master"+cur_masterindex;
+                    temp_master.id = cur_masterindex;
+                    console.log('77'+temp_master.id);
+                    temp_master.title = $scope.supermaster[i].ip;
+                    my_supermaster.image =DIR + 'Hardware-WQN-main.png';
+
+                    vertexes_super[cur_masterindex] = temp_master;
+                    var temp_superedge = {}; //添加一条super_master到temp_master的边
+                    temp_superedge.from = 0;
+                    temp_superedge.to = temp_master.id;
+                    temp_superedge.arrows ='to';
+                    index_superedge ++;
+                    my_superedges[index_superedge] =temp_superedge;
+                }
+
+
+            }
+
+            var nodes = new vis.DataSet(vertexes_super);
+            var edges = new vis.DataSet(my_superedges);
+
+            var option ={};
+
+            var container = document.getElementById('mynetwork');
+            var data = {
+                nodes: nodes,
+                edges: edges
+            };
+
+            var network = new vis.Network(container, data, option);
+
+            // add event listeners
+            network.on('select', function(params) {
+                document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
+            });
+
+
+        }, function errorCallback(response) {
+            // 请求失败执行代码
+        });
+
     });
 
     //模态框对应的Controller
