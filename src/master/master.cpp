@@ -222,7 +222,7 @@ namespace chameleon {
 //    }
 
     /**
-      * Function model  :  sprak run on chameleon
+      * Function model  :  spark run on chameleon
       * Author          :  weiguow
       * Date            :  2018-12-27
       * Funtion name    :  receive
@@ -262,7 +262,7 @@ namespace chameleon {
     }
 
     /**
-     * Function model  :  sprak run on chameleon
+     * Function model  :  spark run on chameleon
      * Author          :  weiguow
      * Date            :  2018-12-28
      * Funtion name    :  subscribe
@@ -300,10 +300,11 @@ namespace chameleon {
 
         LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful !";
 
-//        process::dispatch(self(), &Master::Offer, from);
-        const Duration temp_duration = Seconds(20);
-        process::delay(temp_duration, self(), &Master::Offer, from);
-
+//  when a framework has subscribed to the master successfully,
+// we will send resources message to that framework every 20 seconds.
+//        const Duration temp_duration = Seconds(20);
+//        process::delay(temp_duration, self(), &Master::Offer, from);
+        Offer(from);
         return;
     }
 //    void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
