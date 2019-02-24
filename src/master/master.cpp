@@ -394,7 +394,7 @@ namespace chameleon {
 //        }else{
 //            offer->set_hostname(self().address.hostname().get());
 //        }
-        offer->set_hostname("221b");
+        offer->set_hostname("ccrfox246");
         return offer;
     }
 
@@ -451,7 +451,7 @@ namespace chameleon {
 //        }else{
 //            offer->set_hostname(self().address.hostname().get());
 //        }
-        offer->set_hostname("AMD-V");
+        offer->set_hostname("ccrfox246");
 
 
         mesos::internal::ResourceOffersMessage message;
