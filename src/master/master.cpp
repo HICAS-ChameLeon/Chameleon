@@ -165,16 +165,16 @@ namespace master {
       * Author          :  weiguow
       * Date            :  2018-12-27
       * Funtion name    :  receive
-      * @param         : UPID &from ,Call &call
+      * @param          : UPID& from ,Call& call
       * */
-    void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
+    void Master::receive(const UPID& from, const mesos::scheduler::Call& call) {
         //first call
         if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
             subscribe(from, call.subscribe());
             return;
         }
 
-        Framework* framework = getFramework(call.framework_id());
+        Framework *framework = getFramework(call.framework_id());
 
         if (framework == nullptr) {
             LOG(INFO) << "Framework cannot be found";
@@ -226,23 +226,41 @@ namespace master {
         LOG(INFO) << "Received  SUBSCRIBE call for framework "
                   << frameworkInfo.name() << " at " << from;
 
-        mesos::internal::FrameworkRegisteredMessage message;
+        if (!frameworkInfo.has_id() || frameworkInfo.id().value().empty()) {
 
-        frameworkInfo.mutable_id()->CopyFrom(newFrameworkId());
-        Framework* framework = new Framework(this, frameworkInfo, from);
-        addFramework(framework);
+            // If we are here the framework is subscribing for the first time.
+            // Check if this framework is already subscribed (because it retries).
+            foreachvalue (Framework *framework, frameworks.registered) {
+                if (framework->pid == from) {
+                    LOG(INFO) << "Framework " << *framework
+                    << " already subscribed, resending acknowledgement";
+                    mesos::internal::FrameworkRegisteredMessage message;
+                    message.mutable_framework_id()->MergeFrom(framework->id());
+                    message.mutable_master_info()->MergeFrom(framework->info);
+                    framework->send(message);
+                    return;
+                }
+            }
 
-        message.mutable_framework_id()->MergeFrom(framework->id());
-        message.mutable_master_info()->MergeFrom(m_masterInfo);
+            mesos::internal::FrameworkRegisteredMessage message;
 
-        framework->send(message);
+            frameworkInfo.mutable_id()->CopyFrom(newFrameworkId());
+            Framework *framework = new Framework(this, frameworkInfo, from);
 
-        LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful !";
+            addFramework(framework);
 
-        const Duration temp_duration = Seconds(0);
-        process::delay(temp_duration, self(), &Master::Offer, framework->id());
+            message.mutable_framework_id()->MergeFrom(framework->id());
+            message.mutable_master_info()->MergeFrom(m_masterInfo);
 
-        return;
+            framework->send(message);
+
+            LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful!";
+
+            const Duration temp_duration = Seconds(0);
+            process::delay(temp_duration, self(), &Master::Offer, framework->id());
+
+            return;
+        }
     }
 
     /**
@@ -251,9 +269,9 @@ namespace master {
      * Date            :  2018-12-28
      * Funtion name    :  Master::offer
      * */
-    void Master::Offer(const mesos::FrameworkID& frameworkId) {
+    void Master::Offer(const mesos::FrameworkID &frameworkId) {
 
-        Framework* framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
+        Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
 
         mesos::internal::ResourceOffersMessage message;
 
@@ -315,7 +333,7 @@ namespace master {
     * Date            :  2018-12-29
     * Funtion name    :  Master::accept
     * */
-    void Master::accept(Framework* framework, mesos::scheduler::Call::Accept accept) {
+    void Master::accept(Framework *framework, mesos::scheduler::Call::Accept accept) {
         //judge the operation type
         for (int i = 0; i < accept.operations_size(); ++i) {
             mesos::Offer::Operation *operation = accept.mutable_operations(i);
@@ -389,7 +407,7 @@ namespace master {
                   << " of framework " << update.framework_id().value()
                   << " from agent " << update.slave_id().value();
 
-        Framework* framework = getFramework(update.framework_id());
+        Framework *framework = getFramework(update.framework_id());
 
         if (update.has_uuid()) {
             update.mutable_status()->set_uuid(update.uuid());
@@ -419,7 +437,7 @@ namespace master {
             const mesos::FrameworkID &frameworkId,
             const mesos::TaskID &taskId,
             const string &uuid) {
-        Framework* framework = getFramework(frameworkId);
+        Framework *framework = getFramework(frameworkId);
         LOG(INFO) << "statusUpdateAcknowledgement from " << from;
         mesos::scheduler::Call::Acknowledge message;
         message.mutable_slave_id()->CopyFrom(slaveId);
@@ -436,7 +454,7 @@ namespace master {
     * Description  : send StatusUpdateAcknowledgementMessage message to
     * slave make sure the status
     * */
-    void Master::acknowledge(Framework* framework, const mesos::scheduler::Call::Acknowledge &acknowledge) {
+    void Master::acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge) {
         const mesos::SlaveID &slaveId = acknowledge.slave_id();
         const mesos::TaskID &taskId = acknowledge.task_id();
         const UUID uuid = UUID::fromBytes(acknowledge.uuid()).get();
@@ -459,7 +477,7 @@ namespace master {
      * Date         : 2019-2-22
      * Description  : Save Frameworkinfo to master
      * */
-    void Master::addFramework(Framework* framework) {
+    void Master::addFramework(Framework *framework) {
 
         frameworks.registered[framework->id().value()] = framework;
 
@@ -499,8 +517,7 @@ namespace master {
     /**
      * use frameworkId to get Framework-weiguow-2019/2/24
      * */
-    Framework* Master::getFramework(const mesos::FrameworkID& frameworkId)
-    {
+    Framework *Master::getFramework(const mesos::FrameworkID &frameworkId) {
         return frameworks.registered.contains(frameworkId.value())
                ? frameworks.registered.at(frameworkId.value())
                : nullptr;
@@ -653,7 +670,6 @@ namespace master {
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
             terminate(self());
         }
-
     }
 
     // end of super_mater related

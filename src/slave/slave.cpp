@@ -130,27 +130,28 @@ namespace chameleon {
         LOG(INFO) << "Get task from master, start the mesos executor first";
         const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, task);
 
-        m_frameworkInfo = frameworkInfo;  //missing framework.user framework.name
-//        m_task = task;
-       // push the task to back of the queue
-        m_tasks.push(task);
+        Option<process::UPID> frameworkPid = None();
 
-        m_frameworkID = frameworkId;
+        Framework* framework = getFramework(frameworkId);
+        framework = new Framework(this, frameworkInfo, frameworkPid);
+
+        frameworks[frameworkId.value()] = framework;
+
+        m_tasks.push(task);
         m_executorInfo = executorInfo;
 
-        LOG(INFO) << "weiguow start mesos executor ";
-        start_mesos_executor();
-
+        LOG(INFO) << "Start executor on framework " << framework->id().value();
+        start_mesos_executor(framework);
     }
 
-    void Slave::start_mesos_executor() {
+    void Slave::start_mesos_executor(const Framework* framework) {
 
         const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
         const string mesos_directory = path::join(os::getcwd(), "/mesos_executor/mesos-directory");
 
         const std::map<string, string> environment =
                 {
-                        {"MESOS_FRAMEWORK_ID", m_frameworkID.value()},
+                        {"MESOS_FRAMEWORK_ID", framework->id().value()},
                         {"MESOS_EXECUTOR_ID",  m_executorInfo.executor_id().value()},
                         {"MESOS_SLAVE_PID",    slave_upid},
                         {"MESOS_SLAVE_ID",     m_slaveInfo.id().value()},
@@ -179,17 +180,19 @@ namespace chameleon {
                   << "' of framework " << frameworkId.value() << " from "
                   << stringify(from);
 
+        Framework* framework = getFramework(frameworkId);
+
         mesos::internal::ExecutorRegisteredMessage message;
-        message.mutable_executor_info()->mutable_framework_id()->MergeFrom(m_frameworkID);
+        message.mutable_executor_info()->mutable_framework_id()->MergeFrom(framework->id());
         message.mutable_executor_info()->MergeFrom(m_executorInfo);
-        message.mutable_framework_id()->MergeFrom(m_frameworkID);
-        message.mutable_framework_info()->MergeFrom(m_frameworkInfo);
+        message.mutable_framework_id()->MergeFrom(framework->id());
+        message.mutable_framework_info()->MergeFrom(framework->info);
         message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
         message.mutable_slave_info()->MergeFrom(m_slaveInfo);
         send(from, message);
 
         mesos::internal::RunTaskMessage run_task_message;
-        run_task_message.mutable_framework()->MergeFrom(m_frameworkInfo);
+        run_task_message.mutable_framework()->MergeFrom(framework->info);
         if(!m_tasks.empty()){
             mesos::TaskInfo current_task = m_tasks.front();
             run_task_message.mutable_task()->MergeFrom(current_task);
@@ -375,7 +378,7 @@ namespace chameleon {
     }
 
     /**
-     * Functio     : statusUpdateAcknowledgement
+     * Function     : statusUpdateAcknowledgement
      * Author      : weiguow
      * Date        : 2019-1-10
      * Description : get statusUpdateAcknowledgement message from master to
@@ -399,6 +402,20 @@ namespace chameleon {
         LOG(INFO) << "Status update manager successfully handled status update"
                   << " acknowledgement for task " << taskId.value()
                   << " of framework " << frameworkId.value();
+    }
+
+    /**
+     * Function     : getFramework
+     * Author       : weiguow
+     * Date         : 2019-2-25
+     * Description  : get FrameworkInfo by FrameworkId
+     * */
+    Framework* Slave::getFramework(const mesos::FrameworkID& frameworkId) const
+    {
+        if (frameworks.count(frameworkId.value()) > 0) {
+            return frameworks.at(frameworkId.value());
+        }
+        return nullptr;
     }
 
     void Slave::register_feedback(const string &hostname) {
@@ -458,9 +475,12 @@ namespace chameleon {
 
         send(*msp_masterUPID, *rr_message);
         LOG(INFO) << "slave " << self() << " had sent a heartbeat message to the " << *msp_masterUPID;
+
         auto t2 = std::chrono::system_clock::now();
         std::chrono::duration<double> duration = t2 - t1;
+
         LOG(INFO) << "It cost " << duration.count() << " s";
+
         delete rr_message;
     }
 
