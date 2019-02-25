@@ -69,7 +69,6 @@ namespace chameleon {
         m_slaveInfo.set_port(self().address.port);
 
         install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
-        install<JobMessage>(&Slave::get_a_job);
         install<ShutdownMessage>(&Slave::shutdown);
 
         //get from executor
@@ -404,61 +403,6 @@ namespace chameleon {
 
     void Slave::register_feedback(const string &hostname) {
         cout << " receive register feedback from master" << hostname << endl;
-    }
-
-    void Slave::get_a_job(const UPID &master, const JobMessage &job_message) {
-        LOG(INFO) << "slave " << self() << " got a job";
-        const string test_spark_file = path::join(os::getcwd(), "lele_spark-2.3.0.tar");
-//    ASSERT_SOME(os::write(test_spark_file,job_message.exe_file()));
-        Try<string> decompressed_spark = gzip::decompress(job_message.exe_file());
-        if (decompressed_spark.isError()) {
-            LOG(ERROR) << "slave got a job file which is not completed or decompressing it had mistakes.";
-            LOG(ERROR) << decompressed_spark.error();
-        } else {
-            ASSERT_SOME(os::write(test_spark_file, decompressed_spark.get()));
-            LOG(INFO) << "slave " << self() << "successfully ungziped a job file";
-        }
-        const string shell_command = "tar xvf " + test_spark_file;
-        string out = path::join(os::getcwd(), "stdout");
-        string err = path::join(os::getcwd(), "stderr");
-
-        Try<Subprocess> s = subprocess(
-                shell_command,
-                Subprocess::FD(STDIN_FILENO),
-                Subprocess::PATH(out),
-                Subprocess::PATH(err)
-        );
-        if (s.isError()) {
-            LOG(ERROR) << "slave " << self() << "failed to untar the job file.";
-            LOG(ERROR) << s.error();
-        } else {
-            LOG(INFO) << "slave " << self() << "successfully untar a job file";
-            LOG(INFO) << "job_message is_is_master = " << job_message.is_master();
-            if (job_message.is_master()) {
-                const string fork_spark_master = "./spark-2.3.0-bin-hadoop2.7/sbin/start-master.sh";
-                Try<ProcessTree> res = os::Fork(None(), os::Exec(fork_spark_master))();
-                if (res.isError()) {
-                    LOG(ERROR) << "slave " << self() << " failed to fork a process to run spark 2.3.0 master process";
-                    LOG(ERROR) << res.error();
-                } else {
-                    LOG(INFO) << "slave " << self() << "successfully fork a process to run spark 2.3.0 master process";
-                    LOG(INFO) << "The pid is " << res.get().children.front().process.pid;
-                }
-            } else {
-                sleep(2);
-                const string master_ip = job_message.master_ip();
-                const string fork_spark_slave =
-                        "./spark-2.3.0-bin-hadoop2.7/sbin/start-slave.sh spark://" + master_ip + ":7077";
-                Try<ProcessTree> res = os::Fork(None(), os::Exec(fork_spark_slave))();
-                if (res.isError()) {
-                    LOG(ERROR) << "slave " << self() << " failed to fork a process to run spark 2.3.0 slave process";
-                    LOG(ERROR) << res.error();
-                } else {
-                    LOG(INFO) << "slave " << self() << "successfully fork a process to run spark 2.3.0 slave process";
-                    LOG(INFO) << "The pid is " << res.get().children.front().process.pid;
-                }
-            }
-        }
     }
 
     void Slave::finalize() {

@@ -115,8 +115,6 @@ namespace chameleon {
 
         void register_feedback(const string &hostname);
 
-        void get_a_job(const UPID &master, const JobMessage &job_message);
-
         void send_heartbeat_to_master();
 
         void setM_master(const string &m_master) {
@@ -226,6 +224,31 @@ namespace chameleon {
             process::delay(m_interval, self(), &Self::heartbeat);
         }
         Duration m_interval;
+    };
+
+    class Framework{
+    public:
+        enum State\
+        {
+            RUNNING,
+            TERMINATING,
+        } state;
+        Framework(
+                Slave* slave,
+                const mesos::FrameworkInfo& info,
+                const Option<process::UPID>& pid
+                );
+        ~Framework();
+
+        const FrameworkID id() const { return }
+
+        Slave* slave;
+
+        mesos::FrameworkInfo info;
+
+        Option<process::UPID>
+    private:
+
     };
 
 }

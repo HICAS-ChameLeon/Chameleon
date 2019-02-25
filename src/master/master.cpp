@@ -471,7 +471,7 @@ namespace master {
     }
 
     /**
-     * create slaveID,frameworkID,masterID
+     * create slaveID,frameworkID,masterID-weiguow-2019/2/24
      * */
     mesos::SlaveID Master::newSlaveId() {
         mesos::SlaveID slaveId;
@@ -497,7 +497,7 @@ namespace master {
     }
 
     /**
-     * use frameworkId to get Framework
+     * use frameworkId to get Framework-weiguow-2019/2/24
      * */
     Framework* Master::getFramework(const mesos::FrameworkID& frameworkId)
     {
@@ -513,7 +513,7 @@ namespace master {
 
     void Master::update_hardware_resources(const UPID &from,
                                            const HardwareResourcesMessage &hardware_resources_message) {
-        DLOG(INFO) << "enter update_hardware_resources";
+        DLOG(INFO) << "Enter update hardware resources";
 
         auto slaveid = hardware_resources_message.slave_id();
 
@@ -526,16 +526,6 @@ namespace master {
             m_alive_slaves.insert(slaveid);
         }
     }
-
-//    void Master::change_frameworks(const UPID &from, const mesos::FrameworkInfo &frameworkInfo) {
-//        DLOG(INFO)<<"change protobuf message to JSON";
-//        auto frameworkid = frameworkInfo.;
-//        JSON::Object framework_result = JSON::protobuf(frameworkInfo);
-//        //string object_str = stringify(object);
-//        //LOG(INFO)<<object_str;
-//        // m_json_frameworkInfo
-//
-//    }
 
     void Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
         LOG(INFO) << "received a heartbeat message from " << slave;
