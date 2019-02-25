@@ -431,7 +431,7 @@
 
     //网络拓扑图的Controller
     chameleon_app.controller('TopologyCtrl', function($scope, $http) {
-        if (document.getElementById('locale').value ==2) {
+        if (document.getElementById('locale').value ==1) {
         $http({
             method: 'GET',
             url: 'http://172.20.110.53:6060/master/runtime-resources'
@@ -607,7 +607,7 @@
             // 请求失败执行代码
         });
     }
-        else if (document.getElementById('locale').value == 1) {
+        else if (document.getElementById('locale').value == 2) {
             $http({
                 method: 'GET',
                 url: 'http://172.20.110.53:7000/super_master/super_master'
@@ -790,7 +790,8 @@
                                     shape: 'square',
                                     color: "#0c58c5" // blue
                                 }
-                            }
+                            },
+                            locale: document.getElementById('locale').value,
 
                         };
 
