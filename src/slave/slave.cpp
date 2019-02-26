@@ -97,6 +97,15 @@ namespace chameleon {
                 &mesos::internal::RegisterExecutorMessage::framework_id,
                 &mesos::internal::RegisterExecutorMessage::executor_id);
 
+//        install<mesos::internal::ShutdownExecutorMessage>(
+//                &Slave::shutdownExecutor,
+//                &mesos::internal::ShutdownExecutorMessage::framework_id,
+//                &mesos::internal::ShutdownExecutorMessage::executor_id);
+
+        install<mesos::internal::ShutdownFrameworkMessage>(
+                &Slave::shutdownFramework,
+                &mesos::internal::ShutdownFrameworkMessage::framework_id);
+
         install<ReregisterMasterMessage>(&Slave::reregister_to_master);
 
 
@@ -405,10 +414,7 @@ namespace chameleon {
     }
 
     /**
-     * Function     : getFramework
-     * Author       : weiguow
-     * Date         : 2019-2-25
-     * Description  : get FrameworkInfo by FrameworkId
+     * get FrameworkInfo by FrameworkId-by weiguow-2019/2/25
      * */
     Framework* Slave::getFramework(const mesos::FrameworkID& frameworkId) const
     {
@@ -416,6 +422,53 @@ namespace chameleon {
             return frameworks.at(frameworkId.value());
         }
         return nullptr;
+    }
+
+    /**
+     * removeFramework - by weiguow - 2019-2-26
+     * */
+    void Slave::removeFramework(chameleon::Framework *framework) {
+        CHECK_NOTNULL(framework);
+
+        LOG(INFO) << "Cleaning up framework " << framework->id().value();
+
+        CHECK(framework->state == Framework::RUNNING ||
+              framework->state == Framework::TERMINATING);
+
+        frameworks.erase(framework->id().value());
+    }
+
+    /**
+     * Function     : shutdownFramework
+     * Author       : weiguow
+     * Date         : 2019-2-26
+     * Description  : shutdownFramework after task run over
+     * */
+    void Slave::shutdownFramework(const process::UPID &from, const mesos::FrameworkID &frameworkId) {
+        LOG(INFO) << "Asked to shut down framework " << frameworkId.value()
+                << " by " << from;
+
+        Framework* framework = getFramework(frameworkId);
+
+        switch (framework->state) {
+            case Framework::TERMINATING:
+                LOG(WARNING) << "Ignoring shutdown framework " << framework->id().value()
+                             << " because it is terminating";
+                break;
+            case Framework::RUNNING:
+                LOG(INFO) << "Shutting down framework " << framework->id().value();
+
+                framework->state = Framework::TERMINATING;
+
+                // Remove this framework if it has no pending executors and tasks.
+                removeFramework(framework);
+
+                break;
+            default:
+                LOG(FATAL) << "Framework " << frameworkId.value()
+                           << " is in unexpected state ";
+                break;
+        }
     }
 
     void Slave::register_feedback(const string &hostname) {

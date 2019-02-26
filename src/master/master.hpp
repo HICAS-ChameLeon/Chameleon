@@ -26,6 +26,7 @@
 #include <stout/hashmap.hpp>
 #include <stout/uuid.hpp>
 #include <stout/check.hpp>
+#include <stout/boundedhashmap.hpp>
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -174,6 +175,8 @@ namespace master {
 
         Framework *getFramework(const mesos::FrameworkID &frameworkId);
 
+        hashmap<string, mesos::Offer*> offers;
+
         /**
          * save slaveinfo-weiguow-2019-2-24*/
         struct Slaves {
@@ -221,7 +224,11 @@ namespace master {
          * save Frameworkinfo-weiguow-2019-2-22
          * */
         struct Frameworks {
+
             hashmap<string, Framework*> registered;
+
+//            BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completed;
+
         } frameworks;
 
         void Offer(const mesos::FrameworkID &frameworkId);
@@ -234,7 +241,13 @@ namespace master {
                 const process::UPID &from,
                 const mesos::scheduler::Call::Subscribe &subscribe);
 
+        void teardown(Framework* framework);
+
         void accept(Framework *framework, mesos::scheduler::Call::Accept accept);
+
+        void decline(Framework* framework,const mesos::scheduler::Call::Decline& decline);
+
+        void shutdown(Framework* framework,const mesos::scheduler::Call::Shutdown& shutdown);
 
         void statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid);
 
@@ -248,6 +261,10 @@ namespace master {
         void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
 
         void addFramework(Framework *framework);
+
+        void removeFramework(Framework* framework);
+
+        void deactivate(Framework* framework, bool rescind);
 
 
     private:
@@ -361,6 +378,7 @@ namespace master {
         State state;
 
         process::Time registeredTime;
+        process::Time unregisteredTime;
 
     private:
         Framework(Master *const _master,

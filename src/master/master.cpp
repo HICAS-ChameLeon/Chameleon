@@ -191,9 +191,21 @@ namespace master {
                 LOG(FATAL) << "Unexpected 'SUBSCRIBE' call";
                 break;
 
+            case mesos::scheduler::Call::TEARDOWN:
+                teardown(framework);
+                break;
+
             case mesos::scheduler::Call::ACCEPT:
                 LOG(INFO) << "accept message from framework";
                 accept(framework, call.accept());
+                break;
+
+            case mesos::scheduler::Call::DECLINE:
+                decline(framework, call.decline());
+                break;
+
+            case mesos::scheduler::Call::SHUTDOWN:
+                shutdown(framework, call.shutdown());
                 break;
 
             case mesos::scheduler::Call::ACKNOWLEDGE: {
@@ -236,7 +248,7 @@ namespace master {
                     << " already subscribed, resending acknowledgement";
                     mesos::internal::FrameworkRegisteredMessage message;
                     message.mutable_framework_id()->MergeFrom(framework->id());
-                    message.mutable_master_info()->MergeFrom(framework->info);
+                    message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
                     framework->send(message);
                     return;
                 }
@@ -277,6 +289,7 @@ namespace master {
 
         mesos::Offer *offer = new mesos::Offer();
 
+
         // cpus
         mesos::Resource *cpu_resource = new mesos::Resource();
         cpu_resource->set_name("cpus");
@@ -307,7 +320,12 @@ namespace master {
 
         offer->mutable_id()->MergeFrom(newOfferId());
         offer->mutable_framework_id()->MergeFrom(framework->id());
-        offer->mutable_slave_id()->MergeFrom(newSlaveId());
+
+        //这个slaveID决定了实现master选取分布式集群中节点的基础
+        mesos::SlaveID* slaveID = new mesos::SlaveID();
+//        offer->mutable_slave_id()->MergeFrom(newSlaveId());
+        slaveID->set_value("44444444");
+        offer->mutable_slave_id()->MergeFrom(*slaveID);
 
         //this host_name is slave hostname
         offer->set_hostname(self().address.hostname().get());
@@ -318,6 +336,11 @@ namespace master {
 //        mesos::Offer *second_offer = create_a_offer();
 //        message.add_offers()->MergeFrom(*second_offer);
 //        message.add_pids("2");
+
+//        offers[offer->id()] = offer;
+//
+//        framework->addOffer(offer);
+//        slave->addOffer(offer);
 
         LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
                   << framework->pid.get();
@@ -394,6 +417,49 @@ namespace master {
                 }
             }
         }
+    }
+
+    /**
+     * Function     : teardown
+     * Author       : weiguow
+     * Date         : 2-19-2-26
+     * Description  : */
+     void Master::teardown(master::Framework *framework) {
+         CHECK_NOTNULL(framework);
+
+         LOG(INFO) << "Processing TEARDOWN call for framework " << *framework;
+
+         removeFramework(framework);
+     }
+
+    /**
+     * Function     : Decline
+     * Author       : weiguow
+     * Date         : 2-19-2-26
+     * Description  : */
+
+    void Master::decline(master::Framework *framework, const mesos::scheduler::Call::Decline &decline) {
+        CHECK_NOTNULL(framework);
+
+        LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
+                  << " for framework " << *framework;
+
+        //we should save offer infomation before do this , so we now just leave it- by weiguow
+//        offers.erase(offer->id());
+//        delete offer;
+    }
+
+    /**
+     * Function     : Decline
+     * Author       : weiguow
+     * Date         : 2-19-2-26
+     * Description  : */
+    void Master::shutdown(master::Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown) {
+        CHECK_NOTNULL(framework);
+
+        const mesos::SlaveID& slaveID = shutdown.slave_id();
+
+//        const
     }
 
     /**
@@ -489,6 +555,47 @@ namespace master {
     }
 
     /**
+     * use frameworkId to get Framework-weiguow-2019/2/24
+     * */
+    Framework *Master::getFramework(const mesos::FrameworkID &frameworkId) {
+        return frameworks.registered.contains(frameworkId.value())
+               ? frameworks.registered.at(frameworkId.value())
+               : nullptr;
+    }
+
+    /**
+     * remove framework-weiguow-2019/2/26*
+     * */
+    void Master::removeFramework(Framework* framework) {
+        CHECK_NOTNULL(framework);
+
+        LOG(INFO) << "Removing framework " << *framework;
+
+        if (framework->active()) {
+            deactivate(framework, false);
+
+            //send ShutdownFrameworkMessage to slave
+            mesos::internal::ShutdownFrameworkMessage message;
+            message.mutable_framework_id()->MergeFrom(framework->id());
+
+            string slave_pid = "slave@172.20.110.232:6061";
+            send(slave_pid, message);
+
+            //we need to do this after - by weiguow
+            // The framework's offers should have been removed when the
+            // framework was deactivated.
+//        CHECK(framework->offers.empty());
+//        CHECK(framework->inverseOffers.empty());
+
+            framework->unregisteredTime = process::Clock::now();
+            frameworks.registered.erase(framework->id().value());
+        }
+
+//         frameworks.completed.set(framework->id(), process::Owned<Framework>(framework));
+    }
+
+
+    /**
      * create slaveID,frameworkID,masterID-weiguow-2019/2/24
      * */
     mesos::SlaveID Master::newSlaveId() {
@@ -514,13 +621,19 @@ namespace master {
         return offerId;
     }
 
-    /**
-     * use frameworkId to get Framework-weiguow-2019/2/24
-     * */
-    Framework *Master::getFramework(const mesos::FrameworkID &frameworkId) {
-        return frameworks.registered.contains(frameworkId.value())
-               ? frameworks.registered.at(frameworkId.value())
-               : nullptr;
+     /**
+      * change framework status from active to deactive by weiguow 2019-2-26
+      * */
+    void Master::deactivate(Framework* framework, bool rescind){
+        CHECK_NOTNULL(framework);
+        CHECK(framework->active());
+
+        LOG(INFO) << "Deactive framework " << *framework;
+
+        framework->state = Framework::State::INACTIVE;
+
+        //Below we should allocat offer resource, but now we don't have
+        //this function model-by weiguow
     }
 
 

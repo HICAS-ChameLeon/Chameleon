@@ -149,11 +149,18 @@ namespace chameleon {
                 const mesos::TaskID &taskId,
                 const string &uuid);
 
-        Framework *getFramework(const mesos::FrameworkID &frameworkId) const;
+        Framework *getFramework(
+                const mesos::FrameworkID &frameworkId) const;
 
         mesos::ExecutorInfo getExecutorInfo(
                 const mesos::FrameworkInfo &frameworkInfo,
                 const mesos::TaskInfo &task) const;
+
+        void removeFramework(Framework* framework);
+
+        void shutdownFramework(
+                const process::UPID& from,
+                const mesos::FrameworkID& frameworkId);
 
     protected:
         void finalize() override;
