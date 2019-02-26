@@ -431,7 +431,7 @@
 
     //网络拓扑图的Controller
     chameleon_app.controller('TopologyCtrl', function($scope, $http) {
-        if (document.getElementById('locale').value ==1) {
+        if (document.getElementById('locale').value == 1) {
         $http({
             method: 'GET',
             url: 'http://172.20.110.53:6060/master/runtime-resources'
@@ -458,7 +458,7 @@
             var my_edges = [];
             var cur_index = 0;
 
-            if ($scope.quantities >= 2) {
+            if ($scope.quantities >= 1) {
                 my_edges = [];
                 for (var i in $scope.runtime) {
                     var slave = $scope.runtime[i];
@@ -667,7 +667,7 @@
                         }
                         console.log($scope.quantities);
                         if ($scope.quantities >= 2) {
-                            my_superedges = []
+                            my_superedges = [];
                             for (var j in $scope.runtime) {
                                 var temp_slave = {};       // 添加一个slave节点
                                 cur_masterindex++;
