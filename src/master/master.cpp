@@ -179,6 +179,44 @@ namespace chameleon {
                     return ok_response;
                 });
 
+        route(
+                "/stop-master",
+                "try to stop",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+
+                    //send a shutdown message to every slave
+                    LOG(INFO) << "stopping the Chameleon cluster, we have " << m_alive_slaves.size()
+                              << " slaves to terminate";
+                    for (string ip : this->m_alive_slaves) {
+                        const UPID current_slave(construct_UPID_string("slave", ip, "6061"));
+                        ShutdownMessage m;
+                        m.set_master_ip(this->self().id);
+                        m.set_slave_ip(ip);
+                        send(current_slave, m);
+                        LOG(INFO) << self() << "sent a shutdown message to " << current_slave;
+                    }
+
+                    result.values["stop"] = "success";
+
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+        route(
+                "/kill_master",
+                "kill the super_master of two levels",
+                [this](Request request){
+                    JSON::Object result = JSON::Object();
+                    LOG(INFO) << "MAKUN KILL MASTER";
+                    result.values["kill"] = "success";
+
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
 
 
 //     install("stop", &MyProcess::stop);
