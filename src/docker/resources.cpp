@@ -25,10 +25,10 @@
 
 #include <google/protobuf/repeated_field.h>
 
-#include <mesos/resources.hpp>
-#include <mesos/roles.hpp>
-#include <mesos/values.hpp>
-#include <mesos/type_utils.hpp>
+#include <resources.hpp>
+#include <roles.hpp>
+#include <values.hpp>
+#include <type_utils.hpp>
 
 #include <stout/foreach.hpp>
 #include <stout/hashmap.hpp>
@@ -38,6 +38,8 @@
 #include <stout/strings.hpp>
 #include <stout/unreachable.hpp>
 
+//Heldon add dependence /build/src/messages/mesos.pb.h
+#include <mesos.pb.h>
 
 using std::map;
 using std::ostream;

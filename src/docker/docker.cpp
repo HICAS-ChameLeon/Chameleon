@@ -21,11 +21,10 @@
 #include <process/collect.hpp>
 #include <process/io.hpp>
 
-//#include "common/status_utils.hpp"
 
-#include "docker.hpp"
-#include "linux/cgroups.hpp"
-#include "common/resources.cpp"
+#include <docker.hpp>
+#include <cgroups.hpp>
+//#include <resources.cpp>
 
 using namespace mesos;
 

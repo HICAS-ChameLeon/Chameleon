@@ -15,11 +15,10 @@
 #include <stout/option.hpp>
 #include <stout/gtest.hpp>
 
-#include "docker/docker.hpp"
-#include "docker/docker.cpp"
-#include "mesos/resources.hpp"
-#include "linux/cgroups.hpp"
-#include "linux/cgroups.cpp"
+#include <docker.hpp>
+#include <resources.hpp>
+#include <cgroups.hpp>
+#include <cgroups.cpp>
 
 
 
@@ -37,7 +36,7 @@ int main(){
 
     const string containerName = NAME_PREFIX + "-test";
     //limit the resource
-    Resources resources = Resources::parse("cpus:1;mem:512").get();
+    mesos::Resources resources = mesos::Resources::parse("cpus:1;mem:512").get();
 
     Owned<Docker> docker = Docker::create("docker","/var/run/docker.sock",false).get();
     std::cout << docker.get()->getPath() << std::endl;
@@ -69,7 +68,7 @@ int main(){
     containerInfo.mutable_docker()->CopyFrom(dockerInfo);
 
     mesos::CommandInfo commandInfo;
-    commandInfo.set_value("sleep 120");
+    commandInfo.set_value("sleep 1020");
 
     //hello-world image doesn't need shell, so we set it to be false
     //commandInfo.set_shell(false);
@@ -84,7 +83,7 @@ int main(){
 
     //add additional options
     runOptions.get().additionalOptions.push_back("-i");
-    runOptions.get().additionalOptions.push_back("-t");
+    //runOptions.get().additionalOptions.push_back("-t");
 
     // Start the container.
     Future<Option<int>> status = docker->run(runOptions.get());

@@ -27,8 +27,8 @@
 
 #include <glog/logging.h>
 
-#include <mesos/resources.hpp>
-#include <mesos/values.hpp>
+#include <resources.hpp>
+#include <values.hpp>
 
 #include <stout/error.hpp>
 #include <stout/foreach.hpp>

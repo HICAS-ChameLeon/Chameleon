@@ -56,9 +56,9 @@
 #include <stout/strings.hpp>
 #include <stout/unreachable.hpp>
 
-#include "linux/cgroups.hpp"
-#include "linux/fs.hpp"
-#include "linux/fs.cpp"
+#include <cgroups.hpp>
+#include <fs.hpp>
+#include <fs.cpp>
 
 using namespace process;
 

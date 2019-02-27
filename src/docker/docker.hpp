@@ -20,7 +20,7 @@
 
 #include <stout/os/rm.hpp>
 
-#include "mesos/resources.hpp"
+#include <resources.hpp>
 
 constexpr char DEFAULT_DOCKER_HOST_PREFIX[] = "unix://";
 

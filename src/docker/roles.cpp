@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <mesos/roles.hpp>
+#include <roles.hpp>
 
 #include <vector>
 #include <string>

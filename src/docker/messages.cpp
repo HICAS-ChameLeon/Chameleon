@@ -18,8 +18,8 @@
 
 #include <ostream>
 
-#include <mesos/resources.hpp>
-#include <mesos/type_utils.hpp>
+#include <resources.hpp>
+#include <type_utils.hpp>
 
 using std::ostream;
 

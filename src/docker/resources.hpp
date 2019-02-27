@@ -26,8 +26,8 @@
 #include <google/protobuf/repeated_field.h>
 
 #include <mesos/mesos.hpp>
-#include <mesos/type_utils.hpp>
-#include <mesos/values.hpp>
+#include <type_utils.hpp>
+#include <values.hpp>
 
 #include <stout/bytes.hpp>
 #include <stout/check.hpp>
