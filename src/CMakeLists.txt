@@ -4,6 +4,7 @@ include_directories(${CMAKE_BINARY_DIR}/src/messages)
 # the global configuration for glog
 include_directories(${CMAKE_SOURCE_DIR}/src/log)
 include_directories(${CMAKE_SOURCE_DIR}/src/common)
+include_directories(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
 include_directories(${CMAKE_SOURCE_DIR}/src/docker)
 include_directories(${CMAKE_SOURCE_DIR}/src/linux)
 
