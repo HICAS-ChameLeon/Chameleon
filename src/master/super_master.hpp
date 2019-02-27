@@ -94,7 +94,7 @@ namespace chameleon {
     private:
 
         string m_uuid;
-        // represent the super masters or masters administered by the current node.
+        // represent the masters administered by the current super_master.
         vector<UPID> m_masters;
 
         // if the next level of the current master are occupied by masters, then is _next_level_master is true.

@@ -1,7 +1,8 @@
+
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages monitor_info ${CMAKE_BINARY_DIR}/src/messages monitor_info)
 
-include_directories(${CMAKE_BINARY_DIR}/message)
-include_directories(${CMAKE_CURRENT_LIST_DIR})
+add_subdirectory(resource_collector)
+#add_subdirectory(fetcher)
 
 # set the gtest 1.7 relevant library names.
 set(GTEST_LIBS gmock gtest gflags)
@@ -47,9 +48,9 @@ list(APPEND slave_SRCS ${Gpu_Collector_SRCS})
 list(APPEND slave_SRCS ${tlb_SRCS})
 list(APPEND slave_SRCS ${port_SRCS})
 list(REMOVE_DUPLICATES slave_SRCS)
-#message(47 ${slave_SRCS})
 
 add_executable(slave ${slave_SRCS})
+
 set(slave_PROTOS monitor_info)
 list(APPEND slave_PROTOS hardware_resource)
 list(APPEND slave_PROTOS runtime_resource)
@@ -61,6 +62,5 @@ list(APPEND slave_PROTOS mesos)
 list(APPEND slave_PROTOS slave_related)
 
 list(REMOVE_DUPLICATES slave_PROTOS)
-
 target_link_libraries(slave ${slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})
 

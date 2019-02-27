@@ -8,8 +8,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "memory_collector.hpp"
-#include "runtime_resources_usage.hpp"
+#include <memory_collector.hpp>
+#include <runtime_resources_usage.hpp>
 
 /*
  * Function name：main

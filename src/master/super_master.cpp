@@ -20,6 +20,7 @@ namespace chameleon {
         // change from one level to two levels
         cluster_levels = 2;
         m_masters_size = 1;
+
         m_uuid = UUID::random().toString();
         m_first_to_second_master = "master@172.20.110.53:6060";
         SuperMasterControlMessage *super_master_control_message = new SuperMasterControlMessage();
@@ -138,7 +139,7 @@ namespace chameleon {
         }
 
         m_masters.push_back(from);
-        LOG(INFO) << "record a registered master " << from;
+        LOG(INFO) << "record a registered master " << from <<" Now the size of masters is "<<m_masters.size();
         accept_registered->set_status(AcceptRegisteredMessage_Status_SUCCESS);
         send(from, *accept_registered);
         delete accept_registered;
@@ -184,13 +185,13 @@ namespace chameleon {
 
         int32_t current_cluster_number = 0;
 
+        string master_ip;
         for (auto iter = m_admin_slaves.begin(); iter != m_admin_slaves.end(); iter++) {
             SlaveInfo &current_slave = *iter;
             string current_ip = current_slave.hardware_resources().slave_id();
 //            int32_t cpus = current_slave.hardware_resources().cpu_collection().cpu_infos_size();
 
-            string master_ip;
-            if(count == cluster_size){
+            if(count > cluster_size){
                 count = 1;
             }
             if (count == 1) {
@@ -214,6 +215,14 @@ namespace chameleon {
             count++;
 
         }
+
+        for(auto iter = m_classification_masters.begin();iter!=m_classification_masters.end();iter++){
+            vector<SlavesInfoControlledByMaster> slaves_of_master = m_classification_slaves[*iter];
+            std::cout<<slaves_of_master.size()<<std::endl;
+            for(SlavesInfoControlledByMaster s:slaves_of_master){
+                std::cout<<s.ip()<<std::endl;
+            }
+        }
     }
 
     bool SuperMaster::launch_masters() {
@@ -232,12 +241,12 @@ namespace chameleon {
                     Subprocess::FD(STDERR_FILENO));
 
             if (s.isError()) {
-                LOG(INFO) << " cannot launch masters";
+                LOG(ERROR) << " cannot launch master "<<master_ip;
                 return false;
-            } else {
-                return true;
             }
         }
+        LOG(INFO)<<" launched "<<m_classification_masters.size() << " masters successfully.";
+        return true;
 //        Try<Subprocess> s = subprocess(
 //                "ssh 172.20.110.53 /home/lemaker/open-source/Chameleon/build/src/master/master --port=6060",
 //                Subprocess::FD(STDIN_FILENO),
@@ -272,7 +281,7 @@ namespace chameleon {
             string master_upid = "master@"+master_ip+":6060";
             UPID t_master(master_upid);
             send(t_master, *super_master_control_message);
-            LOG(INFO) << " sends a super_master_constrol_message to a master: " << m_first_to_second_master;
+            LOG(INFO) << " sends a super_master_control_message to a master: " << master_upid;
             delete super_master_control_message;
         }
     }
