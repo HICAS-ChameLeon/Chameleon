@@ -5,7 +5,7 @@
  * Description：Get disk's information
  */
 
-#include <disk_collector.hpp>
+#include <resource_collector/disk_collector.hpp>
 
 namespace chameleon{
 

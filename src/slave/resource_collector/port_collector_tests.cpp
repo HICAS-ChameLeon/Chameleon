@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <port_collector.hpp>
+#include <resource_collector/port_collector.hpp>
 #include "runtime_resources_usage.hpp"
 
 TEST(PortCollectionTests, GetPortInfo) {

@@ -4,7 +4,7 @@
  * Date       ：18-12-4
  * Description：Get TLB information from computer
  */
-#include <tlb_collector.hpp>
+#include <resource_collector/tlb_collector.hpp>
 
 namespace chameleon {
     TLBCollection *TLBCollector::get_tlb_info() {

@@ -10,7 +10,7 @@
 
 // STOUT DEPENDENCIES
 
-#include <tlb_collector.hpp>
+#include <resource_collector/tlb_collector.hpp>
 
 TEST(TLBCollectorTest, Test) {
     chameleon::TLBCollector tlb;
