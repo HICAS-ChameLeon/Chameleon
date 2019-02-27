@@ -76,7 +76,7 @@ using process::http::Request;
 using process::http::OK;
 using process::http::InternalServerError;
 
-namespace chameleon {
+namespace master {
 
     class Framework;
     class Master;
