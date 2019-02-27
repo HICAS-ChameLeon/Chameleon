@@ -391,9 +391,9 @@ namespace master {
 
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
-                            cur_slavePID.append("172.20.110.232:6061");
+                            cur_slavePID.append("172.20.110.228:6061");
                         } else {
-                            cur_slavePID.append("172.20.110.232:6061");
+                            cur_slavePID.append("172.20.110.228:6061");
                         }
                         mesos::TaskInfo task_(task);
 
@@ -578,7 +578,7 @@ namespace master {
             mesos::internal::ShutdownFrameworkMessage message;
             message.mutable_framework_id()->MergeFrom(framework->id());
 
-            string slave_pid = "slave@172.20.110.232:6061";
+            string slave_pid = "slave@172.20.110.228:6061";
             send(slave_pid, message);
 
             //we need to do this after - by weiguow
