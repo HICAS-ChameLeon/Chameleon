@@ -263,7 +263,9 @@ namespace chameleon {
 
             LOG(INFO) << "Subscribe framework " << framework->info.name() << " successful !";
 
-            Offer(framework->id());
+            const Duration temp_duration = Seconds(0);
+            process::delay(temp_duration, self(), &Master::Offer,framework->id());
+
             return;
         }
     }
@@ -320,7 +322,7 @@ namespace chameleon {
      * Date            :  2018-12-28
      * Funtion name    :  Master::offer
      * */
-    void Master::Offer(const mesos::FrameworkID &frameworkId) {
+     void Master::Offer(const mesos::FrameworkID &frameworkId) {
 
         Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
 
