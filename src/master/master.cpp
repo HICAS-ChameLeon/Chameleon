@@ -26,7 +26,7 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
 
 static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 
-namespace master {
+namespace chameleon {
 
     void Master::initialize() {
 
@@ -161,13 +161,13 @@ namespace master {
     }
 
     /**
-      * Function model  :  sprak run on chameleon
+      * Function model  :  spark run on chameleon
       * Author          :  weiguow
       * Date            :  2018-12-27
       * Funtion name    :  receive
       * @param          : UPID& from ,Call& call
       * */
-    void Master::receive(const UPID& from, const mesos::scheduler::Call& call) {
+    void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
         //first call
         if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
             subscribe(from, call.subscribe());
@@ -225,7 +225,7 @@ namespace master {
     }
 
     /**
-     * Function model  :  sprak run on chameleon
+     * Function model  :  spark run on chameleon
      * Author          :  weiguow
      * Date            :  2018-12-28
      * Funtion name    :  subscribe
@@ -235,6 +235,8 @@ namespace master {
 
         mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
 
+        Framework *framework = getFramework(frameworkInfo.id());
+
         LOG(INFO) << "Received  SUBSCRIBE call for framework "
                   << frameworkInfo.name() << " at " << from;
 
@@ -243,37 +245,74 @@ namespace master {
             // If we are here the framework is subscribing for the first time.
             // Check if this framework is already subscribed (because it retries).
             foreachvalue (Framework *framework, frameworks.registered) {
-                if (framework->pid == from) {
-                    LOG(INFO) << "Framework " << *framework
-                    << " already subscribed, resending acknowledgement";
-                    mesos::internal::FrameworkRegisteredMessage message;
-                    message.mutable_framework_id()->MergeFrom(framework->id());
-                    message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
-                    framework->send(message);
-                    return;
-                }
-            }
+                                    if (framework->pid == from) {
+                                        LOG(INFO) << "Framework " << *framework
+                                                  << " already subscribed, resending acknowledgement";
+                                        mesos::internal::FrameworkRegisteredMessage message;
+                                        message.mutable_framework_id()->MergeFrom(framework->id());
+                                        message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
+                                        framework->send(message);
+                                        return;
+                                    }
+                                }
 
             mesos::internal::FrameworkRegisteredMessage message;
-
-            frameworkInfo.mutable_id()->CopyFrom(newFrameworkId());
-            Framework *framework = new Framework(this, frameworkInfo, from);
-
-            addFramework(framework);
 
             message.mutable_framework_id()->MergeFrom(framework->id());
             message.mutable_master_info()->MergeFrom(m_masterInfo);
 
-            framework->send(message);
+            LOG(INFO) << "Subscribe framework " << framework->info.name() << " successful !";
 
-            LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful!";
-
-            const Duration temp_duration = Seconds(0);
-            process::delay(temp_duration, self(), &Master::Offer, framework->id());
-
+            Offer(framework->id());
             return;
         }
     }
+
+    mesos::Offer* Master::create_a_offer(const mesos::FrameworkID& frameworkId) {
+        mesos::Offer *offer = new mesos::Offer();
+
+        Framework* framework = getFramework(frameworkId);
+        // cpus
+        mesos::Resource *cpu_resource = new mesos::Resource();
+        cpu_resource->set_name("cpus");
+        cpu_resource->set_type(mesos::Value_Type_SCALAR);
+        mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
+        cpu_scalar->set_value(4.0);
+        cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
+        offer->add_resources()->MergeFrom(*cpu_resource);
+
+        // memory
+        mesos::Resource *mem_resource = new mesos::Resource();
+        mem_resource->set_name("mem");
+        mem_resource->set_type(mesos::Value_Type_SCALAR);
+        mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
+        mem_scalar->set_value(1200.0);
+        mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
+        offer->add_resources()->MergeFrom(*mem_resource);
+
+        // port
+        mesos::Resource *port_resource = new mesos::Resource();
+        port_resource->set_name("ports");
+        port_resource->set_type(mesos::Value_Type_RANGES);
+
+        mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
+        port_range->set_begin(31000);
+        port_range->set_end(32000);
+        offer->add_resources()->MergeFrom(*port_resource);
+
+        mesos::OfferID offerId;
+        offerId.set_value("22222222");
+        offer->mutable_id()->CopyFrom(offerId);
+
+        offer->mutable_framework_id()->MergeFrom(framework->id());
+
+        mesos::SlaveID *slaveID = new mesos::SlaveID();
+        slaveID->set_value("22222222222");
+
+        offer->mutable_slave_id()->MergeFrom(*slaveID);
+
+        offer->set_hostname("221b");
+        return offer;
 
     /**
      * Function model  :  spark run on chameleon
@@ -288,7 +327,6 @@ namespace master {
         mesos::internal::ResourceOffersMessage message;
 
         mesos::Offer *offer = new mesos::Offer();
-
 
         // cpus
         mesos::Resource *cpu_resource = new mesos::Resource();
@@ -322,7 +360,7 @@ namespace master {
         offer->mutable_framework_id()->MergeFrom(framework->id());
 
         //这个slaveID决定了实现master选取分布式集群中节点的基础
-        mesos::SlaveID* slaveID = new mesos::SlaveID();
+        mesos::SlaveID *slaveID = new mesos::SlaveID();
 //        offer->mutable_slave_id()->MergeFrom(newSlaveId());
         slaveID->set_value("44444444");
         offer->mutable_slave_id()->MergeFrom(*slaveID);
@@ -333,14 +371,10 @@ namespace master {
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("1");
 
-//        mesos::Offer *second_offer = create_a_offer();
-//        message.add_offers()->MergeFrom(*second_offer);
-//        message.add_pids("2");
+        mesos::Offer *second_offer = create_a_offer(framework->id());
+        message.add_offers()->MergeFrom(*second_offer);
+        message.add_pids("2");
 
-//        offers[offer->id()] = offer;
-//
-//        framework->addOffer(offer);
-//        slave->addOffer(offer);
 
         LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
                   << framework->pid.get();
@@ -391,9 +425,9 @@ namespace master {
 
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
-                            cur_slavePID.append("172.20.110.228:6061");
+                            cur_slavePID.append("172.20.110.232:6061");
                         } else {
-                            cur_slavePID.append("172.20.110.228:6061");
+                            cur_slavePID.append("172.20.110.232:6061");
                         }
                         mesos::TaskInfo task_(task);
 
@@ -424,13 +458,13 @@ namespace master {
      * Author       : weiguow
      * Date         : 2-19-2-26
      * Description  : */
-     void Master::teardown(master::Framework *framework) {
-         CHECK_NOTNULL(framework);
+    void Master::teardown(chameleon::Framework *framework) {
+        CHECK_NOTNULL(framework);
 
-         LOG(INFO) << "Processing TEARDOWN call for framework " << *framework;
+        LOG(INFO) << "Processing TEARDOWN call for framework " << *framework;
 
-         removeFramework(framework);
-     }
+        removeFramework(framework);
+    }
 
     /**
      * Function     : Decline
@@ -438,7 +472,7 @@ namespace master {
      * Date         : 2-19-2-26
      * Description  : */
 
-    void Master::decline(master::Framework *framework, const mesos::scheduler::Call::Decline &decline) {
+    void Master::decline(chameleon::Framework *framework, const mesos::scheduler::Call::Decline &decline) {
         CHECK_NOTNULL(framework);
 
         LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
@@ -454,10 +488,10 @@ namespace master {
      * Author       : weiguow
      * Date         : 2-19-2-26
      * Description  : */
-    void Master::shutdown(master::Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown) {
+    void Master::shutdown(chameleon::Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown) {
         CHECK_NOTNULL(framework);
 
-        const mesos::SlaveID& slaveID = shutdown.slave_id();
+        const mesos::SlaveID &slaveID = shutdown.slave_id();
 
 //        const
     }
@@ -566,7 +600,7 @@ namespace master {
     /**
      * remove framework-weiguow-2019/2/26*
      * */
-    void Master::removeFramework(Framework* framework) {
+    void Master::removeFramework(Framework *framework) {
         CHECK_NOTNULL(framework);
 
         LOG(INFO) << "Removing framework " << *framework;
@@ -621,10 +655,10 @@ namespace master {
         return offerId;
     }
 
-     /**
-      * change framework status from active to deactive by weiguow 2019-2-26
-      * */
-    void Master::deactivate(Framework* framework, bool rescind){
+    /**
+     * change framework status from active to deactive by weiguow 2019-2-26
+     * */
+    void Master::deactivate(Framework *framework, bool rescind) {
         CHECK_NOTNULL(framework);
         CHECK(framework->active());
 
@@ -791,7 +825,7 @@ namespace master {
     }
 }
 
-using namespace master;
+using namespace chameleon;
 
 int main(int argc, char **argv) {
     chameleon::set_storage_paths_of_glog("master");// provides the program name

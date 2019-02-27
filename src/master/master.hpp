@@ -76,7 +76,7 @@ using process::http::Request;
 using process::http::OK;
 using process::http::InternalServerError;
 
-namespace master {
+namespace chameleon {
 
     class Framework;
     class Master;
@@ -316,7 +316,7 @@ namespace master {
          */
         void received_reply_shutdown_message(const string &ip, const bool &is_shutdown);
 
-        mesos::Offer *create_a_offer();
+        mesos::Offer* create_a_offer(const mesos::FrameworkID& frameworkId);
 
         // super_master related
         void
