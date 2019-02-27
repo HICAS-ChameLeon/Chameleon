@@ -4,7 +4,7 @@
  * Date       ：18-12-5
  * Description：Get X86 Cpu information from computer
  */
-#include <cpu_collector.hpp>
+#include <resource_collector/cpu_collector.hpp>
 
 namespace chameleon {
     CPUCollection* X86CpuCollector::get_cpu_info() {

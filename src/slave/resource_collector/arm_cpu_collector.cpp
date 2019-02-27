@@ -5,7 +5,7 @@
  * Description：Get ARM Cpu information from computer
  */
 
-#include <cpu_collector.hpp>
+#include <resource_collector/cpu_collector.hpp>
 
 namespace chameleon{
     CPUCollection* ARMCpuCollector::get_cpu_info() {

@@ -12,7 +12,7 @@
 #include <stout/gtest.hpp>
 
 
- #include <cpu_collector.hpp>
+ #include <resource_collector/cpu_collector.hpp>
 
 using std::set;
 using std::string;

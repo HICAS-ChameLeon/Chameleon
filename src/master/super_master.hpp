@@ -11,6 +11,7 @@
 #include <vector>
 #include <set>
 #include<iterator>
+#include <sstream>
 #include <unordered_map>
 // google
 #include <glog/logging.h>
@@ -56,14 +57,20 @@ using process::Promise;
 using process::Subprocess;
 using process::subprocess;
 
+using namespace process::http;
+
+using process::http::Request;
+using process::http::OK;
+using process::http::InternalServerError;
+
 
 namespace chameleon {
 
     extern int32_t cluster_levels = 1;
 
-    class SuperMaster :public ProtobufProcess<SuperMaster>{
+    class SuperMaster :public ProtobufProcess<SuperMaster> {
     public:
-        explicit SuperMaster():ProcessBase("super_master"){
+        explicit SuperMaster() : ProcessBase("super_master") {
 
         }
 
@@ -71,17 +78,18 @@ namespace chameleon {
 
         void registered_master(const UPID &forom, const MasterRegisteredMessage &master_registered_message);
 
-        Future<bool> is_repeated_registered(const UPID& upid);
+        Future<bool> is_repeated_registered(const UPID &upid);
 
         bool launch_masters();
 
-        void record_master(const Future<bool>& future,const UPID &from, const MasterRegisteredMessage &master_registered_message);
+        void record_master(const Future<bool> &future, const UPID &from,
+                           const MasterRegisteredMessage &master_registered_message);
 
-        void terminating_master(const UPID& from,const OwnedSlavesMessage& message);
-        virtual ~SuperMaster(){
-            LOG(INFO)<<" ~SuperMaster";
+        void terminating_master(const UPID &from, const OwnedSlavesMessage &message);
+
+        virtual ~SuperMaster() {
+            LOG(INFO) << " ~SuperMaster";
         }
-
 
     private:
 
@@ -110,6 +118,7 @@ namespace chameleon {
         void send_super_master_control_message();
 
     };
+
 
 }
 

@@ -22,6 +22,12 @@
                     templateUrl: '/Chameleon/src/webui/HTML/network_topology.html',
                     controller: 'TopologyCtrl'
                 })
+
+                // supernetwork_topology.html
+                .when('/topology/super_master', {
+                    templateUrl: '/Chameleon/src/webui/HTML/supernetwork_topology.html',
+                    controller: 'SuperTopologyCtrl'
+                })
                 // frameworks.html
                 .when('/frameworks',{
                     templateUrl:

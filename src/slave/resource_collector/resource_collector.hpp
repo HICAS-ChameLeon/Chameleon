@@ -20,12 +20,14 @@
 #include <stout/os.hpp>
 #include <stout/tests/utils.hpp>
 
-#include <cpu_collector.hpp>
-#include <disk_collector.hpp>
-#include <gpu_collector.hpp>
-#include <memory_collector.hpp>
-#include <port_collector.hpp>
-#include <tlb_collector.hpp>
+#include <hardware_resource.pb.h>
+
+#include <resource_collector/cpu_collector.hpp>
+#include <resource_collector/disk_collector.hpp>
+#include <resource_collector/gpu_collector.hpp>
+#include <resource_collector/memory_collector.hpp>
+#include <resource_collector/port_collector.hpp>
+#include <resource_collector/tlb_collector.hpp>
 #include <chameleon_os.hpp>
 
 using std::vector;
