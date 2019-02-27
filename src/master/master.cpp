@@ -117,6 +117,39 @@ namespace master{
                     return ok_response;
                 });
 
+        route(
+                "/frameworks",
+                "wangweiguo new version of frameworks",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->frameworks.registered.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->frameworks.registered.begin();
+                             it != this->frameworks.registered.end(); it++) {
+                            Framework *framework = it->second;
+                            result = JSON::protobuf(framework->info);
+                            array.values.emplace_back(result);
+                            if (framework->state == Framework::INACTIVE) {
+                                result.values["state"] = "INACTIVE";
+                                break;
+                            }
+                            if (framework->state == Framework::ACTIVE) {
+                                result.values["state"] = "ACTIVE";
+                                break;
+                            }
+                        }
+                        result.values["quantity"] = array.values.size();
+                        result.values["content"] = array;
+                    } else {
+                        result.values["quantity"] = 0;
+                        result.values["content"] = JSON::Object();
+                    }
+
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
 
         // http://172.20.110.228:6060/master/stop-cluster
         route(
@@ -142,6 +175,28 @@ namespace master{
                     OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
+                });
+
+        route(
+                "/start_supermaster",
+                "start supermaster by subprocess",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    /**
+                      * Function model  :  start a subprocess of super_master
+                      * Author          :  Jessicallo
+                      * Date            :  2019-2-27
+                      * Funtion name    :  Try
+                      * @param          :
+                      * */
+                    Try<Subprocess> super_master = subprocess(
+                            "/home/wqn/Chameleon/build/src/master/./super_master",
+                            Subprocess::FD(STDIN_FILENO),
+                            Subprocess::FD(STDOUT_FILENO),
+                            Subprocess::FD(STDERR_FILENO)
+                    );
+                    OK response(stringify(result));
+                    return response;
                 });
 
 
