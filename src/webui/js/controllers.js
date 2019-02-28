@@ -851,6 +851,43 @@
         }
     });
 
+
+    //开启supermaster对应的Controller
+    chameleon_app.controller('StartSupermasterCtrl',function ($scope,$modal) {
+        var alert_message = "Make sure to start Supermaster?";
+        $scope.openModal = function() {
+            var modalInstance = $modal.open({
+                templateUrl : 'StartSupermaster.html',
+                controller : 'StartSupermasterInstanceCtrl',   //shutdown modal对应的Controller
+                resolve : {
+                    date : function() {                //date作为shutdown modal的controller传入的参数
+                        return alert_message;          //用于传递数据
+                    }
+                }
+            })
+        }
+
+    });
+
+    chameleon_app.controller('StartSupermasterInstanceCtrl', function($scope, $modalInstance,$http, date) {
+        $scope.date= date;
+
+        //在这里处理要进行的操作
+        $scope.ok = function() {
+            $http({
+                method: 'GET',
+                url: 'http://172.20.110.53:6060/master/start_supermaster'
+            }).then(function successCallback(response) {
+                console.log(response);
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+            });
+        };
+        $scope.cancel = function() {
+            $modalInstance.dismiss('cancel');
+        }
+    });
+
     //spark框架对应的Controller
     chameleon_app.controller('FrameworksCtrl', function() {});
 
