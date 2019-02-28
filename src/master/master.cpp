@@ -78,6 +78,10 @@ namespace chameleon {
          * */
         install<mesos::scheduler::Call>(&Master::receive);
 
+        //change two levels to one related
+        install("MAKUN",&Master::get_select_master);
+//        install<TerminatingMasterMessage>
+
         // http://172.20.110.228:6060/master/hardware-resources
         route(
                 "/hardware-resources",
@@ -178,45 +182,6 @@ namespace chameleon {
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
                 });
-
-        route(
-                "/stop-master",
-                "try to stop",
-                [this](Request request) {
-                    JSON::Object result = JSON::Object();
-
-                    //send a shutdown message to every slave
-                    LOG(INFO) << "stopping the Chameleon cluster, we have " << m_alive_slaves.size()
-                              << " slaves to terminate";
-                    for (string ip : this->m_alive_slaves) {
-                        const UPID current_slave(construct_UPID_string("slave", ip, "6061"));
-                        ShutdownMessage m;
-                        m.set_master_ip(this->self().id);
-                        m.set_slave_ip(ip);
-                        send(current_slave, m);
-                        LOG(INFO) << self() << "sent a shutdown message to " << current_slave;
-                    }
-
-                    result.values["stop"] = "success";
-
-                    OK ok_response(stringify(result));
-                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                    return ok_response;
-                });
-
-        route(
-                "/kill_master",
-                "kill the super_master of two levels",
-                [this](Request request){
-                    JSON::Object result = JSON::Object();
-                    LOG(INFO) << "MAKUN KILL MASTER";
-                    result.values["kill"] = "success";
-
-                    OK ok_response(stringify(result));
-                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                    return ok_response;
-                });
-
 
 
 //     install("stop", &MyProcess::stop);
@@ -670,6 +635,10 @@ namespace chameleon {
             m_hardware_resources.insert({slaveid, object});
             m_proto_hardware_resources.insert({slaveid, hardware_resources_message});
             m_alive_slaves.insert(slaveid);
+            for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
+                LOG(INFO) << *iter;
+//                send(,*master_registered_message);
+            }
         }
     }
 
@@ -846,11 +815,31 @@ namespace chameleon {
         LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
         if (message.master_id() == stringify(self().address.ip)) {
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
+            for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
+                LOG(INFO) << *iter;
+//                send(,*master_registered_message);
+            }
             terminate(self());
+        } else{
+            string id = message.master_id();
+            MasterRegisteredMessage *master_registered_message = new MasterRegisteredMessage();
+            master_registered_message->set_master_id(stringify(message.master_id()));
+            master_registered_message->set_master_uuid(m_uuid);
+            master_registered_message->set_status(MasterRegisteredMessage_Status_FIRST_REGISTERING);
+            for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
+                LOG(INFO) << *iter;
+//                send(,*master_registered_message);
+            }
+            delete master_registered_message;
+            LOG(INFO) << " send new_master_message to salve";
         }
 
     }
 
+    void Master::get_select_master(const UPID& from, const string& message) {
+        LOG(INFO) << "MAKUN received select_master_message";
+        send(from,"MAKUN2");
+    }
     // end of super_mater related
 
     std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {

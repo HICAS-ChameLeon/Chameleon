@@ -223,6 +223,9 @@ namespace chameleon {
 
         void acknowledge(const mesos::scheduler::Call::Acknowledge& acknowledge);
 
+        void get_select_master(const UPID& from, const string& message);
+        void get_slave_infos(const UPID& from, const string& message);
+
 
     private:
 
