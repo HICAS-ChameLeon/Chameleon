@@ -281,7 +281,7 @@ namespace chameleon {
         for (auto iter = m_classification_masters.begin(); iter != m_classification_masters.end(); iter++) {
             *iter = "master@"+*iter+":6060";
             if (*iter != master_ip) {
-                LOG(INFO) << *iter << " != " << master_ip;
+                LOG(INFO) << *iter << " != select_ip: " << master_ip;
                 send(*iter, *terminating_master);
             } else {
                 send(master_upid,"MAKUN");

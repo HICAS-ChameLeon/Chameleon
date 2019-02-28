@@ -58,6 +58,7 @@
 #include <scheduler.pb.h>
 #include <messages.pb.h>
 #include <mesos.pb.h>
+#include <super_master_related.pb.h>
 
 // chameleon headers
 #include <resource_collector.hpp>
@@ -183,6 +184,9 @@ namespace chameleon {
                 const Option<UPID>& pid);
 
         void reregister_to_master(const UPID& from, const ReregisterMasterMessage& message);
+
+        //super_master related
+//        void received_new_master(const UPID& from, const MasterRegisteredMessage& message);
 
     };
 

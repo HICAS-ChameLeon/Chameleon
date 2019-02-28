@@ -635,10 +635,6 @@ namespace chameleon {
             m_hardware_resources.insert({slaveid, object});
             m_proto_hardware_resources.insert({slaveid, hardware_resources_message});
             m_alive_slaves.insert(slaveid);
-            for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
-                LOG(INFO) << *iter;
-//                send(,*master_registered_message);
-            }
         }
     }
 
@@ -694,6 +690,8 @@ namespace chameleon {
         auto slave_id = runtime_resouces_message.slave_id();
         m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
+        //add insert slave_id to send new master message to slave
+        m_alive_slaves.insert(slave_id);
     }
 
     Try<string> Master::find_min_cpu_and_memory_rates() {
@@ -815,23 +813,24 @@ namespace chameleon {
         LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
         if (message.master_id() == stringify(self().address.ip)) {
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
-            for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
-                LOG(INFO) << *iter;
-//                send(,*master_registered_message);
-            }
             terminate(self());
         } else{
-            string id = message.master_id();
-            MasterRegisteredMessage *master_registered_message = new MasterRegisteredMessage();
-            master_registered_message->set_master_id(stringify(message.master_id()));
-            master_registered_message->set_master_uuid(m_uuid);
-            master_registered_message->set_status(MasterRegisteredMessage_Status_FIRST_REGISTERING);
+            ReregisterMasterMessage *reregister_master_message = new ReregisterMasterMessage();
+            reregister_master_message->set_master_ip(message.master_id());
+            reregister_master_message->set_port("6061");
+//            MasterRegisteredMessage *master_registered_message = new MasterRegisteredMessage();
+//            master_registered_message->set_master_id(stringify(message.master_id()));
+//            master_registered_message->set_master_uuid(m_uuid);
+//            master_registered_message->set_status(MasterRegisteredMessage_Status_FIRST_REGISTERING);
             for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
                 LOG(INFO) << *iter;
-//                send(,*master_registered_message);
+                reregister_master_message->set_slave_ip(*iter);
+                UPID slave_id("slave@"+*iter+":6061");
+                send(slave_id,*reregister_master_message);
+                LOG(INFO) << self().address.ip << " send new_master_message to salve: " <<slave_id;
             }
-            delete master_registered_message;
-            LOG(INFO) << " send new_master_message to salve";
+            delete reregister_master_message;
+            terminate(self());
         }
 
     }
