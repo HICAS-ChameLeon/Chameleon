@@ -13,11 +13,11 @@
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="x in framework | filter :{ active :true}">
-        <th><a href="#/frameworks/{{frameworksID}}">{{frameworksID}}</a>
+    <tr ng-repeat="x in framework | filter :'ACTIVE'">
+        <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
         </th>
         <th>
-            {{x.hostname | uppercase}}
+            {{x.id.value}}
         </th>
         <th>
             {{x.user}}
@@ -53,8 +53,8 @@
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="x in framework | filter :{active :false}">
-        <th><a href="#/frameworks/{{frameworksID}}">{{frameworksID}}</a>
+    <tr ng-repeat="x in framework | filter :{ACTIVE :false}">
+        <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
         </th>
         <th>
             {{x.hostname}}
@@ -94,7 +94,7 @@
     </thead>
     <tbody>
     <tr ng-repeat="x in framework">
-        <th><a href="#/frameworks/{{frameworksID}}">{{frameworksID}}</a>
+        <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
         </th>
         <th>
             {{x.hostname}}
