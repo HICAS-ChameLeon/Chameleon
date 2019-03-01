@@ -136,7 +136,14 @@ namespace master{
                             if (framework->state == Framework::ACTIVE) {
                                 result.values["state"] = "ACTIVE";
                                 break;
+                            }if (framework->state == Framework::DISCONNECTED) {
+                                result.values["state"] = "DISCONNECTED";
+                                break;
+                            }if (framework->state == Framework::RECOVERED) {
+                                result.values["state"] = "RECOVERED";
+                                break;
                             }
+
                         }
                         result.values["quantity"] = array.values.size();
                         result.values["content"] = array;
@@ -491,9 +498,9 @@ namespace master{
 
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
-                            cur_slavePID.append("172.20.110.232:6061");
+                            cur_slavePID.append("172.20.110.53:6061");
                         } else {
-                            cur_slavePID.append("172.20.110.232:6061");
+                            cur_slavePID.append("172.20.110.53:6061");
                         }
                         mesos::TaskInfo task_(task);
 
