@@ -823,13 +823,15 @@ namespace chameleon {
 //            master_registered_message->set_master_uuid(m_uuid);
 //            master_registered_message->set_status(MasterRegisteredMessage_Status_FIRST_REGISTERING);
             for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
-                LOG(INFO) << *iter;
+//                LOG(INFO) << *iter;
                 reregister_master_message->set_slave_ip(*iter);
                 UPID slave_id("slave@"+*iter+":6061");
                 send(slave_id,*reregister_master_message);
-                LOG(INFO) << self().address.ip << " send new_master_message to salve: " <<slave_id;
+                LOG(INFO) << self() << " send new_master_message: " << reregister_master_message->master_ip()
+                << " to salve: " <<slave_id;
             }
             delete reregister_master_message;
+            LOG(INFO) << self() << " is terminating due to change levels to one";
             terminate(self());
         }
 

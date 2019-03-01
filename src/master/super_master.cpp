@@ -281,16 +281,18 @@ namespace chameleon {
         for (auto iter = m_classification_masters.begin(); iter != m_classification_masters.end(); iter++) {
             *iter = "master@"+*iter+":6060";
             if (*iter != master_ip) {
-                LOG(INFO) << *iter << " != select_ip: " << master_ip;
                 send(*iter, *terminating_master);
             } else {
                 send(master_upid,"MAKUN");
             }
         }
+        LOG(INFO) << self() << " is terminating due to change levels to one";
         delete(terminating_master);
     }
     void SuperMaster::recevied_slave_infos(const UPID& from, const string& message){
         LOG(INFO) << "MAKUN received message from new master";
+        terminate(self());
+//        process::wait(self());
     }
 
 
