@@ -13,11 +13,11 @@
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="x in framework | filter :'ACTIVE'">
+    <tr ng-repeat="x in framework | filter:{state: 'ACTIVE'}:true">
         <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
         </th>
         <th>
-            {{x.id.value}}
+            {{x.hostname}}
         </th>
         <th>
             {{x.user}}
@@ -53,28 +53,28 @@
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="x in framework | filter :{ACTIVE :false}">
-        <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
-        </th>
-        <th>
-            {{x.hostname}}
-        </th>
-        <th>
-            {{x.user}}
-        </th>
-        <th>
-            {{x.name}}
-        </th>
-        <th>
-            {{x.princple}}
-        </th>
-        <th>
-            {{user}}
-        </th>
-        <th>
-            {{user}}
-        </th>
-    </tr>
+    <!--<tr ng-repeat="x in framework ">-->
+        <!--<th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>-->
+        <!--</th>-->
+        <!--<th>-->
+            <!--{{x.hostname}}-->
+        <!--</th>-->
+        <!--<th>-->
+            <!--{{x.user}}-->
+        <!--</th>-->
+        <!--<th>-->
+            <!--{{x.name}}-->
+        <!--</th>-->
+        <!--<th>-->
+            <!--{{x.princple}}-->
+        <!--</th>-->
+        <!--<th>-->
+            <!--{{user}}-->
+        <!--</th>-->
+        <!--<th>-->
+            <!--{{user}}-->
+        <!--</th>-->
+    <!--</tr>-->
     </tbody>
 </table>
 
@@ -93,7 +93,7 @@
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="x in framework">
+    <tr ng-repeat="x in framework | filter:{state:'INACTIVE'}:true ">
         <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
         </th>
         <th>

@@ -891,19 +891,21 @@
     //spark框架对应的Controller
     chameleon_app.controller('FrameworksCtrl', function() {});
 
-    chameleon_app.controller('FrameworkCtrl',function ($scope, $http) {
-        $http({
-            method: 'GET',
-            url: 'http://172.20.110.53:6060/master/frameworks'
-        }).then(function successCallback(response) {
-            $scope.framework = response.data.content;
-            $scope.quantities = response.data.quantity;
+    chameleon_app.controller('FrameworkCtrl',function ($scope, $http, $timeout) {
 
-        }, function errorCallback(response) {
-            // 请求失败执行代码
-        });
-
-
+        var pollState = function() {
+            $scope.delay = 1000;
+            $http({
+                method: 'GET',
+                url: 'http://172.20.110.53:6060/master/frameworks'
+            }).then(function successCallback(response) {
+                $scope.framework = response.data.content;
+                $scope.quantities = response.data.quantity;
+            }, function errorCallback(response) {
+            });
+            $timeout(pollState, $scope.delay);
+        };
+        pollState();
     });
 
 

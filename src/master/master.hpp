@@ -229,7 +229,7 @@ namespace master {
 
             hashmap<string, Framework*> registered;
 
-//            BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completed;
+//            BoundedHashMap<string, Framework*> completed;
 
         } frameworks;
 
