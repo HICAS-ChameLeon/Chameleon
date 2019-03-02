@@ -647,10 +647,9 @@
                     //console.log(response.data.quantity);
                     for (var i in $scope.supermaster) {
                         //var master = $scope.runtime[i];
-                        //console.log($scope.runtime[i]);
                         var my_master = {};   //构造一个master节点
                         vertexes_super[0 + $scope.super_quantities] = my_master;
-                        console.log('8' + $scope.super_quantities);
+                        //console.log('8' + $scope.super_quantities);
                         cur_masterindex++     //全局变量
                         my_master.id = cur_masterindex;
                         my_master.label = "master";
@@ -667,13 +666,13 @@
                         index_superedge++;
                         my_superedges[index_superedge] = temp_superedge;
                     }
-                    console.log($scope.quantities);
-                    if ($scope.quantities >= 2) {
-                        my_superedges = [];
+                    //console.log('9'+$scope.quantities);
+                    if ($scope.quantities >= 1) {
+                        //my_superedges = [];
                         for (var j in $scope.runtime) {
                             var temp_slave = {};       // 添加一个slave节点
                             cur_masterindex++;
-                            console.log('2' + cur_masterindex);
+                            //console.log('2' + cur_masterindex);
                             temp_slave.id = cur_masterindex;
                             temp_slave.shape = 'image';
                             temp_slave.image = DIR + 'Hardware-WQN-server.png';
@@ -689,7 +688,7 @@
 
                             // 添加cpu节点
                             var temp_cpu = {};
-                            index_superedge++;
+                            cur_masterindex++;
                             temp_cpu.label = "cpu";
                             temp_cpu.id = cur_masterindex;
                             temp_cpu.group = 'server';
@@ -706,7 +705,7 @@
 
                             // 添加disk节点
                             var temp_disk = {};
-                            index_superedge++;
+                            cur_masterindex++;
                             temp_disk.label = "disk";
                             temp_disk.id = cur_masterindex;
                             temp_disk.group = 'switch';
@@ -723,7 +722,7 @@
 
                             // 添加mem节点
                             var temp_mem = {};
-                            index_superedge++;
+                            cur_masterindex++;
                             temp_mem.label = "mem";
                             temp_mem.id = cur_masterindex;
                             temp_mem.group = 'desktop';
@@ -740,7 +739,7 @@
 
                             // 添加swap节点
                             var temp_swap = {};
-                            index_superedge++;
+                            cur_masterindex++;
                             temp_swap.label = "swap";
                             temp_swap.id = cur_masterindex;
                             temp_swap.group = 'mobile';
