@@ -521,7 +521,7 @@ namespace chameleon {
             msp_masterUPID.reset(new UPID(m_master));
             LOG(INFO)<<" prepare to  a  heartbeat to the new master "<<m_master<<" ";
             send_heartbeat_to_master();
-        }
+         }
     }
 
 //    void Slave::received_new_master(const UPID& from, const MasterRegisteredMessage& message) {

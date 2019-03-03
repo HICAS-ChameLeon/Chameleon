@@ -817,7 +817,7 @@ namespace chameleon {
         } else{
             ReregisterMasterMessage *reregister_master_message = new ReregisterMasterMessage();
             reregister_master_message->set_master_ip(message.master_id());
-            reregister_master_message->set_port("6061");
+            reregister_master_message->set_port("6060");
 //            MasterRegisteredMessage *master_registered_message = new MasterRegisteredMessage();
 //            master_registered_message->set_master_id(stringify(message.master_id()));
 //            master_registered_message->set_master_uuid(m_uuid);
@@ -833,6 +833,7 @@ namespace chameleon {
             delete reregister_master_message;
             LOG(INFO) << self() << " is terminating due to change levels to one";
             terminate(self());
+            process::wait(self());
         }
 
     }

@@ -274,15 +274,16 @@ namespace chameleon {
         send_terminating_master(master_ip);
     }
     void SuperMaster::send_terminating_master(string master_ip) {
-        master_ip = "master@"+master_ip+":6060";
-        UPID master_upid(master_ip);
+        //master_ip = "master@"+master_ip+":6060";
+//        UPID master_upid(master_ip);
         TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
-        terminating_master->set_master_id(master_upid);
+        terminating_master->set_master_id(master_ip);
         for (auto iter = m_classification_masters.begin(); iter != m_classification_masters.end(); iter++) {
-            *iter = "master@"+*iter+":6060";
             if (*iter != master_ip) {
+                *iter = "master@"+*iter+":6060";
                 send(*iter, *terminating_master);
             } else {
+                UPID master_upid("master@"+master_ip+":6060");
                 send(master_upid,"MAKUN");
             }
         }
