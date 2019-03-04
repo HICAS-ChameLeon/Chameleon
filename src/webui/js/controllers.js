@@ -10,7 +10,7 @@
             $scope.delay = 2000;
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.53:6060/master/runtime-resources'
+                url: 'http://172.20.110.228:6060/master/runtime-resources'
             }).then(function successCallback(response) {
                 $scope.runtime = response.data.content;
                 $scope.quantities = response.data.quantity;
@@ -19,7 +19,7 @@
             });
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.53:6060/master/hardware-resources'
+                url: 'http://172.20.110.228:6060/master/hardware-resources'
             }).then(function successCallback(response) {
                 $scope.hardware = response.data.content;
                 $scope.quantities = response.data.quantity;
@@ -434,7 +434,7 @@
 
         $http({
             method: 'GET',
-            url: 'http://172.20.110.53:6060/master/runtime-resources'
+            url: 'http://172.20.110.228:6060/master/runtime-resources'
         }).then(function successCallback(response) {
             $scope.runtime = response.data.content;
             // console.log(response.data.content);
@@ -612,7 +612,7 @@
     chameleon_app.controller('SuperTopologyCtrl', function($scope, $http){
         $http({
             method: 'GET',
-            url: 'http://172.20.110.53:7000/super_master/super_master'
+            url: 'http://172.20.110.228:7000/super_master/super_master'
         }).then(function successCallback(response) {
             $scope.supermaster = response.data.content;
             // console.log(response.data.content);
@@ -639,7 +639,7 @@
                 my_superedges = [];   //构造一条边
                 $http({
                     method: 'GET',
-                    url: 'http://172.20.110.53:6060/master/runtime-resources'
+                    url: 'http://172.20.110.228:6060/master/runtime-resources'
                 }).then(function successCallback(response) {
                     $scope.runtime = response.data.content;
                     // console.log(response.data.content);
@@ -875,7 +875,7 @@
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.53:6060/master/start_supermaster'
+                url: 'http://172.20.110.228:6060/master/start_supermaster'
             }).then(function successCallback(response) {
                 console.log(response);
             }, function errorCallback(response) {
@@ -896,7 +896,7 @@
             $scope.delay = 1000;
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.53:6060/master/frameworks'
+                url: 'http://172.20.110.228:6060/master/frameworks'
             }).then(function successCallback(response) {
                 $scope.framework = response.data.content;
                 $scope.quantities = response.data.quantity;

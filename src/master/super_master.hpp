@@ -76,6 +76,7 @@ namespace chameleon {
 
         virtual void initialize() override;
 
+        void set_master_path(const string& path);
         void registered_master(const UPID &forom, const MasterRegisteredMessage &master_registered_message);
 
         Future<bool> is_repeated_registered(const UPID &upid);
@@ -94,6 +95,7 @@ namespace chameleon {
     private:
 
         string m_uuid;
+        string m_master_path;
         // represent the masters administered by the current super_master.
         vector<UPID> m_masters;
 
