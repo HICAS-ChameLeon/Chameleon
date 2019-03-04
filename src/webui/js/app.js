@@ -36,7 +36,7 @@
                 })
 
                 // framework.html
-                .when('/frameworks/:frameworksID',{
+                .when('/frameworks/:id.value',{
             templateUrl:
                 '/Chameleon/src/webui/HTML/framework.html',
                     controller:'FrameworkCtrl'

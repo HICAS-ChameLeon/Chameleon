@@ -36,6 +36,7 @@
 #include <process/process.hpp>
 #include <process/protobuf.hpp>
 #include <process/delay.hpp>
+#include <process/subprocess.hpp>
 
 // protobuf
 #include <participant_info.pb.h>
@@ -75,6 +76,7 @@ using namespace process::http;
 using process::http::Request;
 using process::http::OK;
 using process::http::InternalServerError;
+using process::Subprocess;
 
 namespace master {
 
@@ -227,7 +229,7 @@ namespace master {
 
             hashmap<string, Framework*> registered;
 
-//            BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completed;
+//            BoundedHashMap<string, Framework*> completed;
 
         } frameworks;
 
