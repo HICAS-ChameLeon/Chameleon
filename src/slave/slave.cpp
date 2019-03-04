@@ -465,8 +465,8 @@ namespace chameleon {
 
                 break;
             default:
-                LOG(FATAL) << "Framework " << frameworkId.value()
-                           << " is in unexpected state ";
+//                LOG(FATAL) << "Framework " << frameworkId.value()
+//                           << " is in unexpected state ";
                 break;
         }
     }
