@@ -9,6 +9,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
+DEFINE_string(supermaster_path, "./super_master", "the absolute path of supermaster executive. For example, -supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 
 /*
  * Function name  : ValidateInt
@@ -24,7 +25,23 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
     return false;
 }
 
-static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
+/**
+ * Function name  : ValidateStr
+ * Author         : weiguow
+ * Date           : 2018-12-13
+ * Description    : Determines whether the input parameter is valid
+ * Return         : True or False*/
+static bool ValidateStr(const char *flagname, const string &value) {
+    if (!value.empty()) {
+        return true;
+    }
+    printf("Invalid value for --%s: To run this program, you must set a meaningful value for it "
+           "%s\n", flagname, value.c_str());;
+    return false;
+}
+
+static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
+static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &ValidateStr);
 
 namespace master {
 
@@ -196,13 +213,15 @@ namespace master {
                       * Funtion name    :  Try
                       * @param          :
                       * */
+                      m_super_master_path.append(" --master_path=/home/wqn/Chameleon/build/src/master/master");
                     Try<Subprocess> super_master = subprocess(
-                            "/home/wqn/Chameleon/build/src/master/./super_master",
+                           m_super_master_path,
                             Subprocess::FD(STDIN_FILENO),
                             Subprocess::FD(STDOUT_FILENO),
                             Subprocess::FD(STDERR_FILENO)
                     );
                     OK response(stringify(result));
+                    response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return response;
                 });
 
@@ -443,9 +462,9 @@ namespace master {
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("1");
 
-        mesos::Offer *second_offer = create_a_offer(framework->id());
-        message.add_offers()->MergeFrom(*second_offer);
-        message.add_pids("2");
+//        mesos::Offer *second_offer = create_a_offer(framework->id());
+//        message.add_offers()->MergeFrom(*second_offer);
+//        message.add_pids("2");
 
 
         LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
@@ -497,9 +516,10 @@ namespace master {
 
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
-                            cur_slavePID.append("172.20.110.53:6061");
+//                            cur_slavePID.append("172.20.110.228:6061");
+                              cur_slavePID.append(stringify(self().address.ip)+":6061");
                         } else {
-                            cur_slavePID.append("172.20.110.53:6061");
+                            cur_slavePID.append(stringify(self().address.ip)+":6061");
                         }
                         mesos::TaskInfo task_(task);
 
@@ -688,7 +708,8 @@ namespace master {
         mesos::internal::ShutdownFrameworkMessage message;
         message.mutable_framework_id()->MergeFrom(framework->id());
 
-        string slave_pid = "slave@172.20.110.53:6061";
+//        string slave_pid = "slave@172.20.110.228:6061";
+        const string slave_pid = stringify(self().address.ip).append(":6061");
         send(slave_pid, message);
 
 //        frameworks.completed.set(framework->id().value(), framework);
@@ -796,6 +817,11 @@ namespace master {
     }
 
     // super_master related
+
+    void Master::set_super_master_path(const string& path) {
+        m_super_master_path = path;
+    }
+
     void Master::super_master_control(const UPID &super_master,
                                       const SuperMasterControlMessage &super_master_control_message) {
         LOG(INFO) << " get a super_master_control_message from super_master" << super_master;
@@ -862,8 +888,7 @@ namespace master {
         }
     }
 
-    void
-    Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
+    void Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
         LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
         if (message.master_id() == stringify(self().address.ip)) {
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
@@ -914,12 +939,13 @@ int main(int argc, char **argv) {
 
     google::CommandLineFlagInfo info;
 
-    if (port_Int) {
+    if (has_port_Int && has_super_master_path) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
         process::initialize("master");
         Master master;
 
+        master.set_super_master_path(FLAGS_supermaster_path);
         PID<Master> cur_master = process::spawn(master);
         LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 

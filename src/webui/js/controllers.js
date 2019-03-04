@@ -37,7 +37,7 @@
         $scope.stop_cluster = function () {
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/stop-cluster'
+                url: 'http://172.20.110.53:6060/master/stop-cluster'
             }).then(function successCallback(response) {
                 console.log(response);
             }, function errorCallback(response) {
@@ -51,7 +51,7 @@
         //
         // $http({
         //     method: 'GET',
-        //     url: 'http://172.20.110.228:6060/master/hardware-resources'
+        //     url: 'http://172.20.110.53:6060/master/hardware-resources'
         // }).then(function successCallback(response) {
         //
         //
@@ -66,7 +66,7 @@
     chameleon_app.controller('RuntimeCtrl', function($scope,$rootScope,$http) {
         // $http({
         //     method: 'GET',
-        //     url: 'http://172.20.110.228:6060/master/runtime-resources'
+        //     url: 'http://172.20.110.53:6060/master/runtime-resources'
         // }).then(function successCallback(response) {
         //     $scope.runtime = response.data.content;
         //     // console.log(response.data.content);
@@ -838,7 +838,7 @@
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/stop-cluster'
+                url: 'http://172.20.110.53:6060/master/stop-cluster'
             }).then(function successCallback(response) {
                 console.log(response);
             }, function errorCallback(response) {
