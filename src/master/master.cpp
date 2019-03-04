@@ -26,7 +26,7 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
 
 static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 
-namespace master{
+namespace master {
 
     void Master::initialize() {
 
@@ -117,6 +117,42 @@ namespace master{
                     return ok_response;
                 });
 
+        route(
+                "/frameworks",
+                "wangweiguo new version of frameworks",
+                [this](Request request) {
+                    JSON::Object a_framework;
+                    JSON::Object a_content = JSON::Object();
+                    if (!this->frameworks.registered.empty()) {
+                       JSON::Array frameworks_array;
+                        for (auto it = this->frameworks.registered.begin();
+                             it != this->frameworks.registered.end(); it++) {
+                            Framework *framework = it->second;
+                            a_framework = JSON::protobuf(framework->info);
+                            if (framework->state == Framework::ACTIVE) {
+                                a_framework.values["state"] = "ACTIVE";
+                            }if (framework->state == Framework::INACTIVE) {
+                                a_framework.values["state"] = "INACTIVE";
+                            }if (framework->state == Framework::RECOVERED) {
+                                a_framework.values["state"] = "RECOVERED";
+                            }if (framework->state == Framework::DISCONNECTED) {
+                                a_framework.values["state"] = "DISCONNECTED";
+                            }
+                            frameworks_array.values.emplace_back(a_framework);
+                        }
+                        a_content.values["quantity"] = frameworks_array.values.size();
+                        a_content.values["content"] = frameworks_array;
+                    } else {
+
+                        a_content.values["quantity"] = 0;
+                        a_content.values["content"] = JSON::Object();
+                    }
+
+                    OK ok_response(stringify(a_content));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
 
         // http://172.20.110.228:6060/master/stop-cluster
         route(
@@ -142,6 +178,28 @@ namespace master{
                     OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
+                });
+
+        route(
+                "/start_supermaster",
+                "start supermaster by subprocess",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    /**
+                      * Function model  :  start a subprocess of super_master
+                      * Author          :  Jessicallo
+                      * Date            :  2019-2-27
+                      * Funtion name    :  Try
+                      * @param          :
+                      * */
+                    Try<Subprocess> super_master = subprocess(
+                            "/home/wqn/Chameleon/build/src/master/./super_master",
+                            Subprocess::FD(STDIN_FILENO),
+                            Subprocess::FD(STDOUT_FILENO),
+                            Subprocess::FD(STDERR_FILENO)
+                    );
+                    OK response(stringify(result));
+                    return response;
                 });
 
 
@@ -245,16 +303,16 @@ namespace master{
             // If we are here the framework is subscribing for the first time.
             // Check if this framework is already subscribed (because it retries).
             foreachvalue (Framework *framework, frameworks.registered) {
-                if (framework->pid == from) {
-                    LOG(INFO) << "Framework " << *framework
-                    << " already subscribed, resending acknowledgement";
-                    mesos::internal::FrameworkRegisteredMessage message;
-                    message.mutable_framework_id()->MergeFrom(framework->id());
-                    message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
-                    framework->send(message);
-                    return;
-                }
-            }
+                                    if (framework->pid == from) {
+                                        LOG(INFO) << "Framework " << *framework
+                                                  << " already subscribed, resending acknowledgement";
+                                        mesos::internal::FrameworkRegisteredMessage message;
+                                        message.mutable_framework_id()->MergeFrom(framework->id());
+                                        message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
+                                        framework->send(message);
+                                        return;
+                                    }
+                                }
 
             mesos::internal::FrameworkRegisteredMessage message;
 
@@ -277,7 +335,7 @@ namespace master{
         }
     }
 
-    mesos::Offer* Master::create_a_offer(const mesos::FrameworkID& frameworkId) {
+    mesos::Offer *Master::create_a_offer(const mesos::FrameworkID &frameworkId) {
         mesos::Offer *offer = new mesos::Offer();
 
         Framework *framework = getFramework(frameworkId);
@@ -371,7 +429,7 @@ namespace master{
         offer->mutable_framework_id()->MergeFrom(framework->id());
 
         //这个slaveID决定了实现master选取分布式集群中节点的基础
-        mesos::SlaveID* slaveID = new mesos::SlaveID();
+        mesos::SlaveID *slaveID = new mesos::SlaveID();
 //        offer->mutable_slave_id()->MergeFrom(newSlaveId());
         slaveID->set_value("44444444");
         offer->mutable_slave_id()->MergeFrom(*slaveID);
@@ -436,9 +494,9 @@ namespace master{
 
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
-                            cur_slavePID.append("172.20.110.232:6061");
+                            cur_slavePID.append("172.20.110.53:6061");
                         } else {
-                            cur_slavePID.append("172.20.110.232:6061");
+                            cur_slavePID.append("172.20.110.53:6061");
                         }
                         mesos::TaskInfo task_(task);
 
@@ -617,26 +675,20 @@ namespace master{
         LOG(INFO) << "Removing framework " << *framework;
 
         if (framework->active()) {
-            deactivate(framework, false);
+            CHECK(framework->active());
 
-            //send ShutdownFrameworkMessage to slave
-            mesos::internal::ShutdownFrameworkMessage message;
-            message.mutable_framework_id()->MergeFrom(framework->id());
+            LOG(INFO) << "Deactive framework " << *framework;
 
-            string slave_pid = "slave@172.20.110.228:6061";
-            send(slave_pid, message);
-
-            //we need to do this after - by weiguow
-            // The framework's offers should have been removed when the
-            // framework was deactivated.
-//        CHECK(framework->offers.empty());
-//        CHECK(framework->inverseOffers.empty());
-
-            framework->unregisteredTime = process::Clock::now();
-            frameworks.registered.erase(framework->id().value());
+            framework->state = Framework::State::INACTIVE;
         }
+        //send ShutdownFrameworkMessage to slave
+        mesos::internal::ShutdownFrameworkMessage message;
+        message.mutable_framework_id()->MergeFrom(framework->id());
 
-//         frameworks.completed.set(framework->id(), process::Owned<Framework>(framework));
+        string slave_pid = "slave@172.20.110.53:6061";
+        send(slave_pid, message);
+
+//        frameworks.completed.set(framework->id().value(), framework);
     }
 
 
@@ -665,22 +717,6 @@ namespace master{
         offerId.set_value(m_masterInfo.id() + "-O" + stringify(nextOfferId++));
         return offerId;
     }
-
-    /**
-     * change framework status from active to deactive by weiguow 2019-2-26
-     * */
-    void Master::deactivate(Framework *framework, bool rescind) {
-        CHECK_NOTNULL(framework);
-        CHECK(framework->active());
-
-        LOG(INFO) << "Deactive framework " << *framework;
-
-        framework->state = Framework::State::INACTIVE;
-
-        //Below we should allocat offer resource, but now we don't have
-        //this function model-by weiguow
-    }
-
 
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;

@@ -647,10 +647,9 @@
                     //console.log(response.data.quantity);
                     for (var i in $scope.supermaster) {
                         //var master = $scope.runtime[i];
-                        //console.log($scope.runtime[i]);
                         var my_master = {};   //构造一个master节点
                         vertexes_super[0 + $scope.super_quantities] = my_master;
-                        console.log('8' + $scope.super_quantities);
+                        //console.log('8' + $scope.super_quantities);
                         cur_masterindex++     //全局变量
                         my_master.id = cur_masterindex;
                         my_master.label = "master";
@@ -667,13 +666,13 @@
                         index_superedge++;
                         my_superedges[index_superedge] = temp_superedge;
                     }
-                    console.log($scope.quantities);
-                    if ($scope.quantities >= 2) {
-                        my_superedges = [];
+                    //console.log('9'+$scope.quantities);
+                    if ($scope.quantities >= 1) {
+                        //my_superedges = [];
                         for (var j in $scope.runtime) {
                             var temp_slave = {};       // 添加一个slave节点
                             cur_masterindex++;
-                            console.log('2' + cur_masterindex);
+                            //console.log('2' + cur_masterindex);
                             temp_slave.id = cur_masterindex;
                             temp_slave.shape = 'image';
                             temp_slave.image = DIR + 'Hardware-WQN-server.png';
@@ -689,7 +688,7 @@
 
                             // 添加cpu节点
                             var temp_cpu = {};
-                            index_superedge++;
+                            cur_masterindex++;
                             temp_cpu.label = "cpu";
                             temp_cpu.id = cur_masterindex;
                             temp_cpu.group = 'server';
@@ -706,7 +705,7 @@
 
                             // 添加disk节点
                             var temp_disk = {};
-                            index_superedge++;
+                            cur_masterindex++;
                             temp_disk.label = "disk";
                             temp_disk.id = cur_masterindex;
                             temp_disk.group = 'switch';
@@ -723,7 +722,7 @@
 
                             // 添加mem节点
                             var temp_mem = {};
-                            index_superedge++;
+                            cur_masterindex++;
                             temp_mem.label = "mem";
                             temp_mem.id = cur_masterindex;
                             temp_mem.group = 'desktop';
@@ -740,7 +739,7 @@
 
                             // 添加swap节点
                             var temp_swap = {};
-                            index_superedge++;
+                            cur_masterindex++;
                             temp_swap.label = "swap";
                             temp_swap.id = cur_masterindex;
                             temp_swap.group = 'mobile';
@@ -851,34 +850,61 @@
         }
     });
 
+
+    //开启supermaster对应的Controller
+    chameleon_app.controller('StartSupermasterCtrl',function ($scope,$modal) {
+        var alert_message = "Make sure to start Supermaster?";
+        $scope.openModal = function() {
+            var modalInstance = $modal.open({
+                templateUrl : 'StartSupermaster.html',
+                controller : 'StartSupermasterInstanceCtrl',   //shutdown modal对应的Controller
+                resolve : {
+                    date : function() {                //date作为shutdown modal的controller传入的参数
+                        return alert_message;          //用于传递数据
+                    }
+                }
+            })
+        }
+
+    });
+
+    chameleon_app.controller('StartSupermasterInstanceCtrl', function($scope, $modalInstance,$http, date) {
+        $scope.date= date;
+
+        //在这里处理要进行的操作
+        $scope.ok = function() {
+            $http({
+                method: 'GET',
+                url: 'http://172.20.110.53:6060/master/start_supermaster'
+            }).then(function successCallback(response) {
+                console.log(response);
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+            });
+        };
+        $scope.cancel = function() {
+            $modalInstance.dismiss('cancel');
+        }
+    });
+
     //spark框架对应的Controller
     chameleon_app.controller('FrameworksCtrl', function() {});
 
-    chameleon_app.controller('FrameworkCtrl',function ($scope, $http) {
-        $http({
-            method: 'GET',
-            url: 'http://172.20.110.53:6060/master/frameworks'
-        }).then(function successCallback(response) {
-            $scope.framework = response.data.framework_content;
-            // $scope.hostname = response.data.hostname;
-            // console.log(response.data.hostname);
-            // $scope.user = response.data.user;
-            // // console.log(response.data.quantity);
-            // $scope.name = response.data.name;
-            // $scope.webui_url = response.data.webui_url;
-        }, function errorCallback(response) {
-            // 请求失败执行代码
-        });
+    chameleon_app.controller('FrameworkCtrl',function ($scope, $http, $timeout) {
 
-        $http({
-            method: 'GET',
-            url: 'http://172.20.110.53:6060/master/frameworksID'
-        }).then(function successCallback(response) {
-            $scope.frameworksID = response.data.value;
-            console.log(response.data.value);
-        }, function errorCallback(response) {
-            // 请求失败执行代码
-        });
+        var pollState = function() {
+            $scope.delay = 1000;
+            $http({
+                method: 'GET',
+                url: 'http://172.20.110.53:6060/master/frameworks'
+            }).then(function successCallback(response) {
+                $scope.framework = response.data.content;
+                $scope.quantities = response.data.quantity;
+            }, function errorCallback(response) {
+            });
+            $timeout(pollState, $scope.delay);
+        };
+        pollState();
     });
 
 
