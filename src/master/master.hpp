@@ -268,6 +268,9 @@ namespace master {
 
         void deactivate(Framework* framework, bool rescind);
 
+        void get_select_master(const UPID& from, const string& message);
+        void get_slave_infos(const UPID& from, const string& message);
+
 
     private:
 

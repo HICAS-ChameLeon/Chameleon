@@ -108,6 +108,8 @@ namespace chameleon {
 
         install<ReregisterMasterMessage>(&Slave::reregister_to_master);
 
+//        install<MasterRegisteredMessage>(&Slave::received_new_master);
+
 
         HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
         DLOG(INFO) << *msp_masterUPID;
@@ -545,8 +547,12 @@ namespace chameleon {
             msp_masterUPID.reset(new UPID(m_master));
             LOG(INFO)<<" prepare to  a  heartbeat to the new master "<<m_master<<" ";
             send_heartbeat_to_master();
-        }
+         }
     }
+
+//    void Slave::received_new_master(const UPID& from, const MasterRegisteredMessage& message) {
+//        LOG(INFO) << "MAKUN " << self().address.ip << " received new master ip from " << from;
+//    }
 
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)
     {

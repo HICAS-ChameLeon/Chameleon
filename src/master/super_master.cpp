@@ -7,6 +7,7 @@
 
 #include <super_master_related.pb.h>
 #include "super_master.hpp"
+#include "master.hpp"
 
 namespace chameleon {
     void SuperMaster::initialize() {
@@ -16,6 +17,10 @@ namespace chameleon {
 
         install<MasterRegisteredMessage>(&SuperMaster::registered_master);
         install<OwnedSlavesMessage>(&SuperMaster::terminating_master);
+        //kill_master related
+        install("KILL",&SuperMaster::owned_masters_message);
+        //kill_master end
+        install("MAKUN2",&SuperMaster::recevied_slave_infos);
 
         // change from one level to two levels
         cluster_levels = 2;
@@ -31,7 +36,7 @@ namespace chameleon {
         UPID t_master(m_first_to_second_master);
         send(t_master, *super_master_control_message);
         LOG(INFO) << " sends a super_master_constrol_message to a master: " << m_first_to_second_master;
-        delete super_master_control_message;
+//        delete super_master_control_message;
 
 
 
@@ -96,6 +101,21 @@ namespace chameleon {
                 });
 
 
+        route(  //change from two level to one levels
+                "/kill_master",
+                "kill the super_master of two levels",
+                [this](Request request){
+                    JSON::Object result = JSON::Object();
+                    LOG(INFO) << "MAKUN KILL MASTER";
+                    result.values["kill"] = "success";
+                    OK ok_response(stringify(result));
+//                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    select_master();
+
+                    return ok_response;
+                });
+
+
     }
 
     void SuperMaster::registered_master(const UPID &from, const MasterRegisteredMessage &master_registered_message) {
@@ -148,15 +168,16 @@ namespace chameleon {
 
     void SuperMaster::terminating_master(const UPID &from, const OwnedSlavesMessage &message) {
         LOG(INFO) << " get an OwnedSlavesMessage from " << from;
-        LOG(INFO) << message.slave_infos().size();
+        LOG(INFO) << "MAKUN slaveInfo size: " << message.slave_infos().size();
 
         std::copy(message.slave_infos().begin(), message.slave_infos().end(), std::back_inserter(m_admin_slaves));
-        LOG(INFO) << m_admin_slaves.size();
+        LOG(INFO) << "MAKUN admin slave size: " << m_admin_slaves.size();
         for (SlaveInfo &slaveInfo: m_admin_slaves) {
-            LOG(INFO) << slaveInfo.hardware_resources().cpu_collection().cpu_infos_size();
+            LOG(INFO) << "MAKUN slaveInfo has " << slaveInfo.hardware_resources().cpu_collection().cpu_infos_size() << "CPU";
         }
         TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
         terminating_master->set_master_id(stringify(from.address.ip));
+        LOG(INFO) << "MAKUN: " << from;
         send(from, *terminating_master);
         delete terminating_master;
         LOG(INFO) << " send a TerminatingMasterMessage to master " << from
@@ -219,8 +240,10 @@ namespace chameleon {
         for(auto iter = m_classification_masters.begin();iter!=m_classification_masters.end();iter++){
             vector<SlavesInfoControlledByMaster> slaves_of_master = m_classification_slaves[*iter];
             std::cout<<slaves_of_master.size()<<std::endl;
+//            LOG(INFO) << slaves_of_master.size();
             for(SlavesInfoControlledByMaster s:slaves_of_master){
                 std::cout<<s.ip()<<std::endl;
+//                LOG(INFO) << s.ip();
             }
         }
     }
@@ -284,6 +307,56 @@ namespace chameleon {
             LOG(INFO) << " sends a super_master_control_message to a master: " << master_upid;
             delete super_master_control_message;
         }
+    }
+
+    //kill_master related
+    void SuperMaster::owned_masters_message(const UPID& kill_master, const string& name){
+        LOG(INFO) << "MAKUN RECIEVED KILL MESSAGE";
+        //OwnedSlavesMessage *owned_slaves = new OwnedSlavesMessage();
+        m_owned_slaves_message = new OwnedSlavesMessage();
+
+        SlaveInfo *t_slave = m_owned_slaves_message->add_slave_infos();
+        m_owned_slaves_message->set_quantity(m_owned_slaves_message->slave_infos_size());
+        send(kill_master, *m_owned_slaves_message);
+        //delete m_owned_slaves_message;
+        LOG(INFO) << " send owned slaves of " << self() << " to kill_master " << kill_master;
+    }
+    //kill_master end
+
+    void SuperMaster::select_master(){
+        string master_ip;
+        int num_slaves = 0;
+        for(auto iter = m_classification_masters.begin();iter!=m_classification_masters.end();iter++){
+            vector<SlavesInfoControlledByMaster> slaves_of_master = m_classification_slaves[*iter];
+            if(num_slaves<slaves_of_master.size()) {
+                num_slaves = slaves_of_master.size();
+                master_ip = *iter;
+            }
+        }
+        LOG(INFO) << "MAKUN select master ip: " << master_ip;
+        send_terminating_master(master_ip);
+    }
+    void SuperMaster::send_terminating_master(string master_ip) {
+        //master_ip = "master@"+master_ip+":6060";
+//        UPID master_upid(master_ip);
+        TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
+        terminating_master->set_master_id(master_ip);
+        for (auto iter = m_classification_masters.begin(); iter != m_classification_masters.end(); iter++) {
+            if (*iter != master_ip) {
+                *iter = "master@"+*iter+":6060";
+                send(*iter, *terminating_master);
+            } else {
+                UPID master_upid("master@"+master_ip+":6060");
+                send(master_upid,"MAKUN");
+            }
+        }
+        LOG(INFO) << self() << " is terminating due to change levels to one";
+        delete(terminating_master);
+    }
+    void SuperMaster::recevied_slave_infos(const UPID& from, const string& message){
+        LOG(INFO) << "MAKUN received message from new master";
+        terminate(self());
+//        process::wait(self());
     }
 
 

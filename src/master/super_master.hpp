@@ -41,6 +41,7 @@
 
 // chameleon headers
 #include <configuration_glog.hpp>
+#include "master.hpp"
 
 using std::string;
 using std::set;
@@ -56,6 +57,9 @@ using process::Future;
 using process::Promise;
 using process::Subprocess;
 using process::subprocess;
+using process::http::Request;
+using process::http::OK;
+using process::http::Response;
 
 using namespace process::http;
 
@@ -112,11 +116,22 @@ namespace chameleon {
         // key: master:ip , value: vector<SlavesInfoControlledByMaster>
         unordered_map<string,vector<SlavesInfoControlledByMaster>> m_classification_slaves;
         vector<string> m_classification_masters;
+        //kill_master related
+        OwnedSlavesMessage *m_owned_slaves_message;
+        //kill_master end
         void classify_masters();
 
         void create_masters();
         void send_super_master_control_message();
 
+        //kill_master related
+        void owned_masters_message(const UPID& from, const string& name);
+        void kill_master_message(const UPID &from, const OwnedSlavesMessage &message);
+        //kill_master end
+
+        void select_master();
+        void send_terminating_master(string master_ip);
+        void recevied_slave_infos(const UPID& from, const string& message);
     };
 
 
