@@ -53,6 +53,7 @@
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
 #include <chameleon_os.hpp>
+#include <runtime_resources_usage.hpp>
 #include "scheduler.hpp"
 
 using std::string;
@@ -79,51 +80,65 @@ using process::http::InternalServerError;
 namespace master {
 
     class Framework;
+
     class Master;
 
     class Slave {
     public:
+//        Slave(Master *const _master,
+//              const RuntimeResourcesMessage &_info,
+//              const string _id,
+//              const string _hostname,
+//              const process::UPID &_pid) :
+//                master(_master),
+//                runtimeInfo(_info),
+//                id(_id),
+//                hostname(_hostname),
+//                pid(_pid) {
+//        };
+
+
         Slave(Master *const _master,
-              const mesos::SlaveInfo &_info,
+              const HardwareResourcesMessage &_info,
+              const string _uid,
+              const string _hostname,
               const process::UPID &_pid) :
                 master(_master),
-                info(_info),
-                id(_info.id()),
+                hardwareInfo(_info),
+                uid(_uid),
+                hostname(_hostname),
                 pid(_pid) {
         };
 
         ~Slave();
 
         Master *const master;
-        const mesos::SlaveID id;
-        const mesos::SlaveInfo info;
+
+        const RuntimeResourcesMessage runtimeInfo;
+        const HardwareResourcesMessage hardwareInfo;
+
+        const string uid;
         process::UPID pid;
 
+        const string hostname;
+
+        hashmap<string, RuntimeResourcesMessage> usage;
+
     private:
+        Slave(const Slave &);
 
-        //Constructor cannot be redeclared
-//        Slave(Master *const _master,
-//              const mesos::SlaveInfo &_info)
-//                : master(_master),
-//                  info(_info),
-//                  id(info.id()){}
-
-        Slave(const Slave&);
-
-        Slave &operator=(const Slave&);
-
+        Slave &operator=(const Slave &);
     };
-
 
     class Master : public ProtobufProcess<Master> {
 
     public:
         friend class Framework;
+
         friend class Slave;
 
         explicit Master() : ProcessBase("master") {
-            msp_spark_slave = make_shared<UPID>(UPID(test_slave_UPID));
-            msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
+
             m_state = INITIALIZING;
 
             m_masterInfo.set_id(UUID::random().toString());
@@ -164,59 +179,60 @@ namespace master {
          * @param slave
          * @param runtime_resouces_message represents the runtime resource usage statistics for the slave
          */
-        void received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message);
+        void received_heartbeat(const UPID &from, const RuntimeResourcesMessage &runtime_resouces_message);
 
         /**
          * make random ID-weiguow-2019/2/24
          * */
-        mesos::SlaveID newSlaveId();
         mesos::FrameworkID newFrameworkId();
         mesos::OfferID newOfferId();
+        const string newSlaveId(const string uid);
 
-        Framework *getFramework(const mesos::FrameworkID &frameworkId);
+        hashmap<string, mesos::Offer *> offers;
 
-        hashmap<string, mesos::Offer*> offers;
-
-        /**
-         * save slaveinfo-weiguow-2019-2-24*/
+        /**save slaveinfo-weiguow-2019-2-24*/
         struct Slaves {
 
             hashset<process::UPID> registering;
 
             struct {
-                Slave* get(const mesos::SlaveID &slaveId) const {
-                    return ids.get(slaveId.value()).getOrElse(nullptr);
+                bool contains(const string uid) const {
+                    return uids.contains(uid);
                 }
 
-                Slave* get(const process::UPID &pid) const {
+                bool contains(const process::UPID &pid) const {
+                    return pids.contains(pid);
+                }
+
+                Slave *get(const string uid) const {
+                    return uids.get(uid).getOrElse(nullptr);
+                }
+
+                Slave *get(const process::UPID &pid) const {
                     return pids.get(pid).getOrElse(nullptr);
                 }
 
-                void put(Slave* slave)
-                {
+                void put(Slave *slave) {
                     CHECK_NOTNULL(slave);
-
-                    ids[slave->id.value()] = slave;
+                    uids[slave->uid] = slave;
                     pids[slave->pid] = slave;
                 }
 
+                size_t size() const { return uids.size(); }
 
-                size_t size() const { return ids.size(); }
+                typedef hashmap<string, Slave *>::iterator iterator;
+                typedef hashmap<string, Slave *>::const_iterator const_iterator;
 
-                typedef hashmap<string, Slave*>::iterator iterator;
-                typedef hashmap<string, Slave*>::const_iterator const_iterator;
+                iterator begin() { return uids.begin(); }
+                iterator end() { return uids.end(); }
 
-                iterator begin() { return ids.begin(); }
-                iterator end()   { return ids.end();   }
-
-                const_iterator begin() const { return ids.begin(); }
-                const_iterator end()   const { return ids.end();   }
+                const_iterator begin() const { return uids.begin(); }
+                const_iterator end() const { return uids.end(); }
 
             public:
-                hashmap<string, Slave*> ids;
-                hashmap<process::UPID, Slave*> pids;
+                hashmap<string, Slave *> uids;
+                hashmap<process::UPID, Slave *> pids;
             } registered;
-
 
         } slaves;
 
@@ -225,9 +241,9 @@ namespace master {
          * */
         struct Frameworks {
 
-            hashmap<string, Framework*> registered;
+            hashmap<string, Framework *> registered;
 
-//            BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completed;
+//            BoundedHashMap<string, Framework *> completed;
 
         } frameworks;
 
@@ -241,13 +257,13 @@ namespace master {
                 const process::UPID &from,
                 const mesos::scheduler::Call::Subscribe &subscribe);
 
-        void teardown(Framework* framework);
+        void teardown(Framework *framework);
 
         void accept(Framework *framework, mesos::scheduler::Call::Accept accept);
 
-        void decline(Framework* framework,const mesos::scheduler::Call::Decline& decline);
+        void decline(Framework *framework, const mesos::scheduler::Call::Decline &decline);
 
-        void shutdown(Framework* framework,const mesos::scheduler::Call::Shutdown& shutdown);
+        void shutdown(Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown);
 
         void statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid);
 
@@ -260,12 +276,15 @@ namespace master {
 
         void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
 
+        void addSlave(Slave *slave);
+
+        Slave* getSlave(const string uid);
+
+        Framework *getFramework(const mesos::FrameworkID &frameworkId);
+
         void addFramework(Framework *framework);
 
-        void removeFramework(Framework* framework);
-
-        void deactivate(Framework* framework, bool rescind);
-
+        void removeFramework(Framework *framework);
 
     private:
 
@@ -281,16 +300,11 @@ namespace master {
         unordered_map<UPID, ParticipantInfo> m_participants;
         unordered_map<string, JSON::Object> m_hardware_resources;
         unordered_map<string, HardwareResourcesMessage> m_proto_hardware_resources;
-        set<string> m_alive_slaves;
-
         unordered_map<string, JSON::Object> m_runtime_resources;
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
-//        unordered_map<string,HardwareResource> m_topology_resources;
 
-        const string test_slave_UPID = "slave@172.20.110.69:6061";
-        const string test_master_UPID = "slave@172.20.110.228:6061";
-        shared_ptr<UPID> msp_spark_slave;
-        shared_ptr<UPID> msp_spark_master;
+        set<string> m_alive_slaves;
+//        unordered_map<string,HardwareResource> m_topology_resources;
 
         string m_slavePID;
 
@@ -316,7 +330,7 @@ namespace master {
          */
         void received_reply_shutdown_message(const string &ip, const bool &is_shutdown);
 
-        mesos::Offer* create_a_offer(const mesos::FrameworkID& frameworkId);
+        mesos::Offer *create_a_offer(const mesos::FrameworkID &frameworkId);
 
         // super_master related
         void
@@ -341,13 +355,13 @@ namespace master {
                     INACTIVE,
 
             //Framework connected, has offer
-                    ACTIVE
+                    ACTIVE,
         };
 
         Framework(Master *const master,
                   const mesos::FrameworkInfo &info,
                   const process::UPID &_pid,
-                  const process::Time& time = process::Clock::now()
+                  const process::Time &time = process::Clock::now()
         ) : Framework(master, info, ACTIVE, time) {
             pid = _pid;
         }
@@ -384,11 +398,11 @@ namespace master {
         Framework(Master *const _master,
                   const mesos::FrameworkInfo &_info,
                   State state,
-                  const process::Time& time
+                  const process::Time &time
         ) : master(_master),
             info(_info),
             state(state),
-            registeredTime(time){}
+            registeredTime(time) {}
 
         Framework(const Framework &);
 
@@ -397,8 +411,8 @@ namespace master {
     };
 
     inline std::ostream &operator<<(std::ostream &stream, const Slave &slave) {
-        return stream << slave.id.value() << " at " << slave.pid
-                      << " (" << slave.info.hostname() << ")";
+        return stream << slave.uid << " at " << slave.pid
+                      << " (" << slave.hostname << ")";
     }
 
     inline std::ostream &operator<<(std::ostream &stream, const Framework &framework) {

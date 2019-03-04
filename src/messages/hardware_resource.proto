@@ -3,6 +3,7 @@ message HardwareResourcesMessage
 {
     required string slave_id =1;
     required string slave_uuid=8;
+    required string slave_hostname = 9;
     required CPUCollection cpu_collection = 2;
     required MemoryCollection mem_collection = 3;
     required GPUCollection    gpu_collection=4;

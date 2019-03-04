@@ -26,7 +26,7 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
 
 static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 
-namespace master{
+namespace master {
 
     void Master::initialize() {
 
@@ -36,8 +36,8 @@ namespace master{
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
         nextFrameworkId = 0;
-        nextSlaveId = 0;
         nextOfferId = 0;
+        nextSlaveId = 0;
 
         install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
 
@@ -164,7 +164,7 @@ namespace master{
       * Function model  :  spark run on chameleon
       * Author          :  weiguow
       * Date            :  2018-12-27
-      * Funtion name    :  receive
+      * Function name    :  receive
       * @param          : UPID& from ,Call& call
       * */
     void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
@@ -234,7 +234,6 @@ namespace master{
     void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
 
         mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
-
         Framework *framework = getFramework(frameworkInfo.id());
 
         LOG(INFO) << "Received  SUBSCRIBE call for framework "
@@ -277,10 +276,11 @@ namespace master{
         }
     }
 
-    mesos::Offer* Master::create_a_offer(const mesos::FrameworkID& frameworkId) {
+    mesos::Offer *Master::create_a_offer(const mesos::FrameworkID &frameworkId) {
         mesos::Offer *offer = new mesos::Offer();
 
         Framework *framework = getFramework(frameworkId);
+
         // cpus
         mesos::Resource *cpu_resource = new mesos::Resource();
         cpu_resource->set_name("cpus");
@@ -334,10 +334,10 @@ namespace master{
 
         Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
 
+
         mesos::internal::ResourceOffersMessage message;
 
         mesos::Offer *offer = new mesos::Offer();
-
 
         // cpus
         mesos::Resource *cpu_resource = new mesos::Resource();
@@ -371,7 +371,7 @@ namespace master{
         offer->mutable_framework_id()->MergeFrom(framework->id());
 
         //这个slaveID决定了实现master选取分布式集群中节点的基础
-        mesos::SlaveID* slaveID = new mesos::SlaveID();
+        mesos::SlaveID *slaveID = new mesos::SlaveID();
 //        offer->mutable_slave_id()->MergeFrom(newSlaveId());
         slaveID->set_value("44444444");
         offer->mutable_slave_id()->MergeFrom(*slaveID);
@@ -388,11 +388,10 @@ namespace master{
 
 
         LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
-                  << framework->pid.get();
+                  << *framework;
 
         framework->send(message);
 
-        return;
     }
 
     /**
@@ -583,11 +582,50 @@ namespace master{
     }
 
     /**
-     * Function     : addFramework
-     * Author       : weiguow
-     * Date         : 2019-2-22
-     * Description  : Save Frameworkinfo to master
-     * */
+    * create frameworkID,masterID-weiguow-2019/2/24
+    * */
+    mesos::FrameworkID Master::newFrameworkId() {
+        std::ostringstream out;
+        out << m_masterInfo.id() << "-" << std::setw(4)
+            << std::setfill('0') << nextFrameworkId++;
+        mesos::FrameworkID frameworkId;
+        frameworkId.set_value(out.str());
+        return frameworkId;
+    }
+
+    mesos::OfferID Master::newOfferId() {
+        mesos::OfferID offerId;
+        offerId.set_value(m_masterInfo.id() + "-O" + stringify(nextOfferId++));
+        return offerId;
+    }
+
+    const string Master::newSlaveId(const string uid) {
+        std::ostringstream out;
+        out << uid << "-S" << nextSlaveId++;
+        return out.str();
+    }
+
+    void Master::addSlave(master::Slave *slave) {
+        CHECK_NOTNULL(slave);
+        CHECK(!slaves.registered.contains(slave->uid));
+        slaves.registered.put(slave);
+        link(slave->pid);
+    }
+
+    Slave* Master::getSlave(const string uid) {
+        return slaves.registered.contains(uid)
+               ? slaves.registered.get(uid)
+               : nullptr;
+    }
+
+    /** use frameworkId to get Framework-weiguow-2019/2/24 */
+    Framework *Master::getFramework(const mesos::FrameworkID &frameworkId) {
+        return frameworks.registered.contains(frameworkId.value())
+               ? frameworks.registered.at(frameworkId.value())
+               : nullptr;
+    }
+
+    /**Save Frameworkinfo to master-by weiguow-2019/2/26 */
     void Master::addFramework(Framework *framework) {
 
         frameworks.registered[framework->id().value()] = framework;
@@ -599,88 +637,28 @@ namespace master{
         }
     }
 
-    /**
-     * use frameworkId to get Framework-weiguow-2019/2/24
-     * */
-    Framework *Master::getFramework(const mesos::FrameworkID &frameworkId) {
-        return frameworks.registered.contains(frameworkId.value())
-               ? frameworks.registered.at(frameworkId.value())
-               : nullptr;
-    }
-
-    /**
-     * remove framework-weiguow-2019/2/26*
-     * */
+    /** remove framework-weiguow-2019/2/26 ** */
     void Master::removeFramework(Framework *framework) {
         CHECK_NOTNULL(framework);
 
         LOG(INFO) << "Removing framework " << *framework;
 
         if (framework->active()) {
-            deactivate(framework, false);
+            CHECK(framework->active());
 
-            //send ShutdownFrameworkMessage to slave
-            mesos::internal::ShutdownFrameworkMessage message;
-            message.mutable_framework_id()->MergeFrom(framework->id());
+            LOG(INFO) << "Deactive framework " << *framework;
 
-            string slave_pid = "slave@172.20.110.228:6061";
-            send(slave_pid, message);
-
-            //we need to do this after - by weiguow
-            // The framework's offers should have been removed when the
-            // framework was deactivated.
-//        CHECK(framework->offers.empty());
-//        CHECK(framework->inverseOffers.empty());
-
-            framework->unregisteredTime = process::Clock::now();
-            frameworks.registered.erase(framework->id().value());
+            framework->state = Framework::State::INACTIVE;
         }
 
-//         frameworks.completed.set(framework->id(), process::Owned<Framework>(framework));
+        foreachvalue(Slave *slave, slaves.registered) {
+            mesos::internal::ShutdownFrameworkMessage message;
+            message.mutable_framework_id()->MergeFrom(framework->id());
+            send(slave->pid, message);
+        }
+
+//        frameworks.completed.set(framework->id().value(), framework);
     }
-
-
-    /**
-     * create slaveID,frameworkID,masterID-weiguow-2019/2/24
-     * */
-    mesos::SlaveID Master::newSlaveId() {
-        mesos::SlaveID slaveId;
-        slaveId.set_value(m_masterInfo.id() + "-S" + stringify(nextSlaveId++));
-        return slaveId;
-    }
-
-    mesos::FrameworkID Master::newFrameworkId() {
-        std::ostringstream out;
-        out << m_masterInfo.id() << "-" << std::setw(4)
-            << std::setfill('0') << nextFrameworkId++;
-
-        mesos::FrameworkID frameworkId;
-        frameworkId.set_value(out.str());
-
-        return frameworkId;
-    }
-
-    mesos::OfferID Master::newOfferId() {
-        mesos::OfferID offerId;
-        offerId.set_value(m_masterInfo.id() + "-O" + stringify(nextOfferId++));
-        return offerId;
-    }
-
-    /**
-     * change framework status from active to deactive by weiguow 2019-2-26
-     * */
-    void Master::deactivate(Framework *framework, bool rescind) {
-        CHECK_NOTNULL(framework);
-        CHECK(framework->active());
-
-        LOG(INFO) << "Deactive framework " << *framework;
-
-        framework->state = Framework::State::INACTIVE;
-
-        //Below we should allocat offer resource, but now we don't have
-        //this function model-by weiguow
-    }
-
 
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;
@@ -690,20 +668,50 @@ namespace master{
                                            const HardwareResourcesMessage &hardware_resources_message) {
         DLOG(INFO) << "Enter update hardware resources";
 
-        auto slaveid = hardware_resources_message.slave_id();
+        /**
+         * register slave on master
+         * slaveuid : uuid+S+number
+         * slavepid : from
+         * author   : weiguow*/
+        slaves.registering.insert(from);    //Save SlaveInfo
+        LOG(INFO) << "Registering slave " << from << " on " << self();
 
-        slaves.registering.insert(from);
+        string slaveuid = newSlaveId(hardware_resources_message.slave_uuid());
 
-        if (m_hardware_resources.find(slaveid) == m_hardware_resources.end()) {
+        Slave *slave = new Slave(
+                this,
+                hardware_resources_message,
+                slaveuid,
+                hardware_resources_message.slave_hostname(),
+                from);
+
+        addSlave(slave);
+
+        LOG(INFO) << "Registered slave " << *slave << "on " << self() << " successful";
+
+        auto slave_id = hardware_resources_message.slave_id();
+        if (m_hardware_resources.find(slave_id) == m_hardware_resources.end()) {
             JSON::Object object = JSON::protobuf(hardware_resources_message);
-            m_hardware_resources.insert({slaveid, object});
-            m_proto_hardware_resources.insert({slaveid, hardware_resources_message});
-            m_alive_slaves.insert(slaveid);
+            m_hardware_resources.insert({slave_id, object});
+            m_proto_hardware_resources.insert({slave_id, hardware_resources_message});
+            m_alive_slaves.insert(slave_id);
         }
     }
 
-    void Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
-        LOG(INFO) << "received a heartbeat message from " << slave;
+    void Master::received_heartbeat(const UPID &from, const RuntimeResourcesMessage &runtime_resouces_message) {
+        LOG(INFO) << "received a heartbeat message from " << from;
+
+        /** save slaveInfo and put runtime resource into slave.usage*/
+        foreachvalue(Slave* slave, slaves.registered){
+            if(! slaves.registered.contains(slave->uid)){
+                LOG(INFO) << "This slave is not registered";
+                return;
+            }
+            Slave* slave_ = getSlave(slave->uid);
+            slave_->usage.put(slave->uid, slave->runtimeInfo);
+            LOG(INFO) << "slave's runtime resource is: " << slave->runtimeInfo;
+        }
+
         auto slave_id = runtime_resouces_message.slave_id();
         m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
@@ -812,12 +820,9 @@ namespace master{
                 delete owned_slaves;
                 LOG(INFO) << " send owned slaves of " << self() << " to super_master " << super_master;
             }
-
-
         } else {
             LOG(INFO) << self() << "cannot registered to " << super_master
                       << ". Maybe it has registered to other supermaster before";
-
         }
     }
 
@@ -828,11 +833,6 @@ namespace master{
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
             terminate(self());
         }
-    }
-
-    // end of super_mater related
-    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
-        return stream << TaskState_Name(state);
     }
 }
 

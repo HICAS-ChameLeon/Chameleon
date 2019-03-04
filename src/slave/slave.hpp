@@ -176,25 +176,18 @@ namespace chameleon {
 
         shared_ptr<UPID> msp_masterUPID;
         Duration m_interval;
+
         string m_uuid;
         string m_master;  //master@127.0.0.1：1080
 
-        hashmap<string, Framework *> frameworks;
+        hashmap<string, Framework*> frameworks;
 
         mesos::SlaveInfo m_slaveInfo;
         mesos::ExecutorInfo m_executorInfo;
-        mesos::ExecutorID m_executorID;
 
-        mesos::TaskInfo m_task;
+        queue<mesos::TaskInfo> m_tasks;
 
         string m_work_dir;
-
-//        BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completedFrameworks;
-
-        // used a queue to keep track of the tasks awaiting to run
-//        mesos::TaskInfo m_task;
-        queue<mesos::TaskInfo> m_tasks;
-        mesos::SlaveID m_slaveID;
 
         void heartbeat();
 

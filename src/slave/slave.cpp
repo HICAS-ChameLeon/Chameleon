@@ -64,9 +64,8 @@ namespace chameleon {
         msp_masterUPID = make_shared<UPID>(UPID(m_master));
 
         m_slaveInfo.set_hostname(self().address.hostname().get());
-        m_slaveInfo.mutable_id()->set_value("44444444");
-        m_slaveID.set_value("44444444");
         m_slaveInfo.set_port(self().address.port);
+        m_slaveInfo.mutable_id()->set_value(m_uuid);    
 
         install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
         install<ShutdownMessage>(&Slave::shutdown);
@@ -111,11 +110,14 @@ namespace chameleon {
 
         HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
         DLOG(INFO) << *msp_masterUPID;
+
         string slave_id = stringify(self().address.ip);
         hr_message->set_slave_id(slave_id);
 
         m_uuid = UUID::random().toString();
         hr_message->set_slave_uuid(m_uuid);
+        hr_message->set_slave_hostname(self().address.hostname().get());
+
         DLOG(INFO) << "Before send message to master";
 
         send(*msp_masterUPID, *hr_message);
@@ -192,12 +194,15 @@ namespace chameleon {
         Framework* framework = getFramework(frameworkId);
 
         mesos::internal::ExecutorRegisteredMessage message;
+
         message.mutable_executor_info()->mutable_framework_id()->MergeFrom(framework->id());
-        message.mutable_executor_info()->MergeFrom(m_executorInfo);
         message.mutable_framework_id()->MergeFrom(framework->id());
         message.mutable_framework_info()->MergeFrom(framework->info);
+
+        message.mutable_executor_info()->MergeFrom(m_executorInfo);
         message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
         message.mutable_slave_info()->MergeFrom(m_slaveInfo);
+
         send(from, message);
 
         mesos::internal::RunTaskMessage run_task_message;
@@ -483,7 +488,6 @@ namespace chameleon {
     void Slave::heartbeat() {
         send_heartbeat_to_master();
         process::delay(m_interval, self(), &Self::heartbeat);
-
     }
 
     void Slave::shutdown(const UPID &master, const ShutdownMessage &shutdown_message) {
@@ -503,6 +507,7 @@ namespace chameleon {
 
         RuntimeResourcesMessage *rr_message = new RuntimeResourcesMessage();
         rr_message->set_slave_uuid(m_uuid);
+
         RuntimeResourceUsage::CpuOccupy f_cpu, s_cpu;
 
         // get cpu usage
@@ -572,7 +577,6 @@ int main(int argc, char *argv[]) {
     google::SetVersionString("Chameleon v1.0");
     google::ParseCommandLineFlags(&argc, &argv, true);
     google::CommandLineFlagInfo info;
-
 
     if (master_Str && port_Int ) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
