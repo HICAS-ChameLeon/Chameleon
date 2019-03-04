@@ -450,7 +450,7 @@
             my_master.label = "master";
             my_master.shape = 'image';
             my_master.image = DIR + 'Hardware-WQN-main.png';
-            my_master.title = '主节点';
+            my_master.title = "主节点";    //unchangeable
 
             //my_slaves[0] = my_master;
             var index_slave = 1;
@@ -655,7 +655,7 @@
                         my_master.label = "master";
                         my_master.shape = 'image';
                         my_master.image = DIR + 'Hardware-WQN-main.png';
-                        my_master.title = '主节点';
+                        my_master.title = $scope.runtime[i].slave_id;
                         //console.log('9'+my_master.id);
                         //vertexes_super[cur_masterindex] = my_master;
                         var temp_superedge = {};       //添加一条super_master到my_master的边
@@ -841,6 +841,7 @@
                 url: 'http://172.20.110.53:6060/master/stop-cluster'
             }).then(function successCallback(response) {
                 console.log(response);
+                $modalInstance.dismiss('cancel');
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
@@ -878,6 +879,7 @@
                 url: 'http://172.20.110.53:6060/master/start_supermaster'
             }).then(function successCallback(response) {
                 console.log(response);
+                $modalInstance.dismiss('cancel');
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
@@ -914,6 +916,7 @@
                 url: 'http://172.20.110.53:7000/super_master/kill_master'
             }).then(function successCallback(response) {
                 console.log(response);
+                $modalInstance.dismiss('cancel');
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });

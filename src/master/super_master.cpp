@@ -121,7 +121,7 @@ namespace chameleon {
                     LOG(INFO) << "MAKUN KILL MASTER";
                     result.values["kill"] = "success";
                     OK ok_response(stringify(result));
-//                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     select_master();
 
                     return ok_response;
