@@ -88,6 +88,10 @@ namespace master {
          * */
         install<mesos::scheduler::Call>(&Master::receive);
 
+        //change two levels to one related
+        install("MAKUN",&Master::get_select_master);
+//        install<TerminatingMasterMessage>
+
         // http://172.20.110.228:6060/master/hardware-resources
         route(
                 "/hardware-resources",
@@ -209,7 +213,7 @@ namespace master {
                       * Funtion name    :  Try
                       * @param          :
                       * */
-                      m_super_master_path.append(" --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
+                      m_super_master_path.append(" --master_path=/home/wqn/Chameleon/build/src/master/master");
                     Try<Subprocess> super_master = subprocess(
                            m_super_master_path,
                             Subprocess::FD(STDIN_FILENO),
@@ -220,7 +224,6 @@ namespace master {
                     response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return response;
                 });
-
 
 
 //     install("stop", &MyProcess::stop);
@@ -764,6 +767,8 @@ namespace master {
         auto slave_id = runtime_resouces_message.slave_id();
         m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
+        //add insert slave_id to send new master message to slave
+        m_alive_slaves.insert(slave_id);
     }
 
     Try<string> Master::find_min_cpu_and_memory_rates() {
@@ -888,9 +893,33 @@ namespace master {
         if (message.master_id() == stringify(self().address.ip)) {
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
             terminate(self());
+        } else{
+            ReregisterMasterMessage *reregister_master_message = new ReregisterMasterMessage();
+            reregister_master_message->set_master_ip(message.master_id());
+            reregister_master_message->set_port("6060");
+//            MasterRegisteredMessage *master_registered_message = new MasterRegisteredMessage();
+//            master_registered_message->set_master_id(stringify(message.master_id()));
+//            master_registered_message->set_master_uuid(m_uuid);
+//            master_registered_message->set_status(MasterRegisteredMessage_Status_FIRST_REGISTERING);
+            for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
+//                LOG(INFO) << *iter;
+                reregister_master_message->set_slave_ip(*iter);
+                UPID slave_id("slave@"+*iter+":6061");
+                send(slave_id,*reregister_master_message);
+                LOG(INFO) << self() << " send new_master_message: " << reregister_master_message->master_ip()
+                << " to salve: " <<slave_id;
+            }
+            delete reregister_master_message;
+            LOG(INFO) << self() << " is terminating due to change levels to one";
+            terminate(self());
+            process::wait(self());
         }
     }
 
+    void Master::get_select_master(const UPID& from, const string& message) {
+        LOG(INFO) << "MAKUN received select_master_message";
+        send(from,"MAKUN2");
+    }
     // end of super_mater related
     std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
         return stream << TaskState_Name(state);

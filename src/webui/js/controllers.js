@@ -10,7 +10,7 @@
             $scope.delay = 2000;
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/runtime-resources'
+                url: 'http://172.20.110.53:6060/master/runtime-resources'
             }).then(function successCallback(response) {
                 $scope.runtime = response.data.content;
                 $scope.quantities = response.data.quantity;
@@ -19,7 +19,7 @@
             });
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/hardware-resources'
+                url: 'http://172.20.110.53:6060/master/hardware-resources'
             }).then(function successCallback(response) {
                 $scope.hardware = response.data.content;
                 $scope.quantities = response.data.quantity;
@@ -37,7 +37,7 @@
         $scope.stop_cluster = function () {
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/stop-cluster'
+                url: 'http://172.20.110.53:6060/master/stop-cluster'
             }).then(function successCallback(response) {
                 console.log(response);
             }, function errorCallback(response) {
@@ -51,7 +51,7 @@
         //
         // $http({
         //     method: 'GET',
-        //     url: 'http://172.20.110.228:6060/master/hardware-resources'
+        //     url: 'http://172.20.110.53:6060/master/hardware-resources'
         // }).then(function successCallback(response) {
         //
         //
@@ -66,7 +66,7 @@
     chameleon_app.controller('RuntimeCtrl', function($scope,$rootScope,$http) {
         // $http({
         //     method: 'GET',
-        //     url: 'http://172.20.110.228:6060/master/runtime-resources'
+        //     url: 'http://172.20.110.53:6060/master/runtime-resources'
         // }).then(function successCallback(response) {
         //     $scope.runtime = response.data.content;
         //     // console.log(response.data.content);
@@ -434,7 +434,7 @@
 
         $http({
             method: 'GET',
-            url: 'http://172.20.110.228:6060/master/runtime-resources'
+            url: 'http://172.20.110.53:6060/master/runtime-resources'
         }).then(function successCallback(response) {
             $scope.runtime = response.data.content;
             // console.log(response.data.content);
@@ -450,7 +450,7 @@
             my_master.label = "master";
             my_master.shape = 'image';
             my_master.image = DIR + 'Hardware-WQN-main.png';
-            my_master.title = '主节点';
+            my_master.title = "主节点";    //unchangeable
 
             //my_slaves[0] = my_master;
             var index_slave = 1;
@@ -612,7 +612,7 @@
     chameleon_app.controller('SuperTopologyCtrl', function($scope, $http){
         $http({
             method: 'GET',
-            url: 'http://172.20.110.228:7000/super_master/super_master'
+            url: 'http://172.20.110.53:7000/super_master/super_master'
         }).then(function successCallback(response) {
             $scope.supermaster = response.data.content;
             // console.log(response.data.content);
@@ -639,7 +639,7 @@
                 my_superedges = [];   //构造一条边
                 $http({
                     method: 'GET',
-                    url: 'http://172.20.110.228:6060/master/runtime-resources'
+                    url: 'http://172.20.110.53:6060/master/runtime-resources'
                 }).then(function successCallback(response) {
                     $scope.runtime = response.data.content;
                     // console.log(response.data.content);
@@ -655,7 +655,7 @@
                         my_master.label = "master";
                         my_master.shape = 'image';
                         my_master.image = DIR + 'Hardware-WQN-main.png';
-                        my_master.title = '主节点';
+                        my_master.title = $scope.runtime[i].slave_id;
                         //console.log('9'+my_master.id);
                         //vertexes_super[cur_masterindex] = my_master;
                         var temp_superedge = {};       //添加一条super_master到my_master的边
@@ -838,9 +838,10 @@
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/stop-cluster'
+                url: 'http://172.20.110.53:6060/master/stop-cluster'
             }).then(function successCallback(response) {
                 console.log(response);
+                $modalInstance.dismiss('cancel');
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
@@ -856,7 +857,7 @@
         var alert_message = "Make sure to start Supermaster?";
         $scope.openModal = function() {
             var modalInstance = $modal.open({
-                templateUrl : 'StartSupermaster.html',
+                templateUrl : 'ControlSupermaster.html',
                 controller : 'StartSupermasterInstanceCtrl',   //shutdown modal对应的Controller
                 resolve : {
                     date : function() {                //date作为shutdown modal的controller传入的参数
@@ -875,9 +876,47 @@
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/start_supermaster'
+                url: 'http://172.20.110.53:6060/master/start_supermaster'
             }).then(function successCallback(response) {
                 console.log(response);
+                $modalInstance.dismiss('cancel');
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+            });
+        };
+        $scope.cancel = function() {
+            $modalInstance.dismiss('cancel');
+        }
+    });
+
+    //关闭supermaster对应的Controller
+    chameleon_app.controller('StopSupermasterCtrl',function ($scope,$modal) {
+        var alert_message = "Make sure to stop Supermaster?";
+        $scope.openModal = function() {
+            var modalInstance = $modal.open({
+                templateUrl : 'ControlSupermaster.html',
+                controller : 'StopSupermasterInstanceCtrl',   //shutdown modal对应的Controller
+                resolve : {
+                    date : function() {                //date作为shutdown modal的controller传入的参数
+                        return alert_message;          //用于传递数据
+                    }
+                }
+            })
+        }
+
+    });
+
+    chameleon_app.controller('StopSupermasterInstanceCtrl', function($scope, $modalInstance,$http, date) {
+        $scope.date= date;
+
+        //在这里处理要进行的操作
+        $scope.ok = function() {
+            $http({
+                method: 'GET',
+                url: 'http://172.20.110.53:7000/super_master/kill_master'
+            }).then(function successCallback(response) {
+                console.log(response);
+                $modalInstance.dismiss('cancel');
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
@@ -896,7 +935,7 @@
             $scope.delay = 1000;
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/frameworks'
+                url: 'http://172.20.110.53:6060/master/frameworks'
             }).then(function successCallback(response) {
                 $scope.framework = response.data.content;
                 $scope.quantities = response.data.quantity;
