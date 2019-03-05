@@ -4,9 +4,15 @@ include_directories(${CMAKE_BINARY_DIR}/src/messages)
 # the global configuration for glog
 include_directories(${CMAKE_SOURCE_DIR}/src/log)
 include_directories(${CMAKE_SOURCE_DIR}/src/common)
+include_directories(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
 
 # libprocess libraries headers directories
 include_directories(${PROCESS_LIB_DIRS})
+
+PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages mesos ${CMAKE_BINARY_DIR}/src/messages mesos)
+PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages hardware_resource ${CMAKE_BINARY_DIR}/src/messages hardware_resource)
+PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages runtime_resource ${CMAKE_BINARY_DIR}/src/messages runtime_resource)
+
 
 # libprocess .so .a libraries directories
 link_directories(${PROCESS_LIB_DIRS})

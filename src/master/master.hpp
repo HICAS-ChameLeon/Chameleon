@@ -25,6 +25,8 @@
 #include <stout/os/pstree.hpp>
 #include <stout/hashmap.hpp>
 #include <stout/uuid.hpp>
+#include <stout/check.hpp>
+#include <stout/boundedhashmap.hpp>
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -34,6 +36,7 @@
 #include <process/process.hpp>
 #include <process/protobuf.hpp>
 #include <process/delay.hpp>
+#include <process/subprocess.hpp>
 
 // protobuf
 #include <participant_info.pb.h>
@@ -44,6 +47,8 @@
 #include <mesos.pb.h>
 #include <scheduler.pb.h>
 #include <messages.pb.h>
+#include <super_master_related.pb.h>
+#include <slave_related.pb.h>
 
 // chameleon headers
 #include <configuration_glog.hpp>
@@ -71,85 +76,69 @@ using namespace process::http;
 using process::http::Request;
 using process::http::OK;
 using process::http::InternalServerError;
+using process::Subprocess;
 
-namespace chameleon {
+namespace master {
 
-//    struct Slave;
-    struct Framework;
-
+    class Framework;
     class Master;
-    /*
-     * Struct : Slave
-     * Author : weiguow
-     * Date   : 2018-12-31
-     * */
-//    struct Slave {
-//        Slave(Master* const master,
-//              const mesos::SlaveInfo &_info,
-//              const process::UPID &_pid);
-//
-//        ~Slave() {}
-//
-//        Master* master;
-//        const mesos::SlaveID id;
-//        const mesos::SlaveInfo info;
-//        process::UPID pid;
-//
-//    private:
-//        Slave(const Slave &);
-//        Slave &operator=(const Slave &);
-//
-//    };
 
-    /*
-     * Struct : Framework
-     * Author : weiguow
-     * Date   : 2018-12-31
-     * */
-//    struct Framework {
-//    public:
-//        enum State {
-//            RECOVERED,
-//            DISCONNECTED,
-//            INACTIVE,
-//            ACTIVE
-//        };
-//
-//        Framework(Master *const master, const mesos::FrameworkInfo &info, const process::UPID &_pid)
-//                : Framework(master, info, ACTIVE) { pid = _pid; }
-//
-//        ~Framework() {}
-//
-//        mesos::FrameworkInfo info;
-//
-//        Master *master;
-//        Option<process::UPID> pid;
-//        State state;
-//
-//        const mesos::FrameworkID id() const { return info.id(); }
-//
-//    private:
-//        Framework(Master *const _master,
-//                  const mesos::FrameworkInfo &_info,
-//                  State state)
+    class Slave {
+    public:
+        Slave(Master *const _master,
+              const mesos::SlaveInfo &_info,
+              const process::UPID &_pid) :
+                master(_master),
+                info(_info),
+                id(_info.id()),
+                pid(_pid) {
+        };
+
+        ~Slave();
+
+        Master *const master;
+        const mesos::SlaveID id;
+        const mesos::SlaveInfo info;
+        process::UPID pid;
+
+    private:
+
+        //Constructor cannot be redeclared
+//        Slave(Master *const _master,
+//              const mesos::SlaveInfo &_info)
 //                : master(_master),
 //                  info(_info),
-//                  state(state) {}
-//
-//        Framework(const Framework &);
-//
-//        Framework &operator=(const Framework &);
-//    };
+//                  id(info.id()){}
+
+        Slave(const Slave&);
+
+        Slave &operator=(const Slave&);
+
+    };
+
 
     class Master : public ProtobufProcess<Master> {
 
     public:
-        friend struct Framework;
-//        friend struct Slave;
+        friend class Framework;
+        friend class Slave;
 
         explicit Master() : ProcessBase("master") {
             msp_spark_slave = make_shared<UPID>(UPID(test_slave_UPID));
             msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
+            m_state = INITIALIZING;
+
+            m_masterInfo.set_id(UUID::random().toString());
+            m_masterInfo.set_ip(self().address.ip.in().get().s_addr);
+            m_masterInfo.set_port(self().address.port);
+            m_masterInfo.set_pid(self());
+
+            string hostname;
+            hostname = stringify(self().address.ip);
+
+            m_masterInfo.mutable_address()->set_ip(stringify(self().address.ip));
+            m_masterInfo.mutable_address()->set_port(self().address.port);
+            m_masterInfo.mutable_address()->set_hostname(hostname);
         }
 
         virtual ~Master() {}
@@ -166,11 +155,11 @@ namespace chameleon {
         void update_hardware_resources(const UPID &from, const HardwareResourcesMessage &hardware_resources_message);
 
         /**
-         * a submitter submits a job to run
-         * @param from
-         * @param job_message
-         */
-        void job_submited(const UPID &from, const JobMessage &job_message);
+           *change framework protobuf to JSON
+           * @param from slave UPID
+           * @param hardware_resources_message
+           */
+        void change_frameworks(const UPID &from, const mesos::FrameworkInfo &frameworkInfo);
 
         /**
          * get a heartbeat message from a slave. The heartbeat message contains the runtime resource usage statistics of the slave.
@@ -180,40 +169,125 @@ namespace chameleon {
         void received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message);
 
         /**
-         * Struct      : Frameworks
-         * Description : set hashmap
-         * Author      : weiguow
-         * Date        : 2019-1-2
+         * make random ID-weiguow-2019/2/24
          * */
-//        struct Frameworks {
-//            ~Frameworks() {}
-//            hashmap<mesos::FrameworkID, Framework*> registered;
-//        } frameworks;
+        mesos::SlaveID newSlaveId();
+        mesos::FrameworkID newFrameworkId();
+        mesos::OfferID newOfferId();
 
-        void Offer(const UPID &from);
+        Framework *getFramework(const mesos::FrameworkID &frameworkId);
 
-        void receive(const process::UPID &from,
-                     const mesos::scheduler::Call &call);
+        hashmap<string, mesos::Offer*> offers;
 
-        void subscribe(const process::UPID &from,
-                       const mesos::scheduler::Call::Subscribe &subscribe);
+        /**
+         * save slaveinfo-weiguow-2019-2-24*/
+        struct Slaves {
 
-        void accept(const UPID &from, mesos::scheduler::Call::Accept accept);
+            hashset<process::UPID> registering;
 
-        void statusUpdate(mesos::internal::StatusUpdate update, const UPID& pid);
+            struct {
+                Slave* get(const mesos::SlaveID &slaveId) const {
+                    return ids.get(slaveId.value()).getOrElse(nullptr);
+                }
+
+                Slave* get(const process::UPID &pid) const {
+                    return pids.get(pid).getOrElse(nullptr);
+                }
+
+                void put(Slave* slave)
+                {
+                    CHECK_NOTNULL(slave);
+
+                    ids[slave->id.value()] = slave;
+                    pids[slave->pid] = slave;
+                }
+
+
+                size_t size() const { return ids.size(); }
+
+                typedef hashmap<string, Slave*>::iterator iterator;
+                typedef hashmap<string, Slave*>::const_iterator const_iterator;
+
+                iterator begin() { return ids.begin(); }
+                iterator end()   { return ids.end();   }
+
+                const_iterator begin() const { return ids.begin(); }
+                const_iterator end()   const { return ids.end();   }
+
+            public:
+                hashmap<string, Slave*> ids;
+                hashmap<process::UPID, Slave*> pids;
+            } registered;
+
+
+        } slaves;
+
+        /**
+         * save Frameworkinfo-weiguow-2019-2-22
+         * */
+        struct Frameworks {
+
+            hashmap<string, Framework*> registered;
+
+//            BoundedHashMap<string, Framework*> completed;
+
+        } frameworks;
+
+        void Offer(const mesos::FrameworkID &frameworkId);
+
+        void receive(
+                const process::UPID &from,
+                const mesos::scheduler::Call &call);
+
+        void subscribe(
+                const process::UPID &from,
+                const mesos::scheduler::Call::Subscribe &subscribe);
+
+        void teardown(Framework* framework);
+
+        void accept(Framework *framework, mesos::scheduler::Call::Accept accept);
+
+        void decline(Framework* framework,const mesos::scheduler::Call::Decline& decline);
+
+        void shutdown(Framework* framework,const mesos::scheduler::Call::Shutdown& shutdown);
+
+        void statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid);
 
         void statusUpdateAcknowledgement(
-                const UPID& from,
-                const mesos::SlaveID& slaveId,
-                const mesos::FrameworkID& frameworkId,
-                const mesos::TaskID& taskId,
-                const string& uuid);
+                const UPID &from,
+                const mesos::SlaveID &slaveId,
+                const mesos::FrameworkID &frameworkId,
+                const mesos::TaskID &taskId,
+                const string &uuid);
 
-        void acknowledge(const mesos::scheduler::Call::Acknowledge& acknowledge);
+        void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
+
+        void addFramework(Framework *framework);
+
+        void removeFramework(Framework* framework);
+
+        void deactivate(Framework* framework, bool rescind);
+
+        void get_select_master(const UPID& from, const string& message);
+        void get_slave_infos(const UPID& from, const string& message);
+        // super_master related
+        void set_super_master_path(const string& path);
+
 
     private:
+
+        string m_uuid;
+
+        // master states.
+        enum {
+            REGISTERING, // is registering from a super_master
+            INITIALIZING,
+            RUNNING
+        } m_state;
+
         unordered_map<UPID, ParticipantInfo> m_participants;
         unordered_map<string, JSON::Object> m_hardware_resources;
+        unordered_map<string, HardwareResourcesMessage> m_proto_hardware_resources;
         set<string> m_alive_slaves;
 
         unordered_map<string, JSON::Object> m_runtime_resources;
@@ -225,15 +299,16 @@ namespace chameleon {
         shared_ptr<UPID> msp_spark_slave;
         shared_ptr<UPID> msp_spark_master;
 
-        mesos::FrameworkInfo  m_frameworkInfo;
-        mesos::FrameworkID m_frameworkID;
-        UPID m_frameworkPID;
         string m_slavePID;
 
-        //void Master::handle_accept_call(mesos::scheduler::Call::Accept accept);
-        //hashmap<mesos::OfferID, mesos::Offer*> offers;
-        //Framework* getFramework(const mesos::FrameworkID& frameworkId) const;
-        //mesos::Offer* getOffer(const mesos::OfferID& offerId) const;
+        int64_t nextFrameworkId;
+        int64_t nextOfferId;
+        int64_t nextSlaveId;
+
+        mesos::MasterInfo m_masterInfo;
+
+        // super_master_related
+        bool is_passive;
 
         /**
          * a simple algorithm to find a slave which has the least usage rate of cpu and memory combination
@@ -248,10 +323,98 @@ namespace chameleon {
          */
         void received_reply_shutdown_message(const string &ip, const bool &is_shutdown);
 
-        void handle_accept_call(mesos::scheduler::Call::Accept accept);
+        mesos::Offer* create_a_offer(const mesos::FrameworkID& frameworkId);
+
+        // super_master related
+        string m_super_master_path;
+        void super_master_control(const UPID &super_master, const SuperMasterControlMessage &super_master_control_message);
+
+        void received_registered_message_from_super_master(const UPID &super_master, const AcceptRegisteredMessage &message);
+        void received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message);
     };
 
-    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state);
+    class Framework {
+    public:
+        enum State {
+            //re-registered
+                    RECOVERED,
+
+            //Framwork not connected
+                    DISCONNECTED,
+
+            //Framework connected, but doesn't have offer
+                    INACTIVE,
+
+            //Framework connected, has offer
+                    ACTIVE
+        };
+
+        Framework(Master *const master,
+                  const mesos::FrameworkInfo &info,
+                  const process::UPID &_pid,
+                  const process::Time& time = process::Clock::now()
+        ) : Framework(master, info, ACTIVE, time) {
+            pid = _pid;
+        }
+
+        ~Framework() {}
+
+        template<typename Message>
+        void send(const Message &message) {
+            if (!connected()) {
+                LOG(WARNING) << "Master attempted to send message to disconnected"
+                             << " framework " << this->state;
+            } else {
+                master->send(pid.get(), message);
+            }
+        }
+
+        bool active() const { return state == ACTIVE; }
+
+        bool connected() const { return state == ACTIVE || state == INACTIVE; }
+
+        bool recovered() const { return state == RECOVERED; }
+
+        const mesos::FrameworkID id() const { return info.id(); }
+
+        Master *const master;
+        mesos::FrameworkInfo info;
+        Option<process::UPID> pid;
+        State state;
+
+        process::Time registeredTime;
+        process::Time unregisteredTime;
+
+    private:
+        Framework(Master *const _master,
+                  const mesos::FrameworkInfo &_info,
+                  State state,
+                  const process::Time& time
+        ) : master(_master),
+            info(_info),
+            state(state),
+            registeredTime(time){}
+
+        Framework(const Framework &);
+
+        Framework &operator=(const Framework &);
+
+    };
+
+    inline std::ostream &operator<<(std::ostream &stream, const Slave &slave) {
+        return stream << slave.id.value() << " at " << slave.pid
+                      << " (" << slave.info.hostname() << ")";
+    }
+
+    inline std::ostream &operator<<(std::ostream &stream, const Framework &framework) {
+        stream << framework.id().value() << " (" << framework.info.name() << ")";
+        if (framework.pid.isSome()) {
+            stream << " at " << framework.pid.get();
+        }
+        return stream;
+    }
+
+    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state);
 
 }
 

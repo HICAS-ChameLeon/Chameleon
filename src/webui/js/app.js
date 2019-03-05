@@ -22,6 +22,25 @@
                     templateUrl: '/Chameleon/src/webui/HTML/network_topology.html',
                     controller: 'TopologyCtrl'
                 })
+
+                // supernetwork_topology.html
+                .when('/topology/super_master', {
+                    templateUrl: '/Chameleon/src/webui/HTML/supernetwork_topology.html',
+                    controller: 'SuperTopologyCtrl'
+                })
+                // frameworks.html
+                .when('/frameworks',{
+                    templateUrl:
+ '/Chameleon/src/webui/HTML/frameworks.html',
+                    controller:'FrameworkCtrl'
+                })
+
+                // framework.html
+                .when('/frameworks/:id.value',{
+            templateUrl:
+                '/Chameleon/src/webui/HTML/framework.html',
+                    controller:'FrameworkCtrl'
+            })
                 // slave.html
                 .when('/slaves/:slave_uuid/ip/:slave_id/cpu_usage/:cpu_used/mem_usage/:mem_used/disk_usage/:disk_used', {
                     templateUrl: '/Chameleon/src/webui/HTML/slave.html',

@@ -8,9 +8,13 @@
 #include <messages.pb.h>
 #include "slave.hpp"
 
-DEFINE_string(minfo, "127.0.0.1:8080", "ip and port info");
-DEFINE_int32(port, 0, "port");
+//The following flags has default values
 DEFINE_uint32(ht, 6, "Heartbeat interval");
+DEFINE_int32(port, 6061, "port");
+
+//The following flags must be set by user
+DEFINE_string(master, "", "master ip and port info");
+DEFINE_string(work_dir, "", "the path to store download file");
 
 /**
  * Function name  : ValidateStr
@@ -22,7 +26,8 @@ static bool ValidateStr(const char *flagname, const string &value) {
     if (!value.empty()) {
         return true;
     }
-    printf("Invalid value for --%s: %s\n", flagname, value.c_str());;
+    printf("Invalid value for --%s: To run this program, you must set a meaningful value for it "
+           "%s\n", flagname, value.c_str());;
     return false;
 }
 
@@ -30,7 +35,7 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
     if (value >= 0 && value < 32768) {
         return true;
     }
-    printf("Invalid value for --%s: %d\n", flagname, (int) value);
+    printf("Invalid value for --%s %d\n", flagname, (int) value);
     return false;
 }
 
@@ -38,13 +43,14 @@ static bool ValidateUint(const char *flagname, gflags::uint32 value) {
     if (value >= 2) {
         return true;
     }
-    printf("Invalid value for --%s: %d\n", flagname, (int) value);
+    printf("Invalid value for --%s %d\n", flagname, (int) value);
     return false;
 }
 
-static const bool port_dummyUint = gflags::RegisterFlagValidator(&FLAGS_ht, &ValidateUint);
-static const bool port_dummyInt = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
-static const bool minfo_dummyStr = gflags::RegisterFlagValidator(&FLAGS_minfo, &ValidateStr);
+static const bool ht_Uint = gflags::RegisterFlagValidator(&FLAGS_ht, &ValidateUint);
+static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
+static const bool master_Str = gflags::RegisterFlagValidator(&FLAGS_master, &ValidateStr);
+//static const bool work_dir_Str = gflags::RegisterFlagValidator(&FLAGS_work_dir, &ValidateStr);
 
 constexpr char MESOS_EXECUTOR[] = "chameleon-executor";
 
@@ -63,7 +69,6 @@ namespace chameleon {
         m_slaveInfo.set_port(self().address.port);
 
         install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
-        install<JobMessage>(&Slave::get_a_job);
         install<ShutdownMessage>(&Slave::shutdown);
 
         //get from executor
@@ -92,6 +97,19 @@ namespace chameleon {
                 &mesos::internal::RegisterExecutorMessage::framework_id,
                 &mesos::internal::RegisterExecutorMessage::executor_id);
 
+//        install<mesos::internal::ShutdownExecutorMessage>(
+//                &Slave::shutdownExecutor,
+//                &mesos::internal::ShutdownExecutorMessage::framework_id,
+//                &mesos::internal::ShutdownExecutorMessage::executor_id);
+
+        install<mesos::internal::ShutdownFrameworkMessage>(
+                &Slave::shutdownFramework,
+                &mesos::internal::ShutdownFrameworkMessage::framework_id);
+
+        install<ReregisterMasterMessage>(&Slave::reregister_to_master);
+
+//        install<MasterRegisteredMessage>(&Slave::received_new_master);
+
 
         HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
         DLOG(INFO) << *msp_masterUPID;
@@ -104,7 +122,7 @@ namespace chameleon {
 
         send(*msp_masterUPID, *hr_message);
         delete hr_message;
-        LOG(INFO) << "The initialization if slave itself finished.";
+        LOG(INFO) << "The initialization of slave itself finished.";
         LOG(INFO) << self() << " starts to send heartbeat message to the master";
         heartbeat();
     }
@@ -123,33 +141,37 @@ namespace chameleon {
         LOG(INFO) << "Get task from master, start the mesos executor first";
         const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, task);
 
-        m_frameworkInfo = frameworkInfo;  //missing framework.user framework.name
-//        m_task = task;
-       // push the task to back of the queue
-        m_tasks.push(task);
+        Option<process::UPID> frameworkPid = None();
 
-        m_frameworkID = frameworkId;
+        Framework* framework = getFramework(frameworkId);
+        framework = new Framework(this, frameworkInfo, frameworkPid);
+
+        frameworks[frameworkId.value()] = framework;
+
+        m_tasks.push(task);
         m_executorInfo = executorInfo;
 
-        start_mesos_executor();
+        LOG(INFO) << "Start executor on framework " << framework->id().value();
+        start_mesos_executor(framework);
     }
 
-    void Slave::start_mesos_executor() {
+    void Slave::start_mesos_executor(const Framework* framework) {
 
         const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
         const string mesos_directory = path::join(os::getcwd(), "/mesos_executor/mesos-directory");
 
         const std::map<string, string> environment =
                 {
-                        {"MESOS_FRAMEWORK_ID", m_frameworkID.value()},
+                        {"MESOS_FRAMEWORK_ID", framework->id().value()},
                         {"MESOS_EXECUTOR_ID",  m_executorInfo.executor_id().value()},
                         {"MESOS_SLAVE_PID",    slave_upid},
                         {"MESOS_SLAVE_ID",     m_slaveInfo.id().value()},
                         {"MESOS_DIRECTORY",    mesos_directory},
                         {"MESOS_CHECKPOINT",   "0"}
                 };
-        const string mesos_executor_path = path::join(os::getcwd(), "../launcher/chameleon-executor");
+        const string mesos_executor_path = path::join(os::getcwd(), "mesos_executor/mesos-executor");
 
+        LOG(INFO) << "start mesos executor finished ";
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,
                 Subprocess::FD(STDIN_FILENO),
@@ -169,17 +191,19 @@ namespace chameleon {
                   << "' of framework " << frameworkId.value() << " from "
                   << stringify(from);
 
+        Framework* framework = getFramework(frameworkId);
+
         mesos::internal::ExecutorRegisteredMessage message;
-        message.mutable_executor_info()->mutable_framework_id()->MergeFrom(m_frameworkID);
+        message.mutable_executor_info()->mutable_framework_id()->MergeFrom(framework->id());
         message.mutable_executor_info()->MergeFrom(m_executorInfo);
-        message.mutable_framework_id()->MergeFrom(m_frameworkID);
-        message.mutable_framework_info()->MergeFrom(m_frameworkInfo);
+        message.mutable_framework_id()->MergeFrom(framework->id());
+        message.mutable_framework_info()->MergeFrom(framework->info);
         message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
         message.mutable_slave_info()->MergeFrom(m_slaveInfo);
         send(from, message);
 
         mesos::internal::RunTaskMessage run_task_message;
-        run_task_message.mutable_framework()->MergeFrom(m_frameworkInfo);
+        run_task_message.mutable_framework()->MergeFrom(framework->info);
         if(!m_tasks.empty()){
             mesos::TaskInfo current_task = m_tasks.front();
             run_task_message.mutable_task()->MergeFrom(current_task);
@@ -365,7 +389,7 @@ namespace chameleon {
     }
 
     /**
-     * Functio     : statusUpdateAcknowledgement
+     * Function     : statusUpdateAcknowledgement
      * Author      : weiguow
      * Date        : 2019-1-10
      * Description : get statusUpdateAcknowledgement message from master to
@@ -391,63 +415,66 @@ namespace chameleon {
                   << " of framework " << frameworkId.value();
     }
 
-    void Slave::register_feedback(const string &hostname) {
-        cout << " receive register feedback from master" << hostname << endl;
+    /**
+     * get FrameworkInfo by FrameworkId-by weiguow-2019/2/25
+     * */
+    Framework* Slave::getFramework(const mesos::FrameworkID& frameworkId) const
+    {
+        if (frameworks.count(frameworkId.value()) > 0) {
+            return frameworks.at(frameworkId.value());
+        }
+        return nullptr;
     }
 
-    void Slave::get_a_job(const UPID &master, const JobMessage &job_message) {
-        LOG(INFO) << "slave " << self() << " got a job";
-        const string test_spark_file = path::join(os::getcwd(), "lele_spark-2.3.0.tar");
-//    ASSERT_SOME(os::write(test_spark_file,job_message.exe_file()));
-        Try<string> decompressed_spark = gzip::decompress(job_message.exe_file());
-        if (decompressed_spark.isError()) {
-            LOG(ERROR) << "slave got a job file which is not completed or decompressing it had mistakes.";
-            LOG(ERROR) << decompressed_spark.error();
-        } else {
-            ASSERT_SOME(os::write(test_spark_file, decompressed_spark.get()));
-            LOG(INFO) << "slave " << self() << "successfully ungziped a job file";
-        }
-        const string shell_command = "tar xvf " + test_spark_file;
-        string out = path::join(os::getcwd(), "stdout");
-        string err = path::join(os::getcwd(), "stderr");
+    /**
+     * removeFramework - by weiguow - 2019-2-26
+     * */
+    void Slave::removeFramework(chameleon::Framework *framework) {
+        CHECK_NOTNULL(framework);
 
-        Try<Subprocess> s = subprocess(
-                shell_command,
-                Subprocess::FD(STDIN_FILENO),
-                Subprocess::PATH(out),
-                Subprocess::PATH(err)
-        );
-        if (s.isError()) {
-            LOG(ERROR) << "slave " << self() << "failed to untar the job file.";
-            LOG(ERROR) << s.error();
-        } else {
-            LOG(INFO) << "slave " << self() << "successfully untar a job file";
-            LOG(INFO) << "job_message is_is_master = " << job_message.is_master();
-            if (job_message.is_master()) {
-                const string fork_spark_master = "./spark-2.3.0-bin-hadoop2.7/sbin/start-master.sh";
-                Try<ProcessTree> res = os::Fork(None(), os::Exec(fork_spark_master))();
-                if (res.isError()) {
-                    LOG(ERROR) << "slave " << self() << " failed to fork a process to run spark 2.3.0 master process";
-                    LOG(ERROR) << res.error();
-                } else {
-                    LOG(INFO) << "slave " << self() << "successfully fork a process to run spark 2.3.0 master process";
-                    LOG(INFO) << "The pid is " << res.get().children.front().process.pid;
-                }
-            } else {
-                sleep(2);
-                const string master_ip = job_message.master_ip();
-                const string fork_spark_slave =
-                        "./spark-2.3.0-bin-hadoop2.7/sbin/start-slave.sh spark://" + master_ip + ":7077";
-                Try<ProcessTree> res = os::Fork(None(), os::Exec(fork_spark_slave))();
-                if (res.isError()) {
-                    LOG(ERROR) << "slave " << self() << " failed to fork a process to run spark 2.3.0 slave process";
-                    LOG(ERROR) << res.error();
-                } else {
-                    LOG(INFO) << "slave " << self() << "successfully fork a process to run spark 2.3.0 slave process";
-                    LOG(INFO) << "The pid is " << res.get().children.front().process.pid;
-                }
-            }
+        LOG(INFO) << "Cleaning up framework " << framework->id().value();
+
+        CHECK(framework->state == Framework::RUNNING ||
+              framework->state == Framework::TERMINATING);
+
+        frameworks.erase(framework->id().value());
+    }
+
+    /**
+     * Function     : shutdownFramework
+     * Author       : weiguow
+     * Date         : 2019-2-26
+     * Description  : shutdownFramework after task run over
+     * */
+    void Slave::shutdownFramework(const process::UPID &from, const mesos::FrameworkID &frameworkId) {
+        LOG(INFO) << "Asked to shut down framework " << frameworkId.value()
+                << " by " << from;
+
+        Framework* framework = getFramework(frameworkId);
+
+        switch (framework->state) {
+            case Framework::TERMINATING:
+                LOG(WARNING) << "Ignoring shutdown framework " << framework->id().value()
+                             << " because it is terminating";
+                break;
+            case Framework::RUNNING:
+                LOG(INFO) << "Shutting down framework " << framework->id().value();
+
+                framework->state = Framework::TERMINATING;
+
+                // Remove this framework if it has no pending executors and tasks.
+                removeFramework(framework);
+
+                break;
+            default:
+//                LOG(FATAL) << "Framework " << frameworkId.value()
+//                           << " is in unexpected state ";
+                break;
         }
+    }
+
+    void Slave::register_feedback(const string &hostname) {
+        cout << " receive register feedback from master" << hostname << endl;
     }
 
     void Slave::finalize() {
@@ -503,11 +530,29 @@ namespace chameleon {
 
         send(*msp_masterUPID, *rr_message);
         LOG(INFO) << "slave " << self() << " had sent a heartbeat message to the " << *msp_masterUPID;
+
         auto t2 = std::chrono::system_clock::now();
         std::chrono::duration<double> duration = t2 - t1;
+
         LOG(INFO) << "It cost " << duration.count() << " s";
+
         delete rr_message;
     }
+
+    void Slave::reregister_to_master(const UPID& from, const ReregisterMasterMessage& message){
+
+        LOG(INFO)<<"got a ReregisteredMasterMessage from "<<from;
+        if(message.slave_ip() == stringify(self().address.ip)){
+            m_master = "master@"+message.master_ip()+":"+message.port();
+            msp_masterUPID.reset(new UPID(m_master));
+            LOG(INFO)<<" prepare to  a  heartbeat to the new master "<<m_master<<" ";
+            send_heartbeat_to_master();
+         }
+    }
+
+//    void Slave::received_new_master(const UPID& from, const MasterRegisteredMessage& message) {
+//        LOG(INFO) << "MAKUN " << self().address.ip << " received new master ip from " << from;
+//    }
 
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)
     {
@@ -519,54 +564,42 @@ namespace chameleon {
 using namespace chameleon;
 
 int main(int argc, char *argv[]) {
-//    google::ParseCommandLineFlags(&argc, &argv, true);
 
     chameleon::set_storage_paths_of_glog("slave");// provides the program name
     chameleon::set_flags_of_glog();
 
-    LOG(INFO) << "glog files paths configuration for slave finished. OK!";
 
     google::SetUsageMessage("usage : Option[name] \n"
                             "--port      the port used by the program \n"
-                            "--minfo     the master ip and port,example:127.0.0.1:8080 \n"
+                            "--master    the master ip and port,example:127.0.0.1:8080 \n"
                             "--ht        fixed time interval, slave send message to master \n"
-                            "            and the interval >= 2");
+                            "            and the interval >= 2 \n"
+                            "--work_dir  the path to store download file");
     google::SetVersionString("Chameleon v1.0");
     google::ParseCommandLineFlags(&argc, &argv, true);
-
     google::CommandLineFlagInfo info;
 
-    if (GetCommandLineFlagInfo("port", &info) && info.is_default &&
-        GetCommandLineFlagInfo("minfo", &info) && info.is_default) {
-        LOG(INFO) << "To run this program , must set parameters correctly "
-                     "\n read the notice " << google::ProgramUsage();
+
+    if (master_Str && port_Int ) {
+        os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
+
+        process::initialize("slave");
+        chameleon::Slave slave;
+        slave.setM_interval(Seconds(FLAGS_ht));
+        slave.setM_work_dir(FLAGS_work_dir);
+
+        string master_ip_and_port = "master@" + stringify(FLAGS_master);
+        slave.setM_master(master_ip_and_port);
+        PID<chameleon::Slave> cur_slave = process::spawn(slave);
+        LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
+        const PID<chameleon::Slave> slave_pid = slave.self();
+        LOG(INFO) << slave_pid;
+        process::wait(slave.self());
     } else {
-        if (GetCommandLineFlagInfo("port", &info) && !info.is_default &&
-            GetCommandLineFlagInfo("minfo", &info) && !info.is_default) {
-
-            os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
-            os::setenv("FLAGS_ht", stringify(FLAGS_ht));
-
-            process::initialize("slave");
-
-            Slave slave;
-
-            slave.setM_interval(Seconds(FLAGS_ht));
-
-            string master_ip_and_port = "master@" + stringify(FLAGS_minfo);
-            slave.setM_master(master_ip_and_port);
-
-            PID<Slave> cur_slave = process::spawn(slave);
-            LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
-
-            const PID<Slave> slave_pid = slave.self();
-            LOG(INFO) << slave_pid;
-            process::wait(slave.self());
-        } else {
-            LOG(INFO) << "To run this program , must set all parameters correctly "
-                         "\n read the notice " << google::ProgramUsage();
-        }
+        LOG(INFO) << "To run this program , must set all parameters correctly "
+                     "\n read the notice " << google::ProgramUsage();
     }
+
     return 0;
 }
 
