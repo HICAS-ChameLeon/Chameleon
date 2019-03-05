@@ -132,7 +132,7 @@ namespace chameleon {
         void kill_master_message(const UPID &from, const OwnedSlavesMessage &message);
         //kill_master end
 
-        void select_master();
+        const string select_master();
         void send_terminating_master(string master_ip);
         void recevied_slave_infos(const UPID& from, const string& message);
     };
