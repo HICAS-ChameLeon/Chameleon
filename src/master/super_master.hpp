@@ -11,6 +11,7 @@
 #include <vector>
 #include <set>
 #include<iterator>
+#include <sstream>
 #include <unordered_map>
 // google
 #include <glog/logging.h>
@@ -60,36 +61,45 @@ using process::http::Request;
 using process::http::OK;
 using process::http::Response;
 
+using namespace process::http;
+
+using process::http::Request;
+using process::http::OK;
+using process::http::InternalServerError;
+
 
 namespace chameleon {
 
     extern int32_t cluster_levels = 1;
 
-    class SuperMaster :public ProtobufProcess<SuperMaster>{
+    class SuperMaster :public ProtobufProcess<SuperMaster> {
     public:
-        explicit SuperMaster():ProcessBase("super_master"){
+        explicit SuperMaster() : ProcessBase("super_master") {
 
         }
 
         virtual void initialize() override;
 
+        void set_master_path(const string& path);
         void registered_master(const UPID &forom, const MasterRegisteredMessage &master_registered_message);
 
-        Future<bool> is_repeated_registered(const UPID& upid);
+        Future<bool> is_repeated_registered(const UPID &upid);
 
         bool launch_masters();
 
-        void record_master(const Future<bool>& future,const UPID &from, const MasterRegisteredMessage &master_registered_message);
+        void record_master(const Future<bool> &future, const UPID &from,
+                           const MasterRegisteredMessage &master_registered_message);
 
-        void terminating_master(const UPID& from,const OwnedSlavesMessage& message);
-        virtual ~SuperMaster(){
-            LOG(INFO)<<" ~SuperMaster";
+        void terminating_master(const UPID &from, const OwnedSlavesMessage &message);
+
+        virtual ~SuperMaster() {
+            LOG(INFO) << " ~SuperMaster";
         }
-
 
     private:
 
         string m_uuid;
+        string m_master_path;
         // represent the masters administered by the current super_master.
         vector<UPID> m_masters;
 
@@ -125,6 +135,7 @@ namespace chameleon {
         void send_terminating_master(string master_ip);
         void recevied_slave_infos(const UPID& from, const string& message);
     };
+
 
 }
 

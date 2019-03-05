@@ -1,13 +1,13 @@
 <div class="row">
     <div  class=" col-md-3 col-lg-3">
         <div class="well">
-            <dl class="inline clearfix">
+            <dl ng-repeat="x in framework" class="inline clearfix">
                 <dt>Name:</dt>
-                <dd>{{name}}</dd>
+                <dd>{{x.name}}</dd>
                 <dt>Web UI:</dt>
-                <dd ><a href="{{webui_url}}"> {{webui_url}} </a></dd>
+                <dd ><a href="{{x.webui_url}}"> {{x.webui_url}} </a></dd>
                 <dt>User:</dt>
-                <dd>{{user}}</dd>
+                <dd>{{x.user}}</dd>
                 <dt>Roles:</dt>
                 <dd>*</dd>
                 <dt>Registered:</dt>
@@ -65,3 +65,5 @@
 
     </div>
 </div>
+
+

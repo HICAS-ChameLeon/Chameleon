@@ -9,6 +9,18 @@
 #include "super_master.hpp"
 #include "master.hpp"
 
+DEFINE_string(master_path, "", "the absolute path of master executive. For example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
+
+static bool ValidateStr(const char *flagname, const string &value) {
+    if (!value.empty()) {
+        return true;
+    }
+    printf("Invalid value for --%s: To run this program, you must set a meaningful value for it "
+           "%s\n", flagname, value.c_str());;
+    return false;
+}
+static const bool has_master_path = gflags::RegisterFlagValidator(&FLAGS_master_path, &ValidateStr);
+
 namespace chameleon {
     void SuperMaster::initialize() {
         // Verify that the version of the library that we linked against is
@@ -24,10 +36,10 @@ namespace chameleon {
 
         // change from one level to two levels
         cluster_levels = 2;
-        m_masters_size = 2;
-//        if(cluster_levels)
+        m_masters_size = 1;
+
         m_uuid = UUID::random().toString();
-        m_first_to_second_master = "master@172.20.110.141:6060";
+        m_first_to_second_master = "master@172.20.110.53:6060";
         SuperMasterControlMessage *super_master_control_message = new SuperMasterControlMessage();
         super_master_control_message->set_super_master_id(m_first_to_second_master);
         super_master_control_message->set_super_master_uuid(m_uuid);
@@ -38,6 +50,69 @@ namespace chameleon {
         LOG(INFO) << " sends a super_master_constrol_message to a master: " << m_first_to_second_master;
 //        delete super_master_control_message;
 
+
+
+        route(
+                "/super_slave",
+                "start super_master and change from one level to two levels",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_classification_slaves.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_classification_slaves.begin();
+                             it != this->m_classification_slaves.end(); it++) {
+                            vector<SlavesInfoControlledByMaster> slaveinfo = it->second;
+                            for (int j = 0; j < slaveinfo.size(); ++j) {
+                                array.values.push_back(JSON::protobuf(slaveinfo[j]));
+                            }
+
+                        }
+                        result.values["quantity"] = array.values.size();
+                        result.values["content"] = array;
+
+                    } else {
+                        result.values["quantity"] = 0;
+                        result.values["content"] = JSON::Object();
+                    }
+
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+        route(
+                "/super_master",
+                "start super_master and change from one level to two levels",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_classification_masters.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_classification_masters.begin();
+                             it != this->m_classification_masters.end(); it++) {
+                            for (int j = 0; j < m_classification_masters.size(); ++j) {
+
+                                //JSON::Object result2 = JSON::Object(stringify(result));
+                                result.values["ip"] = m_classification_masters[0];
+                                //array.values.push_back(JSON::String(m_classification_masters[j]));
+                                array.values.push_back(result);
+                            }
+
+                        }
+                        result.values["quantity"] = array.values.size();
+                        result.values["content"] = array;
+
+
+                    } else {
+                        result.values["quantity"] = 0;
+                        result.values["content"] = JSON::Object();
+                    }
+
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+
         route(  //change from two level to one levels
                 "/kill_master",
                 "kill the super_master of two levels",
@@ -47,7 +122,9 @@ namespace chameleon {
                     string new_master_ip = select_master();
                     result.values["new_master_ip"] = new_master_ip;
                     OK ok_response(stringify(result));
-//                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    select_master();
+
                     return ok_response;
                 });
 
@@ -60,6 +137,10 @@ namespace chameleon {
         distinctive = distinctive.then(defer(self(), &Self::is_repeated_registered, from));
         distinctive.onAny(defer(self(), &Self::record_master, lambda::_1, from, master_registered_message));
 
+    }
+
+    void SuperMaster::set_master_path(const string& path) {
+        m_master_path = path;
     }
 
     Future<bool> SuperMaster::is_repeated_registered(const UPID &upid) {
@@ -192,7 +273,7 @@ namespace chameleon {
 //                Subprocess::FD(STDERR_FILENO));
 
         for(const string& master_ip:m_classification_masters){
-            string ssh_command = "ssh "+master_ip+" /home/lemaker/open-source/Chameleon/build/src/master/master --port=6060";
+            string ssh_command = "ssh "+master_ip+" "+m_master_path+" --port=6060";
             Try<Subprocess> s = subprocess(
                     ssh_command,
                     Subprocess::FD(STDIN_FILENO),
@@ -207,7 +288,7 @@ namespace chameleon {
         LOG(INFO)<<" launched "<<m_classification_masters.size() << " masters successfully.";
         return true;
 //        Try<Subprocess> s = subprocess(
-//                "ssh 172.20.110.53 /home/lemaker/open-source/Chameleon/build/src/master/master --port=6060",
+//                "ssh 172.20.110.228 /home/lemaker/open-source/Chameleon/build/src/master/master --port=6060",
 //                Subprocess::FD(STDIN_FILENO),
 //                Subprocess::FD(STDOUT_FILENO),
 //                Subprocess::FD(STDERR_FILENO));
@@ -305,22 +386,35 @@ int main(int argc, char **argv) {
     chameleon::set_storage_paths_of_glog("super_master");// provides the program name
     chameleon::set_flags_of_glog();
 
-    os::setenv("LIBPROCESS_PORT", "7000");
-    process::initialize("super_master");
+    google::SetUsageMessage("usage : Option[name] \n"
+                            "--port     the port used by the program");
+    google::SetVersionString("Chameleon v1.0");
+    google::ParseCommandLineFlags(&argc, &argv, true);
 
-    SuperMaster super_master;
-    PID<SuperMaster> cur_super_master = process::spawn(super_master);
+    google::CommandLineFlagInfo info;
 
-    LOG(INFO) << "Running super_master on " << process::address().ip << ":" << process::address().port;
+    if(has_master_path){
+        os::setenv("LIBPROCESS_PORT", "7000");
+        process::initialize("super_master");
 
-    const PID<SuperMaster> super_master_pid = super_master.self();
-    LOG(INFO) << super_master_pid;
+        SuperMaster super_master;
+        super_master.set_master_path(FLAGS_master_path);
+
+        PID<SuperMaster> cur_super_master = process::spawn(super_master);
+        LOG(INFO) << "Running super_master on " << process::address().ip << ":" << process::address().port;
+
+        const PID<SuperMaster> super_master_pid = super_master.self();
+        LOG(INFO) << super_master_pid;
 
 //    bool res = super_master.launch_masters();
 //    if (res) {
 //        std::cout << " successfully launched master";
 //    }
-    process::wait(super_master.self());
+        process::wait(super_master.self());
+    }else{
+        LOG(INFO) << "To run this program , must set all parameters correctly "
+                     "\n read the notice " << google::ProgramUsage();
+    }
 
 
     return 0;

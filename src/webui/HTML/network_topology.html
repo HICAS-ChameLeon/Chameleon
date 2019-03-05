@@ -1,4 +1,76 @@
 <div class="tab-pane fade in active" id="networktopology">
+    <thead>
+    <tr>
+        <th>
+            <label for="locale">Select a level:</label>
+            <select id="locale" onchange="window.location.href=this.value">
+                <option value="1" >1层</option>
+                <option value="#/topology/super_master" >2层</option>
+            </select>
+        </th>
+        <th>
+          一层变两层：
+        </th>
+        <th>
+            <button ng-controller = "StartSupermasterCtrl" type="button"  ng-click="openModal()">开启supermaster</button>
+
+        </th>
+
+        <th>
+            两层变一层：
+        </th>
+        <th>
+            <button ng-controller = "StopSupermasterCtrl" type="button"  ng-click="openModal()">关闭supermaster</button>
+
+        </th>
+
+    </tr>
+    </thead>
+
+
+
     <div id="mynetwork" style="width: 100%"></div>
     <p id="selection"></p>
 </div>
+
+
+<!--<div class="tab-pane fade in active" id="networktopology">-->
+
+    <!--<form>-->
+        <!--Select a level:-->
+        <!--<select  ng-model="myVar">-->
+            <!--<option value="1" >1层</option>-->
+            <!--<option value="2" >2层</option>-->
+        <!--</select>-->
+    <!--</form>-->
+
+    <!--<div ng-switch ="myVar">-->
+        <!--<div ng-switch-when="1"> id="mynetwork" style="width: 100%">-->
+            <!--<p id="selection"></p>-->
+        <!--</div>-->
+    <!--</div>-->
+
+    <!--<div ng-switch ="myVar">-->
+        <!--<div ng-switch-when="2">-->
+            <!--<div id="myknetwork" style="width: 100%"></div>-->
+            <!--<p id="superselection"></p>-->
+        <!--</div>-->
+    <!--</div>-->
+<!--</div>-->
+
+<!--<select id="ctc" onchange="changeProgram()">-->
+    <!--{% for ctc in CTCs %}-->
+    <!--<option value="{{ctc}}">{{ctc}}</option>-->
+    <!--{% end %}-->
+<!--</select>-->
+<!--<script>-->
+<!--$(function () {-->
+    <!--if (localStorage.getItem('ctc')) {-->
+        <!--$("#ctc option").eq(localStorage.getItem('ctc')).prop('selected', true);-->
+    <!--}-->
+
+    <!--$("#ctc").on('change', function () {-->
+        <!--localStorage.setItem('ctc', $('option:selected', this).index());-->
+<!--});-->
+<!--});-->
+<!--</script>-->
