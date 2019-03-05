@@ -125,7 +125,7 @@ namespace chameleon {
                     result.values["new_master_ip"] = new_master_ip;
                     OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                    select_master();
+                    //select_master();
 
                     return ok_response;
                 });
