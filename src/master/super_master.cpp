@@ -44,11 +44,10 @@ namespace chameleon {
                 [this](Request request){
                     JSON::Object result = JSON::Object();
                     LOG(INFO) << "MAKUN KILL MASTER";
-                    result.values["kill"] = "success";
+                    string new_master_ip = select_master();
+                    result.values["new_master_ip"] = new_master_ip;
                     OK ok_response(stringify(result));
 //                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                    select_master();
-
                     return ok_response;
                 });
 
@@ -260,7 +259,7 @@ namespace chameleon {
     }
     //kill_master end
 
-    void SuperMaster::select_master(){
+    const string SuperMaster::select_master(){
         string master_ip;
         int num_slaves = 0;
         for(auto iter = m_classification_masters.begin();iter!=m_classification_masters.end();iter++){
@@ -272,6 +271,7 @@ namespace chameleon {
         }
         LOG(INFO) << "MAKUN select master ip: " << master_ip;
         send_terminating_master(master_ip);
+        return master_ip;
     }
     void SuperMaster::send_terminating_master(string master_ip) {
         //master_ip = "master@"+master_ip+":6060";
