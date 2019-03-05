@@ -63,3 +63,18 @@ $./master
 explain
   --port     the port used by the program(default 6060)
 
+#master
+example
+
+$./super_master 
+Required Flags
+
+
+| 一个普通标题 | 一个普通标题 | 一个普通标题 |
+| ------ | ------ | ------ |
+| 短文本 | 中等文本 | 稍微长一点的文本 |
+| 稍微长一点的文本 | 短文本 | 中等文本 |
+
+
+explain
+  --port     the port used by the program(default 6060)
