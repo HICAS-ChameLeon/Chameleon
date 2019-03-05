@@ -82,3 +82,24 @@ $./build/src/master/super_master
 | --master_path | the absolute path of master executive | --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master |
 | --initiator | the ip:port of the current master of first level or supermaster | --initiator=172.20.110.228:6060 |
 
+#submitter
+
+example
+
+$./submitter  --master=172.20.110.228:6060  --port=6062 --path=/home/XXX/spark-2.3.0-bin-hadoop2.7.tgz
+
+explain
+  --port      the port used by the program
+  --master    the master ip and port,example:127.0.0.1:8080
+  --path      the path where the spark package exists
+
+
+
+
+
+
+
+
+
+explain
+  --port     the port used by the program(default 6060)
