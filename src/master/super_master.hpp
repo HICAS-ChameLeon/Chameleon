@@ -74,13 +74,14 @@ namespace chameleon {
 
     class SuperMaster :public ProtobufProcess<SuperMaster> {
     public:
-        explicit SuperMaster() : ProcessBase("super_master") {
+        explicit SuperMaster(const string& initiator) : ProcessBase("super_master") ,m_initiator(initiator){
 
         }
 
         virtual void initialize() override;
 
         void set_master_path(const string& path);
+        void set_first_to_second_master(const string& master);
         void registered_master(const UPID &forom, const MasterRegisteredMessage &master_registered_message);
 
         Future<bool> is_repeated_registered(const UPID &upid);
@@ -108,7 +109,7 @@ namespace chameleon {
 
         // represent the current number of level
         int32_t m_levels;
-        string m_first_to_second_master;
+        string m_initiator;
 
         vector<SlaveInfo> m_admin_slaves;
 

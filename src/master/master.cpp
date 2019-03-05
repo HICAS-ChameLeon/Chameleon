@@ -213,7 +213,7 @@ namespace master {
                       * Funtion name    :  Try
                       * @param          :
                       * */
-                      m_super_master_path.append(" --master_path=/home/wqn/Chameleon/build/src/master/master");
+                      m_super_master_path.append(" --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
                     Try<Subprocess> super_master = subprocess(
                            m_super_master_path,
                             Subprocess::FD(STDIN_FILENO),
