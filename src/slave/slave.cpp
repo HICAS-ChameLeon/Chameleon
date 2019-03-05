@@ -56,6 +56,17 @@ constexpr char MESOS_EXECUTOR[] = "chameleon-executor";
 
 namespace chameleon {
 
+    Slave::Slave() : ProcessBase("slave"), m_interval() {
+        msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+        msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
+//            msp_resource_collector = new ResourceCollector();
+    }
+
+    Slave::~Slave(){
+        LOG(INFO)<<"~Slave";
+    }
+
+
     void Slave::initialize() {
         // Verify that the version of the library that we linked against is
         // compatible with the version of the headers we compiled against.
@@ -108,9 +119,18 @@ namespace chameleon {
 
         install<ReregisterMasterMessage>(&Slave::reregister_to_master);
 
-//        install<MasterRegisteredMessage>(&Slave::received_new_master);
+        // http://172.20.110.228:6061/slave/runtime-resources
+        route(
+                "/runtime-resources",
+                "get the runtime resources of the current slave",
+                [this](Request request) {
+                    JSON::Object result = JSON::protobuf(m_runtime_resources);
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
 
-
+        // send the information fo hardware resources on this machine to master
         HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
         DLOG(INFO) << *msp_masterUPID;
         string slave_id = stringify(self().address.ip);
@@ -499,7 +519,7 @@ namespace chameleon {
 
     void Slave::send_heartbeat_to_master() {
 
-        LOG(INFO) << "The Heartbeat is: " << m_interval;
+        LOG(INFO) << "The Heartbeat interval is: " << m_interval;
 
         auto t1 = std::chrono::system_clock::now();
 
@@ -527,7 +547,8 @@ namespace chameleon {
         rr_message->set_allocated_net_usage(net_usage);
 
         rr_message->set_slave_id(stringify(self().address.ip));
-
+        // update current runtime resources of the current slave
+        m_runtime_resources.CopyFrom(*rr_message);
         send(*msp_masterUPID, *rr_message);
         LOG(INFO) << "slave " << self() << " had sent a heartbeat message to the " << *msp_masterUPID;
 

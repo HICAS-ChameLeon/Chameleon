@@ -82,3 +82,7 @@ $./build/src/master/super_master
 | --master_path | the absolute path of master executive | --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master |
 | --initiator | the ip:port of the current master of first level or supermaster | --initiator=172.20.110.228:6060 |
 
+#### common commands
+ps aux | grep master
+
+sudo kill -9 `ps -ef|grep "master" |grep -v grep|awk '{print $2}'`
