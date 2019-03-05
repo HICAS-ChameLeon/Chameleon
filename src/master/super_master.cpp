@@ -10,6 +10,7 @@
 #include "master.hpp"
 
 DEFINE_string(master_path, "", "the absolute path of master executive. For example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
+DEFINE_string(initiator, "localhost:6060", "the ip:port of the current master of first level or supermaster. For example, --initiator=172.20.110.228:6060");
 
 static bool ValidateStr(const char *flagname, const string &value) {
     if (!value.empty()) {
@@ -20,6 +21,7 @@ static bool ValidateStr(const char *flagname, const string &value) {
     return false;
 }
 static const bool has_master_path = gflags::RegisterFlagValidator(&FLAGS_master_path, &ValidateStr);
+static const bool has_initiator = gflags::RegisterFlagValidator(&FLAGS_initiator, &ValidateStr);
 
 namespace chameleon {
     void SuperMaster::initialize() {
@@ -39,15 +41,15 @@ namespace chameleon {
         m_masters_size = 1;
 
         m_uuid = UUID::random().toString();
-        m_first_to_second_master = "master@172.20.110.53:6060";
+        const string initiator_pid = "master@"+m_initiator;
         SuperMasterControlMessage *super_master_control_message = new SuperMasterControlMessage();
-        super_master_control_message->set_super_master_id(m_first_to_second_master);
+        super_master_control_message->set_super_master_id(initiator_pid);
         super_master_control_message->set_super_master_uuid(m_uuid);
         super_master_control_message->set_passive(false);
 
-        UPID t_master(m_first_to_second_master);
+        UPID t_master(initiator_pid);
         send(t_master, *super_master_control_message);
-        LOG(INFO) << " sends a super_master_constrol_message to a master: " << m_first_to_second_master;
+        LOG(INFO) << " sends a super_master_constrol_message to a master: " << initiator_pid;
 //        delete super_master_control_message;
 
 
@@ -141,6 +143,10 @@ namespace chameleon {
 
     void SuperMaster::set_master_path(const string& path) {
         m_master_path = path;
+    }
+
+    void SuperMaster::set_first_to_second_master(const string &master) {
+
     }
 
     Future<bool> SuperMaster::is_repeated_registered(const UPID &upid) {
@@ -393,11 +399,11 @@ int main(int argc, char **argv) {
 
     google::CommandLineFlagInfo info;
 
-    if(has_master_path){
+    if(has_master_path && has_initiator){
         os::setenv("LIBPROCESS_PORT", "7000");
         process::initialize("super_master");
 
-        SuperMaster super_master;
+        SuperMaster super_master(FLAGS_initiator);
         super_master.set_master_path(FLAGS_master_path);
 
         PID<SuperMaster> cur_super_master = process::spawn(super_master);
