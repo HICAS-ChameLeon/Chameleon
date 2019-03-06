@@ -38,23 +38,23 @@
 #include <process/delay.hpp>
 
 // protobuf
+#include <job.pb.h>
+#include <mesos.pb.h>
+#include <messages.pb.h>
+#include <scheduler.pb.h>
+#include <slave_related.pb.h>
 #include <participant_info.pb.h>
 #include <hardware_resource.pb.h>
-#include <job.pb.h>
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
-#include <mesos.pb.h>
-#include <scheduler.pb.h>
-#include <messages.pb.h>
 #include <super_master_related.pb.h>
-#include <slave_related.pb.h>
+
 
 // chameleon headers
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
 #include <chameleon_os.hpp>
 #include <runtime_resources_usage.hpp>
-#include "scheduler.hpp"
 
 using std::string;
 using std::set;
@@ -103,26 +103,26 @@ namespace master {
               const string _uid,
               const string _hostname,
               const process::UPID &_pid) :
-                master(_master),
-                hardwareInfo(_info),
-                uid(_uid),
-                hostname(_hostname),
-                pid(_pid) {
+                m_master(_master),
+                m_hardwareinfo(_info),
+                m_uid(_uid),
+                m_hostname(_hostname),
+                m_pid(_pid) {
         };
 
         ~Slave();
 
-        Master *const master;
+        Master *const m_master;
 
-        const RuntimeResourcesMessage runtimeInfo;
-        const HardwareResourcesMessage hardwareInfo;
+        const RuntimeResourcesMessage m_runtimeinfo;
+        const HardwareResourcesMessage m_hardwareinfo;
 
-        const string uid;
-        process::UPID pid;
+        const string m_uid;
+        process::UPID m_pid;
 
-        const string hostname;
+        const string m_hostname;
 
-        hashmap<string, RuntimeResourcesMessage> usage;
+        hashmap<string, RuntimeResourcesMessage> m_usage;
 
     private:
         Slave(const Slave &);
@@ -134,7 +134,6 @@ namespace master {
 
     public:
         friend class Framework;
-
         friend class Slave;
 
         explicit Master() : ProcessBase("master") {
@@ -168,25 +167,16 @@ namespace master {
         void update_hardware_resources(const UPID &from, const HardwareResourcesMessage &hardware_resources_message);
 
         /**
-           *change framework protobuf to JSON
-           * @param from slave UPID
-           * @param hardware_resources_message
-           */
-        void change_frameworks(const UPID &from, const mesos::FrameworkInfo &frameworkInfo);
-
-        /**
          * get a heartbeat message from a slave. The heartbeat message contains the runtime resource usage statistics of the slave.
          * @param slave
          * @param runtime_resouces_message represents the runtime resource usage statistics for the slave
          */
         void received_heartbeat(const UPID &from, const RuntimeResourcesMessage &runtime_resouces_message);
 
-        /**
-         * make random ID-weiguow-2019/2/24
-         * */
-        mesos::FrameworkID newFrameworkId();
-        mesos::OfferID newOfferId();
-        const string newSlaveId(const string uid);
+
+        mesos::FrameworkID new_framework_id();
+        mesos::OfferID new_offer_id();
+        const string new_slave_id(const string kUid);
 
         hashmap<string, mesos::Offer *> offers;
 
@@ -196,26 +186,26 @@ namespace master {
             hashset<process::UPID> registering;
 
             struct {
-                bool contains(const string uid) const {
-                    return uids.contains(uid);
+                bool contains(const string KUid) const {
+                    return uids.contains(KUid);
                 }
 
-                bool contains(const process::UPID &pid) const {
-                    return pids.contains(pid);
+                bool contains(const process::UPID &KPid) const {
+                    return pids.contains(KPid);
                 }
 
-                Slave *get(const string uid) const {
-                    return uids.get(uid).getOrElse(nullptr);
+                Slave *get(const string kUid) const {
+                    return uids.get(kUid).getOrElse(nullptr);
                 }
 
-                Slave *get(const process::UPID &pid) const {
-                    return pids.get(pid).getOrElse(nullptr);
+                Slave *get(const process::UPID &KPid) const {
+                    return pids.get(KPid).getOrElse(nullptr);
                 }
 
                 void put(Slave *slave) {
                     CHECK_NOTNULL(slave);
-                    uids[slave->uid] = slave;
-                    pids[slave->pid] = slave;
+                    uids[slave->m_uid] = slave;
+                    pids[slave->m_pid] = slave;
                 }
 
                 size_t size() const { return uids.size(); }
@@ -257,34 +247,34 @@ namespace master {
                 const process::UPID &from,
                 const mesos::scheduler::Call::Subscribe &subscribe);
 
-        void teardown(Framework *framework);
+        void teardown_framework(Framework *framework);
 
         void accept(Framework *framework, mesos::scheduler::Call::Accept accept);
 
-        void decline(Framework *framework, const mesos::scheduler::Call::Decline &decline);
+        void decline_framework(Framework *framework, const mesos::scheduler::Call::Decline &decline);
 
-        void shutdown(Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown);
+        void shutdown_framework(Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown);
 
-        void statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid);
+        void status_update(mesos::internal::StatusUpdate update, const UPID &pid);
 
-        void statusUpdateAcknowledgement(
+        void status_update_acknowledgement(
                 const UPID &from,
-                const mesos::SlaveID &slaveId,
-                const mesos::FrameworkID &frameworkId,
-                const mesos::TaskID &taskId,
-                const string &uuid);
+                const mesos::SlaveID &kSlaveId,
+                const mesos::FrameworkID &kFrameworkId,
+                const mesos::TaskID &KTaskId,
+                const string &KUuid);
 
-        void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
+        void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &kacknowledge);
 
-        void addSlave(Slave *slave);
+        void add_slave(Slave *slave);
 
-        Slave* getSlave(const string uid);
+        Slave* get_slave(const string uid);
 
-        Framework *getFramework(const mesos::FrameworkID &frameworkId);
+        Framework *get_framework(const mesos::FrameworkID &kFrameworkId);
 
-        void addFramework(Framework *framework);
+        void add_framework(Framework *framework);
 
-        void removeFramework(Framework *framework);
+        void remove_framework(Framework *framework);
 
     private:
 
@@ -308,9 +298,9 @@ namespace master {
 
         string m_slavePID;
 
-        int64_t nextFrameworkId;
-        int64_t nextOfferId;
-        int64_t nextSlaveId;
+        int64_t m_next_framework_id;
+        int64_t m_next_offer_id;
+        int64_t m_next_slave_id;
 
         mesos::MasterInfo m_masterInfo;
 
@@ -363,7 +353,7 @@ namespace master {
                   const process::UPID &_pid,
                   const process::Time &time = process::Clock::now()
         ) : Framework(master, info, ACTIVE, time) {
-            pid = _pid;
+            m_pid = _pid;
         }
 
         ~Framework() {}
@@ -374,7 +364,7 @@ namespace master {
                 LOG(WARNING) << "Master attempted to send message to disconnected"
                              << " framework " << this->state;
             } else {
-                master->send(pid.get(), message);
+                m_master->send(m_pid.get(), message);
             }
         }
 
@@ -384,25 +374,25 @@ namespace master {
 
         bool recovered() const { return state == RECOVERED; }
 
-        const mesos::FrameworkID id() const { return info.id(); }
+        const mesos::FrameworkID id() const { return m_info.id(); }
 
-        Master *const master;
-        mesos::FrameworkInfo info;
-        Option<process::UPID> pid;
+        Master *const m_master;
+        mesos::FrameworkInfo m_info;
+        Option<process::UPID> m_pid;
         State state;
 
-        process::Time registeredTime;
-        process::Time unregisteredTime;
+        process::Time m_registered_time;
+        process::Time m_unregistered_time;
 
     private:
         Framework(Master *const _master,
                   const mesos::FrameworkInfo &_info,
                   State state,
                   const process::Time &time
-        ) : master(_master),
-            info(_info),
+        ) : m_master(_master),
+            m_info(_info),
             state(state),
-            registeredTime(time) {}
+            m_registered_time(time) {}
 
         Framework(const Framework &);
 
@@ -411,14 +401,14 @@ namespace master {
     };
 
     inline std::ostream &operator<<(std::ostream &stream, const Slave &slave) {
-        return stream << slave.uid << " at " << slave.pid
-                      << " (" << slave.hostname << ")";
+        return stream << slave.m_uid << " at " << slave.m_pid
+                      << " (" << slave.m_hostname << ")";
     }
 
     inline std::ostream &operator<<(std::ostream &stream, const Framework &framework) {
-        stream << framework.id().value() << " (" << framework.info.name() << ")";
-        if (framework.pid.isSome()) {
-            stream << " at " << framework.pid.get();
+        stream << framework.id().value() << " (" << framework.m_info.name() << ")";
+        if (framework.m_pid.isSome()) {
+            stream << " at " << framework.m_pid.get();
         }
         return stream;
     }

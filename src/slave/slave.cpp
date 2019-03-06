@@ -4,8 +4,6 @@
  * Date       ：18-11-26
  * Description：slave codes
  */
-
-#include <messages.pb.h>
 #include "slave.hpp"
 
 //The following flags has default values
@@ -16,12 +14,6 @@ DEFINE_int32(port, 6061, "port");
 DEFINE_string(master, "", "master ip and port info");
 DEFINE_string(work_dir, "", "the path to store download file");
 
-/**
- * Function name  : ValidateStr
- * Author         : weiguow
- * Date           : 2018-12-13
- * Description    : Determines whether the input parameter is valid
- * Return         : True or False*/
 static bool ValidateStr(const char *flagname, const string &value) {
     if (!value.empty()) {
         return true;
@@ -72,12 +64,12 @@ namespace chameleon {
 
         //get from executor
         install<mesos::internal::StatusUpdateMessage>(
-                &Slave::statusUpdate,
+                &Slave::status_update,
                 &mesos::internal::StatusUpdateMessage::update,
                 &mesos::internal::StatusUpdateMessage::pid);
 
         install<mesos::internal::StatusUpdateAcknowledgementMessage>(
-                &Slave::statusUpdateAcknowledgement,
+                &Slave::status_update_acknowledgement,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::slave_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::framework_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::task_id,
@@ -85,14 +77,14 @@ namespace chameleon {
 
 
         install<mesos::internal::RunTaskMessage>(
-                &Slave::runTask,
+                &Slave::run_task,
                 &mesos::internal::RunTaskMessage::framework,
                 &mesos::internal::RunTaskMessage::framework_id,
                 &mesos::internal::RunTaskMessage::pid,
                 &mesos::internal::RunTaskMessage::task);
 
         install<mesos::internal::RegisterExecutorMessage>(
-                &Slave::registerExecutor,
+                &Slave::register_executor,
                 &mesos::internal::RegisterExecutorMessage::framework_id,
                 &mesos::internal::RegisterExecutorMessage::executor_id);
 
@@ -102,7 +94,7 @@ namespace chameleon {
 //                &mesos::internal::ShutdownExecutorMessage::executor_id);
 
         install<mesos::internal::ShutdownFrameworkMessage>(
-                &Slave::shutdownFramework,
+                &Slave::shutdown_framework,
                 &mesos::internal::ShutdownFrameworkMessage::framework_id);
 
         install<ReregisterMasterMessage>(&Slave::reregister_to_master);
@@ -127,26 +119,21 @@ namespace chameleon {
         heartbeat();
     }
 
-    /**
-     * Funtion  : runTask
-     * Author   : weiguow
-     * Date     : 2019-1-2
-     * */
-    void Slave::runTask(
+    void Slave::run_task(
             const process::UPID &from,
             const mesos::FrameworkInfo &frameworkInfo,
             const mesos::FrameworkID &frameworkId,
             const process::UPID &pid,
             const mesos::TaskInfo &task) {
         LOG(INFO) << "Get task from master, start the mesos executor first";
-        const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, task);
+        const mesos::ExecutorInfo executorInfo = get_executorinfo(frameworkInfo, task);
 
         Option<process::UPID> frameworkPid = None();
 
-        Framework* framework = getFramework(frameworkId);
+        Framework* framework = get_framework(frameworkId);
         framework = new Framework(this, frameworkInfo, frameworkPid);
 
-        frameworks[frameworkId.value()] = framework;
+        m_frameworks[frameworkId.value()] = framework;
 
         m_tasks.push(task);
         m_executorInfo = executorInfo;
@@ -184,20 +171,20 @@ namespace chameleon {
         }
     }
 
-    void Slave::registerExecutor(const UPID &from,
+    void Slave::register_executor(const UPID &from,
                                  const mesos::FrameworkID &frameworkId,
                                  const mesos::ExecutorID &executorId) {
         LOG(INFO) << "Got registration for executor '" << executorId.value()
                   << "' of framework " << frameworkId.value() << " from "
                   << stringify(from);
 
-        Framework* framework = getFramework(frameworkId);
+        Framework* framework = get_framework(frameworkId);
 
         mesos::internal::ExecutorRegisteredMessage message;
 
         message.mutable_executor_info()->mutable_framework_id()->MergeFrom(framework->id());
         message.mutable_framework_id()->MergeFrom(framework->id());
-        message.mutable_framework_info()->MergeFrom(framework->info);
+        message.mutable_framework_info()->MergeFrom(framework->m_info);
 
         message.mutable_executor_info()->MergeFrom(m_executorInfo);
         message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
@@ -206,7 +193,7 @@ namespace chameleon {
         send(from, message);
 
         mesos::internal::RunTaskMessage run_task_message;
-        run_task_message.mutable_framework()->MergeFrom(framework->info);
+        run_task_message.mutable_framework()->MergeFrom(framework->m_info);
         if(!m_tasks.empty()){
             mesos::TaskInfo current_task = m_tasks.front();
             run_task_message.mutable_task()->MergeFrom(current_task);
@@ -219,16 +206,9 @@ namespace chameleon {
         send(from, run_task_message);
     }
 
-
-    /**
-     * Function  : getExecutorInfo
-     * Author    : weiguow
-     * Date      : 2019-1-4
-     * Description  : getExecutorInfo from FrameworkInfo & TaskInfo
-     * */
     const string flags_laucher_dir = setting::FLAGS_LAUCHER_DIR;
 
-    mesos::ExecutorInfo Slave::getExecutorInfo(
+    mesos::ExecutorInfo Slave::get_executorinfo(
             const mesos::FrameworkInfo &frameworkInfo,
             const mesos::TaskInfo &task) const {
 
@@ -320,14 +300,7 @@ namespace chameleon {
         return executorInfo;
     }
 
-    /**
-     * Function    : statusUpdate
-     * Author      : weiguow
-     * Date        : 2019-1-8
-     * Description : Encapsulates the statusUpdate message and uses dispatch call _statusUpdate
-     * @param      : update & pid
-     * */
-    void Slave::statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
+    void Slave::status_update(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
 
         LOG(INFO) << "Handling status update " << update.status().state()
                   << " of framework " << update.framework_id().value();
@@ -340,18 +313,10 @@ namespace chameleon {
         LOG(INFO) << "Received status update " << update.status().state()
                   << " of framework " << update.framework_id().value();
 
-        process::dispatch(self(), &Slave::_statusUpdate, update, pid);
+        process::dispatch(self(), &Slave::_status_update, update, pid);
     }
 
-    /**
-     * Functio     : _statusUpdate
-     * Author      : weiguow
-     * Date        : 2019-1-8
-     * Description : this function is invoked by the updateStatus and
-     *               encapsulation StatusUpdateAcknowledgementMessage message
-     * @param      : update & pid
-     * */
-    void Slave::_statusUpdate(
+    void Slave::_status_update(
             const mesos::internal::StatusUpdate &update,
             const Option<UPID> &pid) {
 
@@ -369,17 +334,11 @@ namespace chameleon {
         } else {
             LOG(INFO) << "Ignoring update status ";
         }
-        process::dispatch(self(), &Slave::forward, update);
+        process::dispatch(self(), &Slave::forward_status_update, update);
     }
 
-    /**
-     * Functio     : forward
-     * Author      : weiguow
-     * Date        : 2019-1-10
-     * Description : Call by _statusUpdate, and send StatusUpdateMessage to master
-     * @param      : update
-     * */
-    void Slave::forward(mesos::internal::StatusUpdate update) {
+
+    void Slave::forward_status_update(mesos::internal::StatusUpdate update) {
 
         LOG(INFO) << "Forwarding the update " << update.status().state()
                   << " of framework " << update.framework_id().value() << " to " << m_master;
@@ -391,15 +350,7 @@ namespace chameleon {
         send(m_master, message);
     }
 
-    /**
-     * Function     : statusUpdateAcknowledgement
-     * Author      : weiguow
-     * Date        : 2019-1-10
-     * Description : get statusUpdateAcknowledgement message from master to
-     *               make sure the status update is successful
-     * @param      : from, slaveId, frameworkId, taskId, uuid
-     * */
-    void Slave::statusUpdateAcknowledgement(
+    void Slave::status_update_acknowledgement(
             const UPID &from,
             const mesos::SlaveID &slaveId,
             const mesos::FrameworkID &frameworkId,
@@ -418,21 +369,15 @@ namespace chameleon {
                   << " of framework " << frameworkId.value();
     }
 
-    /**
-     * get FrameworkInfo by FrameworkId-by weiguow-2019/2/25
-     * */
-    Framework* Slave::getFramework(const mesos::FrameworkID& frameworkId) const
+    Framework* Slave::get_framework(const mesos::FrameworkID& frameworkId) const
     {
-        if (frameworks.count(frameworkId.value()) > 0) {
-            return frameworks.at(frameworkId.value());
+        if (m_frameworks.count(frameworkId.value()) > 0) {
+            return m_frameworks.at(frameworkId.value());
         }
         return nullptr;
     }
 
-    /**
-     * removeFramework - by weiguow - 2019-2-26
-     * */
-    void Slave::removeFramework(chameleon::Framework *framework) {
+    void Slave::remove_framework(chameleon::Framework *framework) {
         CHECK_NOTNULL(framework);
 
         LOG(INFO) << "Cleaning up framework " << framework->id().value();
@@ -443,17 +388,11 @@ namespace chameleon {
 //        frameworks.erase(framework->id().value());
     }
 
-    /**
-     * Function     : shutdownFramework
-     * Author       : weiguow
-     * Date         : 2019-2-26
-     * Description  : shutdownFramework after task run over
-     * */
-    void Slave::shutdownFramework(const process::UPID &from, const mesos::FrameworkID &frameworkId) {
+    void Slave::shutdown_framework(const process::UPID &from, const mesos::FrameworkID &frameworkId) {
         LOG(INFO) << "Asked to shut down framework " << frameworkId.value()
                 << " by " << from;
 
-        Framework* framework = getFramework(frameworkId);
+        Framework* framework = get_framework(frameworkId);
 
         switch (framework->state) {
             case Framework::TERMINATING:
@@ -466,7 +405,7 @@ namespace chameleon {
                 framework->state = Framework::TERMINATING;
 
                 // Remove this framework if it has no pending executors and tasks.
-                removeFramework(framework);
+                remove_framework(framework);
 
                 break;
             default:

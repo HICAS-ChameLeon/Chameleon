@@ -1,8 +1,8 @@
 
-PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages monitor_info ${CMAKE_BINARY_DIR}/src/messages monitor_info)
-
-add_subdirectory(resource_collector)
+#add_subdirectory(resource_collector)
 #add_subdirectory(fetcher)
+
+include_directories(resource_collector)
 
 # set the gtest 1.7 relevant library names.
 set(GTEST_LIBS gmock gtest gflags)

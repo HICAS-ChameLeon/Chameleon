@@ -17,17 +17,11 @@ PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages hardware_resource ${CMAKE_BINARY
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages runtime_resource ${CMAKE_BINARY_DIR}/src/messages runtime_resource)
 
 add_subdirectory(common)
-
 add_subdirectory(messages)
-
 add_subdirectory(log)
-
 add_subdirectory(master)
-
 add_subdirectory(slave)
-
 add_subdirectory(submitter)
-
 add_subdirectory(launcher)
 
 #add_subdirectory(my_hello)

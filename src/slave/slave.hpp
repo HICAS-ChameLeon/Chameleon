@@ -59,15 +59,14 @@
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
 #include <slave_related.pb.h>
-
 #include <scheduler.pb.h>
 #include <messages.pb.h>
 #include <mesos.pb.h>
 
 // chameleon headers
-#include "resource_collector/resource_collector.hpp"
+#include <resource_collector/resource_collector.hpp>
+#include <resource_collector/runtime_resources_usage.hpp>
 #include <configuration_glog.hpp>
-#include "resource_collector/runtime_resources_usage.hpp"
 #include <chameleon_os.hpp>
 #include <chameleon_string.hpp>
 
@@ -132,35 +131,44 @@ namespace chameleon {
             Slave::m_work_dir = m_work_dir;
         }
 
-        void runTask(const process::UPID &from,
+        void run_task(const process::UPID &from,
                      const mesos::FrameworkInfo &frameworkInfo,
                      const mesos::FrameworkID &frameworkId,
                      const process::UPID &pid,
                      const mesos::TaskInfo &task);
 
-        void statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID> &pid);
+        void start_mesos_executor(const Framework *framework);
 
-        void forward(mesos::internal::StatusUpdate update);
+        void register_executor(const UPID &from,
+                               const mesos::FrameworkID &frameworkId,
+                               const mesos::ExecutorID &executorId);
 
-        void statusUpdateAcknowledgement(
+        void status_update(mesos::internal::StatusUpdate update, const Option<UPID> &pid);
+
+        void _status_update(const mesos::internal::StatusUpdate &update,
+                const Option<UPID> &pid);
+
+        void forward_status_update(mesos::internal::StatusUpdate update);
+
+        void status_update_acknowledgement(
                 const UPID &from,
                 const mesos::SlaveID &slaveId,
                 const mesos::FrameworkID &frameworkId,
                 const mesos::TaskID &taskId,
                 const string &uuid);
 
-        Framework *getFramework(
+        Framework *get_framework(
                 const mesos::FrameworkID &frameworkId) const;
 
-        mesos::ExecutorInfo getExecutorInfo(
-                const mesos::FrameworkInfo &frameworkInfo,
-                const mesos::TaskInfo &task) const;
+        void remove_framework(Framework* framework);
 
-        void removeFramework(Framework* framework);
-
-        void shutdownFramework(
+        void shutdown_framework(
                 const process::UPID& from,
                 const mesos::FrameworkID& frameworkId);
+
+        mesos::ExecutorInfo get_executorinfo(
+                const mesos::FrameworkInfo &frameworkInfo,
+                const mesos::TaskInfo &task) const;
 
     protected:
         void finalize() override;
@@ -180,7 +188,7 @@ namespace chameleon {
         string m_uuid;
         string m_master;  //master@127.0.0.1：1080
 
-        hashmap<string, Framework*> frameworks;
+        hashmap<string, Framework*> m_frameworks;
 
         mesos::SlaveInfo m_slaveInfo;
         mesos::ExecutorInfo m_executorInfo;
@@ -192,16 +200,6 @@ namespace chameleon {
         void heartbeat();
 
         void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
-
-        void start_mesos_executor(const Framework *framework);
-
-        void registerExecutor(const UPID &from,
-                              const mesos::FrameworkID &frameworkId,
-                              const mesos::ExecutorID &executorId);
-
-        void _statusUpdate(
-                const mesos::internal::StatusUpdate &update,
-                const Option<UPID> &pid);
 
         void reregister_to_master(const UPID &from, const ReregisterMasterMessage &message);
 
@@ -312,9 +310,9 @@ namespace chameleon {
                 Slave *_slave,
                 const mesos::FrameworkInfo &_info,
                 const Option<process::UPID> &_pid)
-                : slave(_slave),
-                  info(_info) {
-            pid = _pid;
+                : m_slave(_slave),
+                  m_info(_info) {
+            m_pid = _pid;
         };
 
         ~Framework();
@@ -325,16 +323,16 @@ namespace chameleon {
 
 //        void checkpointFramework() const;
 
-        const mesos::FrameworkID id() const { return info.id(); }
+        const mesos::FrameworkID id() const { return m_info.id(); }
 
         enum State {
             RUNNING,      // First state of a newly created framework.
             TERMINATING,  // Framework is shutting down in the cluster.
         } state;
 
-        Slave *slave;
-        mesos::FrameworkInfo info;
-        Option<process::UPID> pid;
+        Slave *m_slave;
+        mesos::FrameworkInfo m_info;
+        Option<process::UPID> m_pid;
 
     private:
         Framework(const Framework &);
