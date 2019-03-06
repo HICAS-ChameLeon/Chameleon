@@ -103,17 +103,11 @@ namespace chameleon {
 
     class Slave : public ProtobufProcess<Slave> {
     public:
-        explicit Slave() : ProcessBase("slave"), m_interval() {
-            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
-            msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
-//            msp_resource_collector = new ResourceCollector();
-        }
+        explicit Slave();
 
-        Slave(const Slave &slave) = default;
+        Slave(const Slave &slave) = delete;
 
-        virtual ~Slave() {
-            LOG(INFO) << "~ Slave()";
-        }
+        virtual ~Slave();
 
         virtual void initialize();
 
@@ -173,6 +167,7 @@ namespace chameleon {
 
         shared_ptr<ResourceCollector> msp_resource_collector;
         shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
+        RuntimeResourcesMessage m_runtime_resources;
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
 
         shared_ptr<UPID> msp_masterUPID;
