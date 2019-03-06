@@ -1,5 +1,8 @@
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages participant_info ${CMAKE_BINARY_DIR}/src/messages participant_info)
 
+include_directories(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
+message(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
+
 # set the gtest 1.7 relevant library names.
 set(GTEST_LIBS gmock gtest gflags)
 
@@ -25,5 +28,5 @@ list(APPEND super_master_PROTOS hardware_resource)
 list(APPEND super_master_PROTOS runtime_resource)
 set(super_master_SRCS  super_master.hpp super_master.cpp)
 add_executable(super_master ${super_master_SRCS})
-target_link_libraries(super_master gflags ${super_master_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET})
+target_link_libraries(super_master gflags ${super_master_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} ${master_PROTOS})
 
