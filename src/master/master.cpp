@@ -333,11 +333,14 @@ namespace master {
     void Master::Offer(const mesos::FrameworkID &frameworkId) {
 
         Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
-
-
         mesos::internal::ResourceOffersMessage message;
 
         mesos::Offer *offer = new mesos::Offer();
+
+        string slave_ip = find_min_cpu_and_memory_rates();
+
+        LOG(INFO) << "what is find_min_cpu_and_memory_return: " << slave_ip;
+
 
         // cpus
         mesos::Resource *cpu_resource = new mesos::Resource();
@@ -382,10 +385,9 @@ namespace master {
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("1");
 
-        mesos::Offer *second_offer = create_a_offer(framework->id());
-        message.add_offers()->MergeFrom(*second_offer);
-        message.add_pids("2");
-
+//        mesos::Offer *second_offer = create_a_offer(framework->id());
+//        message.add_offers()->MergeFrom(*second_offer);
+//        message.add_pids("2");
 
         LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
                   << *framework;
@@ -502,8 +504,6 @@ namespace master {
         CHECK_NOTNULL(framework);
 
         const mesos::SlaveID &slaveID = shutdown.slave_id();
-
-//        const
     }
 
     /**
@@ -709,7 +709,7 @@ namespace master {
             }
             Slave* slave_ = getSlave(slave->uid);
             slave_->usage.put(slave->uid, slave->runtimeInfo);
-            LOG(INFO) << "slave's runtime resource is: " << slave->runtimeInfo;
+//            LOG(INFO) << "slave's runtime resource is: " << slave_->runtimeInfo;
         }
 
         auto slave_id = runtime_resouces_message.slave_id();
@@ -717,7 +717,7 @@ namespace master {
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
     }
 
-    Try<string> Master::find_min_cpu_and_memory_rates() {
+    string Master::find_min_cpu_and_memory_rates() {
         double min_sum_rate = 100.0;
         string res = "";
         for (auto it = m_proto_runtime_resources.begin(); it != m_proto_runtime_resources.end(); it++) {
@@ -736,8 +736,8 @@ namespace master {
             }
         }
         if (res.empty()) {
-            LOG(ERROR) << " calculate the best machine to schedule the new job failed!";
-            return Error("The whole cluster has no machine");
+            LOG(INFO) << " calculate the best machine to schedule the new job failed!";
+            return res;
         }
         return res;
     }
@@ -834,10 +834,14 @@ namespace master {
             terminate(self());
         }
     }
+
+    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
+        return stream << TaskState_Name(state);
+    }
 }
 
 using namespace master;
-
+ 
 int main(int argc, char **argv) {
     chameleon::set_storage_paths_of_glog("master");// provides the program name
     chameleon::set_flags_of_glog();

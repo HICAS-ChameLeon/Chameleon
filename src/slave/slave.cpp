@@ -440,7 +440,7 @@ namespace chameleon {
         CHECK(framework->state == Framework::RUNNING ||
               framework->state == Framework::TERMINATING);
 
-        frameworks.erase(framework->id().value());
+//        frameworks.erase(framework->id().value());
     }
 
     /**
@@ -470,8 +470,7 @@ namespace chameleon {
 
                 break;
             default:
-                LOG(FATAL) << "Framework " << frameworkId.value()
-                           << " is in unexpected state ";
+
                 break;
         }
     }

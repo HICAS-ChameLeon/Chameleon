@@ -322,7 +322,7 @@ namespace master {
          * ( the formula is: combination =  cpu used rate * 50 + memory used rate * 50 )
          * @return the slave ip or an Error if we have no slave
          */
-        Try<string> find_min_cpu_and_memory_rates();
+        string find_min_cpu_and_memory_rates();
 
         /**
          * get a ReplyShutdownMessage from the slave which belongs to the administration of the current master had shutdown.
@@ -423,7 +423,7 @@ namespace master {
         return stream;
     }
 
-    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state);
+
 
 }
 
