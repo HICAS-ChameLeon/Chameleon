@@ -627,7 +627,7 @@
             my_supermaster.id = 0;
             my_supermaster.label = "super_master";
             my_supermaster.shape = 'image';
-            my_supermaster.image = DIR + 'Hardware-WQN-main.png';
+            my_supermaster.image = DIR + 'Hardware-WQN-superserver.png';
             my_supermaster.title = '超级节点';
 
             var index_master = 1;
@@ -816,7 +816,7 @@
 
     //模态框对应的Controller
     chameleon_app.controller('ShutdownCtrl', function($scope,$modal) {
-        var alert_message = "Make sure to shutdown all slaves?";
+        var alert_message = "确认关闭所有slave节点?";
         $scope.openModal = function() {
             var modalInstance = $modal.open({
                 templateUrl : 'shutdown.html',
@@ -854,7 +854,7 @@
 
     //开启supermaster对应的Controller
     chameleon_app.controller('StartSupermasterCtrl',function ($scope,$modal) {
-        var alert_message = "Make sure to start Supermaster?";
+        var alert_message = "确认开启Supermaster?";
         $scope.openModal = function() {
             var modalInstance = $modal.open({
                 templateUrl : 'ControlSupermaster.html',
@@ -891,7 +891,7 @@
 
     //关闭supermaster对应的Controller
     chameleon_app.controller('StopSupermasterCtrl',function ($scope,$modal) {
-        var alert_message = "Make sure to stop Supermaster?";
+        var alert_message = "确认停止Supermaster?";
         $scope.openModal = function() {
             var modalInstance = $modal.open({
                 templateUrl : 'ControlSupermaster.html',
