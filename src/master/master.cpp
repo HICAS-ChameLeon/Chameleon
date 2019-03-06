@@ -9,7 +9,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "./super_master", "the absolute path of supermaster executive. For example, -supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
+DEFINE_string(supermaster_path, "./super_master", "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 
 /*
  * Function name  : ValidateInt
@@ -213,7 +213,7 @@ namespace master {
                       * Funtion name    :  Try
                       * @param          :
                       * */
-                      m_super_master_path.append(" --master_path=/home/wqn/Chameleon/build/src/master/master");
+                      m_super_master_path.append(" --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
                     Try<Subprocess> super_master = subprocess(
                            m_super_master_path,
                             Subprocess::FD(STDIN_FILENO),
@@ -349,9 +349,12 @@ namespace master {
             framework->send(message);
 
             LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful!";
-
-            const Duration temp_duration = Seconds(0);
-            process::delay(temp_duration, self(), &Master::Offer, framework->id());
+//
+//            const Duration temp_duration = Seconds(0);
+//            //
+//            process::delay(temp_duration, self(), &Master::Offer, framework->id());
+// after subscribed, the framework can be given resource offers.
+            Offer(framework->id());
 
             return;
         }
