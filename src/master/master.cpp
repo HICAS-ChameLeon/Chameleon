@@ -8,6 +8,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
+DEFINE_string(supermaster_path, "./super_master", "the absolute path of supermaster executive. For example, -supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 
 /*
  * Function name  : ValidateInt
@@ -23,7 +24,23 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
     return false;
 }
 
-static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
+/**
+ * Function name  : ValidateStr
+ * Author         : weiguow
+ * Date           : 2018-12-13
+ * Description    : Determines whether the input parameter is valid
+ * Return         : True or False*/
+static bool ValidateStr(const char *flagname, const string &value) {
+    if (!value.empty()) {
+        return true;
+    }
+    printf("Invalid value for --%s: To run this program, you must set a meaningful value for it "
+           "%s\n", flagname, value.c_str());;
+    return false;
+}
+
+static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
+static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &ValidateStr);
 
 namespace master {
 
@@ -64,6 +81,10 @@ namespace master {
 //        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
 
         install<mesos::scheduler::Call>(&Master::receive);
+
+        //change two levels to one related
+        install("MAKUN",&Master::get_select_master);
+//        install<TerminatingMasterMessage>
 
         // http://172.20.110.228:6060/master/hardware-resources
         route(
@@ -111,6 +132,42 @@ namespace master {
                     return ok_response;
                 });
 
+        route(
+                "/frameworks",
+                "wangweiguo new version of frameworks",
+                [this](Request request) {
+                    JSON::Object a_framework;
+                    JSON::Object a_content = JSON::Object();
+                    if (!this->frameworks.registered.empty()) {
+                       JSON::Array frameworks_array;
+                        for (auto it = this->frameworks.registered.begin();
+                             it != this->frameworks.registered.end(); it++) {
+                            Framework *framework = it->second;
+                            a_framework = JSON::protobuf(framework->m_info);
+                            if (framework->state == Framework::ACTIVE) {
+                                a_framework.values["state"] = "ACTIVE";
+                            }if (framework->state == Framework::INACTIVE) {
+                                a_framework.values["state"] = "INACTIVE";
+                            }if (framework->state == Framework::RECOVERED) {
+                                a_framework.values["state"] = "RECOVERED";
+                            }if (framework->state == Framework::DISCONNECTED) {
+                                a_framework.values["state"] = "DISCONNECTED";
+                            }
+                            frameworks_array.values.emplace_back(a_framework);
+                        }
+                        a_content.values["quantity"] = frameworks_array.values.size();
+                        a_content.values["content"] = frameworks_array;
+                    } else {
+
+                        a_content.values["quantity"] = 0;
+                        a_content.values["content"] = JSON::Object();
+                    }
+
+                    OK ok_response(stringify(a_content));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
 
         // http://172.20.110.228:6060/master/stop-cluster
         route(
@@ -138,6 +195,29 @@ namespace master {
                     return ok_response;
                 });
 
+        route(
+                "/start_supermaster",
+                "start supermaster by subprocess",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    /**
+                      * Function model  :  start a subprocess of super_master
+                      * Author          :  Jessicallo
+                      * Date            :  2019-2-27
+                      * Funtion name    :  Try
+                      * @param          :
+                      * */
+                      m_super_master_path.append(" --master_path=/home/wqn/Chameleon/build/src/master/master");
+                    Try<Subprocess> super_master = subprocess(
+                           m_super_master_path,
+                            Subprocess::FD(STDIN_FILENO),
+                            Subprocess::FD(STDOUT_FILENO),
+                            Subprocess::FD(STDERR_FILENO)
+                    );
+                    OK response(stringify(result));
+                    response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return response;
+                });
 
 
 //     install("stop", &MyProcess::stop);
@@ -311,9 +391,14 @@ namespace master {
 
         mesos::Offer *offer = new mesos::Offer();
 
-        string slave_ip = find_min_cpu_and_memory_rates();
 
-        LOG(INFO) << "what is find_min_cpu_and_memory_return: " << slave_ip;
+        foreachvalue(Slave* slave, slaves.registered){
+            RuntimeResourcesMessage runtimeResourcesMessage = m_slave_usage.get(slave->m_pid).get();
+            LOG(INFO) << "weiguow" << runtimeResourcesMessage.cpu_usage().cpu_used() << " : "
+                      << runtimeResourcesMessage.disk_usage().disk_available() << " : "
+                      << runtimeResourcesMessage.net_usage().net_used() << " : "
+                      << runtimeResourcesMessage.mem_usage().mem_available();
+        }
 
         // cpus
         mesos::Resource *cpu_resource = new mesos::Resource();
@@ -590,11 +675,6 @@ namespace master {
                                            const HardwareResourcesMessage &hardware_resources_message) {
         DLOG(INFO) << "Enter update hardware resources";
 
-        /**
-         * register slave on master
-         * slaveuid : uuid+S+number
-         * slavepid : from
-         * author   : weiguow*/
         slaves.registering.insert(from);    //Save SlaveInfo
         LOG(INFO) << "Registering slave " << from << " on " << self();
 
@@ -623,15 +703,13 @@ namespace master {
     void Master::received_heartbeat(const UPID &from, const RuntimeResourcesMessage &runtime_resouces_message) {
         LOG(INFO) << "received a heartbeat message from " << from;
 
-        /** save slaveInfo and put runtime resource into slave.usage*/
         foreachvalue(Slave* slave, slaves.registered){
             if(! slaves.registered.contains(slave->m_uid)){
                 LOG(INFO) << "This slave is not registered";
                 return;
             }
             Slave* slave_ = get_slave(slave->m_uid);
-            slave_->m_usage.put(slave->m_uid, slave->m_runtimeinfo);
-//            LOG(INFO) << "slave's runtime resource is: " << slave_->runtimeInfo;
+            m_slave_usage.put(slave_->m_pid, runtime_resouces_message);
         }
 
         auto slave_id = runtime_resouces_message.slave_id();
@@ -748,29 +826,41 @@ namespace master {
         }
     }
 
-    void
-    Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
+    void Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
         LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
         if (message.master_id() == stringify(self().address.ip)) {
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
             terminate(self());
+        } else{
+            ReregisterMasterMessage *reregister_master_message = new ReregisterMasterMessage();
+            reregister_master_message->set_master_ip(message.master_id());
+            reregister_master_message->set_port("6060");
+//            MasterRegisteredMessage *master_registered_message = new MasterRegisteredMessage();
+//            master_registered_message->set_master_id(stringify(message.master_id()));
+//            master_registered_message->set_master_uuid(m_uuid);
+//            master_registered_message->set_status(MasterRegisteredMessage_Status_FIRST_REGISTERING);
+            for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
+//                LOG(INFO) << *iter;
+                reregister_master_message->set_slave_ip(*iter);
+                UPID slave_id("slave@"+*iter+":6061");
+                send(slave_id,*reregister_master_message);
+                LOG(INFO) << self() << " send new_master_message: " << reregister_master_message->master_ip()
+                << " to salve: " <<slave_id;
+            }
+            delete reregister_master_message;
+            LOG(INFO) << self() << " is terminating due to change levels to one";
+            terminate(self());
+            process::wait(self());
         }
     }
 
-    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
-        return stream << TaskState_Name(state);
+    void Master::get_select_master(const UPID& from, const string& message) {
+        LOG(INFO) << "MAKUN received select_master_message";
+        send(from,"MAKUN2");
     }
+    // end of super_mater related
+//    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state)
 
-    inline std::ostream& operator<<(std::ostream& stream, const mesos::scheduler::Call::Type& type)
-    {
-        return stream << mesos::scheduler::Call::Type_Name(type);
-    }
-
-
-    inline std::ostream& operator<<(std::ostream& stream, const mesos::scheduler::Event::Type& type)
-    {
-        return stream << mesos::scheduler::Event::Type_Name(type);
-    }
 }
 
 using namespace master;
@@ -786,7 +876,7 @@ int main(int argc, char **argv) {
 
     google::CommandLineFlagInfo info;
 
-    if (port_Int) {
+    if (has_port_Int && has_super_master_path) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
         process::initialize("master");

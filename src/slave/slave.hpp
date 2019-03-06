@@ -336,7 +336,6 @@ namespace chameleon {
 
     private:
         Framework(const Framework &);
-
         Framework &operator=(const Framework &);
     };
 
@@ -357,14 +356,11 @@ namespace chameleon {
             const Option<mesos::TaskInfo> &task,
             const Option<mesos::TaskGroupInfo> &taskGroup);
 
-    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state);
-
-//    std::ostream &operator<<(std::ostream &stream, Slave::State state);
+    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
+        return stream << TaskState_Name(state);
+    }
 
     std::ostream &operator<<(std::ostream &stream, Framework::State state);
-
-//    std::ostream &operator<<(std::ostream &stream, Executor::State state);
-
 }
 
 

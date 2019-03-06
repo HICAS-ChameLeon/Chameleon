@@ -490,11 +490,6 @@ namespace chameleon {
             send_heartbeat_to_master();
         }
     }
-
-    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)
-    {
-        return stream << TaskState_Name(state);
-    }
 }
 
 
