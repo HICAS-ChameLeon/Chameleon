@@ -568,14 +568,9 @@ namespace chameleon {
             m_master = "master@"+message.master_ip()+":"+message.port();
             msp_masterUPID.reset(new UPID(m_master));
             LOG(INFO)<<" prepare to  a  heartbeat to the new master "<<m_master<<" ";
-            //
             UPID new_master_ip(m_master);
             DLOG(INFO) << "Before send message to master";
             send(new_master_ip, *hr_message);
-            LOG(INFO)<<"send";
-            delete hr_message;
-            LOG(INFO)<<"end";
-            //
             send_heartbeat_to_master();
          }
     }
