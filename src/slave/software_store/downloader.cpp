@@ -242,7 +242,9 @@ namespace chameleon {
 using namespace chameleon;
 int main() {
     Downloader downloader;
-    const string source_uri = "http://mirrors.hust.edu.cn/apache/spark/spark-2.4.0/spark-2.4.0-bin-hadoop2.7.tgz";
+//    hdfs://ccrfox246:9000/user/lemaker/HiBench/Bayes/Input/part-00000
+//    const string source_uri = "http://mirrors.hust.edu.cn/apache/spark/spark-2.4.0/spark-2.4.0-bin-hadoop2.7.tgz";
+    const string source_uri = "hdfs://ccrfox246:9000/spark-2.3.0-bin-hadoop2.7.tgz";
 //    const string source_uri = "https://www-eu.apache.org/dist/spark/spark-2.4.0/spark-2.4.0-bin-hadoop2.7.tgz";
 //    const string source_uri = "file:///home/lemaker/open-source/spark-2.3.0-bin-hadoop2.7.tgz";
     const string destination_path = "/home/lemaker/open-source/Chameleon/build/spark.tgz";
@@ -255,6 +257,5 @@ int main() {
     if(result_extract.isError()){
         std::cout<<result_extract.get()<<std::endl;
     }
-
     return 0;
 }
