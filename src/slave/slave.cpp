@@ -72,6 +72,9 @@ namespace chameleon {
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
+        setting::SLAVE_EXE_DIR = os::getcwd();
+        LOG(INFO)<<"slave executable path"<<setting::SLAVE_EXE_DIR;
+
         msp_masterUPID = make_shared<UPID>(UPID(m_master));
 
         m_slaveInfo.set_hostname(self().address.hostname().get());

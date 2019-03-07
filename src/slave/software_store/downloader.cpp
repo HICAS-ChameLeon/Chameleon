@@ -90,6 +90,28 @@ namespace chameleon {
                strings::startsWith(uri, "ftps://");
     }
 
+    Try<string> Downloader::basename(const string &uri) {
+        if (uri.find_first_of('\\') != string::npos ||
+            uri.find_first_of('\'') != string::npos ||
+            uri.find_first_of('\0') != string::npos) {
+            return Error("Illegal characters in URI");
+        }
+
+        size_t index = uri.find("://");
+        if (index != string::npos && 1 < index) {
+            // URI starts with protocol specifier, e.g., http://, https://,
+            // ftp://, ftps://, hdfs://, hftp://, s3://, s3n://.
+
+            string path = uri.substr(index + 3);
+            if (!strings::contains(path, "/") || path.size() <= path.find('/') + 1) {
+                return Error("Malformed URI (missing path): " + uri);
+            }
+
+            return path.substr(path.find_last_of('/') + 1);
+        }
+        return Path(uri).basename();
+    }
+
     Try<string> Downloader::download_with_net(const string &source_uri, const string &destination_path) {
         LOG(INFO) << "Downloading resource from '" << source_uri
                   << "' to '" << destination_path << "'";
@@ -241,21 +263,51 @@ namespace chameleon {
 
 using namespace chameleon;
 int main() {
+
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+    const Option<string> json_fethcher_info = os::getenv("CHAMELEON_FETCHER_INFO");
+    CHECK_SOME(json_fethcher_info)<<"Missing CHAMELEON_FETCHER_INFO environment variable";
+
+    Try<JSON::Object> parse = JSON::parse<JSON::Object>(json_fethcher_info.get());
+    CHECK_SOME(parse)<<"Failed to parse CHAMELEON_FETCHER_INFO:"<<parse.error();
+
+    Try<mesos::fetcher::FetcherInfo> fetcher_info = ::protobuf::parse<mesos::fetcher::FetcherInfo>(parse.get());
+    CHECK_SOME(fetcher_info)<<"Failed to parse FetcherInfo: "<<fetcher_info.error();
+
+    const string sanbox_directory = fetcher_info.get().sandbox_directory();
+
+
     Downloader downloader;
+    for(auto it  = fetcher_info.get().items().begin();it!=fetcher_info.get().items().end();it++){
+
+        Try<string> output_file = it->uri().has_output_file()? it->uri().output_file() : downloader.basename(it->uri().value());
+        const string destination_path = sanbox_directory+"/"+output_file.get();
+        Try<string> result = downloader.download(it->uri().value(),destination_path,"/home/lemaker");
+        if(result.isError()){
+            std::cout<<result.get()<<std::endl;
+        }
+
+
+        Try<bool> result_extract = downloader.extract(destination_path, sanbox_directory);
+        if(result_extract.isError()){
+            std::cout<<result_extract.get()<<std::endl;
+        }
+    }
 //    hdfs://ccrfox246:9000/user/lemaker/HiBench/Bayes/Input/part-00000
 //    const string source_uri = "http://mirrors.hust.edu.cn/apache/spark/spark-2.4.0/spark-2.4.0-bin-hadoop2.7.tgz";
-    const string source_uri = "hdfs://ccrfox246:9000/spark-2.3.0-bin-hadoop2.7.tgz";
-//    const string source_uri = "https://www-eu.apache.org/dist/spark/spark-2.4.0/spark-2.4.0-bin-hadoop2.7.tgz";
-//    const string source_uri = "file:///home/lemaker/open-source/spark-2.3.0-bin-hadoop2.7.tgz";
-    const string destination_path = "/home/lemaker/open-source/Chameleon/build/spark.tgz";
-    Try<string> result = downloader.download(source_uri,destination_path,"/home/lemaker");
-    if(result.isError()){
-        std::cout<<result.get()<<std::endl;
-    }
-
-    Try<bool> result_extract = downloader.extract("/home/lemaker/open-source/Chameleon/build/spark.tgz", "/home/lemaker/open-source/Chameleon/build/");
-    if(result_extract.isError()){
-        std::cout<<result_extract.get()<<std::endl;
-    }
+//    const string source_uri = "hdfs://ccrfox246:9000/spark-2.3.0-bin-hadoop2.7.tgz";
+////    const string source_uri = "https://www-eu.apache.org/dist/spark/spark-2.4.0/spark-2.4.0-bin-hadoop2.7.tgz";
+////    const string source_uri = "file:///home/lemaker/open-source/spark-2.3.0-bin-hadoop2.7.tgz";
+//    const string destination_path = "/home/lemaker/open-source/Chameleon/build/spark.tgz";
+//    Try<string> result = downloader.download(source_uri,destination_path,"/home/lemaker");
+//    if(result.isError()){
+//        std::cout<<result.get()<<std::endl;
+//    }
+//
+//    Try<bool> result_extract = downloader.extract("/home/lemaker/open-source/Chameleon/build/spark.tgz", "/home/lemaker/open-source/Chameleon/build/");
+//    if(result_extract.isError()){
+//        std::cout<<result_extract.get()<<std::endl;
+//    }
     return 0;
 }

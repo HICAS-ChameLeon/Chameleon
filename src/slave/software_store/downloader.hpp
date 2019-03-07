@@ -18,6 +18,7 @@
 #include <stout/os.hpp>
 #include <stout/path.hpp>
 #include <stout/net.hpp>
+#include <stout/protobuf.hpp>
 
 #include <stout/os/getcwd.hpp>
 #include <stout/os/write.hpp>
@@ -27,6 +28,9 @@
 
 #include <process/process.hpp>
 #include <process/subprocess.hpp>
+
+// protobuf
+#include <fetcher.pb.h>
 
 #include "hdfs.hpp"
 #include "status_utils.hpp"
@@ -50,7 +54,7 @@ namespace chameleon {
                 const Option<string>& frameworks_home);
 
         static Try<bool> extract(const string& source_path, const string& destination_directory);
-
+        static Try<string> basename(const string& uri);
 
     private:
         static Try<string> chmod_executable(const string &file_path);
