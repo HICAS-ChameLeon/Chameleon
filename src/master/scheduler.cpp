@@ -34,7 +34,31 @@ namespace chameleon{
                 }
             }
             return m_slaves.registered.get(m_slave_pid);
-
         }
+
+//        string Master::find_min_cpu_and_memory_rates() {
+//            double min_sum_rate = 100.0;
+//            string res = "";
+//            for (auto it = m_proto_runtime_resources.begin(); it != m_proto_runtime_resources.end(); it++) {
+//                double cur_cpu_rate;
+//                double cur_mem_rate;
+//                auto cur_message = it->second;
+//                cur_cpu_rate = cur_message.cpu_usage().cpu_used() * 0.01;
+//                cur_mem_rate = static_cast<double>(cur_message.mem_usage().mem_available()) /
+//                               static_cast<double >(cur_message.mem_usage().mem_total());
+//                double cur_sum_rate = 50 * cur_cpu_rate + 50 * cur_mem_rate;
+//                LOG(INFO) << it->first << " cpu usage is " << cur_cpu_rate << " memory usage is " << cur_mem_rate;
+//                LOG(INFO) << it->first << " cur_sum_rate is " << cur_sum_rate;
+//                if (min_sum_rate > cur_sum_rate) {
+//                    min_sum_rate = cur_sum_rate;
+//                    res = it->first;
+//                }
+//            }
+//            if (res.empty()) {
+//                LOG(INFO) << " calculate the best machine to schedule the new job failed!";
+//                return res;
+//            }
+//            return res;
+//        }
     }
 }

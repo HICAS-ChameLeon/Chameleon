@@ -123,32 +123,30 @@ namespace chameleon {
 
                 m_state = INITIALIZING;
 
-                m_masterInfo.set_id(UUID::random().toString());
-                m_masterInfo.set_ip(self().address.ip.in().get().s_addr);
-                m_masterInfo.set_port(self().address.port);
-                m_masterInfo.set_pid(self());
+                m_masterinfo.set_id(m_uuid);
+                m_masterinfo.set_pid(self());
 
-                string hostname;
-                hostname = stringify(self().address.ip);
+                m_masterinfo.set_ip(self().address.ip.in().get().s_addr);
+                m_masterinfo.set_port(self().address.port);
 
-                m_masterInfo.mutable_address()->set_ip(stringify(self().address.ip));
-                m_masterInfo.mutable_address()->set_port(self().address.port);
-                m_masterInfo.mutable_address()->set_hostname(hostname);
+                m_masterinfo.mutable_address()->set_ip(stringify(self().address.ip));
+                m_masterinfo.mutable_address()->set_port(self().address.port);
+                m_masterinfo.mutable_address()->set_hostname(stringify(self().address.ip));
             }
 
             virtual ~Master() {}
 
             virtual void initialize();
 
-            void Offer(const mesos::FrameworkID &frameworkId);
-
             void receive(const process::UPID &from, const mesos::scheduler::Call &call);
 
             void subscribe(const process::UPID &from, const mesos::scheduler::Call::Subscribe &subscribe);
 
-            void teardown_framework(Framework *framework);
+            void Offer(const mesos::FrameworkID &frameworkId);
 
             void accept(Framework *framework, mesos::scheduler::Call::Accept accept);
+
+            void teardown_framework(Framework *framework);
 
             void decline_framework(Framework *framework, const mesos::scheduler::Call::Decline &decline);
 
@@ -162,20 +160,16 @@ namespace chameleon {
             void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
 
             void add_slave(Slave *slave);
-
-            Slave *get_slave(const string uid);
-
             void add_framework(Framework *framework);
-
-            Framework *get_framework(const mesos::FrameworkID &kFrameworkId);
-
             void remove_framework(Framework *framework);
 
             mesos::FrameworkID new_framework_id();
-
             mesos::OfferID new_offer_id();
-
             string new_slave_id(const string uid);
+
+            Slave *get_slave(const string uid);
+            mesos::Offer* get_offer(const mesos::OfferID &offerid);
+            Framework *get_framework(const mesos::FrameworkID &kFrameworkId);
 
             const RuntimeResourcesMessage get_runtime_info(const UPID &slave_pid);
 
@@ -220,7 +214,6 @@ namespace chameleon {
 
                 public:
                     hashmap<string, Slave *> m_uids;
-
                     hashmap<process::UPID, Slave *> m_pids;
                 } registered;
             } slaves;
@@ -256,41 +249,33 @@ namespace chameleon {
             void set_super_master_path(const string &path);
 
         private:
-            string m_uuid;
             // master states.
             enum {
                 REGISTERING, // is registering from a super_master
                 INITIALIZING,
                 RUNNING
             } m_state;
+
             unordered_map<UPID, ParticipantInfo> m_participants;
             unordered_map<string, JSON::Object> m_hardware_resources;
             unordered_map<string, HardwareResourcesMessage> m_proto_hardware_resources;
             unordered_map<string, JSON::Object> m_runtime_resources;
             unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
+
+            string m_uuid;
             set<string> m_alive_slaves;
-//        unordered_map<string,HardwareResource> m_topology_resources;
 
-
-            string m_slavePID;
-
+            hashmap<string, mesos::Offer*> offers;
             hashmap<UPID, RuntimeResourcesMessage> m_slave_usage;
+
+            mesos::MasterInfo m_masterinfo;
+
             int64_t m_next_framework_id;
             int64_t m_next_offer_id;
             int64_t m_next_slave_id;
 
-            mesos::MasterInfo m_masterInfo;
-
-
             // super_master_related
             bool is_passive;
-
-            /**
-             * a simple algorithm to find a slave which has the least usage rate of cpu and memory combination
-             * ( the formula is: combination =  cpu used rate * 50 + memory used rate * 50 )
-             * @return the slave ip or an Error if we have no slave
-             */
-            string find_min_cpu_and_memory_rates();
 
             /**
              * get a ReplyShutdownMessage from the slave which belongs to the administration of the current master had shutdown.
@@ -298,18 +283,17 @@ namespace chameleon {
              */
             void received_reply_shutdown_message(const string &ip, const bool &is_shutdown);
 
-            mesos::Offer *create_a_offer(const mesos::FrameworkID &frameworkId);
-
             // super_master related
             string m_super_master_path;
 
             void super_master_control(const UPID &super_master,
-                                      const SuperMasterControlMessage &super_master_control_message);
+                    const SuperMasterControlMessage &super_master_control_message);
 
             void received_registered_message_from_super_master(const UPID &super_master,
-                                                               const AcceptRegisteredMessage &message);
+                    const AcceptRegisteredMessage &message);
 
-            void received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message);
+            void received_terminating_master_message(const UPID &super_master,
+                    const TerminatingMasterMessage &message);
         };
 
         class Framework {

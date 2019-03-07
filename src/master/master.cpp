@@ -308,7 +308,7 @@ namespace chameleon {
                                   << " already subscribed, resending acknowledgement";
                         mesos::internal::FrameworkRegisteredMessage message;
                         message.mutable_framework_id()->MergeFrom(framework->id());
-                        message.mutable_master_info()->MergeFrom(framework->m_master->m_masterInfo);
+                        message.mutable_master_info()->MergeFrom(framework->m_master->m_masterinfo);
                         framework->send(message);
                         return;
                     }
@@ -322,7 +322,7 @@ namespace chameleon {
                 add_framework(framework);
 
                 message.mutable_framework_id()->MergeFrom(framework->id());
-                message.mutable_master_info()->MergeFrom(m_masterInfo);
+                message.mutable_master_info()->MergeFrom(m_masterinfo);
 
                 framework->send(message);
 
@@ -335,54 +335,6 @@ namespace chameleon {
             }
         }
 
-        mesos::Offer *Master::create_a_offer(const mesos::FrameworkID &frameworkId) {
-            mesos::Offer *offer = new mesos::Offer();
-
-            Framework *framework = get_framework(frameworkId);
-
-            // cpus
-            mesos::Resource *cpu_resource = new mesos::Resource();
-            cpu_resource->set_name("cpus");
-            cpu_resource->set_type(mesos::Value_Type_SCALAR);
-            mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
-            cpu_scalar->set_value(4.0);
-            cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
-            offer->add_resources()->MergeFrom(*cpu_resource);
-
-            // memory
-            mesos::Resource *mem_resource = new mesos::Resource();
-            mem_resource->set_name("mem");
-            mem_resource->set_type(mesos::Value_Type_SCALAR);
-            mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
-            mem_scalar->set_value(1200.0);
-            mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
-            offer->add_resources()->MergeFrom(*mem_resource);
-
-            // port
-            mesos::Resource *port_resource = new mesos::Resource();
-            port_resource->set_name("ports");
-            port_resource->set_type(mesos::Value_Type_RANGES);
-
-            mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
-            port_range->set_begin(31000);
-            port_range->set_end(32000);
-            offer->add_resources()->MergeFrom(*port_resource);
-
-            mesos::OfferID offerId;
-            offerId.set_value("22222222");
-            offer->mutable_id()->CopyFrom(offerId);
-
-            offer->mutable_framework_id()->MergeFrom(framework->id());
-
-            mesos::SlaveID *slaveID = new mesos::SlaveID();
-            slaveID->set_value("22222222222");
-
-            offer->mutable_slave_id()->MergeFrom(*slaveID);
-
-            offer->set_hostname("221b");
-            return offer;
-        }
-
         void Master::Offer(const mesos::FrameworkID &frameworkId) {
             Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
 
@@ -390,7 +342,7 @@ namespace chameleon {
             mesos::Offer *offer = new mesos::Offer();
 
             scheduler::Scheduler scheduler;
-            Slave* slave = scheduler.find_slave_to_run_framework();
+            Slave *slave = scheduler.find_slave_to_run_framework();
 
             // cpus
             mesos::Resource *cpu_resource = new mesos::Resource();
@@ -414,17 +366,19 @@ namespace chameleon {
             mesos::Resource *port_resource = new mesos::Resource();
             port_resource->set_name("ports");
             port_resource->set_type(mesos::Value_Type_RANGES);
-
             mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
             port_range->set_begin(31000);
             port_range->set_end(32000);
             offer->add_resources()->MergeFrom(*port_resource);
+
 
             offer->mutable_id()->MergeFrom(new_offer_id());
             offer->mutable_framework_id()->MergeFrom(framework->id());
 
             offer->mutable_slave_id()->set_value(slave->m_uid);
             offer->set_hostname(slave->m_hostname);
+
+            offers.put(offer->id().value(), offer);
 
             message.add_offers()->MergeFrom(*offer);
             message.add_pids("1");
@@ -441,6 +395,15 @@ namespace chameleon {
         }
 
         void Master::accept(Framework *framework, mesos::scheduler::Call::Accept accept) {
+
+            string slave_uid;
+            foreach(const mesos::OfferID & offerid, accept.offer_ids()) {
+                mesos::Offer* offer = get_offer(offerid);
+                slave_uid = offer->slave_id().value();
+            }
+
+            Slave* slave = get_slave(slave_uid);
+
             //judge the operation type
             for (int i = 0; i < accept.operations_size(); ++i) {
                 mesos::Offer::Operation *operation = accept.mutable_operations(i);
@@ -473,15 +436,9 @@ namespace chameleon {
 
                         foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
 
-                            string cur_slavePID = "slave@";
-                            if (task.slave_id().value() == "11111111") {
-                                cur_slavePID.append("172.20.110.232:6061");
-                            } else 
-                                cur_slavePID.append("172.20.110.232:6061");
-                            }
                             mesos::TaskInfo task_(task);
 
-                            LOG(INFO) << "Sending task to slave " << cur_slavePID; //slave(1)@172.20.110.152:5051
+                            LOG(INFO) << "Sending task to slave " << slave->m_pid;
 
                             mesos::internal::RunTaskMessage message;
                             message.mutable_framework()->MergeFrom(framework->m_info);
@@ -489,7 +446,7 @@ namespace chameleon {
                             message.mutable_task()->MergeFrom(task_);
                             message.mutable_framework_id()->MergeFrom(framework->id());
 
-                            send(cur_slavePID, message);
+                            send(slave->m_pid, message);
 
                             _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
                         }
@@ -510,14 +467,14 @@ namespace chameleon {
         }
 
         void Master::decline_framework(master::Framework *framework,
-                const mesos::scheduler::Call::Decline &decline) {
+                                       const mesos::scheduler::Call::Decline &decline) {
             CHECK_NOTNULL(framework);
             LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
                       << " for framework " << *framework;
         }
 
         void Master::shutdown_framework(master::Framework *framework,
-                const mesos::scheduler::Call::Shutdown &shutdown) {
+                                        const mesos::scheduler::Call::Shutdown &shutdown) {
             CHECK_NOTNULL(framework);
             const mesos::SlaveID &slaveID = shutdown.slave_id();
         }
@@ -553,6 +510,7 @@ namespace chameleon {
                 const string &uuid) {
             Framework *framework = get_framework(frameworkId);
             LOG(INFO) << "statusUpdateAcknowledgement from " << from;
+
             mesos::scheduler::Call::Acknowledge message;
             message.mutable_slave_id()->CopyFrom(slaveId);
             message.mutable_task_id()->CopyFrom(taskId);
@@ -561,10 +519,15 @@ namespace chameleon {
             acknowledge(framework, message);
         }
 
-        void Master::acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &KAcknowledge) {
-            const mesos::SlaveID &slaveId = KAcknowledge.slave_id();
-            const mesos::TaskID &taskId = KAcknowledge.task_id();
-            const UUID uuid = UUID::fromBytes(KAcknowledge.uuid()).get();
+        void Master::acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge) {
+            const mesos::SlaveID &slaveId = acknowledge.slave_id();
+
+            LOG(INFO) << "what is SlaveID: " <<  slaveId.value();
+
+            Slave* slave = get_slave(slaveId.value());
+
+            const mesos::TaskID &taskId = acknowledge.task_id();
+            const UUID uuid = UUID::fromBytes(acknowledge.uuid()).get();
 
             mesos::internal::StatusUpdateAcknowledgementMessage message;
             message.mutable_slave_id()->CopyFrom(slaveId);
@@ -573,14 +536,16 @@ namespace chameleon {
             message.mutable_task_id()->CopyFrom(taskId);
             message.set_uuid(uuid.toBytes());
 
+
             LOG(INFO) << "Processing ACKNOWLEDGE call " << uuid << " for task " << taskId.value()
                       << " of framework " << framework->m_info.name() << " on agent " << slaveId.value();
-            send(m_slavePID, message);
+
+            send(slave->m_pid, message);
         }
 
         mesos::FrameworkID Master::new_framework_id() {
             std::ostringstream out;
-            out << m_masterInfo.id() << "-" << std::setw(4)
+            out << m_masterinfo.id() << "-" << std::setw(4)
                 << std::setfill('0') << m_next_framework_id++;
             mesos::FrameworkID frameworkId;
             frameworkId.set_value(out.str());
@@ -589,7 +554,7 @@ namespace chameleon {
 
         mesos::OfferID Master::new_offer_id() {
             mesos::OfferID offerId;
-            offerId.set_value(m_masterInfo.id() + "-O" + stringify(m_next_offer_id++));
+            offerId.set_value(m_masterinfo.id() + "-O" + stringify(m_next_offer_id++));
             return offerId;
         }
 
@@ -604,18 +569,6 @@ namespace chameleon {
             CHECK(!slaves.registered.contains(slave->m_uid));
             slaves.registered.put(slave);
             link(slave->m_pid);
-        }
-
-        Slave *Master::get_slave(const string uid) {
-            return slaves.registered.contains(uid)
-                   ? slaves.registered.get(uid)
-                   : nullptr;
-        }
-
-        Framework *Master::get_framework(const mesos::FrameworkID &frameworkId) {
-            return frameworks.registered.contains(frameworkId.value())
-                   ? frameworks.registered.at(frameworkId.value())
-                   : nullptr;
         }
 
         void Master::add_framework(Framework *framework) {
@@ -649,9 +602,28 @@ namespace chameleon {
 //        frameworks.completed.set(framework->id().value(), framework);
         }
 
+        Slave *Master::get_slave(const string uid) {
+            return slaves.registered.contains(uid)
+                   ? slaves.registered.get(uid)
+                   : nullptr;
+        }
+
+        mesos::Offer *Master::get_offer(const mesos::OfferID &offerid) {
+            return offers.contains(offerid.value())
+                   ? offers.get(offerid.value()).get()
+                   : nullptr;
+        }
+
+        Framework *Master::get_framework(const mesos::FrameworkID &frameworkId) {
+            return frameworks.registered.contains(frameworkId.value())
+                   ? frameworks.registered.at(frameworkId.value())
+                   : nullptr;
+        }
+
         const RuntimeResourcesMessage Master::get_runtime_info(const UPID &slave_pid) {
             return m_slave_usage.get(slave_pid).get();
         }
+
 
         void Master::register_participant(const string &hostname) {
             DLOG(INFO) << "master receive register message from " << hostname;
@@ -667,10 +639,10 @@ namespace chameleon {
             string slaveuid = new_slave_id(hardware_resources_message.slave_uuid());
 
             Slave *slave = new Slave(this,
-                    hardware_resources_message,
-                    slaveuid,
-                    hardware_resources_message.slave_hostname(),
-                    from);
+                                     hardware_resources_message,
+                                     slaveuid,
+                                     hardware_resources_message.slave_hostname(),
+                                     from);
 
             add_slave(slave);
 
@@ -688,45 +660,20 @@ namespace chameleon {
 
             //save runtimeinfo-by weiguow
             foreachvalue(Slave *slave, slaves.registered) {
-                if (!slaves.registered.contains(slave->m_uid)) {
-                    LOG(INFO) << "This slave is not registered";
-                    return;
-                }
-                Slave *slave_ = get_slave(slave->m_uid);
-                if (! m_slave_usage.contains(slave_->m_pid)) {
-                    m_slave_usage.put(slave_->m_pid, runtime_resouces_message);
-                }
-            }
+                                    if (!slaves.registered.contains(slave->m_uid)) {
+                                        LOG(INFO) << "This slave is not registered";
+                                        return;
+                                    }
+                                    Slave *slave_ = get_slave(slave->m_uid);
+                                    if (!m_slave_usage.contains(slave_->m_pid)) {
+                                        m_slave_usage.put(slave_->m_pid, runtime_resouces_message);
+                                    }
+                                }
 
 
             auto slave_id = runtime_resouces_message.slave_id();
             m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
             m_proto_runtime_resources[slave_id] = runtime_resouces_message;
-        }
-
-        string Master::find_min_cpu_and_memory_rates() {
-            double min_sum_rate = 100.0;
-            string res = "";
-            for (auto it = m_proto_runtime_resources.begin(); it != m_proto_runtime_resources.end(); it++) {
-                double cur_cpu_rate;
-                double cur_mem_rate;
-                auto cur_message = it->second;
-                cur_cpu_rate = cur_message.cpu_usage().cpu_used() * 0.01;
-                cur_mem_rate = static_cast<double>(cur_message.mem_usage().mem_available()) /
-                               static_cast<double >(cur_message.mem_usage().mem_total());
-                double cur_sum_rate = 50 * cur_cpu_rate + 50 * cur_mem_rate;
-                LOG(INFO) << it->first << " cpu usage is " << cur_cpu_rate << " memory usage is " << cur_mem_rate;
-                LOG(INFO) << it->first << " cur_sum_rate is " << cur_sum_rate;
-                if (min_sum_rate > cur_sum_rate) {
-                    min_sum_rate = cur_sum_rate;
-                    res = it->first;
-                }
-            }
-            if (res.empty()) {
-                LOG(INFO) << " calculate the best machine to schedule the new job failed!";
-                return res;
-            }
-            return res;
         }
 
         void Master::received_reply_shutdown_message(const string &ip, const bool &is_shutdown) {
@@ -814,7 +761,8 @@ namespace chameleon {
         }
 
         void
-        Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
+        Master::received_terminating_master_message(const UPID &super_master,
+                                                    const TerminatingMasterMessage &message) {
             LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
             if (message.master_id() == stringify(self().address.ip)) {
                 LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
