@@ -92,148 +92,148 @@ using process::http::InternalServerError;
 
 
 namespace chameleon {
-    // forward declations
-    class SlaveHeartbeater;
+    namespace slave {
 
-    class Executor;
+        // forward declations
+        class SlaveHeartbeater;
+        class Executor;
+        class Framework;
 
-    class Framework;
-
-    class Slave : public ProtobufProcess<Slave> {
-    public:
-        explicit Slave() : ProcessBase("slave"), m_interval() {
-            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
-            msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
+        class Slave : public ProtobufProcess<Slave> {
+        public:
+            explicit Slave() : ProcessBase("slave"), m_interval() {
+                msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+                msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
 //            msp_resource_collector = new ResourceCollector();
-        }
+            }
 
-        Slave(const Slave &slave) = default;
+            Slave(const Slave &slave) = default;
 
-        virtual ~Slave() {
-            LOG(INFO) << "~ Slave()";
-        }
+            virtual ~Slave() {
+                LOG(INFO) << "~ Slave()";
+            }
 
-        virtual void initialize();
+            virtual void initialize();
 
-        void register_feedback(const string &hostname);
+            void register_feedback(const string &hostname);
 
-        void send_heartbeat_to_master();
+            void send_heartbeat_to_master();
 
-        void setM_master(const string &m_master) {
-            Slave::m_master = m_master;
-        }
+            void setM_master(const string &m_master) {
+                Slave::m_master = m_master;
+            }
 
-        void setM_interval(const Duration &m_interval) {
-            Slave::m_interval = m_interval;
-        }
+            void setM_interval(const Duration &m_interval) {
+                Slave::m_interval = m_interval;
+            }
 
-        void setM_work_dir(const string &m_work_dir) {
-            Slave::m_work_dir = m_work_dir;
-        }
+            void setM_work_dir(const string &m_work_dir) {
+                Slave::m_work_dir = m_work_dir;
+            }
 
-        void run_task(const process::UPID &from,
-                     const mesos::FrameworkInfo &frameworkInfo,
-                     const mesos::FrameworkID &frameworkId,
-                     const process::UPID &pid,
-                     const mesos::TaskInfo &task);
+            void run_task(const process::UPID &from,
+                          const mesos::FrameworkInfo &frameworkInfo,
+                          const mesos::FrameworkID &frameworkId,
+                          const process::UPID &pid,
+                          const mesos::TaskInfo &task);
 
-        void start_mesos_executor(const Framework *framework);
+            void start_mesos_executor(const Framework *framework);
 
-        void register_executor(const UPID &from,
-                               const mesos::FrameworkID &frameworkId,
-                               const mesos::ExecutorID &executorId);
+            void register_executor(const UPID &from,
+                                   const mesos::FrameworkID &frameworkId,
+                                   const mesos::ExecutorID &executorId);
 
-        void status_update(mesos::internal::StatusUpdate update, const Option<UPID> &pid);
+            void status_update(mesos::internal::StatusUpdate update, const Option<UPID> &pid);
 
-        void _status_update(const mesos::internal::StatusUpdate &update,
-                const Option<UPID> &pid);
+            void _status_update(const mesos::internal::StatusUpdate &update,
+                                const Option<UPID> &pid);
 
-        void forward_status_update(mesos::internal::StatusUpdate update);
+            void forward_status_update(mesos::internal::StatusUpdate update);
 
-        void status_update_acknowledgement(
-                const UPID &from,
-                const mesos::SlaveID &slaveId,
-                const mesos::FrameworkID &frameworkId,
-                const mesos::TaskID &taskId,
-                const string &uuid);
+            void status_update_acknowledgement(
+                    const UPID &from,
+                    const mesos::SlaveID &slaveId,
+                    const mesos::FrameworkID &frameworkId,
+                    const mesos::TaskID &taskId,
+                    const string &uuid);
 
-        Framework *get_framework(
-                const mesos::FrameworkID &frameworkId) const;
+            Framework *get_framework(
+                    const mesos::FrameworkID &frameworkId) const;
 
-        void remove_framework(Framework* framework);
+            void remove_framework(Framework *framework);
 
-        void shutdown_framework(
-                const process::UPID& from,
-                const mesos::FrameworkID& frameworkId);
+            void shutdown_framework(
+                    const process::UPID &from,
+                    const mesos::FrameworkID &frameworkId);
 
-        mesos::ExecutorInfo get_executorinfo(
-                const mesos::FrameworkInfo &frameworkInfo,
-                const mesos::TaskInfo &task) const;
+            mesos::ExecutorInfo get_executorinfo(
+                    const mesos::FrameworkInfo &frameworkInfo,
+                    const mesos::TaskInfo &task) const;
 
-    protected:
-        void finalize() override;
+        protected:
+            void finalize() override;
 
-    private:
-        friend class Framework;
+        private:
+            friend class Framework;
 
-        friend class Executor;
+            friend class Executor;
 
-        shared_ptr<ResourceCollector> msp_resource_collector;
-        shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
+            shared_ptr<ResourceCollector> msp_resource_collector;
+            shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
 
-        shared_ptr<UPID> msp_masterUPID;
-        Duration m_interval;
+            shared_ptr<UPID> msp_masterUPID;
+            Duration m_interval;
 
-        string m_uuid;
-        string m_master;  //master@127.0.0.1：1080
+            string m_uuid;
+            string m_master;  //master@127.0.0.1：1080
 
-        hashmap<string, Framework*> m_frameworks;
+            hashmap<string, Framework *> m_frameworks;
 
-        mesos::SlaveInfo m_slaveInfo;
-        mesos::ExecutorInfo m_executorInfo;
+            mesos::SlaveInfo m_slaveInfo;
+            mesos::ExecutorInfo m_executorInfo;
 
-        queue<mesos::TaskInfo> m_tasks;
+            queue<mesos::TaskInfo> m_tasks;
 
-        string m_work_dir;
+            string m_work_dir;
 
-        void heartbeat();
+            void heartbeat();
 
-        void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
+            void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
 
-        void reregister_to_master(const UPID &from, const ReregisterMasterMessage &message);
+            void reregister_to_master(const UPID &from, const ReregisterMasterMessage &message);
 
-    };
+        };
 
-    class SlaveHeartbeater : public process::Process<SlaveHeartbeater> {
+        class SlaveHeartbeater : public process::Process<SlaveHeartbeater> {
 
-    public:
+        public:
 
-        SlaveHeartbeater(const Duration &interval)
-                : process::ProcessBase(process::ID::generate("slaveheartbeater")),
-                  m_interval(interval) {
-        }
+            SlaveHeartbeater(const Duration &interval)
+                    : process::ProcessBase(process::ID::generate("slaveheartbeater")),
+                      m_interval(interval) {
+            }
 
-        virtual void initialize() {
-            heartbeat();
+            virtual void initialize() {
+                heartbeat();
 //        install<Offer>(&Master::report_from_client, &Offer::key,&Offer::value);
-        }
+            }
 
-        void setM_interval(Duration &m_interval) {
-            SlaveHeartbeater::m_interval = m_interval;
-        }
+            void setM_interval(Duration &m_interval) {
+                SlaveHeartbeater::m_interval = m_interval;
+            }
 
-    private:
+        private:
 
-        void heartbeat() {
-            DLOG(INFO) << "5 seconds";
-            //  delays 5 seconds to invoke the function "heartbeat " of self.
-            // it's cyclical because "heartbeat invoke heartbeat"
-            process::delay(m_interval, self(), &Self::heartbeat);
-        }
+            void heartbeat() {
+                DLOG(INFO) << "5 seconds";
+                //  delays 5 seconds to invoke the function "heartbeat " of self.
+                // it's cyclical because "heartbeat invoke heartbeat"
+                process::delay(m_interval, self(), &Self::heartbeat);
+            }
 
-        Duration m_interval;
-    };
+            Duration m_interval;
+        };
 
 //    class Executor {
 //    public:
@@ -304,18 +304,18 @@ namespace chameleon {
 //        bool commandExecutor;
 //    };
 
-    class Framework {
-    public:
-        Framework(
-                Slave *_slave,
-                const mesos::FrameworkInfo &_info,
-                const Option<process::UPID> &_pid)
-                : m_slave(_slave),
-                  m_info(_info) {
-            m_pid = _pid;
-        };
+        class Framework {
+        public:
+            Framework(
+                    Slave *_slave,
+                    const mesos::FrameworkInfo &_info,
+                    const Option<process::UPID> &_pid)
+                    : m_slave(_slave),
+                      m_info(_info) {
+                m_pid = _pid;
+            };
 
-        ~Framework();
+            ~Framework();
 
 //        Executor *addExecutor(const mesos::ExecutorInfo &executorInfo);
 
@@ -323,44 +323,46 @@ namespace chameleon {
 
 //        void checkpointFramework() const;
 
-        const mesos::FrameworkID id() const { return m_info.id(); }
+            const mesos::FrameworkID id() const { return m_info.id(); }
 
-        enum State {
-            RUNNING,      // First state of a newly created framework.
-            TERMINATING,  // Framework is shutting down in the cluster.
-        } state;
+            enum State {
+                RUNNING,      // First state of a newly created framework.
+                TERMINATING,  // Framework is shutting down in the cluster.
+            } state;
 
-        Slave *m_slave;
-        mesos::FrameworkInfo m_info;
-        Option<process::UPID> m_pid;
+            Slave *m_slave;
+            mesos::FrameworkInfo m_info;
+            Option<process::UPID> m_pid;
 
-    private:
-        Framework(const Framework &);
-        Framework &operator=(const Framework &);
-    };
+        private:
+            Framework(const Framework &);
 
-    mesos::Task createTask(
-            const mesos::TaskInfo &task,
-            const mesos::TaskState &state,
-            const mesos::FrameworkID &frameworkId);
+            Framework &operator=(const Framework &);
+        };
 
-    std::map<std::string, std::string> executorEnvironment(
-            const mesos::ExecutorInfo &executorInfo,
-            const std::string &directory,
-            const mesos::SlaveID &slaveId,
-            const process::PID<Slave> &slavePid,
-            bool checkpoint);
+        mesos::Task createTask(
+                const mesos::TaskInfo &task,
+                const mesos::TaskState &state,
+                const mesos::FrameworkID &frameworkId);
+
+        std::map<std::string, std::string> executorEnvironment(
+                const mesos::ExecutorInfo &executorInfo,
+                const std::string &directory,
+                const mesos::SlaveID &slaveId,
+                const process::PID<Slave> &slavePid,
+                bool checkpoint);
 
 
-    string taskOrTaskGroup(
-            const Option<mesos::TaskInfo> &task,
-            const Option<mesos::TaskGroupInfo> &taskGroup);
+        string taskOrTaskGroup(
+                const Option<mesos::TaskInfo> &task,
+                const Option<mesos::TaskGroupInfo> &taskGroup);
 
-    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
-        return stream << TaskState_Name(state);
+        std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
+            return stream << TaskState_Name(state);
+        }
+
+        std::ostream &operator<<(std::ostream &stream, Framework::State state);
     }
-
-    std::ostream &operator<<(std::ostream &stream, Framework::State state);
 }
 
 
