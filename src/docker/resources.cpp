@@ -834,10 +834,10 @@ namespace mesos {
         }
 
         // Check role name.
-        Option<Error> error = roles::validate(resource.role());
-        if (error.isSome()) {
-            return error;
-        }
+//        Option<Error> error = roles::validate(resource.role());
+//        if (error.isSome()) {
+//            return error;
+//        }
 
         // Check that shareability is enabled for supported resource types.
         // For now, it is for persistent volumes only.
@@ -1212,10 +1212,10 @@ namespace mesos {
             const Option<Resource::ReservationInfo>& reservation) const
     {
         // Check role name.
-        Option<Error> error = roles::validate(role);
-        if (error.isSome()) {
-            return error.get();
-        }
+//        Option<Error> error = roles::validate(role);
+//        if (error.isSome()) {
+//            return error.get();
+//        }
 
         // Checks for the invalid state of (role, reservation) pair.
         if (role == "*" && reservation.isSome()) {

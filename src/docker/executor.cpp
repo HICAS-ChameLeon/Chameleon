@@ -19,7 +19,7 @@
 #include <map>
 #include <string>
 
-#include <mesos/executor.hpp>
+//#include <mesos/executor.hpp>
 #include <mesos/mesos.hpp>
 
 #include <process/delay.hpp>
@@ -42,6 +42,8 @@
 
 #include "docker.hpp"
 #include "executor.hpp"
+#include <executor.hpp>
+#include <status_utils.hpp>
 
 using namespace mesos;
 using namespace process;
@@ -445,13 +447,13 @@ private:
     driver.get()->stop();
   }
 
-/*  void launchCheck(const TaskInfo& task)
+  void launchCheck(const TaskInfo& task)
   {
     // TODO(alexr): Implement general checks support, see MESOS-7250.
     CHECK(!task.has_check()) << "Docker executor does not support checks yet";
   }
 
-  void launchHealthCheck(const string& containerName, const TaskInfo& task)
+/*  void launchHealthCheck(const string& containerName, const TaskInfo& task)
   {
     // Bail out early if we have been already killed or if the task has no
     // associated health checks.
@@ -562,7 +564,7 @@ private:
 };
 
 
-class DockerExecutor : public Executor
+class DockerExecutor : public mesos::Executor
 {
 public:
   DockerExecutor(

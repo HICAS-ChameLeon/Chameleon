@@ -122,6 +122,32 @@ set(slave_SRCS
         resource_collector/resource_collector.hpp
         resource_collector/resource_collector.cpp)
 
+#heldon contaienrizer
+include_directories(${CMAKE_SOURCE_DIR}/src)
+set(containerizer_SRC
+        containerizer/containerizer.hpp)
+set(docker_containerizer_SRC
+        containerizer/docker.hpp
+        containerizer/docker.cpp)
+set(flags_SRC
+        slave_flags.hpp
+        slave_flags.cpp)
+set(resources_SRC
+        ${CMAKE_SOURCE_DIR}/src/docker/resources.hpp
+        ${CMAKE_SOURCE_DIR}/src/docker/resources.cpp)
+set(values_SRC
+        ${CMAKE_SOURCE_DIR}/src/docker/values.hpp
+        ${CMAKE_SOURCE_DIR}/src/docker/values.cpp)
+set(type_utils_SRC
+        ${CMAKE_SOURCE_DIR}/src/docker/type_utils.hpp
+        ${CMAKE_SOURCE_DIR}/src/docker/type_utils.cpp)
+set(attributes_SRC
+        ${CMAKE_SOURCE_DIR}/src/docker/attributes.hpp
+        ${CMAKE_SOURCE_DIR}/src/docker/attributes.cpp)
+set(cgroups_SRC
+        ${CMAKE_SOURCE_DIR}/src/linux/cgroups.hpp
+        ${CMAKE_SOURCE_DIR}/src/linux/cgroups.cpp)
+
 list(APPEND slave_SRCS ${runtime_resource_SRCS})
 list(APPEND slave_SRCS ${cpu_SRCS})
 list(APPEND slave_SRCS ${memory_SRCS})
@@ -129,6 +155,16 @@ list(APPEND slave_SRCS ${disk_SRCS})
 list(APPEND slave_SRCS ${Gpu_Collector_SRCS})
 list(APPEND slave_SRCS ${tlb_SRCS})
 list(APPEND slave_SRCS ${port_SRCS})
+
+list(APPEND slave_SRCS ${containerizer_SRC})
+list(APPEND slave_SRCS ${docker_containerizer_SRC})
+list(APPEND slave_SRCS ${flags_SRC})
+list(APPEND slave_SRCS ${resources_SRC})
+list(APPEND slave_SRCS ${values_SRC})
+list(APPEND slave_SRCS ${type_utils_SRC})
+list(APPEND slave_SRCS ${attributes_SRC})
+list(APPEND slave_SRCS ${cgroups_SRC})
+
 list(REMOVE_DUPLICATES slave_SRCS)
 
 add_executable(slave ${slave_SRCS})
@@ -145,4 +181,11 @@ list(APPEND slave_PROTOS slave_related)
 
 list(REMOVE_DUPLICATES slave_PROTOS)
 target_link_libraries(slave ${slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})
+
+#list(APPEND docker_launch_PROTOS mesos)
+#list(APPEND docker_launch_PROTOS scheduler)
+#list(REMOVE_DUPLICATES docker_launch_PROTOS)
+link_libraries(/home/heldon/chameleon/mesos/mesos-1.3.2/build/src/.libs/libmesos-1.3.2.so)
+add_executable(docker_launch docker_launch.cpp)
+target_link_libraries(docker_launch ${PROCESS_LIBS} ${PROCESS_TARGET} mesos)
 

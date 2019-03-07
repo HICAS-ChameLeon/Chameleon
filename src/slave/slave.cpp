@@ -168,7 +168,6 @@ namespace chameleon {
                         {"MESOS_CHECKPOINT",   "0"}
                 };
         const string mesos_executor_path = path::join(os::getcwd(), "mesos_executor/mesos-executor");
-
         LOG(INFO) << "start mesos executor finished ";
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,

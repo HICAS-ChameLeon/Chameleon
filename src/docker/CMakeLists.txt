@@ -1,9 +1,11 @@
 
 set(docker_SRC docker.hpp docker.cpp)
-set(DOCKER_EXECUTOR_SRC executor.hpp executor.cpp)
+set(DOCKER_EXECUTOR_SRC executor.hpp executor.cpp ${CMAKE_SOURCE_DIR}/src/common/executor.hpp)
+set(logging_SRC ${CMAKE_SOURCE_DIR}/src/logging/logging.hpp ${CMAKE_SOURCE_DIR}/src/logging/logging.cpp)
+set(flags_SRC ${CMAKE_SOURCE_DIR}/src/logging/flags.hpp ${CMAKE_SOURCE_DIR}/src/logging/flags.cpp)
 
-#add_executable(docker_executor ${DOCKER_EXECUTOR_SRC})
-#target_link_libraries(docker_executor ${PROCESS_LIBS}  ${PROCESS_TARGET})
+#add_executable(docker_executor ${DOCKER_EXECUTOR_SRC} ${logging_SRC} ${flags_SRC})
+#target_link_libraries(docker_executor ${PROCESS_LIBS}  ${PROCESS_TARGET} mesos messages)
 
 
 set(type_utils_SRC type_utils.hpp type_utils.cpp)

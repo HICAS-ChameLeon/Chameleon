@@ -68,7 +68,7 @@ int main(){
     containerInfo.mutable_docker()->CopyFrom(dockerInfo);
 
     mesos::CommandInfo commandInfo;
-    commandInfo.set_value("sleep 1020");
+    commandInfo.set_value("sleep 120");
 
     //hello-world image doesn't need shell, so we set it to be false
     //commandInfo.set_shell(false);

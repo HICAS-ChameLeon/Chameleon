@@ -31,7 +31,7 @@
 #include <stout/stringify.hpp>
 #include <stout/try.hpp>
 
-#include "logging/logging.hpp"
+#include <logging.hpp>
 
 namespace fLB {
   extern GOOGLE_GLOG_DLL_DECL bool FLAGS_drop_log_memory;

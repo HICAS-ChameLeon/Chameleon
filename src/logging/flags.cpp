@@ -1,5 +1,5 @@
 
-#include "logging/flags.hpp"
+#include <flags.hpp>
 
 
 chameleon::logging::Flags::Flags()
