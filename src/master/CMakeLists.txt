@@ -2,7 +2,7 @@
 # set the gtest 1.7 relevant library names.
 set(GTEST_LIBS gmock gtest gflags)
 
-set(master_SRCS  master.hpp master.cpp scheduler.cpp scheduler.hpp)
+set(master_SRCS  master.hpp master.cpp)
 set(master_PROTOS participant_info)
 list(APPEND master_PROTOS job)
 list(APPEND master_PROTOS hardware_resource)

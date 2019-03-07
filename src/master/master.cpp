@@ -5,10 +5,8 @@
  * Description：master
  */
 #include "master.hpp"
-#include "scheduler.hpp"
 
 using namespace chameleon::master;
-using namespace chameleon::scheduler;
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
@@ -41,15 +39,9 @@ namespace chameleon {
     namespace master {
 
         void Master::initialize() {
-
-            m_uuid = UUID::random().toString();
             // Verify that the version of the library that we linked against is
             // compatible with the version of the headers we compiled against.
             GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-            m_next_framework_id = 0;
-            m_next_offer_id = 0;
-            m_next_slave_id = 0;
 
             install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
 
@@ -341,8 +333,10 @@ namespace chameleon {
             mesos::internal::ResourceOffersMessage message;
             mesos::Offer *offer = new mesos::Offer();
 
-            scheduler::Scheduler scheduler;
-            Slave *slave = scheduler.find_slave_to_run_framework();
+            Slave *slave = find_slave_to_run();
+
+            LOG(INFO) << "successful slave " << slave->m_pid;
+
 
             // cpus
             mesos::Resource *cpu_resource = new mesos::Resource();
@@ -466,6 +460,25 @@ namespace chameleon {
             remove_framework(framework);
         }
 
+        void Master::remove_framework(Framework *framework) {
+            CHECK_NOTNULL(framework);
+
+            LOG(INFO) << "Removing framework " << *framework;
+
+            if (framework->active()) {
+                CHECK(framework->active());
+                LOG(INFO) << "Deactive framework " << *framework;
+                framework->state = Framework::State::INACTIVE;
+            }
+
+            mesos::internal::ShutdownFrameworkMessage message;
+            message.mutable_framework_id()->MergeFrom(framework->id());
+            send(m_slave_run_framework, message);
+
+//        frameworks.completed.set(framework->id().value(), framework);
+        }
+
+
         void Master::decline_framework(master::Framework *framework,
                                        const mesos::scheduler::Call::Decline &decline) {
             CHECK_NOTNULL(framework);
@@ -582,26 +595,6 @@ namespace chameleon {
             }
         }
 
-        void Master::remove_framework(Framework *framework) {
-            CHECK_NOTNULL(framework);
-
-            LOG(INFO) << "Removing framework " << *framework;
-
-            if (framework->active()) {
-                CHECK(framework->active());
-                LOG(INFO) << "Deactive framework " << *framework;
-                framework->state = Framework::State::INACTIVE;
-            }
-
-//        foreachvalue(Slave *slave, slaves.registered) {
-//            mesos::internal::ShutdownFrameworkMessage message;
-//            message.mutable_framework_id()->MergeFrom(framework->id());
-//            send(slave->m_pid, message);
-//        }
-
-//        frameworks.completed.set(framework->id().value(), framework);
-        }
-
         Slave *Master::get_slave(const string uid) {
             return slaves.registered.contains(uid)
                    ? slaves.registered.get(uid)
@@ -620,10 +613,27 @@ namespace chameleon {
                    : nullptr;
         }
 
-        const RuntimeResourcesMessage Master::get_runtime_info(const UPID &slave_pid) {
-            return m_slave_usage.get(slave_pid).get();
-        }
+        Slave* Master::find_slave_to_run() {
+            double min_use_rate = 100;
+            double cur_mem_rate;
 
+            foreachvalue(Slave* slave, slaves.registered) {
+                RuntimeResourcesMessage rrm = m_slave_usage.get(slave->m_pid).get();
+                LOG(INFO) << "test: " << rrm.slave_id() << " : "
+                          << rrm.mem_usage().mem_available();
+
+                cur_mem_rate = rrm.mem_usage().mem_available() / rrm.mem_usage().mem_total();
+
+                if (min_use_rate > cur_mem_rate) {
+                    min_use_rate = cur_mem_rate;
+                    m_slave_run_framework = slave->m_pid;
+                }
+            }
+
+            LOG(INFO) << "m_slave_run_frameowkr" << m_slave_run_framework;
+
+            return slaves.registered.get(m_slave_run_framework);
+        }
 
         void Master::register_participant(const string &hostname) {
             DLOG(INFO) << "master receive register message from " << hostname;
@@ -639,12 +649,14 @@ namespace chameleon {
             string slaveuid = new_slave_id(hardware_resources_message.slave_uuid());
 
             Slave *slave = new Slave(this,
-                                     hardware_resources_message,
-                                     slaveuid,
-                                     hardware_resources_message.slave_hostname(),
-                                     from);
+                    hardware_resources_message,
+                    slaveuid,
+                    hardware_resources_message.slave_hostname(),
+                    from);
 
             add_slave(slave);
+
+            LOG(INFO) << "Slave " << *slave << " registered on " << self() << " successful!";
 
             auto slave_id = hardware_resources_message.slave_id();
             if (m_hardware_resources.find(slave_id) == m_hardware_resources.end()) {
@@ -660,16 +672,15 @@ namespace chameleon {
 
             //save runtimeinfo-by weiguow
             foreachvalue(Slave *slave, slaves.registered) {
-                                    if (!slaves.registered.contains(slave->m_uid)) {
-                                        LOG(INFO) << "This slave is not registered";
-                                        return;
-                                    }
-                                    Slave *slave_ = get_slave(slave->m_uid);
-                                    if (!m_slave_usage.contains(slave_->m_pid)) {
-                                        m_slave_usage.put(slave_->m_pid, runtime_resouces_message);
-                                    }
-                                }
-
+                if (!slaves.registered.contains(slave->m_uid)) {
+                    LOG(INFO) << "This slave is not registered";
+                    return;
+                }
+                Slave *slave_ = get_slave(slave->m_uid);
+                if (! m_slave_usage.contains(slave->m_pid)) {
+                    m_slave_usage.put(slave->m_pid, runtime_resouces_message);
+                }
+            }
 
             auto slave_id = runtime_resouces_message.slave_id();
             m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);

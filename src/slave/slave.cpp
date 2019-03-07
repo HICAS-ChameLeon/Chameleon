@@ -160,7 +160,7 @@ namespace chameleon {
                     };
             const string mesos_executor_path = path::join(os::getcwd(), "mesos_executor/mesos-executor");
 
-            LOG(INFO) << "start mesos executor finished ";
+            LOG(INFO) << "Start mesos executor successful!";
             Try<Subprocess> child = subprocess(
                     mesos_executor_path,
                     Subprocess::FD(STDIN_FILENO),
@@ -222,7 +222,7 @@ namespace chameleon {
 
             // Command executors share the same id as the task.
             executorInfo.mutable_executor_id()->set_value(task.task_id().value());
-            LOG(INFO) << " generate new executorInfo, its executor_id is "
+            LOG(INFO) << "Generate new executorInfo, its executor_id is "
                       << executorInfo.mutable_executor_id()->value();
             executorInfo.mutable_framework_id()->CopyFrom(frameworkInfo.id());
 

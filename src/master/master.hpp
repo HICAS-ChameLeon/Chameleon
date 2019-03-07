@@ -100,8 +100,8 @@ namespace chameleon {
 
             Master *const m_master;
 
-            const RuntimeResourcesMessage m_runtimeinfo;
-            const HardwareResourcesMessage m_hardwareinfo;
+            RuntimeResourcesMessage m_runtimeinfo;
+            HardwareResourcesMessage m_hardwareinfo;
             const string m_uid;
             process::UPID m_pid;
             const string m_hostname;
@@ -122,6 +122,11 @@ namespace chameleon {
             explicit Master() : ProcessBase("master") {
 
                 m_state = INITIALIZING;
+                m_uuid = UUID::random().toString();
+
+                m_next_framework_id = 0;
+                m_next_offer_id = 0;
+                m_next_slave_id = 0;
 
                 m_masterinfo.set_id(m_uuid);
                 m_masterinfo.set_pid(self());
@@ -170,8 +175,6 @@ namespace chameleon {
             Slave *get_slave(const string uid);
             mesos::Offer* get_offer(const mesos::OfferID &offerid);
             Framework *get_framework(const mesos::FrameworkID &kFrameworkId);
-
-            const RuntimeResourcesMessage get_runtime_info(const UPID &slave_pid);
 
             struct Slaves {
                 hashset<process::UPID> registering;
@@ -222,6 +225,7 @@ namespace chameleon {
                 hashmap<string, Framework *> registered;
             } frameworks;
 
+            Slave* find_slave_to_run();
 
 
             void register_participant(const string &hostname);
@@ -249,6 +253,7 @@ namespace chameleon {
             void set_super_master_path(const string &path);
 
         private:
+
             // master states.
             enum {
                 REGISTERING, // is registering from a super_master
@@ -264,15 +269,6 @@ namespace chameleon {
 
             string m_uuid;
             set<string> m_alive_slaves;
-
-            hashmap<string, mesos::Offer*> offers;
-            hashmap<UPID, RuntimeResourcesMessage> m_slave_usage;
-
-            mesos::MasterInfo m_masterinfo;
-
-            int64_t m_next_framework_id;
-            int64_t m_next_offer_id;
-            int64_t m_next_slave_id;
 
             // super_master_related
             bool is_passive;
@@ -294,6 +290,17 @@ namespace chameleon {
 
             void received_terminating_master_message(const UPID &super_master,
                     const TerminatingMasterMessage &message);
+
+
+            hashmap<string, mesos::Offer*> offers;
+            hashmap<UPID, RuntimeResourcesMessage> m_slave_usage;
+            mesos::MasterInfo m_masterinfo;
+
+            int64_t m_next_framework_id;
+            int64_t m_next_offer_id;
+            int64_t m_next_slave_id;
+
+            process::UPID m_slave_run_framework;
         };
 
         class Framework {
