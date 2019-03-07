@@ -22,10 +22,13 @@
 #include <stout/os/getcwd.hpp>
 #include <stout/os/write.hpp>
 
+#include <process/future.hpp>
+#include <process/owned.hpp>
+
 #include <process/process.hpp>
 #include <process/subprocess.hpp>
 
-
+#include "hdfs.hpp"
 #include "status_utils.hpp"
 
 using std::string;
@@ -60,7 +63,7 @@ namespace chameleon {
         static Result<string> uri_to_local_path(const string& uir, const Option<string>& frameworks_home);
         static bool is_net_uri(const string& uri);
         static Try<string> download_with_net(const string& source_uri, const string& destination_path);
-
+        static Try<string> download_with_hadoop_client(const string& source_uri, const string& destination_path);
 
     };
 }

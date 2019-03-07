@@ -117,6 +117,26 @@ namespace chameleon {
         return destination_path;
     }
 
+    Try<string> Downloader::download_with_hadoop_client(const string& source_uri, const string& destination_path){
+        Try<process::Owned<HDFS>> hdfs = HDFS::create();
+        if (hdfs.isError()) {
+            return Error("Failed to create HDFS client: " + hdfs.error());
+        }
+
+        LOG(INFO) << "Downloading resource with Hadoop client from '" << source_uri
+                  << "' to '" << destination_path << "'";
+
+        process::Future<Nothing> result = hdfs.get()->copy_to_local(source_uri, destination_path);
+        result.await();
+
+        if (!result.isReady()) {
+            return Error("HDFS copyToLocal failed: " +
+                         (result.isFailed() ? result.failure() : "discarded"));
+        }
+
+        return destination_path;
+    }
+
     Try<string> Downloader::download(
             const string &source_uri,
             const string &destination_path,
@@ -139,6 +159,20 @@ namespace chameleon {
         if (is_net_uri(source_uri)) {
             return download_with_net(source_uri, destination_path);
         }
+
+        // 3. Try to fetch the URI using hadoop client.
+        // We use the hadoop client to fetch any URIs that are not
+        // handled by other fetchers(local / os::net). These URIs may be
+        // `hdfs://` URIs or any other URI that has been configured (and
+        // hence handled) in the hadoop client. This allows mesos to
+        // externalize the handling of previously unknown resource
+        // endpoints without the need to support them natively.
+        // Note: Hadoop Client is not a hard dependency for running mesos.
+        // This allows users to get mesos up and running without a
+        // hadoop_home or the hadoop client setup but in case we reach
+        // this part and don't have one configured, the fetch would fail
+        // and log an appropriate error.
+        return download_with_hadoop_client(source_uri, destination_path);
     }
 
     Try<bool> Downloader::extract(const string& source_path, const string& destination_directory){
@@ -208,8 +242,9 @@ namespace chameleon {
 using namespace chameleon;
 int main() {
     Downloader downloader;
-//    const string source_uri = "http://mirrors.hust.edu.cn/apache/spark/spark-2.4.0/spark-2.4.0-bin-hadoop2.7.tgz";
-    const string source_uri = "file:///home/lemaker/open-source/spark-2.3.0-bin-hadoop2.7.tgz";
+    const string source_uri = "http://mirrors.hust.edu.cn/apache/spark/spark-2.4.0/spark-2.4.0-bin-hadoop2.7.tgz";
+//    const string source_uri = "https://www-eu.apache.org/dist/spark/spark-2.4.0/spark-2.4.0-bin-hadoop2.7.tgz";
+//    const string source_uri = "file:///home/lemaker/open-source/spark-2.3.0-bin-hadoop2.7.tgz";
     const string destination_path = "/home/lemaker/open-source/Chameleon/build/spark.tgz";
     Try<string> result = downloader.download(source_uri,destination_path,"/home/lemaker");
     if(result.isError()){

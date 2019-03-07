@@ -28,6 +28,7 @@
 #include <stout/option.hpp>
 #include <stout/try.hpp>
 
+namespace chameleon {
 
 // TODO(benh): We should get the hostname:port (or ip:port) of the
 // server via:
@@ -43,29 +44,30 @@
 // HTTP GET on hostname:port and grab the information in the
 // <title>...</title> (this is the best hack I can think of to get
 // 'fs.default.name' given the tools available).
-class HDFS
-{
-public:
-  static Try<process::Owned<HDFS>> create(
-      const Option<std::string>& hadoop = None());
+    class HDFS {
+    public:
+        static Try<process::Owned<HDFS>> create(
+                const Option<std::string> &hadoop = None());
 
-  process::Future<bool> exists(const std::string& path);
-  process::Future<Bytes> du(const std::string& path);
-  process::Future<Nothing> rm(const std::string& path);
+        process::Future<bool> exists(const std::string &path);
 
-  process::Future<Nothing> copyFromLocal(
-      const std::string& from,
-      const std::string& to);
+        process::Future<Bytes> du(const std::string &path);
 
-  process::Future<Nothing> copyToLocal(
-      const std::string& from,
-      const std::string& to);
+        process::Future<Nothing> rm(const std::string &path);
 
-private:
-  explicit HDFS(const std::string& _hadoop)
-    : hadoop(_hadoop) {}
+        process::Future<Nothing> copy_from_local(
+                const std::string &from,
+                const std::string &to);
 
-  const std::string hadoop;
-};
+        process::Future<Nothing> copy_to_local(
+                const std::string &from,
+                const std::string &to);
 
+    private:
+        explicit HDFS(const std::string &_hadoop)
+                : hadoop(_hadoop) {}
+
+        const std::string hadoop;
+    };
+}
 #endif // __HDFS_HPP__
