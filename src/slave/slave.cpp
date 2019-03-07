@@ -63,6 +63,7 @@ namespace chameleon {
     }
 
     Slave::~Slave(){
+        delete hr_message;
         LOG(INFO)<<"~Slave";
     }
 
@@ -131,7 +132,7 @@ namespace chameleon {
                 });
 
         // send the information fo hardware resources on this machine to master
-        HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
+        hr_message = msp_resource_collector->collect_hardware_resources();
         DLOG(INFO) << *msp_masterUPID;
         string slave_id = stringify(self().address.ip);
         hr_message->set_slave_id(slave_id);
@@ -141,7 +142,7 @@ namespace chameleon {
         DLOG(INFO) << "Before send message to master";
 
         send(*msp_masterUPID, *hr_message);
-        delete hr_message;
+
         LOG(INFO) << "The initialization of slave itself finished.";
         LOG(INFO) << self() << " starts to send heartbeat message to the master";
         heartbeat();
@@ -567,6 +568,9 @@ namespace chameleon {
             m_master = "master@"+message.master_ip()+":"+message.port();
             msp_masterUPID.reset(new UPID(m_master));
             LOG(INFO)<<" prepare to  a  heartbeat to the new master "<<m_master<<" ";
+            UPID new_master_ip(m_master);
+            DLOG(INFO) << "Before send message to master";
+            send(new_master_ip, *hr_message);
             send_heartbeat_to_master();
          }
     }
