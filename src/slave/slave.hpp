@@ -59,6 +59,7 @@
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
 #include <slave_related.pb.h>
+#include <fetcher.pb.h>
 
 #include <scheduler.pb.h>
 #include <messages.pb.h>
@@ -67,8 +68,10 @@
 
 // chameleon headers
 #include "resource_collector/resource_collector.hpp"
-#include <configuration_glog.hpp>
 #include "resource_collector/runtime_resources_usage.hpp"
+#include "software_store/software_resource_manager.hpp"
+
+#include <configuration_glog.hpp>
 #include <chameleon_os.hpp>
 #include <chameleon_string.hpp>
 
@@ -169,6 +172,7 @@ namespace chameleon {
         shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
         RuntimeResourcesMessage m_runtime_resources;
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
+        HardwareResourcesMessage *hr_message;
 
         shared_ptr<UPID> msp_masterUPID;
         Duration m_interval;
@@ -192,11 +196,14 @@ namespace chameleon {
         queue<mesos::TaskInfo> m_tasks;
         mesos::SlaveID m_slaveID;
 
+        // software resources related
+        SoftwareResourceManager* m_software_resource_manager;
+
         void heartbeat();
 
         void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
 
-        void start_mesos_executor(const Framework *framework);
+        void start_mesos_executor(const Future<Nothing>& future, const Framework *framework);
 
         void registerExecutor(const UPID &from,
                               const mesos::FrameworkID &frameworkId,
