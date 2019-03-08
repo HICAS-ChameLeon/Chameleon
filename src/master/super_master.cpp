@@ -460,7 +460,7 @@ namespace chameleon {
                                                   << " already subscribed, resending acknowledgement";
                                         mesos::internal::FrameworkRegisteredMessage message;
                                         message.mutable_framework_id()->MergeFrom(framework->id());
-                                        message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
+//                                        message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
                                         framework->send(message);
                                         return;
                                     }
@@ -469,14 +469,14 @@ namespace chameleon {
             mesos::internal::FrameworkRegisteredMessage message;
 
             frameworkInfo.mutable_id()->CopyFrom(newFrameworkId());
-            master::Framework *framework = new Framework(this, frameworkInfo, from);
+//            master::Framework *framework = new Framework(this, frameworkInfo, from);
 
-            addFramework(framework);
+//            addFramework(framework);
 
-            message.mutable_framework_id()->MergeFrom(framework->id());
+//            message.mutable_framework_id()->MergeFrom(framework->id());
 //            message.mutable_master_info()->MergeFrom(m_masterInfo);
 
-            framework->send(message);
+//            framework->send(message);
 
             LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful!";
 //
@@ -484,7 +484,7 @@ namespace chameleon {
 //            //
 //            process::delay(temp_duration, self(), &Master::Offer, framework->id());
 // after subscribed, the framework can be given resource offers.
-            Offer(framework->id());
+//            Offer(framework->id());
 
             return;
         }

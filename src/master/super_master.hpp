@@ -44,7 +44,7 @@
 // chameleon headers
 #include <configuration_glog.hpp>
 #include "master.hpp"
-#include "../slave/slave.hpp"
+
 
 using std::string;
 using std::set;
