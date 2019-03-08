@@ -8,12 +8,23 @@
 #include "software_resource_manager.hpp"
 namespace chameleon{
 
-    SoftwareResourceManager::SoftwareResourceManager() {
+    SoftwareResourceManager::SoftwareResourceManager():process(new DownloadProcess()) {
+        process::spawn(process.get());
+    }
 
+    SoftwareResourceManager::SoftwareResourceManager(const process::Owned<DownloadProcess>& _process):process(_process){
+        process::spawn(process.get());
     }
 
     SoftwareResourceManager::~SoftwareResourceManager(){
+        LOG(INFO)<< "~SoftwareResourceManager";
+        process::terminate(process.get());
+        process::wait(process.get());
+    }
 
+    process::Future<Nothing> SoftwareResourceManager::download(const string &framework_name,
+                                                               const mesos::fetcher::FetcherInfo &info) {
+        return process::dispatch(process.get(),&DownloadProcess::download,framework_name,info);
     }
 
     process::Future<Nothing> DownloadProcess::download(const string &framework_name, const mesos::fetcher::FetcherInfo& info) {
@@ -41,7 +52,8 @@ namespace chameleon{
         }
 
 //        string downloader_path = path::join(
-        string downloader_path = path::join(setting::SLAVE_EXE_DIR,"/software_store/downloader");
+//        string downloader_path = path::join(setting::SLAVE_EXE_DIR,"/software_store/downloader");
+        string downloader_path = path::join("/home/lemaker/open-source/Chameleon/build/src/slave","/software_store/downloader");
         LOG(INFO)<<"downloader_path "<<downloader_path;
 
         map<string,string> environment;
@@ -100,12 +112,30 @@ namespace chameleon{
 
     DownloadProcess::~DownloadProcess() {
         for(auto it=m_subprocess_pids.begin();it!= m_subprocess_pids.end();it++){
-            kill(it->first);
+            if(!it->first.empty()){
+                kill(it->first);
+            }
         }
     }
 }
 
 using namespace chameleon;
 int main(){
+
+    SoftwareResourceManager manager;
+    mesos::fetcher::FetcherInfo* fetcher_info = new mesos::fetcher::FetcherInfo();
+    mesos::fetcher::FetcherInfo_Item* item = fetcher_info->add_items();
+    mesos::fetcher::URI* uri = new mesos::fetcher::URI();
+    uri->set_value("http://mirrors.hust.edu.cn/apache/spark/spark-2.3.2/spark-2.3.2-bin-hadoop2.7.tgz");
+    item->set_allocated_uri(uri);
+    item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
+    fetcher_info->set_sandbox_directory("/home/lemaker/open-source/Chameleon/build/sanbox");
+    process::Future<Nothing> result = manager.download("my_spark",*fetcher_info);
+    while(!result.isReady()){
+
+    }
+
+    delete fetcher_info;
+
     return 0;
 }

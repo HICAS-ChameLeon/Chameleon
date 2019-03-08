@@ -46,6 +46,8 @@ public:
     explicit SoftwareResourceManager();
     SoftwareResourceManager(const process::Owned<DownloadProcess>& process);
 
+    process::Future<Nothing> download(const string& framework_name, const mesos::fetcher::FetcherInfo& info);
+
     virtual ~SoftwareResourceManager();
 
 
