@@ -56,14 +56,17 @@ constexpr char MESOS_EXECUTOR[] = "chameleon-executor";
 
 namespace chameleon {
 
-    Slave::Slave() : ProcessBase("slave"), m_interval() {
+    Slave::Slave() : ProcessBase("slave"), m_interval(), m_software_resource_manager(new SoftwareResourceManager()) {
         msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
         msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
+        setting::SLAVE_EXE_DIR = os::getcwd();
+
 //            msp_resource_collector = new ResourceCollector();
     }
 
-    Slave::~Slave(){
-        LOG(INFO)<<"~Slave";
+    Slave::~Slave() {
+        delete m_software_resource_manager;
+        LOG(INFO) << "~Slave";
     }
 
 
@@ -72,8 +75,7 @@ namespace chameleon {
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-        setting::SLAVE_EXE_DIR = os::getcwd();
-        LOG(INFO)<<"slave executable path"<<setting::SLAVE_EXE_DIR;
+        LOG(INFO) << "slave executable path" << setting::SLAVE_EXE_DIR;
 
         msp_masterUPID = make_shared<UPID>(UPID(m_master));
 
@@ -166,7 +168,7 @@ namespace chameleon {
 
         Option<process::UPID> frameworkPid = None();
 
-        Framework* framework = getFramework(frameworkId);
+        Framework *framework = getFramework(frameworkId);
         framework = new Framework(this, frameworkInfo, frameworkPid);
 
         frameworks[frameworkId.value()] = framework;
@@ -175,10 +177,39 @@ namespace chameleon {
         m_executorInfo = executorInfo;
 
         LOG(INFO) << "Start executor on framework " << framework->id().value();
-        start_mesos_executor(framework);
+
+        mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
+        mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
+        mesos::fetcher::URI *uri = new mesos::fetcher::URI();
+        //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
+
+        uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
+        item->set_allocated_uri(uri);
+        item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
+        const string sanbox_path = os::getcwd();
+        fetcher_info->set_sandbox_directory(sanbox_path);
+//    process::Future<Nothing> result = manager.download("my_spark",*fetcher_info);
+        process::Future<Nothing> download_result;
+        Promise<Nothing> promise;
+        if(! os::exists(path::join(sanbox_path,"/spark-2.3.0-bin-hadoop2.7"))){
+            LOG(INFO)<<"spark  didn't exist, download it frist";
+            download_result= m_software_resource_manager->download("my_spark", *fetcher_info);
+        }else{
+            LOG(INFO)<<"spark  has existed";
+
+            download_result=promise.future();
+            promise.set(Nothing());
+        }
+        download_result.onAny(process::defer(self(),&Self::start_mesos_executor,lambda::_1, framework));
+//        start_mesos_executor(framework);
     }
 
-    void Slave::start_mesos_executor(const Framework* framework) {
+    void Slave::start_mesos_executor(const Future<Nothing>& future, const Framework *framework) {
+        if(!future.isReady()){
+            LOG(ERROR)<<"framework "<<framework->info.name()<<" downloaded failed";
+        }else{
+            LOG(INFO)<<"framework "<<framework->info.name()<<" downloaded successfully";
+        }
 
         const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
         const string mesos_directory = path::join(os::getcwd(), "/mesos_executor/mesos-directory");
@@ -214,7 +245,7 @@ namespace chameleon {
                   << "' of framework " << frameworkId.value() << " from "
                   << stringify(from);
 
-        Framework* framework = getFramework(frameworkId);
+        Framework *framework = getFramework(frameworkId);
 
         mesos::internal::ExecutorRegisteredMessage message;
         message.mutable_executor_info()->mutable_framework_id()->MergeFrom(framework->id());
@@ -227,12 +258,12 @@ namespace chameleon {
 
         mesos::internal::RunTaskMessage run_task_message;
         run_task_message.mutable_framework()->MergeFrom(framework->info);
-        if(!m_tasks.empty()){
+        if (!m_tasks.empty()) {
             mesos::TaskInfo current_task = m_tasks.front();
             run_task_message.mutable_task()->MergeFrom(current_task);
             m_tasks.pop();
-        }else{
-            LOG(FATAL)<<" No task left for new executor to run ";
+        } else {
+            LOG(FATAL) << " No task left for new executor to run ";
         }
         run_task_message.set_pid(from);
 
@@ -260,7 +291,7 @@ namespace chameleon {
 
         // Command executors share the same id as the task.
         executorInfo.mutable_executor_id()->set_value(task.task_id().value());
-        LOG(INFO)<<" generate new executorInfo, its executor_id is "<<executorInfo.mutable_executor_id()->value();
+        LOG(INFO) << " generate new executorInfo, its executor_id is " << executorInfo.mutable_executor_id()->value();
         executorInfo.mutable_framework_id()->CopyFrom(frameworkInfo.id());
 
         if (task.has_container()) {
@@ -441,8 +472,7 @@ namespace chameleon {
     /**
      * get FrameworkInfo by FrameworkId-by weiguow-2019/2/25
      * */
-    Framework* Slave::getFramework(const mesos::FrameworkID& frameworkId) const
-    {
+    Framework *Slave::getFramework(const mesos::FrameworkID &frameworkId) const {
         if (frameworks.count(frameworkId.value()) > 0) {
             return frameworks.at(frameworkId.value());
         }
@@ -471,9 +501,9 @@ namespace chameleon {
      * */
     void Slave::shutdownFramework(const process::UPID &from, const mesos::FrameworkID &frameworkId) {
         LOG(INFO) << "Asked to shut down framework " << frameworkId.value()
-                << " by " << from;
+                  << " by " << from;
 
-        Framework* framework = getFramework(frameworkId);
+        Framework *framework = getFramework(frameworkId);
 
         switch (framework->state) {
             case Framework::TERMINATING:
@@ -563,23 +593,22 @@ namespace chameleon {
         delete rr_message;
     }
 
-    void Slave::reregister_to_master(const UPID& from, const ReregisterMasterMessage& message){
+    void Slave::reregister_to_master(const UPID &from, const ReregisterMasterMessage &message) {
 
-        LOG(INFO)<<"got a ReregisteredMasterMessage from "<<from;
-        if(message.slave_ip() == stringify(self().address.ip)){
-            m_master = "master@"+message.master_ip()+":"+message.port();
+        LOG(INFO) << "got a ReregisteredMasterMessage from " << from;
+        if (message.slave_ip() == stringify(self().address.ip)) {
+            m_master = "master@" + message.master_ip() + ":" + message.port();
             msp_masterUPID.reset(new UPID(m_master));
-            LOG(INFO)<<" prepare to  a  heartbeat to the new master "<<m_master<<" ";
+            LOG(INFO) << " prepare to  a  heartbeat to the new master " << m_master << " ";
             send_heartbeat_to_master();
-         }
+        }
     }
 
 //    void Slave::received_new_master(const UPID& from, const MasterRegisteredMessage& message) {
 //        LOG(INFO) << "MAKUN " << self().address.ip << " received new master ip from " << from;
 //    }
 
-    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)
-    {
+    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
         return stream << TaskState_Name(state);
     }
 }
@@ -604,7 +633,7 @@ int main(int argc, char *argv[]) {
     google::CommandLineFlagInfo info;
 
 
-    if (master_Str && port_Int ) {
+    if (master_Str && port_Int) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
         process::initialize("slave");

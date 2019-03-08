@@ -52,8 +52,8 @@ namespace chameleon{
         }
 
 //        string downloader_path = path::join(
-//        string downloader_path = path::join(setting::SLAVE_EXE_DIR,"/software_store/downloader");
-        string downloader_path = path::join("/home/lemaker/open-source/Chameleon/build/src/slave","/software_store/downloader");
+        string downloader_path = path::join(os::getcwd(),"/software_store/downloader");
+//        string downloader_path = path::join("/home/lemaker/open-source/Chameleon/build/src/slave","/software_store/downloader");
         LOG(INFO)<<"downloader_path "<<downloader_path;
 
         map<string,string> environment;
@@ -119,23 +119,29 @@ namespace chameleon{
     }
 }
 
-using namespace chameleon;
-int main(){
-
-    SoftwareResourceManager manager;
-    mesos::fetcher::FetcherInfo* fetcher_info = new mesos::fetcher::FetcherInfo();
-    mesos::fetcher::FetcherInfo_Item* item = fetcher_info->add_items();
-    mesos::fetcher::URI* uri = new mesos::fetcher::URI();
-    uri->set_value("http://mirrors.hust.edu.cn/apache/spark/spark-2.3.2/spark-2.3.2-bin-hadoop2.7.tgz");
-    item->set_allocated_uri(uri);
-    item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
-    fetcher_info->set_sandbox_directory("/home/lemaker/open-source/Chameleon/build/sanbox");
-    process::Future<Nothing> result = manager.download("my_spark",*fetcher_info);
-    while(!result.isReady()){
-
-    }
-
-    delete fetcher_info;
-
-    return 0;
-}
+//using namespace chameleon;
+//int main(){
+//
+//    SoftwareResourceManager manager;
+//    mesos::fetcher::FetcherInfo* fetcher_info = new mesos::fetcher::FetcherInfo();
+//    mesos::fetcher::FetcherInfo_Item* item = fetcher_info->add_items();
+//    mesos::fetcher::URI* uri = new mesos::fetcher::URI();
+//    uri->set_value("http://mirrors.hust.edu.cn/apache/spark/spark-2.3.2/spark-2.3.2-bin-hadoop2.7.tgz");
+//    item->set_allocated_uri(uri);
+//    item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
+//    fetcher_info->set_sandbox_directory("/home/lemaker/open-source/Chameleon/build/sanbox");
+//    process::Future<Nothing> result = manager.download("my_spark",*fetcher_info);
+//    while(result.isPending()){
+//
+//    }
+//    if(result.isFailed()){
+//        std::cout<<result.failure();
+//    }else if(result.isReady()){
+//        std::cout<<"downloaded successfully";
+//    }
+//
+//
+//    delete fetcher_info;
+//
+//    return 0;
+//}
