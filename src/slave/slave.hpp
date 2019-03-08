@@ -169,6 +169,7 @@ namespace chameleon {
         shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
         RuntimeResourcesMessage m_runtime_resources;
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
+        HardwareResourcesMessage *hr_message;
 
         shared_ptr<UPID> msp_masterUPID;
         Duration m_interval;

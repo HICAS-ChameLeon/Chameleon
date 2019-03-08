@@ -10,6 +10,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
 include_directories(${PROCESS_LIB_DIRS})
 
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages mesos ${CMAKE_BINARY_DIR}/src/messages mesos)
+PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages fetcher ${CMAKE_BINARY_DIR}/src/messages fetcher)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages hardware_resource ${CMAKE_BINARY_DIR}/src/messages hardware_resource)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages runtime_resource ${CMAKE_BINARY_DIR}/src/messages runtime_resource)
 
