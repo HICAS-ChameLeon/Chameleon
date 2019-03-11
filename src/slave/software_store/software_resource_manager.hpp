@@ -46,6 +46,12 @@ public:
     explicit SoftwareResourceManager();
     SoftwareResourceManager(const process::Owned<DownloadProcess>& process);
 
+    /**
+     *  download the relevant dependencies of a specified framework
+     * @param framework_name
+     * @param info protobuf download info
+     * @return
+     */
     process::Future<Nothing> download(const string& framework_name, const mesos::fetcher::FetcherInfo& info);
 
     virtual ~SoftwareResourceManager();
@@ -58,6 +64,9 @@ private:
 
 };
 
+/**
+ * The genuine actor responsible for downloading dependencies of a specified framework
+ */
 class DownloadProcess:public process::Process<DownloadProcess>{
 
 public:
@@ -71,6 +80,10 @@ public:
 
 private:
 
+    /**
+     * kill the associated pid_ts of "downloader" responsible for downloading for the framework
+     * @param framework_name
+     */
     void kill(const string& framework_name);
 
     // key: framework's name, value: the Subproesses of downloaders spawned for this special framework.
