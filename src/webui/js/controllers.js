@@ -27,20 +27,39 @@
         }
     }
 
+    var leadingChameleonMasterURL = function(path){
+        var address = location.hostname + ':' + '6060';
+        return '//'+ address + path;
+
+    };
+
+    var leadingChameleonSuperMasterURL = function(path){
+        var address = location.hostname + ':' + '7000';
+        return '//'+ address + path;
+
+    };
 
     //数据自动更新的Controller
     chameleon_app.controller('UpdateCtrl',function($scope,$http,$timeout){
 
-        var leadingMasterURL =function(path){
-            var address
-
-        }
-
         var pollState = function() {
-            $scope.delay = 2000;
+           $scope.delay = 2000;
+
+            // $http.jsonp(leadingMasterURL('/master/runtime-resources?jsonp=JSON_CALLBACK'))
+            //     .success(function (response) {
+            //         console.log(response);
+            //
+            //         $scope.runtime = response.data.content;
+            //         $scope.master_runtime_quantities = response.data.quantity;
+            //         //$scope.masters.runtime.quantities = response.data.quantity;
+            //     })
+            //     .error(function (reason){
+            //        alert(reason);
+            //     });
+
             $http({
                 method: 'GET',
-                url: 'http://localhost:6060/master/runtime-resources'
+                url: leadingChameleonMasterURL('/master/runtime-resources')
             }).then(function successCallback(response) {
                 $scope.runtime = response.data.content;
                 $scope.master_runtime_quantities = response.data.quantity;
@@ -49,7 +68,7 @@
             });
             $http({
                 method: 'GET',
-                url: 'http://localhost:6060/master/hardware-resources'
+                url: leadingChameleonMasterURL('/master/hardware-resources')
             }).then(function successCallback(response) {
                 $scope.hardware = response.data.content;
                 $scope.master_hardware_quantities = response.data.quantity;
@@ -67,7 +86,7 @@
         $scope.stop_cluster = function () {
             $http({
                 method: 'GET',
-                url: 'http://localhost:6060/master/stop-cluster'
+                url: leadingChameleonMasterURL('/master/stop-cluster')
             }).then(function successCallback(response) {
                 console.log(response);
             }, function errorCallback(response) {
@@ -399,7 +418,7 @@
 
         $http({
             method: 'GET',
-            url: 'http://localhost:6060/master/runtime-resources'
+            url: leadingChameleonMasterURL('/master/runtime-resources')
         }).then(function successCallback(response) {
             $scope.master_runtime = response.data.content;
             console.log(response.data.content);
@@ -577,7 +596,7 @@
     chameleon_app.controller('SuperTopologyCtrl', function($scope, $http){
         $http({
             method: 'GET',
-            url: 'http://localhost:7000/super_master/super_master'
+            url: leadingChameleonSuperMasterURL('/super_master/super_master')
         }).then(function successCallback(response) {
             $scope.supermaster = response.data.content;
             // console.log(response.data.content);
@@ -599,30 +618,27 @@
             var index_superedge = -1;
             var my_superedges = [];
             var cur_masterindex = 0;
-
+           // console.log('9'+$scope.supermaster_quantities);
             if ($scope.supermaster_quantities >= 1) {
                 my_superedges = [];   //构造一条边
                 $http({
                     method: 'GET',
-                    url: 'http://localhost:6060/master/runtime-resources'
+                    url: leadingChameleonMasterURL('/master/runtime-resources')
                 }).then(function successCallback(response) {
                     $scope.master_runtime = response.data.content;
-                    // console.log(response.data.content);
+                     console.log($scope.runtime);
                     $scope.master_runtime_quantities = response.data.quantity;
                     //console.log(response.data.quantity);
                     for (var i in $scope.supermaster) {
                         //var master = $scope.master_runtime[i];
-                        var my_master = {};   //构造一个master节点
-                        vertexes_super[0 + $scope.super_quantities] = my_master;
-                        //console.log('8' + $scope.super_quantities);
-                        cur_masterindex++     //全局变量
+                        var my_master = {};    //构造一个master节点
+                        vertexes_super[0 + $scope.supermaster_quantities] = my_master;
+                        cur_masterindex++      //全局变量
                         my_master.id = cur_masterindex;
                         my_master.label = "master";
                         my_master.shape = 'image';
                         my_master.image = DIR + 'Hardware-WQN-main.png';
                         my_master.title = $scope.master_runtime[i].slave_id;
-                        //console.log('9'+my_master.id);
-                        //vertexes_super[cur_masterindex] = my_master;
                         var temp_superedge = {};       //添加一条super_master到my_master的边
                         //console.log('5'+my_supermaster.id);
                         temp_superedge.from = my_supermaster.id;
@@ -631,8 +647,7 @@
                         index_superedge++;
                         my_superedges[index_superedge] = temp_superedge;
                     }
-                    //console.log('9'+$scope.quantities);
-                    if ($scope.quantities >= 1) {
+                    if ($scope.master_runtime_quantities >= 1) {
                         //my_superedges = [];
                         for (var j in $scope.master_runtime) {
                             var temp_slave = {};       // 添加一个slave节点
@@ -803,7 +818,7 @@
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: 'http://localhost:6060/master/stop-cluster'
+                url: leadingChameleonMasterURL('/master/stop-cluster')
             }).then(function successCallback(response) {
                 console.log(response);
                 $modalInstance.dismiss('cancel');
@@ -841,7 +856,7 @@
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: 'http://localhost:6060/master/start_supermaster'
+                url: leadingChameleonMasterURL('/master/start_supermaster')
             }).then(function successCallback(response) {
                 console.log(response);
                 $modalInstance.dismiss('cancel');
@@ -878,7 +893,7 @@
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: 'http://localhost:7000/super_master/kill_master'
+                url: leadingChameleonSuperMasterURL('/super_master/kill_master')
             }).then(function successCallback(response) {
                 console.log(response);
                 $modalInstance.dismiss('cancel');
@@ -900,7 +915,7 @@
             $scope.delay = 1000;
             $http({
                 method: 'GET',
-                url: 'http://localhost:6060/master/frameworks'
+                url: leadingChameleonMasterURL('/master/frameworks')
             }).then(function successCallback(response) {
                 $scope.framework = response.data.content;
                 $scope.framework_quantities = response.data.quantity;
