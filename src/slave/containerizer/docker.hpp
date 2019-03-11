@@ -24,10 +24,10 @@
 //libprocess dependencies
 #include <process/owned.hpp>
 #include <process/shared.hpp>
+#include <process/process.hpp>
 
 //chameleon dependencies
 #include <resources.hpp>
-#include "containerizer.hpp"
 #include "slave_flags.hpp"
 #include "docker/docker.hpp"
 #include "docker/resources.hpp"
@@ -37,8 +37,13 @@ namespace slave{
     //Foward declaration
     class DockerContainerizerProcess;
 
-    class DockerContainerizer : public Containerizer {
+    class DockerContainerizer{
     public:
+
+        static Try<DockerContainerizer*> create();
+
+        DockerContainerizer(process::Shared<Docker> docker);
+
         virtual process::Future<bool> launch(
                 const mesos::ContainerID& containerId,
                 const Option<mesos::TaskInfo>& taskInfo,
@@ -56,6 +61,9 @@ namespace slave{
 
     class DockerContainerizerProcess : public process::Process<DockerContainerizerProcess>{
     public:
+
+        DockerContainerizerProcess(process::Shared<Docker> _docker) : m_docker(_docker){}
+
         //start launch containerizer
         virtual process::Future<bool> launch(
                 const mesos::ContainerID& contaierId,
@@ -64,7 +72,7 @@ namespace slave{
                 const std::string& directory,
                 const Option<std::string>& user,
                 const mesos::SlaveID& slaveId,
-                const std::map<std::string, std::string>& environment) = 0;
+                const std::map<std::string, std::string>& environment);
 
         // pull the image
         virtual process::Future<Nothing> pull(const mesos::ContainerID& containerId);
@@ -83,7 +91,7 @@ namespace slave{
                 const mesos::ContainerID& containerId,
                 const std::string& containerName);
 
-        const Flags m_flags;
+        //const Flags m_flags;
 
         process::Shared<Docker> m_docker;
 
@@ -101,7 +109,7 @@ namespace slave{
 
             const Option<std::string> m_user;
             mesos::SlaveID m_slaveId;
-            const Flags m_flags;
+            //const Flags m_flags;
             mesos::Resources m_resources;
             process::Future<Docker::Image> m_pull;
 
@@ -114,8 +122,7 @@ namespace slave{
                     const std::string& directory,
                     const Option<std::string>& user,
                     const mesos::SlaveID& slaveId,
-                    const std::map<std::string, std::string>& environment,
-                    const Flags& flags);
+                    const std::map<std::string, std::string>& environment);
 
             static std::string name(const mesos::SlaveID& slaveId, const std::string& id) {
                 return "chameleon-" + slaveId.value() + "." +
@@ -128,7 +135,6 @@ namespace slave{
                       const std::string& directory,
                       const Option<std::string>& user,
                       const mesos::SlaveID& slaveId,
-                      const Flags& flags,
                       const Option<mesos::CommandInfo>& _command,
                       const Option<mesos::ContainerInfo>& _container,
                       const std::map<std::string, std::string>& _environment)
@@ -138,8 +144,7 @@ namespace slave{
                       m_environment(_environment),
                       m_directory(directory),
                       m_user(user),
-                      m_slaveId(slaveId),
-                      m_flags(flags) {
+                      m_slaveId(slaveId){
 
                 m_resources = m_executor.resources();
 

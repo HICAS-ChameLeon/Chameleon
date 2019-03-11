@@ -40,6 +40,26 @@ namespace slave{
         process::wait(m_process.get());
     }
 
+    Try<DockerContainerizer*> DockerContainerizer::create() {
+        Try<Owned<Docker>> create = Docker::create(
+                "docker",
+                "/var/run/docker.sock",
+                false);
+
+        if (create.isError()) {
+            return Error("Failed to create docker: " + create.error());
+        }
+
+        Shared<Docker> docker = create->share();
+
+        return new chameleon::slave::DockerContainerizer(docker);
+    }
+
+    DockerContainerizer::DockerContainerizer(Shared<Docker> docker)
+            : m_process(new chameleon::slave::DockerContainerizerProcess(docker)) {
+        spawn(m_process.get());
+    }
+
     /**
     * Function name  : pull
     * Author         : Heldon
@@ -82,8 +102,7 @@ namespace slave{
             const string& directory,
             const Option<string>& user,
             const mesos::SlaveID& slaveId,
-            const map<string, string>& environment,
-            const Flags& flags){
+            const map<string, string>& environment){
 
         Try<Nothing> touch = os::touch(path::join(directory, "stdout"));
 
@@ -109,7 +128,6 @@ namespace slave{
                 containerWorkdir,
                 user,
                 slaveId,
-                flags,
                 commandInfo,
                 containerInfo,
                 environment);
@@ -130,6 +148,7 @@ namespace slave{
             const Option<std::string>& user,
             const mesos::SlaveID& slaveId,
             const std::map<std::string, std::string>& environment){
+        LOG(INFO)<<"Heldon Enter function launch";
         return dispatch(
                 m_process.get(),
                 &DockerContainerizerProcess::launch,
@@ -185,8 +204,7 @@ namespace slave{
                 directory,
                 user,
                 slaveId,
-                environment,
-                m_flags);
+                environment);
 
         if (container.isError()) {
             return Failure("Failed to create container: " + container.error());
@@ -267,7 +285,7 @@ namespace slave{
                 container->m_command,
                 container_name,
                 container->m_directory,
-                "/mnt/mesos/sandbox",
+                "/mnt/chame/sandbox",
                 container->m_resources,
                 false,
                 container->m_environment,

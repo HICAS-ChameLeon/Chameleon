@@ -320,7 +320,7 @@ namespace master{
 
         offer->mutable_slave_id()->MergeFrom(*slaveID);
 
-        offer->set_hostname("221b");
+        offer->set_hostname("heldon");
         return offer;
     }
 
@@ -436,9 +436,9 @@ namespace master{
 
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
-                            cur_slavePID.append("172.20.110.232:6061");
+                            cur_slavePID.append("172.20.110.59:6061");
                         } else {
-                            cur_slavePID.append("172.20.110.232:6061");
+                            cur_slavePID.append("172.20.110.59:6061");
                         }
                         mesos::TaskInfo task_(task);
 

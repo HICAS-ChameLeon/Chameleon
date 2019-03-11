@@ -720,9 +720,11 @@ static void transport(Message* message, ProcessBase* sender = nullptr)
 {
   if (message->to.address == __address__) {
     // Local message.
+    LOG(INFO)<<"Heldon local";
     process_manager->deliver(message->to, new MessageEvent(message), sender);
   } else {
     // Remote message.
+    LOG(INFO)<<"Heldon remote";
     socket_manager->send(message);
   }
 }
@@ -2287,6 +2289,7 @@ void SocketManager::send(Message* message, const SocketImpl::Kind& kind)
   }
 
   if (connect) {
+    LOG(INFO)<<"Heldon connect = true";
     CHECK_SOME(socket);
     socket->connect(address)
       .onAny(lambda::bind(
@@ -2449,7 +2452,7 @@ void SocketManager::close(int_fd s)
       // termination logic is not run twice.
       Socket socket = iterator->second;
       sockets.erase(iterator);
-
+      LOG(INFO)<<"Heldon socket shutdown";
       Try<Nothing> shutdown = socket.shutdown();
       if (shutdown.isError()) {
         LOG(ERROR) << "Failed to shutdown socket with fd " << socket.get()
@@ -3706,6 +3709,7 @@ void ProcessBase::send(
     size_t length)
 {
   if (!to) {
+    LOG(INFO)<<"Heldon !UPID";
     return;
   }
 

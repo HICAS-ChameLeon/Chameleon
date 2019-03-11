@@ -14,12 +14,19 @@
 #include <stout/option.hpp>
 #include <stout/flags.hpp>
 
+using std::string;
+
 namespace chameleon{
     namespace slave{
-        class Flags : virtual flags::FlagsBase{
+        class Flags : public virtual flags::FlagsBase{
         public:
             Flags();
             Option<std::string> docker_chameleon_image;
+            string docker_socket;
+            int32_t port;
+            uint32_t ht;
+            string work_dir;
+            Option<string> master;
         };
     }
 }

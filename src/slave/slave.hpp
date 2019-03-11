@@ -70,7 +70,8 @@
 #include <runtime_resources_usage.hpp>
 #include <chameleon_os.hpp>
 #include <chameleon_string.hpp>
-#include <containerizer/containerizer.hpp>
+#include <containerizer/docker.hpp>
+#include <docker.hpp>
 
 using std::string;
 using std::queue;
@@ -164,6 +165,10 @@ namespace chameleon {
                 const mesos::FrameworkID& frameworkId);
 
     protected:
+    public:
+        void setM_containerizer(slave::DockerContainerizer *m_containerizer);
+
+    protected:
         void finalize() override;
 
     private:
@@ -188,6 +193,8 @@ namespace chameleon {
 
         mesos::TaskInfo m_task;
 
+        chameleon::slave::DockerContainerizer* m_containerizer;
+
         string m_work_dir;
 
 //        BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completedFrameworks;
@@ -203,7 +210,8 @@ namespace chameleon {
 
         void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
 
-        void start_mesos_executor(const Framework *framework);
+        void start_mesos_executor(const Framework *framework,
+                                  const mesos::TaskInfo& taskInfo);
 
         void registerExecutor(const UPID &from,
                               const mesos::FrameworkID &frameworkId,

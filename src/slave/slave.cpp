@@ -5,8 +5,11 @@
  * Description：slave codes
  */
 
+#include <stout/flags.hpp>
 #include <messages.pb.h>
 #include "slave.hpp"
+#include "slave_flags.hpp"
+//#include "containerizer/docker.hpp"
 
 //The following flags has default values
 DEFINE_uint32(ht, 6, "Heartbeat interval");
@@ -123,6 +126,7 @@ namespace chameleon {
         LOG(INFO) << "The initialization of slave itself finished.";
         LOG(INFO) << self() << " starts to send heartbeat message to the master";
         heartbeat();
+
     }
 
     /**
@@ -135,9 +139,9 @@ namespace chameleon {
             const mesos::FrameworkInfo &frameworkInfo,
             const mesos::FrameworkID &frameworkId,
             const process::UPID &pid,
-            const mesos::TaskInfo &task) {
+            const mesos::TaskInfo &taskInfo) {
         LOG(INFO) << "Get task from master, start the mesos executor first";
-        const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, task);
+        const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, taskInfo);
 
         Option<process::UPID> frameworkPid = None();
 
@@ -146,15 +150,17 @@ namespace chameleon {
 
         frameworks[frameworkId.value()] = framework;
 
-        m_tasks.push(task);
+        m_tasks.push(taskInfo);
         m_executorInfo = executorInfo;
 
         LOG(INFO) << "Start executor on framework " << framework->id().value();
-        start_mesos_executor(framework);
+        start_mesos_executor(framework,taskInfo);
     }
 
-    void Slave::start_mesos_executor(const Framework* framework) {
-
+    void Slave::start_mesos_executor(
+            const Framework* framework,
+            const mesos::TaskInfo& taskInfo) {
+        LOG(INFO)<<"Heldon enter function start_mesos_executor";
         const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
         const string mesos_directory = path::join(os::getcwd(), "/mesos_executor/mesos-directory");
 
@@ -167,6 +173,7 @@ namespace chameleon {
                         {"MESOS_DIRECTORY",    mesos_directory},
                         {"MESOS_CHECKPOINT",   "0"}
                 };
+
         const string mesos_executor_path = path::join(os::getcwd(), "mesos_executor/mesos-executor");
         LOG(INFO) << "start mesos executor finished ";
         Try<Subprocess> child = subprocess(
@@ -182,7 +189,20 @@ namespace chameleon {
 
         //TODO:launchExecutor
         //launch the container
-        Future<bool> launch = true;
+//        mesos::ContainerID container_id;
+//        container_id.set_value(UUID::random().toString());
+//
+//        Future<bool> launch;
+//
+//        LOG(INFO)<<"Heldon enter function containerizer->launch";
+//        launch = m_containerizer->launch(
+//                container_id,
+//                taskInfo,
+//                m_executorInfo,
+//                "heldon",
+//                mesos_directory,
+//                m_slaveInfo.id(),
+//                environment);
     }
 
     void Slave::registerExecutor(const UPID &from,
@@ -243,7 +263,7 @@ namespace chameleon {
 
         if (task.has_container()) {
             executorInfo.mutable_container()->CopyFrom(task.container());
-            LOG(INFO)<<"Heldon taks has a container" ;
+            LOG(INFO)<<"Heldon task has a container" ;
         }
 
         string name = "(Task: " + task.task_id().value() + ") ";
@@ -328,16 +348,16 @@ namespace chameleon {
      * */
     void Slave::statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
 
-        LOG(INFO) << "Handling status update " << update.status().state()
-                  << " of framework " << update.framework_id().value();
+//        LOG(INFO) << "Handling status update " << update.status().state()
+//                  << " of framework " << update.framework_id().value();
 
         update.mutable_status()->set_uuid(update.uuid());
         update.mutable_status()->set_source(
                 pid == UPID() ? mesos::TaskStatus::SOURCE_SLAVE : mesos::TaskStatus::SOURCE_EXECUTOR);
         update.mutable_status()->mutable_executor_id()->CopyFrom(update.executor_id());
 
-        LOG(INFO) << "Received status update " << update.status().state()
-                  << " of framework " << update.framework_id().value();
+//        LOG(INFO) << "Received status update " << update.status().state()
+//                  << " of framework " << update.framework_id().value();
 
         process::dispatch(self(), &Slave::_statusUpdate, update, pid);
     }
@@ -361,9 +381,9 @@ namespace chameleon {
         message.set_uuid(update.uuid());
 
         if (pid.isSome()) {
-            LOG(INFO) << "Sending acknowledgement for status update " << update.status().state()
-                      << " of framework " << update.framework_id().value()
-                      << " to " << pid.get();  //executor(1)@172.20.110.77:39343
+//            LOG(INFO) << "Sending acknowledgement for status update " << update.status().state()
+//                      << " of framework " << update.framework_id().value()
+//                      << " to " << pid.get();  //executor(1)@172.20.110.77:39343
             send(pid.get(), message);
         } else {
             LOG(INFO) << "Ignoring update status ";
@@ -380,8 +400,8 @@ namespace chameleon {
      * */
     void Slave::forward(mesos::internal::StatusUpdate update) {
 
-        LOG(INFO) << "Forwarding the update " << update.status().state()
-                  << " of framework " << update.framework_id().value() << " to " << m_master;
+//        LOG(INFO) << "Forwarding the update " << update.status().state()
+//                  << " of framework " << update.framework_id().value() << " to " << m_master;
 
         mesos::internal::StatusUpdateMessage message;
         message.mutable_update()->MergeFrom(update);
@@ -552,6 +572,10 @@ namespace chameleon {
         }
     }
 
+    void Slave::setM_containerizer(slave::DockerContainerizer *m_containerizer) {
+        Slave::m_containerizer = m_containerizer;
+    }
+
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)
     {
         return stream << TaskState_Name(state);
@@ -562,6 +586,23 @@ namespace chameleon {
 using namespace chameleon;
 
 int main(int argc, char *argv[]) {
+//    chameleon::slave::Flags flags;
+//
+//    Try<flags::Warnings> load = flags.load("Chameleon-", argc, argv);
+//    if (flags.help) {
+//        cout << flags.usage() << endl;
+//        return EXIT_SUCCESS;
+//    }
+//    if (load.isError()) {
+//        std::cerr << flags.usage(load.error()) << endl;
+//        return EXIT_FAILURE;
+//    }
+
+    Try<chameleon::slave::DockerContainerizer*> docker_containerizer = chameleon::slave::DockerContainerizer::create();
+    if (docker_containerizer.isError()) {
+        EXIT(EXIT_FAILURE)
+                << "Failed to create a containerizer: " << docker_containerizer.error();
+    }
 
     chameleon::set_storage_paths_of_glog("slave");// provides the program name
     chameleon::set_flags_of_glog();
@@ -577,15 +618,15 @@ int main(int argc, char *argv[]) {
     google::ParseCommandLineFlags(&argc, &argv, true);
     google::CommandLineFlagInfo info;
 
-
     if (master_Str && port_Int ) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
-
         process::initialize("slave");
         chameleon::Slave slave;
+
+        slave.setM_containerizer(docker_containerizer.get());
+
         slave.setM_interval(Seconds(FLAGS_ht));
         slave.setM_work_dir(FLAGS_work_dir);
-
         string master_ip_and_port = "master@" + stringify(FLAGS_master);
         slave.setM_master(master_ip_and_port);
         PID<chameleon::Slave> cur_slave = process::spawn(slave);
@@ -597,6 +638,8 @@ int main(int argc, char *argv[]) {
         LOG(INFO) << "To run this program , must set all parameters correctly "
                      "\n read the notice " << google::ProgramUsage();
     }
+
+    delete docker_containerizer.get();
 
     return 0;
 }

@@ -124,14 +124,14 @@ set(slave_SRCS
 
 #heldon contaienrizer
 include_directories(${CMAKE_SOURCE_DIR}/src)
-set(containerizer_SRC
-        containerizer/containerizer.hpp)
+#set(containerizer_SRC
+#        containerizer/containerizer.hpp)
 set(docker_containerizer_SRC
         containerizer/docker.hpp
         containerizer/docker.cpp)
-set(flags_SRC
-        slave_flags.hpp
-        slave_flags.cpp)
+#set(flags_SRC
+#        slave_flags.hpp
+#        slave_flags.cpp)
 set(resources_SRC
         ${CMAKE_SOURCE_DIR}/src/docker/resources.hpp
         ${CMAKE_SOURCE_DIR}/src/docker/resources.cpp)
@@ -156,9 +156,9 @@ list(APPEND slave_SRCS ${Gpu_Collector_SRCS})
 list(APPEND slave_SRCS ${tlb_SRCS})
 list(APPEND slave_SRCS ${port_SRCS})
 
-list(APPEND slave_SRCS ${containerizer_SRC})
+#list(APPEND slave_SRCS ${containerizer_SRC})
 list(APPEND slave_SRCS ${docker_containerizer_SRC})
-list(APPEND slave_SRCS ${flags_SRC})
+#list(APPEND slave_SRCS ${flags_SRC})
 list(APPEND slave_SRCS ${resources_SRC})
 list(APPEND slave_SRCS ${values_SRC})
 list(APPEND slave_SRCS ${type_utils_SRC})
@@ -187,5 +187,4 @@ target_link_libraries(slave ${slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} $
 #list(REMOVE_DUPLICATES docker_launch_PROTOS)
 link_libraries(/home/heldon/chameleon/mesos/mesos-1.3.2/build/src/.libs/libmesos-1.3.2.so)
 add_executable(docker_launch docker_launch.cpp)
-target_link_libraries(docker_launch ${PROCESS_LIBS} ${PROCESS_TARGET} mesos)
-
+target_link_libraries(docker_launch ${PROCESS_LIBS} mesos-1.3.2 glog)
