@@ -15,7 +15,6 @@
 #include <string>
 
 //stout dependencies
-#include <stout/flags.hpp>
 #include <stout/os.hpp>
 
 //google dependencies
@@ -28,7 +27,6 @@
 
 //chameleon dependencies
 #include <resources.hpp>
-//#include "slave_flags.hpp"
 #include "docker/docker.hpp"
 #include "docker/resources.hpp"
 

@@ -1118,6 +1118,7 @@ bool initialize(
   }
 
   if (flags.ip.isSome()) {
+    LOG(INFO)<<"Heldon flags.ip : "<<flags.ip.get();
     __address__.ip = flags.ip.get();
   }
 

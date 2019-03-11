@@ -647,18 +647,6 @@ namespace chameleon {
 using namespace chameleon;
 
 int main(int argc, char *argv[]) {
-//    chameleon::slave::Flags flags;
-//
-//    Try<flags::Warnings> load = flags.load("Chameleon-", argc, argv);
-//    if (flags.help) {
-//        cout << flags.usage() << endl;
-//        return EXIT_SUCCESS;
-//    }
-//    if (load.isError()) {
-//        std::cerr << flags.usage(load.error()) << endl;
-//        return EXIT_FAILURE;
-//    }
-
     Try<chameleon::slave::DockerContainerizer*> docker_containerizer = chameleon::slave::DockerContainerizer::create();
     if (docker_containerizer.isError()) {
         EXIT(EXIT_FAILURE)
@@ -688,7 +676,7 @@ int main(int argc, char *argv[]) {
         LOG(INFO)<<"Heldon env port : "<< os::getenv("LIBPROCESS_PORT").get();
         process::initialize("slave");
 
-        Slave slave;
+        chameleon::Slave slave;
 
         slave.setM_containerizer(docker_containerizer.get());
 
