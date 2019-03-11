@@ -10,7 +10,7 @@
             $scope.delay = 2000;
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/runtime-resources'
+                url: 'http://localhost:6060/master/runtime-resources'
             }).then(function successCallback(response) {
                 $scope.runtime = response.data.content;
                 $scope.quantities = response.data.quantity;
@@ -19,7 +19,7 @@
             });
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/hardware-resources'
+                url: 'http://localhost:6060/master/hardware-resources'
             }).then(function successCallback(response) {
                 $scope.hardware = response.data.content;
                 $scope.quantities = response.data.quantity;
@@ -37,7 +37,7 @@
         $scope.stop_cluster = function () {
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/stop-cluster'
+                url: 'http://localhost:6060/master/stop-cluster'
             }).then(function successCallback(response) {
                 console.log(response);
             }, function errorCallback(response) {
@@ -51,7 +51,7 @@
         //
         // $http({
         //     method: 'GET',
-        //     url: 'http://172.20.110.228:6060/master/hardware-resources'
+        //     url: 'http://localhost:6060/master/hardware-resources'
         // }).then(function successCallback(response) {
         //
         //
@@ -66,7 +66,7 @@
     chameleon_app.controller('RuntimeCtrl', function($scope,$rootScope,$http) {
         // $http({
         //     method: 'GET',
-        //     url: 'http://172.20.110.228:6060/master/runtime-resources'
+        //     url: 'http://localhost:6060/master/runtime-resources'
         // }).then(function successCallback(response) {
         //     $scope.runtime = response.data.content;
         //     // console.log(response.data.content);
@@ -434,7 +434,7 @@
 
         $http({
             method: 'GET',
-            url: 'http://172.20.110.228:6060/master/runtime-resources'
+            url: 'http://localhost:6060/master/runtime-resources'
         }).then(function successCallback(response) {
             $scope.runtime = response.data.content;
             // console.log(response.data.content);
@@ -612,7 +612,7 @@
     chameleon_app.controller('SuperTopologyCtrl', function($scope, $http){
         $http({
             method: 'GET',
-            url: 'http://172.20.110.228:7000/super_master/super_master'
+            url: 'http://localhost:7000/super_master/super_master'
         }).then(function successCallback(response) {
             $scope.supermaster = response.data.content;
             // console.log(response.data.content);
@@ -627,7 +627,7 @@
             my_supermaster.id = 0;
             my_supermaster.label = "super_master";
             my_supermaster.shape = 'image';
-            my_supermaster.image = DIR + 'Hardware-WQN-main.png';
+            my_supermaster.image = DIR + 'Hardware-WQN-superserver.png';
             my_supermaster.title = '超级节点';
 
             var index_master = 1;
@@ -639,7 +639,7 @@
                 my_superedges = [];   //构造一条边
                 $http({
                     method: 'GET',
-                    url: 'http://172.20.110.228:6060/master/runtime-resources'
+                    url: 'http://localhost:6060/master/runtime-resources'
                 }).then(function successCallback(response) {
                     $scope.runtime = response.data.content;
                     // console.log(response.data.content);
@@ -816,7 +816,7 @@
 
     //模态框对应的Controller
     chameleon_app.controller('ShutdownCtrl', function($scope,$modal) {
-        var alert_message = "Make sure to shutdown all slaves?";
+        var alert_message = "确认关闭所有slave节点?";
         $scope.openModal = function() {
             var modalInstance = $modal.open({
                 templateUrl : 'shutdown.html',
@@ -838,7 +838,7 @@
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/stop-cluster'
+                url: 'http://localhost:6060/master/stop-cluster'
             }).then(function successCallback(response) {
                 console.log(response);
                 $modalInstance.dismiss('cancel');
@@ -854,7 +854,7 @@
 
     //开启supermaster对应的Controller
     chameleon_app.controller('StartSupermasterCtrl',function ($scope,$modal) {
-        var alert_message = "Make sure to start Supermaster?";
+        var alert_message = "确认开启Supermaster?";
         $scope.openModal = function() {
             var modalInstance = $modal.open({
                 templateUrl : 'ControlSupermaster.html',
@@ -876,7 +876,7 @@
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/start_supermaster'
+                url: 'http://localhost:6060/master/start_supermaster'
             }).then(function successCallback(response) {
                 console.log(response);
                 $modalInstance.dismiss('cancel');
@@ -891,7 +891,7 @@
 
     //关闭supermaster对应的Controller
     chameleon_app.controller('StopSupermasterCtrl',function ($scope,$modal) {
-        var alert_message = "Make sure to stop Supermaster?";
+        var alert_message = "确认停止Supermaster?";
         $scope.openModal = function() {
             var modalInstance = $modal.open({
                 templateUrl : 'ControlSupermaster.html',
@@ -913,7 +913,7 @@
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:7000/super_master/kill_master'
+                url: 'http://localhost:7000/super_master/kill_master'
             }).then(function successCallback(response) {
                 console.log(response);
                 $modalInstance.dismiss('cancel');
@@ -935,7 +935,7 @@
             $scope.delay = 1000;
             $http({
                 method: 'GET',
-                url: 'http://172.20.110.228:6060/master/frameworks'
+                url: 'http://localhost:6060/master/frameworks'
             }).then(function successCallback(response) {
                 $scope.framework = response.data.content;
                 $scope.quantities = response.data.quantity;
