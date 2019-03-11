@@ -190,10 +190,11 @@ namespace chameleon {
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
 
             shared_ptr<UPID> msp_masterUPID;
-            Duration m_interval;
 
             string m_uuid;
-            string m_master;  //master@127.0.0.1：1080
+            string m_master;
+            string m_work_dir;
+            Duration m_interval;
 
             hashmap<string, Framework *> m_frameworks;
 
@@ -201,8 +202,6 @@ namespace chameleon {
             mesos::ExecutorInfo m_executorInfo;
 
             queue<mesos::TaskInfo> m_tasks;
-
-            string m_work_dir;
 
             void heartbeat();
 
@@ -251,16 +250,21 @@ namespace chameleon {
             ) : m_slave(_slave),
                 m_frameworkId(_frameworkId),
                 m_containerId(_containerId),
-                m_info(_info),
-                m_id(_info.executor_id().value()) {};
+                m_info(_info){};
 
             ~Executor();
+
+            enum State {
+                REGISTERING,  // Executor is launched but not (re-)registered yet.
+                RUNNING,      // Executor has (re-)registered.
+                TERMINATING,  // Executor is being shutdown/killed.
+                TERMINATED,   // Executor has terminated but there might be pending updates.
+            } state;
 
             void checkpointExecutor();
 
             void checkpointTask(const mesos::TaskInfo &task);
 
-            mesos::Task *Executor::addTask(const mesos::TaskInfo &task);
 
             friend std::ostream &operator<<(std::ostream &stream, const Executor &executor);
 
@@ -285,27 +289,18 @@ namespace chameleon {
             Slave *m_slave;
             const mesos::ExecutorID m_id;
             const mesos::ExecutorInfo m_info;
+            Option<process::UPID> m_pid;
             const mesos::FrameworkID m_frameworkId;
             const mesos::ContainerID m_containerId;
 
             const std::string m_directory;
             const Option<std::string> m_user;
             const bool m_checkpoint;
-            Option<process::UPID> m_pid;
 
             LinkedHashMap<mesos::TaskID, mesos::TaskInfo> queuedTasks;
             std::list<mesos::TaskGroupInfo> queuedTaskGroups;
             LinkedHashMap<mesos::TaskID, mesos::Task *> launchedTasks;
             LinkedHashMap<mesos::TaskID, mesos::Task *> terminatedTasks;
-
-
-            enum State {
-                REGISTERING,  // Executor is launched but not (re-)registered yet.
-                RUNNING,      // Executor has (re-)registered.
-                TERMINATING,  // Executor is being shutdown/killed.
-                TERMINATED,   // Executor has terminated but there might be pending updates.
-            } state;
-
 
         private:
             Executor(const Executor &);              // No copying.
@@ -326,26 +321,26 @@ namespace chameleon {
 
             ~Framework();
 
-            Executor *addExecutor(const mesos::ExecutorInfo &executorInfo);
-
-            Executor *getExecutor(const mesos::ExecutorID &executorId) const;
-
-
             const mesos::FrameworkID id() const { return m_info.id(); }
+            Executor *add_executor(const mesos::ExecutorInfo &executorInfo);
+
+            Executor *get_executor(const mesos::ExecutorID &executorId);
 
             enum State {
                 RUNNING,      // First state of a newly created framework.
                 TERMINATING,  // Framework is shutting down in the cluster.
             } state;
 
+        private:
             Slave *m_slave;
             mesos::FrameworkInfo m_info;
             Option<process::UPID> m_pid;
 
+            hashmap<string, Executor*> m_executors;
+
 
         private:
             Framework(const Framework &);
-
             Framework &operator=(const Framework &);
         };
 

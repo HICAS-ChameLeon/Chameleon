@@ -126,7 +126,7 @@ namespace chameleon {
                 const mesos::FrameworkID &frameworkId,
                 const process::UPID &pid,
                 const mesos::TaskInfo &task) {
-            LOG(INFO) << "Get task from master, start the mesos executor first";
+            LOG(INFO) << "Get task from master " << from << " start the mesos executor first";
             const mesos::ExecutorInfo executorInfo = get_executorinfo(frameworkInfo, task);
 
             Option<process::UPID> frameworkPid = None();
@@ -376,6 +376,18 @@ namespace chameleon {
             return nullptr;
         }
 
+        void Slave::remove_framework(Framework *framework) {
+
+            CHECK_NOTNULL(framework);
+
+            LOG(INFO) << "Cleaning up framework " << framework->id().value();
+
+            CHECK(framework->state == Framework::RUNNING ||
+                  framework->state == Framework::TERMINATING);
+
+            m_frameworks.erase(framework->id().value());
+        }
+
         void Slave::shutdown_framework(const process::UPID &from, const mesos::FrameworkID &frameworkId) {
             LOG(INFO) << "Asked to shutdown framework " << frameworkId.value()
                       << " by " << from;
@@ -400,18 +412,6 @@ namespace chameleon {
             }
         }
 
-        void Slave::remove_framework(Framework *framework) {
-
-            CHECK_NOTNULL(framework);
-
-            LOG(INFO) << "Cleaning up framework " << framework->id().value();
-
-            CHECK(framework->state == Framework::RUNNING ||
-                  framework->state == Framework::TERMINATING);
-
-            m_frameworks.erase(framework->id().value());
-        }
-
         void Slave::shutdown_executor(const UPID &from,
                                       const mesos::FrameworkID &frameworkId,
                                       const mesos::ExecutorID &executorId) {
@@ -428,8 +428,8 @@ namespace chameleon {
                 LOG(INFO) << "Cannot shut down executor " << executorId.value()
                           << " of unknown framework " << frameworkId.value();
             }
-
-
+            Executor* executor = framework->m_executors[executorId.value()];
+            executor->state = Executor::TERMINATING;
         }
 
         void Slave::register_feedback(const string &hostname) {
