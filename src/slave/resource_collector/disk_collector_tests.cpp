@@ -11,8 +11,8 @@
 
 #include <stout/gtest.hpp>
 
-#include <disk_collector.hpp>
-#include <runtime_resources_usage.hpp>
+#include <resource_collector/disk_collector.hpp>
+#include <resource_collector/runtime_resources_usage.hpp>
 
 using std::shared_ptr;
 

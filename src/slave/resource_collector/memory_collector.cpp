@@ -5,7 +5,7 @@
  * Description：Get memory information
  */
 
-#include <memory_collector.hpp>
+#include <resource_collector/memory_collector.hpp>
 
 namespace chameleon{
     /*

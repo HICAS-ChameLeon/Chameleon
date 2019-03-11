@@ -11,6 +11,7 @@
 #include <vector>
 #include <set>
 #include<iterator>
+#include <sstream>
 #include <unordered_map>
 // google
 #include <glog/logging.h>
@@ -40,6 +41,7 @@
 
 // chameleon headers
 #include <configuration_glog.hpp>
+#include "master.hpp"
 
 using std::string;
 using std::set;
@@ -55,37 +57,50 @@ using process::Future;
 using process::Promise;
 using process::Subprocess;
 using process::subprocess;
+using process::http::Request;
+using process::http::OK;
+using process::http::Response;
+
+using namespace process::http;
+
+using process::http::Request;
+using process::http::OK;
+using process::http::InternalServerError;
 
 
 namespace chameleon {
 
     extern int32_t cluster_levels = 1;
 
-    class SuperMaster :public ProtobufProcess<SuperMaster>{
+    class SuperMaster :public ProtobufProcess<SuperMaster> {
     public:
-        explicit SuperMaster():ProcessBase("super_master"){
+        explicit SuperMaster(const string& initiator) : ProcessBase("super_master") ,m_initiator(initiator){
 
         }
 
         virtual void initialize() override;
 
+        void set_master_path(const string& path);
+        void set_first_to_second_master(const string& master);
         void registered_master(const UPID &forom, const MasterRegisteredMessage &master_registered_message);
 
-        Future<bool> is_repeated_registered(const UPID& upid);
+        Future<bool> is_repeated_registered(const UPID &upid);
 
         bool launch_masters();
 
-        void record_master(const Future<bool>& future,const UPID &from, const MasterRegisteredMessage &master_registered_message);
+        void record_master(const Future<bool> &future, const UPID &from,
+                           const MasterRegisteredMessage &master_registered_message);
 
-        void terminating_master(const UPID& from,const OwnedSlavesMessage& message);
-        virtual ~SuperMaster(){
-            LOG(INFO)<<" ~SuperMaster";
+        void terminating_master(const UPID &from, const OwnedSlavesMessage &message);
+
+        virtual ~SuperMaster() {
+            LOG(INFO) << " ~SuperMaster";
         }
-
 
     private:
 
         string m_uuid;
+        string m_master_path;
         // represent the masters administered by the current super_master.
         vector<UPID> m_masters;
 
@@ -94,7 +109,7 @@ namespace chameleon {
 
         // represent the current number of level
         int32_t m_levels;
-        string m_first_to_second_master;
+        string m_initiator;
 
         vector<SlaveInfo> m_admin_slaves;
 
@@ -104,12 +119,24 @@ namespace chameleon {
         // key: master:ip , value: vector<SlavesInfoControlledByMaster>
         unordered_map<string,vector<SlavesInfoControlledByMaster>> m_classification_slaves;
         vector<string> m_classification_masters;
+        //kill_master related
+        OwnedSlavesMessage *m_owned_slaves_message;
+        //kill_master end
         void classify_masters();
 
         void create_masters();
         void send_super_master_control_message();
 
+        //kill_master related
+        void owned_masters_message(const UPID& from, const string& name);
+        void kill_master_message(const UPID &from, const OwnedSlavesMessage &message);
+        //kill_master end
+
+        const string select_master();
+        void send_terminating_master(string master_ip);
+        void recevied_slave_infos(const UPID& from, const string& message);
     };
+
 
 }
 

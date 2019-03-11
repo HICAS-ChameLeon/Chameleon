@@ -1,4 +1,4 @@
-#include <gpu_collector.hpp>
+#include <resource_collector/gpu_collector.hpp>
 
 namespace chameleon {
 /*

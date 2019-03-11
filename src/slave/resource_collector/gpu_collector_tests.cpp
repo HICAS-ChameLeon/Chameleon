@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <gpu_collector.hpp>
-#include <runtime_resources_usage.hpp>
+#include <resource_collector/gpu_collector.hpp>
+#include <resource_collector/runtime_resources_usage.hpp>
 
 TEST(GPUCollectorTests, GetGpuInfo)
 {

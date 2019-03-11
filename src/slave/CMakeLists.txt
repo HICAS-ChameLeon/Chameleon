@@ -1,8 +1,8 @@
 
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages monitor_info ${CMAKE_BINARY_DIR}/src/messages monitor_info)
 
+add_subdirectory(software_store)
 add_subdirectory(resource_collector)
-#add_subdirectory(fetcher)
 
 
 # set the gtest 1.7 relevant library names.
@@ -116,11 +116,15 @@ set(runtime_resource_SRCS
         resource_collector/runtime_resources_usage.hpp
         resource_collector/runtime_resources_usage.cpp)
 
+
 set(slave_SRCS
         slave.hpp
         slave.cpp
         resource_collector/resource_collector.hpp
         resource_collector/resource_collector.cpp)
+
+# software_store
+set(software_resources_SRCS software_store/software_resource_manager.hpp software_store/software_resource_manager.cpp)
 
 #heldon contaienrizer
 include_directories(${CMAKE_SOURCE_DIR}/src)
@@ -155,6 +159,7 @@ list(APPEND slave_SRCS ${disk_SRCS})
 list(APPEND slave_SRCS ${Gpu_Collector_SRCS})
 list(APPEND slave_SRCS ${tlb_SRCS})
 list(APPEND slave_SRCS ${port_SRCS})
+list(APPEND slave_SRCS ${software_resources_SRCS})
 
 #list(APPEND slave_SRCS ${containerizer_SRC})
 list(APPEND slave_SRCS ${docker_containerizer_SRC})
@@ -178,6 +183,7 @@ list(APPEND slave_PROTOS messages)
 list(APPEND slave_PROTOS scheduler)
 list(APPEND slave_PROTOS mesos)
 list(APPEND slave_PROTOS slave_related)
+list(APPEND slave_PROTOS fetcher)
 
 list(REMOVE_DUPLICATES slave_PROTOS)
 target_link_libraries(slave ${slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})

@@ -26,3 +26,4 @@ list(APPEND super_master_PROTOS runtime_resource)
 set(super_master_SRCS  super_master.hpp super_master.cpp)
 add_executable(super_master ${super_master_SRCS})
 target_link_libraries(super_master gflags ${super_master_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET})
+

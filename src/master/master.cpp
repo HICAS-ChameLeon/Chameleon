@@ -9,6 +9,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
+DEFINE_string(supermaster_path, "./super_master", "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 
 /*
  * Function name  : ValidateInt
@@ -24,9 +25,25 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
     return false;
 }
 
-static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
+/**
+ * Function name  : ValidateStr
+ * Author         : weiguow
+ * Date           : 2018-12-13
+ * Description    : Determines whether the input parameter is valid
+ * Return         : True or False*/
+static bool ValidateStr(const char *flagname, const string &value) {
+    if (!value.empty()) {
+        return true;
+    }
+    printf("Invalid value for --%s: To run this program, you must set a meaningful value for it "
+           "%s\n", flagname, value.c_str());;
+    return false;
+}
 
-namespace master{
+static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
+static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &ValidateStr);
+
+namespace master {
 
     void Master::initialize() {
 
@@ -70,6 +87,10 @@ namespace master{
          * Date      :  2018-12-27
          * */
         install<mesos::scheduler::Call>(&Master::receive);
+
+        //change two levels to one related
+        install("MAKUN",&Master::get_select_master);
+//        install<TerminatingMasterMessage>
 
         // http://172.20.110.228:6060/master/hardware-resources
         route(
@@ -117,6 +138,42 @@ namespace master{
                     return ok_response;
                 });
 
+        route(
+                "/frameworks",
+                "wangweiguo new version of frameworks",
+                [this](Request request) {
+                    JSON::Object a_framework;
+                    JSON::Object a_content = JSON::Object();
+                    if (!this->frameworks.registered.empty()) {
+                       JSON::Array frameworks_array;
+                        for (auto it = this->frameworks.registered.begin();
+                             it != this->frameworks.registered.end(); it++) {
+                            Framework *framework = it->second;
+                            a_framework = JSON::protobuf(framework->info);
+                            if (framework->state == Framework::ACTIVE) {
+                                a_framework.values["state"] = "ACTIVE";
+                            }if (framework->state == Framework::INACTIVE) {
+                                a_framework.values["state"] = "INACTIVE";
+                            }if (framework->state == Framework::RECOVERED) {
+                                a_framework.values["state"] = "RECOVERED";
+                            }if (framework->state == Framework::DISCONNECTED) {
+                                a_framework.values["state"] = "DISCONNECTED";
+                            }
+                            frameworks_array.values.emplace_back(a_framework);
+                        }
+                        a_content.values["quantity"] = frameworks_array.values.size();
+                        a_content.values["content"] = frameworks_array;
+                    } else {
+
+                        a_content.values["quantity"] = 0;
+                        a_content.values["content"] = JSON::Object();
+                    }
+
+                    OK ok_response(stringify(a_content));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
 
         // http://172.20.110.228:6060/master/stop-cluster
         route(
@@ -144,6 +201,29 @@ namespace master{
                     return ok_response;
                 });
 
+        route(
+                "/start_supermaster",
+                "start supermaster by subprocess",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    /**
+                      * Function model  :  start a subprocess of super_master
+                      * Author          :  Jessicallo
+                      * Date            :  2019-2-27
+                      * Funtion name    :  Try
+                      * @param          :
+                      * */
+                      m_super_master_path.append(" --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
+                    Try<Subprocess> super_master = subprocess(
+                           m_super_master_path,
+                            Subprocess::FD(STDIN_FILENO),
+                            Subprocess::FD(STDOUT_FILENO),
+                            Subprocess::FD(STDERR_FILENO)
+                    );
+                    OK response(stringify(result));
+                    response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return response;
+                });
 
 
 //     install("stop", &MyProcess::stop);
@@ -245,16 +325,16 @@ namespace master{
             // If we are here the framework is subscribing for the first time.
             // Check if this framework is already subscribed (because it retries).
             foreachvalue (Framework *framework, frameworks.registered) {
-                if (framework->pid == from) {
-                    LOG(INFO) << "Framework " << *framework
-                    << " already subscribed, resending acknowledgement";
-                    mesos::internal::FrameworkRegisteredMessage message;
-                    message.mutable_framework_id()->MergeFrom(framework->id());
-                    message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
-                    framework->send(message);
-                    return;
-                }
-            }
+                                    if (framework->pid == from) {
+                                        LOG(INFO) << "Framework " << *framework
+                                                  << " already subscribed, resending acknowledgement";
+                                        mesos::internal::FrameworkRegisteredMessage message;
+                                        message.mutable_framework_id()->MergeFrom(framework->id());
+                                        message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
+                                        framework->send(message);
+                                        return;
+                                    }
+                                }
 
             mesos::internal::FrameworkRegisteredMessage message;
 
@@ -269,15 +349,18 @@ namespace master{
             framework->send(message);
 
             LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful!";
-
-            const Duration temp_duration = Seconds(0);
-            process::delay(temp_duration, self(), &Master::Offer, framework->id());
+//
+//            const Duration temp_duration = Seconds(0);
+//            //
+//            process::delay(temp_duration, self(), &Master::Offer, framework->id());
+// after subscribed, the framework can be given resource offers.
+            Offer(framework->id());
 
             return;
         }
     }
 
-    mesos::Offer* Master::create_a_offer(const mesos::FrameworkID& frameworkId) {
+    mesos::Offer *Master::create_a_offer(const mesos::FrameworkID &frameworkId) {
         mesos::Offer *offer = new mesos::Offer();
 
         Framework *framework = getFramework(frameworkId);
@@ -371,7 +454,7 @@ namespace master{
         offer->mutable_framework_id()->MergeFrom(framework->id());
 
         //这个slaveID决定了实现master选取分布式集群中节点的基础
-        mesos::SlaveID* slaveID = new mesos::SlaveID();
+        mesos::SlaveID *slaveID = new mesos::SlaveID();
 //        offer->mutable_slave_id()->MergeFrom(newSlaveId());
         slaveID->set_value("44444444");
         offer->mutable_slave_id()->MergeFrom(*slaveID);
@@ -382,9 +465,9 @@ namespace master{
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("1");
 
-        mesos::Offer *second_offer = create_a_offer(framework->id());
-        message.add_offers()->MergeFrom(*second_offer);
-        message.add_pids("2");
+//        mesos::Offer *second_offer = create_a_offer(framework->id());
+//        message.add_offers()->MergeFrom(*second_offer);
+//        message.add_pids("2");
 
 
         LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
@@ -436,9 +519,10 @@ namespace master{
 
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
-                            cur_slavePID.append("172.20.110.59:6061");
+//                            cur_slavePID.append("172.20.110.228:6061");
+                              cur_slavePID.append(stringify(self().address.ip)+":6061");
                         } else {
-                            cur_slavePID.append("172.20.110.59:6061");
+                            cur_slavePID.append(stringify(self().address.ip)+":6061");
                         }
                         mesos::TaskInfo task_(task);
 
@@ -617,26 +701,21 @@ namespace master{
         LOG(INFO) << "Removing framework " << *framework;
 
         if (framework->active()) {
-            deactivate(framework, false);
+            CHECK(framework->active());
 
-            //send ShutdownFrameworkMessage to slave
-            mesos::internal::ShutdownFrameworkMessage message;
-            message.mutable_framework_id()->MergeFrom(framework->id());
+            LOG(INFO) << "Deactive framework " << *framework;
 
-            string slave_pid = "slave@172.20.110.228:6061";
-            send(slave_pid, message);
-
-            //we need to do this after - by weiguow
-            // The framework's offers should have been removed when the
-            // framework was deactivated.
-//        CHECK(framework->offers.empty());
-//        CHECK(framework->inverseOffers.empty());
-
-            framework->unregisteredTime = process::Clock::now();
-            frameworks.registered.erase(framework->id().value());
+            framework->state = Framework::State::INACTIVE;
         }
+        //send ShutdownFrameworkMessage to slave
+        mesos::internal::ShutdownFrameworkMessage message;
+        message.mutable_framework_id()->MergeFrom(framework->id());
 
-//         frameworks.completed.set(framework->id(), process::Owned<Framework>(framework));
+//        string slave_pid = "slave@172.20.110.228:6061";
+        const string slave_pid = stringify(self().address.ip).append(":6061");
+        send(slave_pid, message);
+
+//        frameworks.completed.set(framework->id().value(), framework);
     }
 
 
@@ -666,22 +745,6 @@ namespace master{
         return offerId;
     }
 
-    /**
-     * change framework status from active to deactive by weiguow 2019-2-26
-     * */
-    void Master::deactivate(Framework *framework, bool rescind) {
-        CHECK_NOTNULL(framework);
-        CHECK(framework->active());
-
-        LOG(INFO) << "Deactive framework " << *framework;
-
-        framework->state = Framework::State::INACTIVE;
-
-        //Below we should allocat offer resource, but now we don't have
-        //this function model-by weiguow
-    }
-
-
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;
     }
@@ -707,6 +770,8 @@ namespace master{
         auto slave_id = runtime_resouces_message.slave_id();
         m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
+        //add insert slave_id to send new master message to slave
+        m_alive_slaves.insert(slave_id);
     }
 
     Try<string> Master::find_min_cpu_and_memory_rates() {
@@ -755,6 +820,11 @@ namespace master{
     }
 
     // super_master related
+
+    void Master::set_super_master_path(const string& path) {
+        m_super_master_path = path;
+    }
+
     void Master::super_master_control(const UPID &super_master,
                                       const SuperMasterControlMessage &super_master_control_message) {
         LOG(INFO) << " get a super_master_control_message from super_master" << super_master;
@@ -821,15 +891,38 @@ namespace master{
         }
     }
 
-    void
-    Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
+    void Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
         LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
         if (message.master_id() == stringify(self().address.ip)) {
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
             terminate(self());
+        } else{
+            ReregisterMasterMessage *reregister_master_message = new ReregisterMasterMessage();
+            reregister_master_message->set_master_ip(message.master_id());
+            reregister_master_message->set_port("6060");
+//            MasterRegisteredMessage *master_registered_message = new MasterRegisteredMessage();
+//            master_registered_message->set_master_id(stringify(message.master_id()));
+//            master_registered_message->set_master_uuid(m_uuid);
+//            master_registered_message->set_status(MasterRegisteredMessage_Status_FIRST_REGISTERING);
+            for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
+//                LOG(INFO) << *iter;
+                reregister_master_message->set_slave_ip(*iter);
+                UPID slave_id("slave@"+*iter+":6061");
+                send(slave_id,*reregister_master_message);
+                LOG(INFO) << self() << " send new_master_message: " << reregister_master_message->master_ip()
+                << " to salve: " <<slave_id;
+            }
+            delete reregister_master_message;
+            LOG(INFO) << self() << " is terminating due to change levels to one";
+            terminate(self());
+            process::wait(self());
         }
     }
 
+    void Master::get_select_master(const UPID& from, const string& message) {
+        LOG(INFO) << "MAKUN received select_master_message";
+        send(from,"MAKUN2");
+    }
     // end of super_mater related
     std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
         return stream << TaskState_Name(state);
@@ -849,12 +942,13 @@ int main(int argc, char **argv) {
 
     google::CommandLineFlagInfo info;
 
-    if (port_Int) {
+    if (has_port_Int && has_super_master_path) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
         process::initialize("master");
         Master master;
 
+        master.set_super_master_path(FLAGS_supermaster_path);
         PID<Master> cur_master = process::spawn(master);
         LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 

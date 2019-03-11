@@ -2,7 +2,7 @@
 // Created by lemaker on 18-12-4.
 //
 
-#include "runtime_resources_usage.hpp"
+#include <resource_collector/runtime_resources_usage.hpp>
 
 #define WAIT_SECOND 1
 

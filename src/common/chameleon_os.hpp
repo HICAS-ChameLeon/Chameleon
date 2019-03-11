@@ -16,6 +16,7 @@ namespace chameleon {
         const string MESOS_DIRECTORY="/home/weiguow/project/chameleon/src/slave/mesos_executor/mesos-directory";
         const string MESOS_EXECUTOR_PATH="/home/weiguow/project/chameleon/src/slave/mesos_executor/mesos-executor";
         const string FLAGS_LAUCHER_DIR="/home/weiguow/project/mesos/mesos-1.3.2/build/src";
+        static string SLAVE_EXE_DIR="";
     }
 }
 

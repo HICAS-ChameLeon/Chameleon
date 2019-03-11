@@ -66,6 +66,7 @@ link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/lib/.libs)
 
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/gtest/include)
 link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/gtest/lib/.libs)
+link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0)
 
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/gflag-2.2.2/include)
 link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gflag-2.2.2/lib)
@@ -75,6 +76,8 @@ link_directories(${CMAKE_BINARY_DIR}/3rdparty/gflag-2.2.2/lib)
 
 include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build/src/glog)
 include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build/src)
+include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3/src)
+include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/windows)
 link_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build/.libs)
 
 add_subdirectory(3rdparty)

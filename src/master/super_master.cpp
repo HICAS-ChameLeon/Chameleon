@@ -7,6 +7,21 @@
 
 #include <super_master_related.pb.h>
 #include "super_master.hpp"
+#include "master.hpp"
+
+DEFINE_string(master_path, "", "the absolute path of master executive. For example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
+DEFINE_string(initiator, "localhost:6060", "the ip:port of the current master of first level or supermaster. For example, --initiator=172.20.110.228:6060");
+
+static bool ValidateStr(const char *flagname, const string &value) {
+    if (!value.empty()) {
+        return true;
+    }
+    printf("Invalid value for --%s: To run this program, you must set a meaningful value for it "
+           "%s\n", flagname, value.c_str());;
+    return false;
+}
+static const bool has_master_path = gflags::RegisterFlagValidator(&FLAGS_master_path, &ValidateStr);
+static const bool has_initiator = gflags::RegisterFlagValidator(&FLAGS_initiator, &ValidateStr);
 
 namespace chameleon {
     void SuperMaster::initialize() {
@@ -16,22 +31,105 @@ namespace chameleon {
 
         install<MasterRegisteredMessage>(&SuperMaster::registered_master);
         install<OwnedSlavesMessage>(&SuperMaster::terminating_master);
+        //kill_master related
+        install("KILL",&SuperMaster::owned_masters_message);
+        //kill_master end
+        install("MAKUN2",&SuperMaster::recevied_slave_infos);
 
         // change from one level to two levels
         cluster_levels = 2;
-        m_masters_size = 2;
-//        if(cluster_levels)
+        m_masters_size = 1;
+
         m_uuid = UUID::random().toString();
-        m_first_to_second_master = "master@172.20.110.228:6060";
+        const string initiator_pid = "master@"+m_initiator;
         SuperMasterControlMessage *super_master_control_message = new SuperMasterControlMessage();
-        super_master_control_message->set_super_master_id(m_first_to_second_master);
+        super_master_control_message->set_super_master_id(initiator_pid);
         super_master_control_message->set_super_master_uuid(m_uuid);
         super_master_control_message->set_passive(false);
 
-        UPID t_master(m_first_to_second_master);
+        UPID t_master(initiator_pid);
         send(t_master, *super_master_control_message);
-        LOG(INFO) << " sends a super_master_constrol_message to a master: " << m_first_to_second_master;
-        delete super_master_control_message;
+        LOG(INFO) << " sends a super_master_constrol_message to a master: " << initiator_pid;
+//        delete super_master_control_message;
+
+
+
+        route(
+                "/super_slave",
+                "start super_master and change from one level to two levels",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_classification_slaves.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_classification_slaves.begin();
+                             it != this->m_classification_slaves.end(); it++) {
+                            vector<SlavesInfoControlledByMaster> slaveinfo = it->second;
+                            for (int j = 0; j < slaveinfo.size(); ++j) {
+                                array.values.push_back(JSON::protobuf(slaveinfo[j]));
+                            }
+
+                        }
+                        result.values["quantity"] = array.values.size();
+                        result.values["content"] = array;
+
+                    } else {
+                        result.values["quantity"] = 0;
+                        result.values["content"] = JSON::Object();
+                    }
+
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+        route(
+                "/super_master",
+                "start super_master and change from one level to two levels",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_classification_masters.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_classification_masters.begin();
+                             it != this->m_classification_masters.end(); it++) {
+                            for (int j = 0; j < m_classification_masters.size(); ++j) {
+
+                                //JSON::Object result2 = JSON::Object(stringify(result));
+                                result.values["ip"] = m_classification_masters[0];
+                                //array.values.push_back(JSON::String(m_classification_masters[j]));
+                                array.values.push_back(result);
+                            }
+
+                        }
+                        result.values["quantity"] = array.values.size();
+                        result.values["content"] = array;
+
+
+                    } else {
+                        result.values["quantity"] = 0;
+                        result.values["content"] = JSON::Object();
+                    }
+
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+
+        route(  //change from two level to one levels
+                "/kill_master",
+                "kill the super_master of two levels",
+                [this](Request request){
+                    JSON::Object result = JSON::Object();
+                    LOG(INFO) << "MAKUN KILL MASTER";
+                    string new_master_ip = select_master();
+                    result.values["new_master_ip"] = new_master_ip;
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    //select_master();
+
+                    return ok_response;
+                });
+
 
     }
 
@@ -40,6 +138,14 @@ namespace chameleon {
         Future<bool> distinctive = true;
         distinctive = distinctive.then(defer(self(), &Self::is_repeated_registered, from));
         distinctive.onAny(defer(self(), &Self::record_master, lambda::_1, from, master_registered_message));
+
+    }
+
+    void SuperMaster::set_master_path(const string& path) {
+        m_master_path = path;
+    }
+
+    void SuperMaster::set_first_to_second_master(const string &master) {
 
     }
 
@@ -85,15 +191,16 @@ namespace chameleon {
 
     void SuperMaster::terminating_master(const UPID &from, const OwnedSlavesMessage &message) {
         LOG(INFO) << " get an OwnedSlavesMessage from " << from;
-        LOG(INFO) << message.slave_infos().size();
+        LOG(INFO) << "MAKUN slaveInfo size: " << message.slave_infos().size();
 
         std::copy(message.slave_infos().begin(), message.slave_infos().end(), std::back_inserter(m_admin_slaves));
-        LOG(INFO) << m_admin_slaves.size();
+        LOG(INFO) << "MAKUN admin slave size: " << m_admin_slaves.size();
         for (SlaveInfo &slaveInfo: m_admin_slaves) {
-            LOG(INFO) << slaveInfo.hardware_resources().cpu_collection().cpu_infos_size();
+            LOG(INFO) << "MAKUN slaveInfo has " << slaveInfo.hardware_resources().cpu_collection().cpu_infos_size() << "CPU";
         }
         TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
         terminating_master->set_master_id(stringify(from.address.ip));
+        LOG(INFO) << "MAKUN: " << from;
         send(from, *terminating_master);
         delete terminating_master;
         LOG(INFO) << " send a TerminatingMasterMessage to master " << from
@@ -156,8 +263,10 @@ namespace chameleon {
         for(auto iter = m_classification_masters.begin();iter!=m_classification_masters.end();iter++){
             vector<SlavesInfoControlledByMaster> slaves_of_master = m_classification_slaves[*iter];
             std::cout<<slaves_of_master.size()<<std::endl;
+//            LOG(INFO) << slaves_of_master.size();
             for(SlavesInfoControlledByMaster s:slaves_of_master){
                 std::cout<<s.ip()<<std::endl;
+//                LOG(INFO) << s.ip();
             }
         }
     }
@@ -170,7 +279,7 @@ namespace chameleon {
 //                Subprocess::FD(STDERR_FILENO));
 
         for(const string& master_ip:m_classification_masters){
-            string ssh_command = "ssh "+master_ip+" /home/lemaker/open-source/Chameleon/build/src/master/master --port=6060";
+            string ssh_command = "ssh "+master_ip+" "+m_master_path+" --port=6060";
             Try<Subprocess> s = subprocess(
                     ssh_command,
                     Subprocess::FD(STDIN_FILENO),
@@ -185,7 +294,7 @@ namespace chameleon {
         LOG(INFO)<<" launched "<<m_classification_masters.size() << " masters successfully.";
         return true;
 //        Try<Subprocess> s = subprocess(
-//                "ssh 172.20.110.53 /home/lemaker/open-source/Chameleon/build/src/master/master --port=6060",
+//                "ssh 172.20.110.228 /home/lemaker/open-source/Chameleon/build/src/master/master --port=6060",
 //                Subprocess::FD(STDIN_FILENO),
 //                Subprocess::FD(STDOUT_FILENO),
 //                Subprocess::FD(STDERR_FILENO));
@@ -223,6 +332,57 @@ namespace chameleon {
         }
     }
 
+    //kill_master related
+    void SuperMaster::owned_masters_message(const UPID& kill_master, const string& name){
+        LOG(INFO) << "MAKUN RECIEVED KILL MESSAGE";
+        //OwnedSlavesMessage *owned_slaves = new OwnedSlavesMessage();
+        m_owned_slaves_message = new OwnedSlavesMessage();
+
+        SlaveInfo *t_slave = m_owned_slaves_message->add_slave_infos();
+        m_owned_slaves_message->set_quantity(m_owned_slaves_message->slave_infos_size());
+        send(kill_master, *m_owned_slaves_message);
+        //delete m_owned_slaves_message;
+        LOG(INFO) << " send owned slaves of " << self() << " to kill_master " << kill_master;
+    }
+    //kill_master end
+
+    const string SuperMaster::select_master(){
+        string master_ip;
+        int num_slaves = 0;
+        for(auto iter = m_classification_masters.begin();iter!=m_classification_masters.end();iter++){
+            vector<SlavesInfoControlledByMaster> slaves_of_master = m_classification_slaves[*iter];
+            if(num_slaves<slaves_of_master.size()) {
+                num_slaves = slaves_of_master.size();
+                master_ip = *iter;
+            }
+        }
+        LOG(INFO) << "MAKUN select master ip: " << master_ip;
+        send_terminating_master(master_ip);
+        return master_ip;
+    }
+    void SuperMaster::send_terminating_master(string master_ip) {
+        //master_ip = "master@"+master_ip+":6060";
+//        UPID master_upid(master_ip);
+        TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
+        terminating_master->set_master_id(master_ip);
+        for (auto iter = m_classification_masters.begin(); iter != m_classification_masters.end(); iter++) {
+            if (*iter != master_ip) {
+                *iter = "master@"+*iter+":6060";
+                send(*iter, *terminating_master);
+            } else {
+                UPID master_upid("master@"+master_ip+":6060");
+                send(master_upid,"MAKUN");
+            }
+        }
+        LOG(INFO) << self() << " is terminating due to change levels to one";
+        delete(terminating_master);
+    }
+    void SuperMaster::recevied_slave_infos(const UPID& from, const string& message){
+        LOG(INFO) << "MAKUN received message from new master";
+        terminate(self());
+//        process::wait(self());
+    }
+
 
 }
 using namespace chameleon;
@@ -232,22 +392,35 @@ int main(int argc, char **argv) {
     chameleon::set_storage_paths_of_glog("super_master");// provides the program name
     chameleon::set_flags_of_glog();
 
-    os::setenv("LIBPROCESS_PORT", "7000");
-    process::initialize("super_master");
+    google::SetUsageMessage("usage : Option[name] \n"
+                            "--port     the port used by the program");
+    google::SetVersionString("Chameleon v1.0");
+    google::ParseCommandLineFlags(&argc, &argv, true);
 
-    SuperMaster super_master;
-    PID<SuperMaster> cur_super_master = process::spawn(super_master);
+    google::CommandLineFlagInfo info;
 
-    LOG(INFO) << "Running super_master on " << process::address().ip << ":" << process::address().port;
+    if(has_master_path && has_initiator){
+        os::setenv("LIBPROCESS_PORT", "7000");
+        process::initialize("super_master");
 
-    const PID<SuperMaster> super_master_pid = super_master.self();
-    LOG(INFO) << super_master_pid;
+        SuperMaster super_master(FLAGS_initiator);
+        super_master.set_master_path(FLAGS_master_path);
+
+        PID<SuperMaster> cur_super_master = process::spawn(super_master);
+        LOG(INFO) << "Running super_master on " << process::address().ip << ":" << process::address().port;
+
+        const PID<SuperMaster> super_master_pid = super_master.self();
+        LOG(INFO) << super_master_pid;
 
 //    bool res = super_master.launch_masters();
 //    if (res) {
 //        std::cout << " successfully launched master";
 //    }
-    process::wait(super_master.self());
+        process::wait(super_master.self());
+    }else{
+        LOG(INFO) << "To run this program , must set all parameters correctly "
+                     "\n read the notice " << google::ProgramUsage();
+    }
 
 
     return 0;

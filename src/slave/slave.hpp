@@ -59,15 +59,19 @@
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
 #include <slave_related.pb.h>
+#include <fetcher.pb.h>
 
 #include <scheduler.pb.h>
 #include <messages.pb.h>
 #include <mesos.pb.h>
+#include <super_master_related.pb.h>
 
 // chameleon headers
-#include <resource_collector.hpp>
+#include "resource_collector/resource_collector.hpp"
+#include "resource_collector/runtime_resources_usage.hpp"
+#include "software_store/software_resource_manager.hpp"
+
 #include <configuration_glog.hpp>
-#include <runtime_resources_usage.hpp>
 #include <chameleon_os.hpp>
 #include <chameleon_string.hpp>
 #include <containerizer/docker.hpp>
@@ -104,17 +108,11 @@ namespace chameleon {
 
     class Slave : public ProtobufProcess<Slave> {
     public:
-        explicit Slave() : ProcessBase("slave"), m_interval() {
-            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
-            msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
-//            msp_resource_collector = new ResourceCollector();
-        }
+        explicit Slave();
 
-        Slave(const Slave &slave) = default;
+        Slave(const Slave &slave) = delete;
 
-        virtual ~Slave() {
-            LOG(INFO) << "~ Slave()";
-        }
+        virtual ~Slave();
 
         virtual void initialize();
 
@@ -178,7 +176,9 @@ namespace chameleon {
 
         shared_ptr<ResourceCollector> msp_resource_collector;
         shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
+        RuntimeResourcesMessage m_runtime_resources;
 //        Option<process::Owned<SlaveHeartbeater>> heartbeater;
+        HardwareResourcesMessage *hr_message;
 
         shared_ptr<UPID> msp_masterUPID;
         Duration m_interval;
@@ -204,14 +204,14 @@ namespace chameleon {
         queue<mesos::TaskInfo> m_tasks;
         mesos::SlaveID m_slaveID;
 
-        //DockerContainerizer* m_dockerContainerizer;
+        // software resources related
+        SoftwareResourceManager* m_software_resource_manager;
 
         void heartbeat();
 
         void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
 
-        void start_mesos_executor(const Framework *framework,
-                                  const mesos::TaskInfo& taskInfo);
+        void start_mesos_executor(const Future<Nothing>& future, const Framework *framework);
 
         void registerExecutor(const UPID &from,
                               const mesos::FrameworkID &frameworkId,
@@ -222,6 +222,9 @@ namespace chameleon {
                 const Option<UPID> &pid);
 
         void reregister_to_master(const UPID &from, const ReregisterMasterMessage &message);
+
+        //super_master related
+//        void received_new_master(const UPID& from, const MasterRegisteredMessage& message);
 
     };
 
