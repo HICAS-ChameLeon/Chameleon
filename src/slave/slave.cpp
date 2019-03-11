@@ -5,10 +5,10 @@
  * Description：slave codes
  */
 
-#include <stout/flags.hpp>
+//#include <stout/flags.hpp>
 #include <messages.pb.h>
 #include "slave.hpp"
-#include "slave_flags.hpp"
+//#include "slave_flags.hpp"
 //#include "containerizer/docker.hpp"
 
 //The following flags has default values
@@ -681,12 +681,19 @@ int main(int argc, char *argv[]) {
 
 
     if (master_Str && port_Int) {
+        LOG(INFO)<<"Heldon port : "<<stringify(FLAGS_port);
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
+
+//        os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));  // LIBPROCESS_
+        LOG(INFO)<<"Heldon env port : "<< os::getenv("LIBPROCESS_PORT").get();
         process::initialize("slave");
-        chameleon::Slave slave;
+
+        Slave slave;
 
         slave.setM_containerizer(docker_containerizer.get());
 
+        LOG(INFO)<<"Heldon port : "<<stringify(FLAGS_port);
+        LOG(INFO)<<"Heldon address.port : " << process::address().port;
         slave.setM_interval(Seconds(FLAGS_ht));
         slave.setM_work_dir(FLAGS_work_dir);
         string master_ip_and_port = "master@" + stringify(FLAGS_master);

@@ -23,7 +23,7 @@
 
 //chameleon dependencies
 #include "docker.hpp"
-#include "slave_flags.hpp"
+//#include "slave_flags.hpp"
 #include "docker/docker.hpp"
 #include "docker/docker.cpp"
 #include "common/status_utils.hpp"

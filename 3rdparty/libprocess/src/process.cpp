@@ -1122,7 +1122,8 @@ bool initialize(
   }
 
   if (flags.port.isSome()) {
-    __address__.port = flags.port.get();
+      LOG(INFO)<<"Heldon flags.port : "<<flags.port.get();
+      __address__.port = flags.port.get();
   }
 
   // Create a "server" socket for communicating.
@@ -2148,7 +2149,7 @@ void SocketManager::send_connect(
 {
   if (future.isDiscarded() || future.isFailed()) {
     if (future.isFailed()) {
-      VLOG(1) << "Failed to send '" << message->name << "' to '"
+      LOG(INFO) << "Failed to send '" << message->name << "' to '"
               << message->to.address << "', connect: " << future.failure();
     }
 

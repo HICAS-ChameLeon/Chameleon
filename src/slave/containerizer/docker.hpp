@@ -28,7 +28,7 @@
 
 //chameleon dependencies
 #include <resources.hpp>
-#include "slave_flags.hpp"
+//#include "slave_flags.hpp"
 #include "docker/docker.hpp"
 #include "docker/resources.hpp"
 
