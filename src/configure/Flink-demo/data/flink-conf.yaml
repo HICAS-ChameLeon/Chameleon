@@ -1,0 +1,106 @@
+jobmanager.rpc.address: localhost
+jobmanager.rpc.port: 6123
+web.port: 8081
+
+akka.ask.timeout: 30 s
+akka.watch.heartbeat.pause: 120 s
+#fs.hdfs.hadoopconf: /export/App/conf
+#high-availability: zookeeper
+#high-availability.cluster-id: ump-tp-min-compute-test2
+#high-availability.storageDir: jss://127.0.0.1:8020/flink/ha/
+#high-availability.zookeeper.quorum: 10.191.60.249:2181,10.191.60.250:2181,10.191.60.251:2181,10.191.60.252:2181,10.191.60.253:2181
+JVM_ARGS: -XX:CICompilerCount=2 -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2
+taskmanager.net.server.backlog: 2000
+#state.backend.fs.checkpointdir: jss://127.0.0.1:8020/flink/chks
+#state.backend.incremental: false
+taskmanager.memory.preallocate: false
+state.backend: jobmanager
+taskmanager.net.server.backlog: 2000
+taskmanager.network.netty.client.connectTimeoutSec: 120
+#taskmanager.tmp.dirs: /export/Data/dataflow
+
+#####      Managed Memory and parallelism
+#default 256MB   JVM heap size (in megabytes) for the JobManager
+jobmanager.heap.mb: 2227
+#default 512MB
+taskmanager.heap.mb: 4417
+#default 1
+taskmanager.numberOfTaskSlots: 2
+#default taskmanager.numberOfTaskSlots*TM
+parallelism.default: 20
+#default false    the task manager allocates memory which is used for sorting, hash tables, and caching of intermediate results outside of the JVM heap
+taskmanager.memory.off-heap: false
+#default 0.7  This parameter is only evaluated, if taskmanager.memory.size is not set.
+taskmanager.memory.fraction: 0.4
+
+#default 32768b =32kb  The size of memory buffers used by the memory manager and the network stack in bytes
+taskmanager.memory.segment-size: 256 K
+
+#####   network
+#default 2048  弃用，由后面三项共同调节
+#taskmanager.network.numberOfBuffers: 2048
+#default 0.1
+taskmanager.network.memory.fraction: 0.2
+#default 64MB
+taskmanager.network.memory.min: 64 MB
+#default 1GB  was determined from taskmanager.network.numberOfBuffers and taskmanager.memory.segment-size.
+taskmanager.network.memory.max: 1787 MB
+#default taskmanager.numberOfTaskSlots)
+taskmanager.net.num-arenas: 2
+#default taskmanager.numberOfTaskSlots)
+taskmanager.net.client.numThreads: 3
+#default taskmanager.numberOfTaskSlots)
+taskmanager.net.server.numThreads: 2
+#The Netty send and receive buffer size. This defaults to the system buffer size (cat /proc/sys/net/ipv4/tcp_[rw]mem) and is 4 MiB in modern Linux.
+taskmanager.net.sendReceiveBufferSize: 132383
+#default 50
+blob.fetch.retries: 78
+#default 50
+blob.fetch.num-concurrent: 61
+#default 1000
+blob.fetch.backlog: 1100
+
+#Maximum size of the TaskDeploymentDescriptor’s serialized task and job information to still transmit them via RPC.
+#Larger blobs may be offloaded to the BLOB server.
+jobmanager.tdd.offload.minsize: 1645
+
+#####   kafka
+#default 10485760b=10M   Maximum size of messages which are sent between the JobManager and the TaskManagers
+akka.framesize: 16 MB
+#default 12   Threshold for the DeathWatch failure detector.
+akka.watch.threshold: 16
+
+####   fs
+#Specifies whether file output writers should overwrite existing files by default.
+#Set to true to overwrite by default,false otherwise.
+fs.overwrite-files: true
+#File writers running with a parallelism larger than one create a directory for the output file path and
+#put the different result files (one per parallel writer task) into that directory.
+fs.output.always-create-directory: true
+
+####Compiler/Optimizer
+#The maximum number of line samples taken by the compiler for delimited inputs. The samples are used to estimate the number of records.
+compiler.delimited-informat.max-line-samples: 19
+#The minimum number of line samples taken by the compiler for delimited inputs. The samples are used to estimate the number of records.
+compiler.delimited-informat.min-line-samples: 6
+#The maximal length of a line sample that the compiler takes for delimited inputs.(DEFAULT: 2097152 (= 2 MiBytes))
+compiler.delimited-informat.max-sample-len: 7 MB
+
+#The backend that will be used to store operator state checkpoints if checkpointing is enabled. jobmanager/filesystem
+#state.backend: jobmanager
+
+############  Runtime Algorithms
+#default false
+taskmanager.runtime.hashjoin-bloom-filters: false
+#default 128
+taskmanager.runtime.max-fan: 168
+#default 0.8
+taskmanager.runtime.sort-spilling-threshold: 0.7
+
+
+#####     Memory and Performance Debugging
+#default false Causes the TaskManagers to periodically log memory and Garbage collection statistics.
+#taskmanager.debug.memory.startLogThread: false
+##in milliseconds  Only has an effect, if taskmanager.debug.memory.startLogThread is set to true.
+##taskmanager.debug.memory.logIntervalMs:
+#web.checkpoints.disable: false
