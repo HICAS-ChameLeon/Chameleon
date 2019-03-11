@@ -96,7 +96,9 @@ namespace chameleon {
 
         // forward declations
         class SlaveHeartbeater;
+
         class Executor;
+
         class Framework;
 
         class Slave : public ProtobufProcess<Slave> {
@@ -118,6 +120,7 @@ namespace chameleon {
             void register_feedback(const string &hostname);
 
             void send_heartbeat_to_master();
+
 
             void setM_master(const string &m_master) {
                 Slave::m_master = m_master;
@@ -169,6 +172,10 @@ namespace chameleon {
             mesos::ExecutorInfo get_executorinfo(
                     const mesos::FrameworkInfo &frameworkInfo,
                     const mesos::TaskInfo &task) const;
+
+            void shutdown_executor(const UPID &from,
+                                   const mesos::FrameworkID &frameworkId,
+                                   const mesos::ExecutorID &executorId);
 
         protected:
             void finalize() override;
@@ -235,74 +242,76 @@ namespace chameleon {
             Duration m_interval;
         };
 
-//    class Executor {
-//    public:
-//        Executor(Slave *slave,
-//                 const mesos::FrameworkID &frameworkId,
-//                 const mesos::ExecutorInfo &info,
-//                 const mesos::ContainerID &_containerId,
-//                 const std::string &directory,
-//                 const Option<std::string> &user,
-//                 bool checkpoint);
-//
-//        ~Executor();
-//
-//        void checkpointExecutor();
-//
-//        void checkpointTask(const mesos::TaskInfo &task);
-//
-//        mesos::Task *Executor::addTask(const mesos::TaskInfo &task);
-//
-//        friend std::ostream &operator<<(
-//                std::ostream &stream,
-//                const Executor &executor);
-//
-//        bool isCommandExecutor() const;
-//
-//        template<typename Message>
-//        void send(const Message &message) {
-//            if (state == REGISTERING || state == TERMINATED) {
-//                LOG(WARNING) << "Attempting to send message to disconnected"
-//                             << " executor " << *this << " in state " << state;
-//            }
-//            if (pid.isSome()) {
-//                slave->send(pid.get(), message);
-//            } else {
-//                LOG(WARNING) << "Unable to send event to executor " << *this
-//                             << ": unknown connection type";
-//            }
-//        }
-//
-//        //non-static data member
-//        Slave *slave;
-//        const mesos::ExecutorID id;
-//        const mesos::ExecutorInfo info;
-//        const mesos::FrameworkID frameworkId;
-//        const std::string directory;
-//        const mesos::ContainerID containerId;
-//        const Option<std::string> user;
-//        const bool checkpoint;
-//        Option<process::UPID> pid;
-//
-//        LinkedHashMap<mesos::TaskID, mesos::TaskInfo> queuedTasks;
-//        std::list<mesos::TaskGroupInfo> queuedTaskGroups;
-//        LinkedHashMap<mesos::TaskID, mesos::Task *> launchedTasks;
-//        LinkedHashMap<mesos::TaskID, mesos::Task *> terminatedTasks;
-//
-//
-//        enum State {
-//            REGISTERING,  // Executor is launched but not (re-)registered yet.
-//            RUNNING,      // Executor has (re-)registered.
-//            TERMINATING,  // Executor is being shutdown/killed.
-//            TERMINATED,   // Executor has terminated but there might be pending updates.
-//        } state;
-//
-//
-//    private:
-//        Executor(const Executor &);              // No copying.
-//        Executor &operator=(const Executor &);   // No assigning.
-//        bool commandExecutor;
-//    };
+        class Executor {
+        public:
+            Executor(Slave *_slave,
+                     const mesos::FrameworkID &_frameworkId,
+                     const mesos::ExecutorInfo &_info,
+                     const mesos::ContainerID &_containerId
+            ) : m_slave(_slave),
+                m_frameworkId(_frameworkId),
+                m_containerId(_containerId),
+                m_info(_info),
+                m_id(_info.executor_id().value()) {};
+
+            ~Executor();
+
+            void checkpointExecutor();
+
+            void checkpointTask(const mesos::TaskInfo &task);
+
+            mesos::Task *Executor::addTask(const mesos::TaskInfo &task);
+
+            friend std::ostream &operator<<(std::ostream &stream, const Executor &executor);
+
+            bool isCommandExecutor() const;
+
+            template<typename Message>
+            void send(const Message &message) {
+                if (state == REGISTERING || state == TERMINATED) {
+                    LOG(WARNING) << "Attempting to send message to disconnected"
+                                 << " executor " << *this << " in state " << state;
+                }
+                if (m_pid.isSome()) {
+                    m_slave->send(m_pid.get(), message);
+                } else {
+                    LOG(WARNING) << "Unable to send event to executor " << *this
+                                 << ": unknown connection type";
+                }
+            }
+
+        private:
+            //non-static data member
+            Slave *m_slave;
+            const mesos::ExecutorID m_id;
+            const mesos::ExecutorInfo m_info;
+            const mesos::FrameworkID m_frameworkId;
+            const mesos::ContainerID m_containerId;
+
+            const std::string m_directory;
+            const Option<std::string> m_user;
+            const bool m_checkpoint;
+            Option<process::UPID> m_pid;
+
+            LinkedHashMap<mesos::TaskID, mesos::TaskInfo> queuedTasks;
+            std::list<mesos::TaskGroupInfo> queuedTaskGroups;
+            LinkedHashMap<mesos::TaskID, mesos::Task *> launchedTasks;
+            LinkedHashMap<mesos::TaskID, mesos::Task *> terminatedTasks;
+
+
+            enum State {
+                REGISTERING,  // Executor is launched but not (re-)registered yet.
+                RUNNING,      // Executor has (re-)registered.
+                TERMINATING,  // Executor is being shutdown/killed.
+                TERMINATED,   // Executor has terminated but there might be pending updates.
+            } state;
+
+
+        private:
+            Executor(const Executor &);              // No copying.
+            Executor &operator=(const Executor &);   // No assigning.
+            bool commandExecutor;
+        };
 
         class Framework {
         public:
@@ -317,11 +326,10 @@ namespace chameleon {
 
             ~Framework();
 
-//        Executor *addExecutor(const mesos::ExecutorInfo &executorInfo);
+            Executor *addExecutor(const mesos::ExecutorInfo &executorInfo);
 
-//        Executor *getExecutor(const mesos::ExecutorID &executorId) const;
+            Executor *getExecutor(const mesos::ExecutorID &executorId) const;
 
-//        void checkpointFramework() const;
 
             const mesos::FrameworkID id() const { return m_info.id(); }
 
@@ -333,6 +341,7 @@ namespace chameleon {
             Slave *m_slave;
             mesos::FrameworkInfo m_info;
             Option<process::UPID> m_pid;
+
 
         private:
             Framework(const Framework &);

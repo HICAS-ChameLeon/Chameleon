@@ -147,7 +147,7 @@ namespace chameleon {
 
             void subscribe(const process::UPID &from, const mesos::scheduler::Call::Subscribe &subscribe);
 
-            void Offer(const mesos::FrameworkID &frameworkId);
+            void offer(const mesos::FrameworkID &frameworkId);
 
             void accept(Framework *framework, mesos::scheduler::Call::Accept accept);
 
@@ -155,7 +155,7 @@ namespace chameleon {
 
             void decline_framework(Framework *framework, const mesos::scheduler::Call::Decline &decline);
 
-            void shutdown_framework(Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown);
+            void shutdown_slave_executor(Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown);
 
             void status_update(mesos::internal::StatusUpdate update, const UPID &pid);
 
@@ -164,16 +164,24 @@ namespace chameleon {
 
             void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
 
+            Slave* find_slave_to_run();
+
             void add_slave(Slave *slave);
+
             void add_framework(Framework *framework);
+
             void remove_framework(Framework *framework);
 
             mesos::FrameworkID new_framework_id();
+
             mesos::OfferID new_offer_id();
+
             string new_slave_id(const string uid);
 
             Slave *get_slave(const string uid);
+
             mesos::Offer* get_offer(const mesos::OfferID &offerid);
+
             Framework *get_framework(const mesos::FrameworkID &kFrameworkId);
 
             struct Slaves {
@@ -224,9 +232,6 @@ namespace chameleon {
             struct Frameworks {
                 hashmap<string, Framework *> registered;
             } frameworks;
-
-            Slave* find_slave_to_run();
-
 
             void register_participant(const string &hostname);
 
@@ -300,7 +305,7 @@ namespace chameleon {
             int64_t m_next_offer_id;
             int64_t m_next_slave_id;
 
-            process::UPID m_slave_run_framework;
+            process::UPID m_slave_pid;
         };
 
         class Framework {

@@ -49,7 +49,6 @@ constexpr char MESOS_EXECUTOR[] = "chameleon-executor";
 namespace chameleon {
     namespace slave {
 
-
         void Slave::initialize() {
             // Verify that the version of the library that we linked against is
             // compatible with the version of the headers we compiled against.
@@ -90,10 +89,10 @@ namespace chameleon {
                     &mesos::internal::RegisterExecutorMessage::framework_id,
                     &mesos::internal::RegisterExecutorMessage::executor_id);
 
-//        install<mesos::internal::ShutdownExecutorMessage>(
-//                &Slave::shutdownExecutor,
-//                &mesos::internal::ShutdownExecutorMessage::framework_id,
-//                &mesos::internal::ShutdownExecutorMessage::executor_id);
+            install<mesos::internal::ShutdownExecutorMessage>(
+                    &Slave::shutdown_executor,
+                    &mesos::internal::ShutdownExecutorMessage::framework_id,
+                    &mesos::internal::ShutdownExecutorMessage::executor_id);
 
             install<mesos::internal::ShutdownFrameworkMessage>(
                     &Slave::shutdown_framework,
@@ -208,8 +207,6 @@ namespace chameleon {
             send(from, run_task_message);
         }
 
-        const string flags_laucher_dir = setting::FLAGS_LAUCHER_DIR;
-
         mesos::ExecutorInfo Slave::get_executorinfo(
                 const mesos::FrameworkInfo &frameworkInfo,
                 const mesos::TaskInfo &task) const {
@@ -285,14 +282,14 @@ namespace chameleon {
             }
 
             Result<string> path = os::realpath(
-                    path::join(flags_laucher_dir, MESOS_EXECUTOR));
+                    path::join(setting::FLAGS_LAUCHER_DIR, MESOS_EXECUTOR));
 
             if (path.isSome()) {
                 executorInfo.mutable_command()->set_shell(false);
                 executorInfo.mutable_command()->set_value(path.get());
                 executorInfo.mutable_command()->add_arguments(MESOS_EXECUTOR);
                 executorInfo.mutable_command()->add_arguments(
-                        "--launcher_dir=" + flags_laucher_dir);
+                        "--launcher_dir=" + setting::FLAGS_LAUCHER_DIR);
             } else {
                 executorInfo.mutable_command()->set_shell(true);
                 executorInfo.mutable_command()->set_value(
@@ -379,17 +376,6 @@ namespace chameleon {
             return nullptr;
         }
 
-        void Slave::remove_framework(Framework *framework) {
-            CHECK_NOTNULL(framework);
-
-            LOG(INFO) << "Cleaning up framework " << framework->id().value();
-
-            CHECK(framework->state == Framework::RUNNING ||
-                  framework->state == Framework::TERMINATING);
-
-//        frameworks.erase(framework->id().value());
-        }
-
         void Slave::shutdown_framework(const process::UPID &from, const mesos::FrameworkID &frameworkId) {
             LOG(INFO) << "Asked to shutdown framework " << frameworkId.value()
                       << " by " << from;
@@ -401,19 +387,49 @@ namespace chameleon {
                     LOG(WARNING) << "Ignoring shutdown framework " << framework->id().value()
                                  << " because it is terminating";
                     break;
+
                 case Framework::RUNNING:
                     LOG(INFO) << "Shutting down framework " << framework->id().value();
-
                     framework->state = Framework::TERMINATING;
-
                     // Remove this framework if it has no pending executors and tasks.
                     remove_framework(framework);
-
                     break;
-                default:
 
+                default:
                     break;
             }
+        }
+
+        void Slave::remove_framework(Framework *framework) {
+
+            CHECK_NOTNULL(framework);
+
+            LOG(INFO) << "Cleaning up framework " << framework->id().value();
+
+            CHECK(framework->state == Framework::RUNNING ||
+                  framework->state == Framework::TERMINATING);
+
+            m_frameworks.erase(framework->id().value());
+        }
+
+        void Slave::shutdown_executor(const UPID &from,
+                                      const mesos::FrameworkID &frameworkId,
+                                      const mesos::ExecutorID &executorId) {
+            if (UPID(m_master) != from) {
+                LOG(INFO) << "Ignoring shutdown executor message for executor";
+                return;
+            }
+
+            LOG(INFO) << "Ask to shut down executor " << executorId.value()
+                      << " of framework " << frameworkId.value() << " by " << from;
+
+            Framework *framework = get_framework(frameworkId);
+            if (framework == nullptr) {
+                LOG(INFO) << "Cannot shut down executor " << executorId.value()
+                          << " of unknown framework " << frameworkId.value();
+            }
+
+
         }
 
         void Slave::register_feedback(const string &hostname) {
@@ -514,7 +530,7 @@ int main(int argc, char *argv[]) {
     google::ParseCommandLineFlags(&argc, &argv, true);
     google::CommandLineFlagInfo info;
 
-    if (master_Str && port_Int ) {
+    if (master_Str && port_Int) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
         process::initialize("slave");
