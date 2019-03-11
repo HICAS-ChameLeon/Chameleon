@@ -63,9 +63,12 @@ include_directories(${PROJECT_SOURCE_DIR}/3rdparty/libprocess/include)
 
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/include)
 link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/lib/.libs)
+link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/)
 
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/gtest/include)
 link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/gtest/lib/.libs)
+link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0/gtest/)
+
 
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/gflag-2.2.2/include)
 link_directories(${PROJECT_SOURCE_DIR}/3rdparty/gflag-2.2.2/lib)
