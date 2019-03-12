@@ -366,6 +366,7 @@ namespace master {
                              << " framework " << this->state;
             } else {
                 master->send(pid.get(), message);
+                LOG(INFO) << "master send message to " << pid.get();
             }
         }
 

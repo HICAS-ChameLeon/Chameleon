@@ -40,6 +40,7 @@
 #include <super_master_related.pb.h>
 #include <hardware_resource.pb.h>
 #include <runtime_resource.pb.h>
+#include <messages.pb.h>
 
 // chameleon headers
 #include <configuration_glog.hpp>
@@ -96,16 +97,6 @@ namespace chameleon {
 
         void terminating_master(const UPID &from, const OwnedSlavesMessage &message);
 
-        //framework related
-        struct Frameworks {
-
-            hashmap<string, master::Framework*> registered;
-
-//            BoundedHashMap<string, Framework*> completed;
-
-        } frameworks;
-        //end
-
         virtual ~SuperMaster() {
             LOG(INFO) << " ~SuperMaster";
         }
@@ -114,6 +105,7 @@ namespace chameleon {
 
         string m_uuid;
         string m_master_path;
+        UPID m_framework;
         // represent the masters administered by the current super_master.
         vector<UPID> m_masters;
 
@@ -150,18 +142,9 @@ namespace chameleon {
         void recevied_slave_infos(const UPID& from, const string& message);
 
         //framework related
-        void receive(const UPID &from, const mesos::scheduler::Call &call);
-        void subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe);
-        void Offer(const mesos::FrameworkID &frameworkId);
-        master::Framework *getFramework(const mesos::FrameworkID &frameworkId);
-        void teardown(master::Framework *framework);
-        void removeFramework(master::Framework *framework);
-        void accept(master::Framework *framework, mesos::scheduler::Call::Accept accept);
-        void decline(master::Framework *framework, const mesos::scheduler::Call::Decline &decline);
-        void shutdown(master::Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown);
-        void acknowledge(master::Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
-        mesos::FrameworkID newFrameworkId();
-        void addFramework(master::Framework *framework);
+        void received_call(const UPID &from, const mesos::scheduler::Call &call);
+        void received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message);
+        void received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message);
     };
 
 

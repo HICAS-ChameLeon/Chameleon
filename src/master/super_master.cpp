@@ -36,6 +36,11 @@ namespace chameleon {
         //kill_master end
         install("MAKUN2",&SuperMaster::recevied_slave_infos);
 
+        //franework related
+        install<mesos::scheduler::Call>(&SuperMaster::received_call);
+        install<mesos::internal::FrameworkRegisteredMessage>(&SuperMaster::received_registered);
+        install<mesos::internal::ResourceOffersMessage>(&SuperMaster::received_resource);
+
         // change from one level to two levels
         cluster_levels = 2;
         m_masters_size = 1;
@@ -384,337 +389,24 @@ namespace chameleon {
     }
 
     //framework related
-    void SuperMaster::receive(const UPID &from, const mesos::scheduler::Call &call) {
-        //first call
-        if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
-            subscribe(from, call.subscribe());
-            return;
-        }
-
-        master::Framework *framework = getFramework(call.framework_id());
-
-        if (framework == nullptr) {
-            LOG(INFO) << "Framework cannot be found";
-            return;
-        }
-
-        if (framework->pid != from) {
-            LOG(INFO) << "Call is not from registered framework";
-            return;
-        }
-
-        switch (call.type()) {
-            case mesos::scheduler::Call::SUBSCRIBE:
-                LOG(FATAL) << "Unexpected 'SUBSCRIBE' call";
-                break;
-
-            case mesos::scheduler::Call::TEARDOWN:
-                teardown(framework);
-                break;
-
-            case mesos::scheduler::Call::ACCEPT:
-                LOG(INFO) << "accept message from framework";
-                accept(framework, call.accept());
-                break;
-
-            case mesos::scheduler::Call::DECLINE:
-                decline(framework, call.decline());
-                break;
-
-            case mesos::scheduler::Call::SHUTDOWN:
-                shutdown(framework, call.shutdown());
-                break;
-
-            case mesos::scheduler::Call::ACKNOWLEDGE: {
-                Try<UUID> uuid = UUID::fromBytes(call.acknowledge().uuid());
-                if (uuid.isError()) {
-                    LOG(INFO) << "Ignoring unknow uuid" << uuid.get();
-                    return;
-                }
-                acknowledge(framework, call.acknowledge());
-                break;
-            }
-
-            case mesos::scheduler::Call::UNKNOWN:
-                LOG(WARNING) << "'UNKNOWN' call";
-                break;
-        }
+    void SuperMaster::received_call(const UPID &from, const mesos::scheduler::Call &call) {
+        LOG(INFO) << "MAKUN Supermaster received call from " << from;
+        m_framework = from;
+        send(UPID("master@172.20.110.141:6060"),call);
+        LOG(INFO) << "MAKUN send call to master: master@172.20.110.141:6060";
     }
 
-    void SuperMaster::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
-
-        mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
-
-        master::Framework *framework = getFramework(frameworkInfo.id());
-
-        LOG(INFO) << "Received  SUBSCRIBE call for framework "
-                  << frameworkInfo.name() << " at " << from;
-
-        if (!frameworkInfo.has_id() || frameworkInfo.id().value().empty()) {
-
-            // If we are here the framework is subscribing for the first time.
-            // Check if this framework is already subscribed (because it retries).
-            foreachvalue (master::Framework *framework, frameworks.registered) {
-                                    if (framework->pid == from) {
-                                        LOG(INFO) << "Framework " << *framework
-                                                  << " already subscribed, resending acknowledgement";
-                                        mesos::internal::FrameworkRegisteredMessage message;
-                                        message.mutable_framework_id()->MergeFrom(framework->id());
-//                                        message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
-                                        framework->send(message);
-                                        return;
-                                    }
-                                }
-
-            mesos::internal::FrameworkRegisteredMessage message;
-
-            frameworkInfo.mutable_id()->CopyFrom(newFrameworkId());
-//            master::Framework *framework = new Framework(this, frameworkInfo, from);
-
-//            addFramework(framework);
-
-//            message.mutable_framework_id()->MergeFrom(framework->id());
-//            message.mutable_master_info()->MergeFrom(m_masterInfo);
-
-//            framework->send(message);
-
-            LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful!";
-//
-//            const Duration temp_duration = Seconds(0);
-//            //
-//            process::delay(temp_duration, self(), &Master::Offer, framework->id());
-// after subscribed, the framework can be given resource offers.
-//            Offer(framework->id());
-
-            return;
-        }
+    void SuperMaster::received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message) {
+        LOG(INFO) << "MAKUN Supermaster received frameworkRegistered from " << from;
+        send(m_framework,message);
+        LOG(INFO) << "MAKUN send frameworkRegistered to " << m_framework;
     }
 
-    void SuperMaster::Offer(const mesos::FrameworkID &frameworkId) {
-
-        master::Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
-
-        mesos::internal::ResourceOffersMessage message;
-
-        mesos::Offer *offer = new mesos::Offer();
-
-
-        // cpus
-        mesos::Resource *cpu_resource = new mesos::Resource();
-        cpu_resource->set_name("cpus");
-        cpu_resource->set_type(mesos::Value_Type_SCALAR);
-        mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
-        cpu_scalar->set_value(4.0);
-        cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
-        offer->add_resources()->MergeFrom(*cpu_resource);
-
-        // memory
-        mesos::Resource *mem_resource = new mesos::Resource();
-        mem_resource->set_name("mem");
-        mem_resource->set_type(mesos::Value_Type_SCALAR);
-        mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
-        mem_scalar->set_value(1000.0);
-        mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
-        offer->add_resources()->MergeFrom(*mem_resource);
-
-        // port
-        mesos::Resource *port_resource = new mesos::Resource();
-        port_resource->set_name("ports");
-        port_resource->set_type(mesos::Value_Type_RANGES);
-
-        mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
-        port_range->set_begin(31000);
-        port_range->set_end(32000);
-        offer->add_resources()->MergeFrom(*port_resource);
-
-        //
-//        offer->mutable_id()->MergeFrom(newOfferId());
-        offer->mutable_framework_id()->MergeFrom(framework->id());
-
-        //这个slaveID决定了实现master选取分布式集群中节点的基础
-        mesos::SlaveID *slaveID = new mesos::SlaveID();
-//        offer->mutable_slave_id()->MergeFrom(newSlaveId());
-        slaveID->set_value("44444444");
-        offer->mutable_slave_id()->MergeFrom(*slaveID);
-
-        //this host_name is slave hostname
-        offer->set_hostname(self().address.hostname().get());
-
-        message.add_offers()->MergeFrom(*offer);
-        message.add_pids("1");
-
-//        mesos::Offer *second_offer = create_a_offer(framework->id());
-//        message.add_offers()->MergeFrom(*second_offer);
-//        message.add_pids("2");
-
-
-        LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
-                  << framework->pid.get();
-
-        framework->send(message);
-
-        return;
+    void SuperMaster::received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message) {
+        LOG(INFO) << "MAKUN Supermaster received resourceOffers from " << from;
+        send(m_framework,message);
+        LOG(INFO) << "MAKUN send resourceOffers to " << m_framework;
     }
-
-    master::Framework *SuperMaster::getFramework(const mesos::FrameworkID &frameworkId) {
-        return frameworks.registered.contains(frameworkId.value())
-               ? frameworks.registered.at(frameworkId.value())
-               : nullptr;
-    }
-
-    void SuperMaster::teardown(master::Framework *framework) {
-        CHECK_NOTNULL(framework);
-
-        LOG(INFO) << "Processing TEARDOWN call for framework " << *framework;
-
-        removeFramework(framework);
-    }
-
-    void SuperMaster::removeFramework(master::Framework *framework) {
-        CHECK_NOTNULL(framework);
-
-        LOG(INFO) << "Removing framework " << *framework;
-
-        if (framework->active()) {
-            CHECK(framework->active());
-
-            LOG(INFO) << "Deactive framework " << *framework;
-
-            framework->state = master::Framework::State::INACTIVE;
-        }
-        //send ShutdownFrameworkMessage to slave
-        mesos::internal::ShutdownFrameworkMessage message;
-        message.mutable_framework_id()->MergeFrom(framework->id());
-
-//        string slave_pid = "slave@172.20.110.228:6061";
-        const string slave_pid = stringify(self().address.ip).append(":6061");
-        send(slave_pid, message);
-
-//        frameworks.completed.set(framework->id().value(), framework);
-    }
-
-    void SuperMaster::accept(master::Framework *framework, mesos::scheduler::Call::Accept accept) {
-        //judge the operation type
-        for (int i = 0; i < accept.operations_size(); ++i) {
-            mesos::Offer::Operation *operation = accept.mutable_operations(i);
-            if (operation->type() == mesos::Offer::Operation::LAUNCH) {
-                if (operation->launch().task_infos().size() > 0) {
-                    LOG(INFO) << "Get offer from scheduler ";
-                } else {
-                    LOG(INFO) << "There is no task to run";
-                }
-            } else if (operation->type() == mesos::Offer::Operation::LAUNCH_GROUP) {
-                const mesos::ExecutorInfo &executor = operation->launch_group().executor();
-                mesos::TaskGroupInfo *taskGroup = operation->mutable_launch_group()->mutable_task_group();
-                for (int j = 0; j < taskGroup->tasks().size(); ++j) {
-                    mesos::TaskInfo *task = taskGroup->mutable_tasks(j);
-                    if (!task->has_executor()) {
-                        task->mutable_executor()->CopyFrom(executor);
-                    }
-                }
-            }
-        }
-
-        vector<mesos::Offer::Operation> operations;
-
-        foreach (const mesos::Offer::Operation &operation, accept.operations()) {
-            switch (operation.type()) {
-                case mesos::Offer::Operation::LAUNCH: {
-                    mesos::Offer::Operation _operation;
-
-                    _operation.set_type(mesos::Offer::Operation::LAUNCH);
-
-                    foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
-
-                        string cur_slavePID = "slave@";
-                        if (task.slave_id().value() == "11111111") {
-//                            cur_slavePID.append("172.20.110.228:6061");
-                            cur_slavePID.append(stringify(self().address.ip)+":6061");
-                        } else {
-                            cur_slavePID.append(stringify(self().address.ip)+":6061");
-                        }
-                        mesos::TaskInfo task_(task);
-
-                        LOG(INFO) << "Sending task to slave " << cur_slavePID; //slave(1)@172.20.110.152:5051
-
-                        mesos::internal::RunTaskMessage message;
-                        message.mutable_framework()->MergeFrom(framework->info);
-                        message.set_pid(framework->pid.getOrElse(UPID()));
-                        message.mutable_task()->MergeFrom(task_);
-                        message.mutable_framework_id()->MergeFrom(framework->id());
-
-                        send(cur_slavePID, message);
-
-                        _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
-                    }
-                    break;
-                }
-                case mesos::Offer::Operation::UNKNOWN: {
-                    LOG(WARNING) << "Ignoring unknown offer operation";
-                    break;
-                }
-            }
-        }
-    }
-
-    void SuperMaster::decline(master::Framework *framework, const mesos::scheduler::Call::Decline &decline) {
-        CHECK_NOTNULL(framework);
-
-        LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
-                  << " for framework " << *framework;
-
-        //we should save offer infomation before do this , so we now just leave it- by weiguow
-//        offers.erase(offer->id());
-//        delete offer;
-    }
-
-    void SuperMaster::shutdown(master::Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown) {
-        CHECK_NOTNULL(framework);
-
-        const mesos::SlaveID &slaveID = shutdown.slave_id();
-
-//        const
-    }
-
-    void SuperMaster::acknowledge(master::Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge) {
-        const mesos::SlaveID &slaveId = acknowledge.slave_id();
-        const mesos::TaskID &taskId = acknowledge.task_id();
-        const UUID uuid = UUID::fromBytes(acknowledge.uuid()).get();
-
-        mesos::internal::StatusUpdateAcknowledgementMessage message;
-        message.mutable_slave_id()->CopyFrom(slaveId);
-
-        message.mutable_framework_id()->MergeFrom(framework->id());
-        message.mutable_task_id()->CopyFrom(taskId);
-        message.set_uuid(uuid.toBytes());
-
-        LOG(INFO) << "Processing ACKNOWLEDGE call " << uuid << " for task " << taskId.value()
-                  << " of framework " << framework->info.name() << " on agent " << slaveId.value();
-        //send(m_slavePID, message);
-    }
-
-    mesos::FrameworkID SuperMaster::newFrameworkId() {
-        std::ostringstream out;
-//        out << m_masterInfo.id() << "-" << std::setw(4)
-//            << std::setfill('0') << nextFrameworkId++;
-
-        mesos::FrameworkID frameworkId;
-        frameworkId.set_value(out.str());
-
-        return frameworkId;
-    }
-
-    void SuperMaster::addFramework(master::Framework *framework) {
-
-        frameworks.registered[framework->id().value()] = framework;
-
-        if (framework->connected()) {
-            if (framework->pid.isSome()) {
-                link(framework->pid.get());
-            }
-        }
-    }
-
 
 }
 using namespace chameleon;
