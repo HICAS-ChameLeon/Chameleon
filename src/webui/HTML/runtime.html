@@ -30,7 +30,6 @@
                     <td>{{ (100 - x.disk_usage.available_percent) | number:1}} %</td>
                     <td ng-if="x.mem_usage.swap_total ==0 ">无</td>
                     <td ng-if="x.mem_usage.swap_total !=0 ">{{ (1 - x.mem_usage.swap_free / x.mem_usage.swap_total)  * 100 | number:1}} %</td>
-                    <!--<td>{{ (1 - x.mem_usage.swap_free / x.mem_usage.swap_total)  * 100 | number:1}} %</td>-->
                 </tr>
                 </tbody>
             </table>

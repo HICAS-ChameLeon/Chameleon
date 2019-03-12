@@ -22,8 +22,6 @@
                         {{x.slave_id}}
                     </td>
                     <td>
-                        <!--<div class="panel panel-default">
-                            <div class="panel-heading">-->
                         {{x.cpu_collection.cpu_quantity}}
                         <a style="float:right" data-toggle="collapse"
                            href="/#cpu{{x.slave_uuid}}">
@@ -32,15 +30,11 @@
                                 <use xlink:href="#icon-xiala"></use>
                             </svg>
                         </a>
-                        <!--</div>-->
                         <div id="cpu{{x.slave_uuid}}" class="collapse">
-                            <!--<div class="panel-body">-->
                             modelname:{{x.cpu_collection.cpu_infos[0].modelname}}
                             主频:{{x.cpu_collection.cpu_infos[0].cpuMHz}}MHz
                             最大主频:{{x.cpu_collection.cpu_infos[0].cpumaxMhz}}MHz
-                            <!--</div>-->
                         </div>
-                        <!--</div>-->
 
                     </td>
                     <td>
