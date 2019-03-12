@@ -188,6 +188,8 @@ namespace chameleon {
         mesos::TaskInfo m_task;
 
         string m_work_dir;
+        // the absolute path of the slave executable
+        string m_cwd;
 
 //        BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completedFrameworks;
 

@@ -8,8 +8,8 @@
 #include "software_resource_manager.hpp"
 namespace chameleon{
 
-    SoftwareResourceManager::SoftwareResourceManager():process(new DownloadProcess()) {
-        process::spawn(process.get());
+    SoftwareResourceManager::SoftwareResourceManager(const string& public_resources_):m_public_resources(public_resources_),process(new DownloadProcess(public_resources_)) {
+        initialize();
     }
 
     SoftwareResourceManager::SoftwareResourceManager(const process::Owned<DownloadProcess>& _process):process(_process){
@@ -22,12 +22,23 @@ namespace chameleon{
         process::wait(process.get());
     }
 
+    void SoftwareResourceManager::initialize() {
+        Try<Nothing> public_resources_create = os::mkdir(m_public_resources);
+        if(public_resources_create.isError()){
+            LOG(FATAL)<<public_resources_create.error();
+            return;
+        }else{
+            process::spawn(process.get());
+        }
+    }
+
     process::Future<Nothing> SoftwareResourceManager::download(const string &framework_name,
                                                                const mesos::fetcher::FetcherInfo &info) {
         return process::dispatch(process.get(),&DownloadProcess::download,framework_name,info);
     }
 
     process::Future<Nothing> DownloadProcess::download(const string &framework_name, const mesos::fetcher::FetcherInfo& info) {
+
         LOG(INFO)<<"DownloadProcess::download ";
 
         const string stdoutPath = path::join(info.sandbox_directory(), "stdout");
@@ -60,6 +71,7 @@ namespace chameleon{
         map<string,string> environment;
         environment["CHAMELEON_FETCHER_INFO"] = stringify(JSON::protobuf(info));
         environment["framework_name"] = framework_name;
+        environment["PUBLIC_RESOURCES_DIR"] = m_public_resources_dir;
         LOG(INFO)<<"lele download dependencies of framework_name: "<<framework_name;
         Try<Subprocess> download_subprocess = process::subprocess(
                 downloader_path,

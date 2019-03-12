@@ -140,7 +140,7 @@ namespace master {
 
         route(
                 "/frameworks",
-                "wangweiguo new version of frameworks",
+                "get all the information of frameworks related with the current master",
                 [this](Request request) {
                     JSON::Object a_framework;
                     JSON::Object a_content = JSON::Object();

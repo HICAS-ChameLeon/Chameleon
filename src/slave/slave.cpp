@@ -14,7 +14,8 @@ DEFINE_int32(port, 6061, "port");
 
 //The following flags must be set by user
 DEFINE_string(master, "", "master ip and port info");
-DEFINE_string(work_dir, "", "the path to store download file");
+DEFINE_string(work_dir, "work_dir",
+              "the path to store the files of frameworks. The default is build/src/slave/work_dir");
 
 /**
  * Function name  : ValidateStr
@@ -47,19 +48,31 @@ static bool ValidateUint(const char *flagname, gflags::uint32 value) {
     return false;
 }
 
+static bool validate_work_dir(const char *flagname, const string &value) {
+
+    if (value == "work_dir" || os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for work_dir, please make sure the work_dir actually exist!");
+    return false;
+
+}
+
 static const bool ht_Uint = gflags::RegisterFlagValidator(&FLAGS_ht, &ValidateUint);
 static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 static const bool master_Str = gflags::RegisterFlagValidator(&FLAGS_master, &ValidateStr);
-//static const bool work_dir_Str = gflags::RegisterFlagValidator(&FLAGS_work_dir, &ValidateStr);
+static const bool work_dir_Str = gflags::RegisterFlagValidator(&FLAGS_work_dir, &validate_work_dir);
 
 constexpr char MESOS_EXECUTOR[] = "chameleon-executor";
 
 namespace chameleon {
 
-    Slave::Slave() : ProcessBase("slave"), m_interval(), m_software_resource_manager(new SoftwareResourceManager()) {
+    Slave::Slave() : ProcessBase("slave"), m_interval() {
         msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
         msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
-        setting::SLAVE_EXE_DIR = os::getcwd();
+//        setting::SLAVE_EXE_DIR = os::getcwd();
+        m_cwd = os::getcwd();
+        m_software_resource_manager = new SoftwareResourceManager(m_cwd+"/public_resources");
 
 //            msp_resource_collector = new ResourceCollector();
     }
@@ -156,24 +169,24 @@ namespace chameleon {
 
     /**
      * change the spark shell value of the specified command in the task
-     *
-     * @param task
+     * @param spark_home_path spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
+     *  @param task
      */
-    void Slave::modify_command_info_of_running_task(const string& spark_home_path, mesos::TaskInfo &task) {
-       if(task.has_command()){
-           mesos::CommandInfo* new_command_info = new mesos::CommandInfo(task.command());
-           const string shell_value = task.command().value();
-           auto  it = shell_value.find("spark-class");
-           if(it!= string::npos){
-               const string right_part = shell_value.substr(it);
-               const string left_part = " \""+spark_home_path+"/bin/";
-               const string final_value = left_part + right_part;
-               new_command_info->set_value(final_value);
-               task.clear_command();
-               task.set_allocated_command(new_command_info);
-               LOG(INFO)<<"the final value of command shell is "<<final_value;
-           }
-       }
+    void Slave::modify_command_info_of_running_task(const string &spark_home_path, mesos::TaskInfo &task) {
+        if (task.has_command()) {
+            mesos::CommandInfo *new_command_info = new mesos::CommandInfo(task.command());
+            const string shell_value = task.command().value();
+            auto it = shell_value.find("spark-class");
+            if (it != string::npos) {
+                const string right_part = shell_value.substr(it);
+                const string left_part = " \"" + spark_home_path + "/bin/";
+                const string final_value = left_part + right_part;
+                new_command_info->set_value(final_value);
+                task.clear_command();
+                task.set_allocated_command(new_command_info);
+                LOG(INFO) << "the final value of command shell is " << final_value;
+            }
+        }
     }
 
     /**
@@ -197,59 +210,63 @@ namespace chameleon {
 
         frameworks[frameworkId.value()] = framework;
 
+        LOG(INFO) << "Start executor on framework " << framework->id().value();
+
+//        const string current_cwd = os::getcwd();
+        const string sanbox_path = path::join(m_work_dir, frameworkId.value());
+        Try<Nothing> mkdir_sanbox = os::mkdir(sanbox_path);
+        if (mkdir_sanbox.isError()) {
+            LOG(ERROR) << mkdir_sanbox.error();
+            return;
+        }
+
         // change the spark home of the command information if the running task belongs to spark
-        const string current_cwd = os::getcwd();
-        const string spark_home_path = path::join(current_cwd,"spark-2.3.0-bin-hadoop2.7");
+        // spark_home_path = sanbox_path + "spark-2.3.0-bin-hadoop2.7"
+        // for example,
+        // sanbox_path = Chameleon/build/src/slave/da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000
+        //  spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
+        const string spark_home_path = path::join(sanbox_path, "spark-2.3.0-bin-hadoop2.7");
         mesos::TaskInfo copy_task(task);
-        modify_command_info_of_running_task(spark_home_path,copy_task);
+        modify_command_info_of_running_task(spark_home_path, copy_task);
 
         // queue the task and executor_info
         m_tasks.push(copy_task);
         m_executorInfo = executorInfo;
 
-        LOG(INFO) << "Start executor on framework " << framework->id().value();
-
-        const string sanbox_path = path::join(current_cwd,frameworkId.value());
-        Try<Nothing> mkdir_sanbox = os::mkdir(sanbox_path);
-        if(mkdir_sanbox.isError()){
-            LOG(ERROR)<<mkdir_sanbox.error();
-            return;
-        }
-
         process::Future<Nothing> download_result;
         Promise<Nothing> promise;
-        if(! os::exists(spark_home_path)){
-            LOG(INFO)<<"spark  didn't exist, download it frist";
+        if (!os::exists(spark_home_path)) {
+            LOG(INFO) << "spark  didn't exist, download it frist";
             mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
             mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
             mesos::fetcher::URI *uri = new mesos::fetcher::URI();
-            fetcher_info->set_sandbox_directory(current_cwd);
+            fetcher_info->set_sandbox_directory(sanbox_path);
             //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
             uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
             item->set_allocated_uri(uri);
             item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
-            download_result= m_software_resource_manager->download("my_spark", *fetcher_info);
+            download_result = m_software_resource_manager->download("my_spark", *fetcher_info);
             delete fetcher_info;
 
-        }else{
-            LOG(INFO)<<"spark  has existed";
+        } else {
+            LOG(INFO) << "the Spark framework has existed";
 
-            download_result=promise.future();
+            download_result = promise.future();
             promise.set(Nothing());
         }
-        download_result.onAny(process::defer(self(),&Self::start_mesos_executor,lambda::_1, framework));
+        download_result.onAny(process::defer(self(), &Self::start_mesos_executor, lambda::_1, framework));
 //        start_mesos_executor(framework);
     }
 
-    void Slave::start_mesos_executor(const Future<Nothing>& future, const Framework *framework) {
-        if(!future.isReady()){
-            if(future.isFailed()){
-                LOG(ERROR)<<future.failure();
+    void Slave::start_mesos_executor(const Future<Nothing> &future, const Framework *framework) {
+        if (!future.isReady()) {
+            if (future.isFailed()) {
+                LOG(ERROR) << future.failure();
             }
-            LOG(ERROR)<<"framework "<<framework->info.name()<<" downloaded failed";
+            LOG(ERROR) << "framework " << framework->info.name() << " downloaded failed";
             return;
-        }else{
-            LOG(INFO)<<"framework "<<framework->info.name()<<" downloaded successfully";
+        } else {
+            LOG(INFO) << "framework " << framework->info.name() << " downloaded successfully";
         }
 
         const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
@@ -641,7 +658,7 @@ namespace chameleon {
             m_master = "master@" + message.master_ip() + ":" + message.port();
             msp_masterUPID.reset(new UPID(m_master));
 
-            LOG(INFO)<<" prepare to  a  heartbeat to the new master "<<m_master<<" ";
+            LOG(INFO) << " prepare to  a  heartbeat to the new master " << m_master << " ";
             UPID new_master_ip(m_master);
             DLOG(INFO) << "Before send message to master";
             send(new_master_ip, *hr_message);
@@ -678,13 +695,24 @@ int main(int argc, char *argv[]) {
     google::CommandLineFlagInfo info;
 
 
-    if (master_Str && port_Int) {
+    if (master_Str && port_Int && work_dir_Str) {
+        // first get the absolute path for the default work_dir
+        string work_dir_path = FLAGS_work_dir;
+        if (FLAGS_work_dir == "work_dir") {
+            work_dir_path = path::join(os::getcwd(), FLAGS_work_dir);
+            Try<Nothing> work_dir_create = os::mkdir(work_dir_path);
+            if (work_dir_create.isError()) {
+                printf(work_dir_create.error().c_str());
+                return -1;
+            }
+        }
+
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
         process::initialize("slave");
         chameleon::Slave slave;
         slave.setM_interval(Seconds(FLAGS_ht));
-        slave.setM_work_dir(FLAGS_work_dir);
+        slave.setM_work_dir(work_dir_path);
 
         string master_ip_and_port = "master@" + stringify(FLAGS_master);
         slave.setM_master(master_ip_and_port);
