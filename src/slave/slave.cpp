@@ -155,6 +155,28 @@ namespace chameleon {
     }
 
     /**
+     * change the spark shell value of the specified command in the task
+     *
+     * @param task
+     */
+    void Slave::modify_command_info_of_running_task(const string& spark_home_path, mesos::TaskInfo &task) {
+       if(task.has_command()){
+           mesos::CommandInfo* new_command_info = new mesos::CommandInfo(task.command());
+           const string shell_value = task.command().value();
+           auto  it = shell_value.find("spark-class");
+           if(it!= string::npos){
+               const string right_part = shell_value.substr(it);
+               const string left_part = " \""+spark_home_path+"/bin/";
+               const string final_value = left_part + right_part;
+               new_command_info->set_value(final_value);
+               task.clear_command();
+               task.set_allocated_command(new_command_info);
+               LOG(INFO)<<"the final value of command shell is "<<final_value;
+           }
+       }
+    }
+
+    /**
      * Funtion  : runTask
      * Author   : weiguow
      * Date     : 2019-1-2
@@ -175,27 +197,40 @@ namespace chameleon {
 
         frameworks[frameworkId.value()] = framework;
 
-        m_tasks.push(task);
+        // change the spark home of the command information if the running task belongs to spark
+        const string current_cwd = os::getcwd();
+        const string spark_home_path = path::join(current_cwd,"spark-2.3.0-bin-hadoop2.7");
+        mesos::TaskInfo copy_task(task);
+        modify_command_info_of_running_task(spark_home_path,copy_task);
+
+        // queue the task and executor_info
+        m_tasks.push(copy_task);
         m_executorInfo = executorInfo;
 
         LOG(INFO) << "Start executor on framework " << framework->id().value();
 
-        mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
-        mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
-        mesos::fetcher::URI *uri = new mesos::fetcher::URI();
-        //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
+        const string sanbox_path = path::join(current_cwd,frameworkId.value());
+        Try<Nothing> mkdir_sanbox = os::mkdir(sanbox_path);
+        if(mkdir_sanbox.isError()){
+            LOG(ERROR)<<mkdir_sanbox.error();
+            return;
+        }
 
-        uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
-        item->set_allocated_uri(uri);
-        item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
-        const string sanbox_path = os::getcwd();
-        fetcher_info->set_sandbox_directory(sanbox_path);
-//    process::Future<Nothing> result = manager.download("my_spark",*fetcher_info);
         process::Future<Nothing> download_result;
         Promise<Nothing> promise;
-        if(! os::exists(path::join(sanbox_path,"/spark-2.3.0-bin-hadoop2.7"))){
+        if(! os::exists(spark_home_path)){
             LOG(INFO)<<"spark  didn't exist, download it frist";
+            mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
+            mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
+            mesos::fetcher::URI *uri = new mesos::fetcher::URI();
+            fetcher_info->set_sandbox_directory(current_cwd);
+            //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
+            uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
+            item->set_allocated_uri(uri);
+            item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
             download_result= m_software_resource_manager->download("my_spark", *fetcher_info);
+            delete fetcher_info;
+
         }else{
             LOG(INFO)<<"spark  has existed";
 
@@ -208,7 +243,11 @@ namespace chameleon {
 
     void Slave::start_mesos_executor(const Future<Nothing>& future, const Framework *framework) {
         if(!future.isReady()){
+            if(future.isFailed()){
+                LOG(ERROR)<<future.failure();
+            }
             LOG(ERROR)<<"framework "<<framework->info.name()<<" downloaded failed";
+            return;
         }else{
             LOG(INFO)<<"framework "<<framework->info.name()<<" downloaded successfully";
         }

@@ -28,6 +28,7 @@ namespace chameleon{
     }
 
     process::Future<Nothing> DownloadProcess::download(const string &framework_name, const mesos::fetcher::FetcherInfo& info) {
+        LOG(INFO)<<"DownloadProcess::download ";
 
         const string stdoutPath = path::join(info.sandbox_directory(), "stdout");
 
@@ -37,7 +38,7 @@ namespace chameleon{
                 S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
         if (out.isError()) {
-            return process::Failure("Failed to create 'stdout' file: " + out.error());
+            return process::Failure("Failed to create 'stdout' file: " + stdoutPath + " . " +out.error());
         }
 
         string stderrPath = path::join(info.sandbox_directory(), "stderr");
