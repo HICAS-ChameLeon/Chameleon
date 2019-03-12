@@ -7,6 +7,7 @@
         <th data-key = "hostname">主机名</th>
         <th>用户</th>
         <th>框架</th>
+        <th>Web UI</th>
         <th>活动的任务</th>
         <th>注册时间</th>
     </tr>
@@ -14,6 +15,7 @@
     <tbody>
     <tr ng-repeat="x in framework | filter:{state: 'ACTIVE'}:true">
         <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
+        <!--<th><a href="{{x.webui_url}}">{{x.id.value}}</a>-->
         </th>
         <th>
             {{x.hostname}}
@@ -23,6 +25,9 @@
         </th>
         <th>
             {{x.name}}
+        </th>
+        <th>
+            <a href="{{x.webui_url}}">{{x.webui_url}}</a>
         </th>
         <th>
             {{x.princple}}
@@ -46,6 +51,7 @@
         <th>主机名</th>
         <th>用户</th>
         <th>框架</th>
+        <th>Web UI</th>
         <th>活动的任务</th>
         <th>注册时间</th>
     </tr>
@@ -85,12 +91,14 @@
         <th>主机名</th>
         <th>用户</th>
         <th>框架</th>
+        <th>Wei UI</th>
         <th>注册时间</th>
     </tr>
     </thead>
     <tbody>
     <tr ng-repeat="x in framework | filter:{state:'INACTIVE'}:true ">
         <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
+        <!--<th><a href="{{x.webui_url}}">{{x.id.value}}</a>-->
         </th>
         <th>
             {{x.hostname}}
@@ -100,6 +108,9 @@
         </th>
         <th>
             {{x.name}}
+        </th>
+        <th>
+            <a href="{{x.webui_url}}">{{x.webui_url}}</a>
         </th>
         <th>
             {{user}}
