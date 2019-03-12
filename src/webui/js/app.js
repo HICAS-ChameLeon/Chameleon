@@ -10,12 +10,12 @@
             $routeProvider.when('/hardware', {
                 //templateURL：插入ng-view的HTML模板文件
                 templateUrl: '/Chameleon/src/webui/HTML/hardware.html',
-                controller: 'HardwareCtrl'
+                controller: 'UpdateCtrl'
 
             })
                 .when('/runtime', {
                     templateUrl: '/Chameleon/src/webui/HTML/runtime.html',
-                    controller: 'RuntimeCtrl'
+                    controller: 'UpdateCtrl'
                 })
                 // network_topology.html
                 .when('/topology', {
