@@ -99,7 +99,6 @@ namespace chameleon {
             ~Slave();
 
             Master *const m_master;
-
             RuntimeResourcesMessage m_runtimeinfo;
             HardwareResourcesMessage m_hardwareinfo;
             const string m_uid;

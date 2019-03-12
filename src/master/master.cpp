@@ -340,7 +340,8 @@ namespace chameleon {
             cpu_resource->set_name("cpus");
             cpu_resource->set_type(mesos::Value_Type_SCALAR);
             mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
-            //cpu核数
+
+            LOG(INFO) << "cpu cores is " << slave->m_hardwareinfo.cpu_collection().cpu_quantity();
             cpu_scalar->set_value(slave->m_hardwareinfo.cpu_collection().cpu_quantity());
             cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
             offer->add_resources()->MergeFrom(*cpu_resource);
@@ -351,7 +352,12 @@ namespace chameleon {
             mem_resource->set_type(mesos::Value_Type_SCALAR);
             mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
             //slave可用内存
-            mem_scalar->set_value(slave->m_runtimeinfo.mem_usage().mem_available());
+
+            int memory = slave->m_runtimeinfo.mem_usage().mem_available() / 1024;
+
+            LOG(INFO) << "memory not suite for message " << memory;
+
+            mem_scalar->set_value(memory);
             mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
             offer->add_resources()->MergeFrom(*mem_resource);
 
@@ -379,10 +385,7 @@ namespace chameleon {
             LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
                       << *framework;
 
-            LOG(INFO) << "framework m_pid: " << framework->m_pid.get();
-
             framework->send(message);
-
         }
 
         void Master::accept(Framework *framework, mesos::scheduler::Call::Accept accept) {
@@ -533,7 +536,8 @@ namespace chameleon {
                 const mesos::TaskID &taskId,
                 const string &uuid) {
             Framework *framework = get_framework(frameworkId);
-            LOG(INFO) << "statusUpdateAcknowledgement from " << from;
+
+            LOG(INFO) << "Status Update Acknowledgement from " << from;
 
             mesos::scheduler::Call::Acknowledge message;
             message.mutable_slave_id()->CopyFrom(slaveId);
@@ -545,8 +549,6 @@ namespace chameleon {
 
         void Master::acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge) {
             const mesos::SlaveID &slaveId = acknowledge.slave_id();
-
-            LOG(INFO) << "what is SlaveID: " << slaveId.value();
 
             Slave *slave = get_slave(slaveId.value());
 
@@ -576,8 +578,6 @@ namespace chameleon {
             foreachvalue(Slave *slave, slaves.registered) {
 
                 RuntimeResourcesMessage rrm = m_slave_usage.get(slave->m_pid).get();
-                LOG(INFO) << "test: " << rrm.slave_id() << " : "
-                << rrm.mem_usage().mem_available();
 
                 cur_mem_rate = rrm.mem_usage().mem_available() / rrm.mem_usage().mem_total();
 
@@ -586,7 +586,7 @@ namespace chameleon {
                     m_slave_pid = slave->m_pid;
                 }
             }
-            LOG(INFO) << "Choose " << m_slave_pid;
+            LOG(INFO) << "Choose " << m_slave_pid << " offer resource to framework";
             return slaves.registered.get(m_slave_pid);
         }
 
@@ -684,15 +684,16 @@ namespace chameleon {
 
             //save runtimeinfo-by weiguow
             foreachvalue(Slave *slave, slaves.registered) {
-                                    if (!slaves.registered.contains(slave->m_uid)) {
+                if (!slaves.registered.contains(slave->m_uid)) {
                                         LOG(INFO) << "This slave is not registered";
                                         return;
-                                    }
-                                    Slave *slave_ = get_slave(slave->m_uid);
-                                    if (!m_slave_usage.contains(slave->m_pid)) {
-                                        m_slave_usage.put(slave->m_pid, runtime_resouces_message);
-                                    }
-                                }
+                }
+                Slave *slave_ = get_slave(slave->m_uid);
+                if (!m_slave_usage.contains(slave->m_pid)) {
+                    m_slave_usage.put(slave->m_pid, runtime_resouces_message);
+                    slave->m_runtimeinfo = runtime_resouces_message;
+                }
+            }
 
             auto slave_id = runtime_resouces_message.slave_id();
             m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);

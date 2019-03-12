@@ -102,21 +102,17 @@ namespace chameleon {
 
 
             HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
-            DLOG(INFO) << *msp_masterUPID;
-
-            string slave_id = stringify(self().address.ip);
-            hr_message->set_slave_id(slave_id);
 
             m_uuid = UUID::random().toString();
             hr_message->set_slave_uuid(m_uuid);
             hr_message->set_slave_hostname(self().address.hostname().get());
-
-            DLOG(INFO) << "Before send message to master";
-
+            hr_message->set_slave_id(stringify(self().address.ip));
             send(*msp_masterUPID, *hr_message);
+
             delete hr_message;
-            LOG(INFO) << "The initialization of slave itself finished.";
+
             LOG(INFO) << self() << " starts to send heartbeat message to the master";
+
             heartbeat();
         }
 
@@ -126,85 +122,387 @@ namespace chameleon {
                 const mesos::FrameworkID &frameworkId,
                 const process::UPID &pid,
                 const mesos::TaskInfo &task) {
-            LOG(INFO) << "Get task from master " << from << " start the mesos executor first";
+            if (UPID(m_master) != from) {
+                LOG(WARNING) << "Ignoring run task message from " << from
+                             << " because it is not the expected master";
+                return;
+            }
+
+            if (!frameworkInfo.has_id()) {
+                LOG(ERROR) << "Ignoring run task message from " << from
+                           << " because it does not have a framework ID";
+                return;
+            }
+
             const mesos::ExecutorInfo executorInfo = get_executorinfo(frameworkInfo, task);
 
-            Option<process::UPID> frameworkPid = None();
-
-            Framework *framework = get_framework(frameworkId);
-            framework = new Framework(this, frameworkInfo, frameworkPid);
-
-            m_frameworks[frameworkId.value()] = framework;
-
-            m_tasks.push(task);
-            m_executorInfo = executorInfo;
-
-            LOG(INFO) << "Start executor on framework " << framework->id().value();
-            start_mesos_executor(framework);
+            //pid is scheduler-b3ff430b-b93e-4a1b-8716-a5a1d6416fe5@172.20.110.98:45457
+            run(frameworkInfo, executorInfo, task, None(), pid);
         }
 
-        void Slave::start_mesos_executor(const Framework *framework) {
+        void Slave::run(const mesos::FrameworkInfo &frameworkInfo, const mesos::ExecutorInfo &executorInfo,
+                        const Option<mesos::TaskInfo> &task, const Option<mesos::TaskGroupInfo> &taskGroup,
+                        const UPID &pid) {
 
-            const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
-            const string mesos_directory = path::join(os::getcwd(), "/mesos_executor/mesos-directory");
+            const mesos::FrameworkID &frameworkId = frameworkInfo.id();
+            LOG(INFO) << "Got assigned " << taskOrTaskGroup(task, taskGroup)
+                      << " for framework " << frameworkId.value();
 
-            const std::map<string, string> environment =
-                    {
-                            {"MESOS_FRAMEWORK_ID", framework->id().value()},
-                            {"MESOS_EXECUTOR_ID",  m_executorInfo.executor_id().value()},
-                            {"MESOS_SLAVE_PID",    slave_upid},
-                            {"MESOS_SLAVE_ID",     m_slaveInfo.id().value()},
-                            {"MESOS_DIRECTORY",    mesos_directory},
-                            {"MESOS_CHECKPOINT",   "0"}
-                    };
-            const string mesos_executor_path = path::join(os::getcwd(), "mesos_executor/mesos-executor");
+            //New Framework in slave
+            Framework* framework = get_framework(frameworkId);
+            if (framework == nullptr) {
+                Option<UPID> frameworkPid = None();
 
-            LOG(INFO) << "Start mesos executor successful!";
-            Try<Subprocess> child = subprocess(
-                    mesos_executor_path,
-                    Subprocess::FD(STDIN_FILENO),
-                    Subprocess::FD(STDOUT_FILENO),
-                    Subprocess::FD(STDERR_FILENO),
-                    environment
-            );
-            if (child.isError()) {
-                LOG(INFO) << child.error();
+                if (pid != UPID()) {
+                    frameworkPid = pid;
+                }
+
+                framework = new Framework(this, frameworkInfo, frameworkPid);
+                m_frameworks[frameworkId.value()] = framework;
             }
+
+            process::dispatch(self(), &Self::_run, frameworkInfo,
+                    executorInfo, task, taskGroup);
+        }
+
+        void Slave::_run(const mesos::FrameworkInfo &frameworkInfo, const mesos::ExecutorInfo &executorInfo,
+                         const Option<mesos::TaskInfo> &task, const Option<mesos::TaskGroupInfo> &taskGroup) {
+
+            LOG(INFO) << "Authorizing " << taskOrTaskGroup(task, taskGroup)
+                      << " for framework " << frameworkInfo.id().value();
+
+            Framework* framework = get_framework(frameworkInfo.id());
+
+            if (framework == nullptr) {
+                LOG(WARNING) << "Ignoring running " << taskOrTaskGroup(task, taskGroup)
+                             << " because the framework " << framework->id().value()
+                             << " does not exist";
+                return;
+            }
+
+            LOG(INFO) << "Launching " << taskOrTaskGroup(task, taskGroup)
+                      << " for framework " << framework->id().value();
+
+            Executor *executor = framework->get_executor(executorInfo.executor_id());
+
+            if (executor == nullptr) {
+                //add executor && launchexecutor
+                executor = framework->add_executor(executorInfo);
+
+                launch_executor(
+                        frameworkInfo.id(),
+                        executor->info.executor_id(),
+                        taskGroup.isNone() ? task.get() : Option<mesos::TaskInfo>::none());
+
+            }
+
+            process::dispatch(self(), &Self::__run, frameworkInfo,
+                    executor->info, task, taskGroup);
+
+        }
+
+        void Slave::__run(const mesos::FrameworkInfo &frameworkInfo, const mesos::ExecutorInfo &executorInfo,
+                          const Option<mesos::TaskInfo> &task, const Option<mesos::TaskGroupInfo> &taskGroup) {
+
+            vector<mesos::TaskInfo> tasks;
+            if (task.isSome()) {
+                tasks.push_back(task.get());
+            } else {
+                foreach (const mesos::TaskInfo &_task, taskGroup->tasks()) {
+                    tasks.push_back(_task);
+                }
+            }
+
+            Framework* framework = get_framework(frameworkInfo.id());
+            Executor *executor = framework->get_executor(executorInfo.executor_id());
+
+            switch (executor->state) {
+                case Executor::TERMINATING:
+                case Executor::TERMINATED: {
+                    string executorState;
+
+                    if (executor->state == Executor::TERMINATING) {
+                        executorState = "terminating";
+                    } else {
+                        executorState = "terminated";
+                    }
+
+                    LOG(WARNING) << "Asked to run " << taskOrTaskGroup(task, taskGroup)
+                                 << "' for framework " << framework->id().value()
+                                 << " with executor '" << executor->info.executor_id().value()
+                                 << "' which is " << executorState;
+                    break;
+                }
+                case Executor::REGISTERING: {
+                    foreach (const mesos::TaskInfo &_task, tasks) {
+                        // Queue task if the executor has not yet registered.
+                        executor->queuedTasks[_task.task_id().value()] = _task;
+                    }
+
+                    if (taskGroup.isSome()) {
+                        executor->queuedTaskGroups.push_back(taskGroup.get());
+                    }
+
+                    LOG(INFO) << "Queued " << taskOrTaskGroup(task, taskGroup)
+                              << " for executor " << *executor;
+
+                    Try<Subprocess> child = subprocess(
+                            path::join(os::getcwd(), "mesos_executor/mesos-executor"),
+                            Subprocess::FD(STDIN_FILENO),
+                            Subprocess::FD(STDOUT_FILENO),
+                            Subprocess::FD(STDERR_FILENO),
+                            m_enviornment
+                            );
+                    break;
+                }
+
+                case Executor::RUNNING: {
+                    foreach (const mesos::TaskInfo& _task, tasks) {
+                        executor->queuedTasks[_task.task_id().value()] = _task;
+                    }
+
+                    if (taskGroup.isSome()) {
+                        executor->queuedTaskGroups.push_back(taskGroup.get());
+                    }
+
+                    LOG(INFO) << "Queued " << taskOrTaskGroup(task, taskGroup)
+                              << " for executor " << *executor;
+
+                    break;
+                }
+
+                default:
+                    LOG(FATAL) << "Executor " << *executor << " is in unexpected state "
+                               << executor->state;
+                    break;
+            }
+
+            const Duration delay_duration = Seconds(1);
+            process::delay(delay_duration, self(), &Self::___run, frameworkInfo,
+                              executor->info, task, taskGroup);
+        }
+
+        void Slave::___run(const mesos::FrameworkInfo &frameworkInfo, const mesos::ExecutorInfo &executorInfo,
+                           const Option<mesos::TaskInfo> &task, const Option<mesos::TaskGroupInfo> &taskGroup) {
+            vector<mesos::TaskInfo> tasks;
+            if (task.isSome()) {
+                tasks.push_back(task.get());
+            } else {
+                foreach (const mesos::TaskInfo &_task, taskGroup->tasks()) {
+                    tasks.push_back(_task);
+                }
+            }
+
+            Framework* framework = get_framework(frameworkInfo.id());
+            Executor* executor = framework->get_executor(executorInfo.executor_id());
+
+            foreach(const mesos::TaskInfo& task, tasks) {
+                if (!executor->queuedTasks.contains(task.task_id().value())) {
+                    LOG(WARNING) << "Ignoring send queued task "<< task.task_id().value()
+                                 << " to " << *executor;
+                    continue;
+                }
+
+                executor->queuedTasks.erase(task.task_id().value());
+
+                mesos::internal::RunTaskMessage message;
+                message.mutable_framework()->MergeFrom(framework->info);
+                message.mutable_task()->MergeFrom(task);
+                message.set_pid(framework->pid.getOrElse(UPID()));
+
+                executor->send(message);
+            }
+
         }
 
         void Slave::register_executor(const UPID &from,
                                       const mesos::FrameworkID &frameworkId,
                                       const mesos::ExecutorID &executorId) {
+
+
             LOG(INFO) << "Got registration for executor '" << executorId.value()
                       << "' of framework " << frameworkId.value() << " from "
                       << stringify(from);
 
             Framework *framework = get_framework(frameworkId);
+            Executor* executor = framework->get_executor(executorId);
 
-            mesos::internal::ExecutorRegisteredMessage message;
+            switch (executor->state) {
+                case Executor::TERMINATING:
+                case Executor::TERMINATED:
+                case Executor::RUNNING:
+                    LOG(WARNING) << "Shutting down executor " <<*executor
+                                 << " because it is unexpected state " << executor->state;
+                    break;
+                case Executor::REGISTERING: {
+                    executor->state = Executor::RUNNING;
 
-            message.mutable_executor_info()->mutable_framework_id()->MergeFrom(framework->id());
-            message.mutable_framework_id()->MergeFrom(framework->id());
-            message.mutable_framework_info()->MergeFrom(framework->m_info);
+                    executor->pid = from;
+                    link(from);
 
-            message.mutable_executor_info()->MergeFrom(m_executorInfo);
-            message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
-            message.mutable_slave_info()->MergeFrom(m_slaveInfo);
+                    mesos::internal::ExecutorRegisteredMessage message;
 
-            send(from, message);
+                    message.mutable_executor_info()->MergeFrom(executor->info);
+                    message.mutable_framework_id()->MergeFrom(framework->id());
+                    message.mutable_framework_info()->MergeFrom(framework->info);
+                    message.mutable_slave_id()->MergeFrom(m_slaveInfo.id());
+                    message.mutable_slave_info()->MergeFrom(m_slaveInfo);
 
-            mesos::internal::RunTaskMessage run_task_message;
-            run_task_message.mutable_framework()->MergeFrom(framework->m_info);
-            if (!m_tasks.empty()) {
-                mesos::TaskInfo current_task = m_tasks.front();
-                run_task_message.mutable_task()->MergeFrom(current_task);
-                m_tasks.pop();
-            } else {
-                LOG(FATAL) << " No task left for new executor to run ";
+                    executor->send(message);
+
+                    break;
+                }
+                default:
+                    LOG(FATAL) << "Executor " << *executor << " is in unexpected state "
+                    << executor->state;
             }
-            run_task_message.set_pid(from);
 
-            send(from, run_task_message);
+        }
+
+        void Slave::status_update(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
+
+            LOG(INFO) << "Handling status update " << update.status().state()
+                      << " of framework " << update.framework_id().value();
+
+            update.mutable_status()->set_uuid(update.uuid());
+            update.mutable_status()->set_source(
+                    pid == UPID() ? mesos::TaskStatus::SOURCE_SLAVE : mesos::TaskStatus::SOURCE_EXECUTOR);
+            update.mutable_status()->mutable_executor_id()->CopyFrom(update.executor_id());
+
+            LOG(INFO) << "Received status update " << update.status().state()
+                      << " of framework " << update.framework_id().value();
+
+            process::dispatch(self(), &Slave::forward_status_update_to_master, update);
+        }
+
+        void Slave::forward_status_update_to_master(mesos::internal::StatusUpdate update) {
+
+            LOG(INFO) << "Forwarding the update " << update.status().state()
+                      << " of framework " << update.framework_id().value() << " to " << m_master;
+
+            Framework* framework = get_framework(update.framework_id());
+            Executor* executor = framework->get_executor(update.executor_id());
+
+            mesos::internal::StatusUpdateMessage message;
+            message.mutable_update()->MergeFrom(update);
+            message.set_pid(self()); // The ACK will be first received by the slave.
+
+            send(m_master, message);
+
+            process::dispatch(self(), &Slave::send_status_update_to_executor, update, executor->pid);
+        }
+
+        void Slave::send_status_update_to_executor(
+                const mesos::internal::StatusUpdate &update,
+                const Option<UPID> &pid) {
+
+            mesos::internal::StatusUpdateAcknowledgementMessage message;
+            message.mutable_framework_id()->MergeFrom(update.framework_id());
+            message.mutable_slave_id()->MergeFrom(update.slave_id());
+            message.mutable_task_id()->MergeFrom(update.status().task_id());
+            message.set_uuid(update.uuid());
+
+            if (pid.isSome()) {
+                LOG(INFO) << "Sending acknowledgement for status update " << update.status().state()
+                          << " of framework " << update.framework_id().value()
+                          << " to " << pid.get();  //executor(1)@172.20.110.77:39343
+                send(pid.get(), message);
+            } else {
+                LOG(INFO) << "Ignoring update status ";
+            }
+        }
+
+        void Slave::status_update_acknowledgement(
+                const UPID &from,
+                const mesos::SlaveID &slaveId,
+                const mesos::FrameworkID &frameworkId,
+                const mesos::TaskID &taskId,
+                const string &uuid) {
+
+            if (UPID(m_master) != from) {
+                LOG(WARNING) << "Ignoring status update acknowledgement message from "
+                             << from << " because it is not the expected master: "
+                             << m_master << " is None";
+                return;
+            }
+
+            LOG(INFO) << "Status update manager successfully handled status update"
+                      << " acknowledgement for task " << taskId.value()
+                      << " of framework " << frameworkId.value();
+        }
+
+        Framework *Slave::get_framework(const mesos::FrameworkID &frameworkId) const {
+            if (m_frameworks.count(frameworkId.value()) > 0) {
+                return m_frameworks.at(frameworkId.value());
+            }
+            return nullptr;
+        }
+
+        Executor* Framework::get_executor(const mesos::ExecutorID &executorId) {
+            if (executors.contains(executorId.value())) {
+                return  executors.at(executorId.value());
+            }
+            return nullptr;
+        }
+
+        Executor* Framework::add_executor(const mesos::ExecutorInfo &executorInfo) {
+            mesos::ContainerID containerId;
+            containerId.set_value(UUID::random().toString());
+
+            Executor* executor = new Executor(
+                    slave,
+                    id(),
+                    executorInfo,
+                    containerId
+                    );
+
+            executor->state = Executor::State::REGISTERING;
+
+            executors[executorInfo.executor_id().value()] = executor;
+
+            LOG(INFO) << "Launching executor '" << executorInfo.executor_id().value()
+                      << "' of framework " << id().value() ;
+
+            return executor;
+        }
+
+        void Slave::launch_executor(const mesos::FrameworkID &frameworkId, const mesos::ExecutorID &executorId,
+                                    const Option<mesos::TaskInfo> &taskInfo) {
+            Framework* framework = get_framework(frameworkId);
+            Executor* executor = framework->get_executor(executorId);
+
+            m_enviornment = executor_environment(
+                    executor->info,
+                    m_slaveInfo.id(),
+                    self()
+            );
+
+            return;
+            //launch container should be done in there
+        }
+
+        map<string, string> executor_environment(
+                const mesos::ExecutorInfo &executorInfo,
+                const mesos::SlaveID& slaveId,
+                const PID<Slave> &slavepid
+        ) {
+
+            const string mesos_directory = path::join(os::getcwd(), "/mesos_executor/mesos-directory");
+
+            map<string, string> environment;
+
+            Option<string> libprocessIP = os::getenv("LIBPROCESS_IP");
+
+            environment["LIBPROCESS_PORT"] = "0";
+            environment["MESOS_FRAMEWORK_ID"] = executorInfo.framework_id().value();
+            environment["MESOS_EXECUTOR_ID"] = executorInfo.executor_id().value();
+            environment["MESOS_SLAVE_ID"] = slaveId.value();
+            environment["MESOS_SLAVE_PID"] = stringify(slavepid);
+            environment["MESOS_AGENT_ENDPOINT"] = stringify(slavepid.address);
+            environment["MESOS_DIRECTORY"] = mesos_directory;
+            environment["MESOS_CHECKPOINT"] = "0";
+
+            return environment;
         }
 
         mesos::ExecutorInfo Slave::get_executorinfo(
@@ -217,10 +515,11 @@ namespace chameleon {
 
             mesos::ExecutorInfo executorInfo;
 
-            // Command executors share the same id as the task.
             executorInfo.mutable_executor_id()->set_value(task.task_id().value());
+
             LOG(INFO) << "Generate new executorInfo, its executor_id is "
                       << executorInfo.mutable_executor_id()->value();
+
             executorInfo.mutable_framework_id()->CopyFrom(frameworkInfo.id());
 
             if (task.has_container()) {
@@ -300,94 +599,6 @@ namespace chameleon {
             return executorInfo;
         }
 
-        void Slave::status_update(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
-
-            LOG(INFO) << "Handling status update " << update.status().state()
-                      << " of framework " << update.framework_id().value();
-
-            update.mutable_status()->set_uuid(update.uuid());
-            update.mutable_status()->set_source(
-                    pid == UPID() ? mesos::TaskStatus::SOURCE_SLAVE : mesos::TaskStatus::SOURCE_EXECUTOR);
-            update.mutable_status()->mutable_executor_id()->CopyFrom(update.executor_id());
-
-            LOG(INFO) << "Received status update " << update.status().state()
-                      << " of framework " << update.framework_id().value();
-
-            process::dispatch(self(), &Slave::_status_update, update, pid);
-        }
-
-        void Slave::_status_update(
-                const mesos::internal::StatusUpdate &update,
-                const Option<UPID> &pid) {
-
-            mesos::internal::StatusUpdateAcknowledgementMessage message;
-            message.mutable_framework_id()->MergeFrom(update.framework_id());
-            message.mutable_slave_id()->MergeFrom(update.slave_id());
-            message.mutable_task_id()->MergeFrom(update.status().task_id());
-            message.set_uuid(update.uuid());
-
-            if (pid.isSome()) {
-                LOG(INFO) << "Sending acknowledgement for status update " << update.status().state()
-                          << " of framework " << update.framework_id().value()
-                          << " to " << pid.get();  //executor(1)@172.20.110.77:39343
-                send(pid.get(), message);
-            } else {
-                LOG(INFO) << "Ignoring update status ";
-            }
-            process::dispatch(self(), &Slave::forward_status_update, update);
-        }
-
-
-        void Slave::forward_status_update(mesos::internal::StatusUpdate update) {
-
-            LOG(INFO) << "Forwarding the update " << update.status().state()
-                      << " of framework " << update.framework_id().value() << " to " << m_master;
-
-            mesos::internal::StatusUpdateMessage message;
-            message.mutable_update()->MergeFrom(update);
-            message.set_pid(self()); // The ACK will be first received by the slave.
-
-            send(m_master, message);
-        }
-
-        void Slave::status_update_acknowledgement(
-                const UPID &from,
-                const mesos::SlaveID &slaveId,
-                const mesos::FrameworkID &frameworkId,
-                const mesos::TaskID &taskId,
-                const string &uuid) {
-
-            if (UPID(m_master) != from) {
-                LOG(WARNING) << "Ignoring status update acknowledgement message from "
-                             << from << " because it is not the expected master: "
-                             << m_master << " is None";
-                return;
-            }
-
-            LOG(INFO) << "Status update manager successfully handled status update"
-                      << " acknowledgement for task " << taskId.value()
-                      << " of framework " << frameworkId.value();
-        }
-
-        Framework *Slave::get_framework(const mesos::FrameworkID &frameworkId) const {
-            if (m_frameworks.count(frameworkId.value()) > 0) {
-                return m_frameworks.at(frameworkId.value());
-            }
-            return nullptr;
-        }
-
-        void Slave::remove_framework(Framework *framework) {
-
-            CHECK_NOTNULL(framework);
-
-            LOG(INFO) << "Cleaning up framework " << framework->id().value();
-
-            CHECK(framework->state == Framework::RUNNING ||
-                  framework->state == Framework::TERMINATING);
-
-            m_frameworks.erase(framework->id().value());
-        }
-
         void Slave::shutdown_framework(const process::UPID &from, const mesos::FrameworkID &frameworkId) {
             LOG(INFO) << "Asked to shutdown framework " << frameworkId.value()
                       << " by " << from;
@@ -412,6 +623,18 @@ namespace chameleon {
             }
         }
 
+        void Slave::remove_framework(Framework *framework) {
+
+            CHECK_NOTNULL(framework);
+
+            LOG(INFO) << "Cleaning up framework " << framework->id().value();
+
+            CHECK(framework->state == Framework::RUNNING ||
+                  framework->state == Framework::TERMINATING);
+
+            m_frameworks.erase(framework->id().value());
+        }
+
         void Slave::shutdown_executor(const UPID &from,
                                       const mesos::FrameworkID &frameworkId,
                                       const mesos::ExecutorID &executorId) {
@@ -428,9 +651,10 @@ namespace chameleon {
                 LOG(INFO) << "Cannot shut down executor " << executorId.value()
                           << " of unknown framework " << frameworkId.value();
             }
-            Executor* executor = framework->m_executors[executorId.value()];
+            Executor* executor = framework->executors[executorId.value()];
             executor->state = Executor::TERMINATING;
         }
+
 
         void Slave::register_feedback(const string &hostname) {
             cout << " receive register feedback from master" << hostname << endl;
@@ -542,8 +766,8 @@ int main(int argc, char *argv[]) {
         slave.setM_master(master_ip_and_port);
         PID<Slave> cur_slave = process::spawn(slave);
         LOG(INFO) << "Running slave on " << process::address().ip << ":" << process::address().port;
+
         const PID<Slave> slave_pid = slave.self();
-        LOG(INFO) << slave_pid;
         process::wait(slave.self());
     } else {
         LOG(INFO) << "To run this program , must set all parameters correctly "
