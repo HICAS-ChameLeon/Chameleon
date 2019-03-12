@@ -461,6 +461,7 @@ namespace master {
 
         //this host_name is slave hostname
         offer->set_hostname(self().address.hostname().get());
+//        offer->set_hostname("ccrfox246");
 
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("1");
@@ -520,9 +521,9 @@ namespace master {
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
 //                            cur_slavePID.append("172.20.110.228:6061");
-                              cur_slavePID.append(stringify(self().address.ip)+":6061");
+                              cur_slavePID.append(*m_alive_slaves.begin()+":6061");
                         } else {
-                            cur_slavePID.append(stringify(self().address.ip)+":6061");
+                            cur_slavePID.append(*m_alive_slaves.begin()+":6061");
                         }
                         mesos::TaskInfo task_(task);
 
@@ -663,7 +664,12 @@ namespace master {
 
         LOG(INFO) << "Processing ACKNOWLEDGE call " << uuid << " for task " << taskId.value()
                   << " of framework " << framework->info.name() << " on agent " << slaveId.value();
-        send(m_slavePID, message);
+//        send(m_slavePID, message);
+
+        string cur_slavePID  = "slave@"+ *m_alive_slaves.begin()+":6061";
+        UPID cur_slave(cur_slavePID);
+        send(cur_slave, message);
+
     }
 
     /**
@@ -712,8 +718,9 @@ namespace master {
         message.mutable_framework_id()->MergeFrom(framework->id());
 
 //        string slave_pid = "slave@172.20.110.228:6061";
-        const string slave_pid = stringify(self().address.ip).append(":6061");
-        send(slave_pid, message);
+        string cur_slavePID  = "slave@"+ *m_alive_slaves.begin()+":6061";
+        UPID cur_slave(cur_slavePID);
+        send(cur_slave, message);
 
 //        frameworks.completed.set(framework->id().value(), framework);
     }

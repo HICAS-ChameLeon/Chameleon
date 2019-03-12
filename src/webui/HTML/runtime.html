@@ -19,10 +19,9 @@
                         <button class="btn btn-xs btn-default btn-toggle"
                                 clipboard
                                 data-clipboard-text="{{x.slave_uuid}}"
-                                tooltip="Copy ID"
+                                tooltip="复制ID"
                                 tooltip-placement="right"
                                 tooltip-trigger="clipboardhover">
-                            <i class="icon-file"></i>
                         </button>
                     </td>
                     <td>{{x.slave_id}}</td>
@@ -31,7 +30,6 @@
                     <td>{{ (100 - x.disk_usage.available_percent) | number:1}} %</td>
                     <td ng-if="x.mem_usage.swap_total ==0 ">无</td>
                     <td ng-if="x.mem_usage.swap_total !=0 ">{{ (1 - x.mem_usage.swap_free / x.mem_usage.swap_total)  * 100 | number:1}} %</td>
-                    <!--<td>{{ (1 - x.mem_usage.swap_free / x.mem_usage.swap_total)  * 100 | number:1}} %</td>-->
                 </tr>
                 </tbody>
             </table>
