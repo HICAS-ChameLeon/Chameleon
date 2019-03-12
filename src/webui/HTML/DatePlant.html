@@ -11,13 +11,9 @@
     <link rel="stylesheet" href="../css/Chameleon.css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 
-
-
-
 </head>
 
 <body ng-app="Chameleon" ng-controller="UpdateCtrl">
-
 <style type="text/css">
     .icon {
         font-size: 30px;
@@ -26,14 +22,6 @@
         fill: currentColor;
         overflow: hidden;
         margin-right: 20px;
-    }
-</style>
-
-<style type="text/css">
-    #mynetwork {
-        width: 100%;
-        height: 800px;
-        border: 1px solid lightgray;
     }
 </style>
 
@@ -58,7 +46,7 @@
                     <!-- Brand -->
                     <div class="brand-name-wrapper">
                         <a class="navbar-brand" href="#">
-                            <p style="font-family: verdana;font-size:200%">Chameleon</p>
+                            <p style="font-family: verdana;font-size:200%"> Chameleon</p>
                         </a>
                         <div class="left" style="float: right">
                             <img src="../icon/chameleon-icon" style="width: 60px;height: 60px">
@@ -109,7 +97,7 @@
                     </li>
 
                 </ul>
-            </div>
+            </div><!-- /.navbar-collapse -->
         </nav>
     </div>
 
@@ -119,43 +107,26 @@
             <img src="../icon/HICAS.png" style="float: right;width: 80px;height: 100px" alt="">
             <p style="font-size: 200%;">
                 <svg class="icon" aria-hidden="true">
-                    <use xlink:href="#icon-kongzhitai-"></use>
+                    <use xlink:href="#icon-shuju"></use>
                 </svg>
-                控制模块
+                数据平面模块
             </p>
-
-
-
         </div>
         <ul id="myTab" class="nav nav-tabs">
-            <li><a href="#/scheduling" data-toggle="tab" style="font-size: 100%">
-                调度算法选择
+            <li >
+                <a href="#/hardware"  style="font-size: 100%">
+                    机器节点
+                </a>
+            </li>
+            <li><a href="#/runtime"  style="font-size: 100%">
+                集群资源使用统计
             </a></li>
-            <li><a href="#/time_space" data-toggle="tab" style="font-size: 100%">
-                时空共享调度策略
-            </a></li>
-            <li><a href="#/topology" style="font-size: 100%">
-                网络拓扑图
-            </a></li>
-            <div>
-            </div>
-
-            <!--Indicates a dangerous or potentially negative action-->
-            <div ng-controller = "ShutdownCtrl">
-                <li>
-                <button type="button" class="btn btn-danger" ng-click="openModal()">关闭所有slave节点</button>
-                </li>
-            </div>
         </ul>
-
         <div id="myTabContent"  style="margin-top: 15px">
             <div ng-view=""></div>
         </div>
     </div>
-
 </div>
-
-
 
 <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
 
@@ -166,10 +137,6 @@
 <script src="../js/thirdparty/angular-route-1.2.3.js"></script>
 <script src="../js/thirdparty/underscore-1.4.3.js"></script>
 <script src="../js/thirdparty/clipboard-1.5.16.js"></script>
-
-
-<script type="text/javascript" src="../vis-4.21.0/dist/vis.js"></script>
-<link href="../vis-4.21.0/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
 
 <script src="../js/thirdparty/navbar.js"></script>
 <script src="../js/thirdparty/iconfont.js"></script>
