@@ -6,5 +6,5 @@ CXX_FLAGS =    -Wall -Wshadow -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-un
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/include -I/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest 
+CXX_INCLUDES = -I/home/marcie/chameleon/Chameleon1/Chameleon/3rdparty/gmock-1.7.0/gtest/include -I/home/marcie/chameleon/Chameleon1/Chameleon/3rdparty/gmock-1.7.0/gtest 
 
