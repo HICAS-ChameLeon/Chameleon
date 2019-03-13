@@ -759,6 +759,8 @@ namespace master {
         out << m_masterInfo.id() << "-" << std::setw(4)
             << std::setfill('0') << nextFrameworkId++;
 
+        LOG(INFO)<<"m_masterInfo.id(): "<<m_masterInfo.id();
+
         mesos::FrameworkID frameworkId;
         frameworkId.set_value(out.str());
 

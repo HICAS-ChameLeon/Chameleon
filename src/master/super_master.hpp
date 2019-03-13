@@ -38,10 +38,14 @@
 
 // protobuf
 #include <super_master_related.pb.h>
+#include <hardware_resource.pb.h>
+#include <runtime_resource.pb.h>
+#include <messages.pb.h>
 
 // chameleon headers
 #include <configuration_glog.hpp>
 #include "master.hpp"
+
 
 using std::string;
 using std::set;
@@ -105,6 +109,7 @@ namespace chameleon {
         // the absolute path for the super_master executable
         string m_super_master_cwd;
         string m_master_path;
+        UPID m_framework;
         // represent the masters administered by the current super_master.
         vector<UPID> m_masters;
 
@@ -123,6 +128,8 @@ namespace chameleon {
         // key: master:ip , value: vector<SlavesInfoControlledByMaster>
         unordered_map<string,vector<SlavesInfoControlledByMaster>> m_classification_slaves;
         vector<string> m_classification_masters;
+        //framework related
+        unordered_map<string,string> m_classification_masters_framework;
         //kill_master related
         OwnedSlavesMessage *m_owned_slaves_message;
         //kill_master end
@@ -139,6 +146,12 @@ namespace chameleon {
         const string select_master();
         void send_terminating_master(string master_ip);
         void recevied_slave_infos(const UPID& from, const string& message);
+
+        //framework related
+        void received_call(const UPID &from, const mesos::scheduler::Call &call);
+        void received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message);
+        void received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message);
+        void classify_masters_framework();
     };
 
 

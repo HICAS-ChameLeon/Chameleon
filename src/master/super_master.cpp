@@ -36,6 +36,11 @@ namespace chameleon {
         //kill_master end
         install("MAKUN2",&SuperMaster::recevied_slave_infos);
 
+        //franework related
+        install<mesos::scheduler::Call>(&SuperMaster::received_call);
+        install<mesos::internal::FrameworkRegisteredMessage>(&SuperMaster::received_registered);
+        install<mesos::internal::ResourceOffersMessage>(&SuperMaster::received_resource);
+
         // change from one level to two levels
         cluster_levels = 2;
         m_masters_size = 1;
@@ -273,6 +278,7 @@ namespace chameleon {
 //                LOG(INFO) << s.ip();
             }
         }
+        classify_masters_framework();
     }
 
     // launch the exectuables of maters administered by the current super_master
@@ -391,6 +397,39 @@ namespace chameleon {
 //        process::wait(self());
     }
 
+    //framework related
+    void SuperMaster::received_call(const UPID &from, const mesos::scheduler::Call &call) {
+        LOG(INFO) << "MAKUN Supermaster received call from " << from;
+        m_framework = from;
+        for(auto iter = m_classification_masters_framework.begin();
+            iter != m_classification_masters_framework.end(); iter++){
+            if (iter->first.find("spark") != string::npos) {
+                send(UPID("master@" + iter->second + ":6060"),call);
+                LOG(INFO) << "MAKUN send call to master: master@" << iter->second << ":6060";
+                break;
+            }
+        }
+//        send(UPID("master@172.20.110.141:6060"),call);
+    }
+
+    void SuperMaster::received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message) {
+        LOG(INFO) << "MAKUN Supermaster received frameworkRegistered from " << from;
+        send(m_framework,message);
+        LOG(INFO) << "MAKUN send frameworkRegistered to " << m_framework;
+    }
+
+    void SuperMaster::received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message) {
+        LOG(INFO) << "MAKUN Supermaster received resourceOffers from " << from;
+        send(m_framework,message);
+        LOG(INFO) << "MAKUN send resourceOffers to " << m_framework;
+    }
+
+    void SuperMaster::classify_masters_framework() {
+        if(m_classification_masters.size() > 1){
+            m_classification_masters_framework.insert(std::pair<string,string>("spark",m_classification_masters[0].data()));
+            m_classification_masters_framework.insert(std::pair<string,string>("flink",m_classification_masters[1].data()));
+        } else m_classification_masters_framework.insert(std::pair<string,string>("spark,flink",m_classification_masters[0].data()));
+    }
 
 }
 using namespace chameleon;
