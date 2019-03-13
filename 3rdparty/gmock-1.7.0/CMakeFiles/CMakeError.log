@@ -59,3 +59,62 @@ Makefile:126: recipe for target 'cmTC_4a21b/fast' failed
 make: *** [cmTC_4a21b/fast] Error 2
 
 
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_bd91d/fast"
+make[3]: Entering directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_bd91d.dir/build.make CMakeFiles/cmTC_bd91d.dir/build
+make[4]: Entering directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_bd91d.dir/CheckSymbolExists.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_bd91d.dir/CheckSymbolExists.c.o   -c /home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_bd91d
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bd91d.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_bd91d.dir/CheckSymbolExists.c.o  -o cmTC_bd91d -rdynamic 
+CMakeFiles/cmTC_bd91d.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x16): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_bd91d.dir/build.make:97: recipe for target 'cmTC_bd91d' failed
+make[4]: *** [cmTC_bd91d] Error 1
+make[4]: Leaving directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_bd91d/fast' failed
+make[3]: *** [cmTC_bd91d/fast] Error 2
+make[3]: Leaving directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+
+File /home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_fe797/fast"
+make[3]: Entering directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_fe797.dir/build.make CMakeFiles/cmTC_fe797.dir/build
+make[4]: Entering directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fe797.dir/CheckFunctionExists.c.o
+/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_fe797.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_fe797
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fe797.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_fe797.dir/CheckFunctionExists.c.o  -o cmTC_fe797 -rdynamic -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_fe797.dir/build.make:97: recipe for target 'cmTC_fe797' failed
+make[4]: *** [cmTC_fe797] Error 1
+make[4]: Leaving directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_fe797/fast' failed
+make[3]: *** [cmTC_fe797/fast] Error 2
+make[3]: Leaving directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+
+

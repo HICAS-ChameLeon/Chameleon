@@ -628,3 +628,35 @@ Linking C executable cmTC_13a17
 make[1]: Leaving directory '/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
 
 
+Determining if the include file pthread.h exists passed with the following output:
+Change Dir: /home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_7efab/fast"
+make[3]: Entering directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_7efab.dir/build.make CMakeFiles/cmTC_7efab.dir/build
+make[4]: Entering directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_7efab.dir/CheckIncludeFile.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_7efab.dir/CheckIncludeFile.c.o   -c /home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_7efab
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7efab.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_7efab.dir/CheckIncludeFile.c.o  -o cmTC_7efab -rdynamic 
+make[4]: Leaving directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+make[3]: Leaving directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+
+
+Determining if the function pthread_create exists in the pthread passed with the following output:
+Change Dir: /home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_dbbf5/fast"
+make[3]: Entering directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_dbbf5.dir/build.make CMakeFiles/cmTC_dbbf5.dir/build
+make[4]: Entering directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_dbbf5.dir/CheckFunctionExists.c.o
+/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_dbbf5.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_dbbf5
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dbbf5.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_dbbf5.dir/CheckFunctionExists.c.o  -o cmTC_dbbf5 -rdynamic -lpthread 
+make[4]: Leaving directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+make[3]: Leaving directory '/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/CMakeFiles/CMakeTmp'
+
+

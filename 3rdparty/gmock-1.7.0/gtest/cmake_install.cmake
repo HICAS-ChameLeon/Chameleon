@@ -1,4 +1,4 @@
-# Install script for directory: /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest
+# Install script for directory: /home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

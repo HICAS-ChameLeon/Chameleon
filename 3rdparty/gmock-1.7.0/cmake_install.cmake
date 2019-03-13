@@ -1,4 +1,4 @@
-# Install script for directory: /home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0
+# Install script for directory: /home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,7 +34,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/cmake_install.cmake")
+  include("/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/cmake_install.cmake")
 
 endif()
 
@@ -46,5 +46,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

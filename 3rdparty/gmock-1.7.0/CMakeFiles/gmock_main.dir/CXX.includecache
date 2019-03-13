@@ -6,45 +6,45 @@
 
 #IncludeRegexTransform: 
 
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/src/gtest-all.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/src/gtest-all.cc
 gtest/gtest.h
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/src/gtest/gtest.h
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/src/gtest/gtest.h
 src/gtest.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest.cc
 src/gtest-death-test.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-death-test.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-death-test.cc
 src/gtest-filepath.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-filepath.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-filepath.cc
 src/gtest-port.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-port.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-port.cc
 src/gtest-printers.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-printers.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-printers.cc
 src/gtest-test-part.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-test-part.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-test-part.cc
 src/gtest-typed-test.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-typed-test.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/gtest/src/src/gtest-typed-test.cc
 
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/src/gmock-all.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/src/gmock-all.cc
 gmock/gmock.h
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/src/gmock/gmock.h
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/src/gmock/gmock.h
 src/gmock-cardinalities.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/src/src/gmock-cardinalities.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/src/src/gmock-cardinalities.cc
 src/gmock-internal-utils.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/src/src/gmock-internal-utils.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/src/src/gmock-internal-utils.cc
 src/gmock-matchers.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/src/src/gmock-matchers.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/src/src/gmock-matchers.cc
 src/gmock-spec-builders.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/src/src/gmock-spec-builders.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/src/src/gmock-spec-builders.cc
 src/gmock.cc
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/src/src/gmock.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/src/src/gmock.cc
 
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/src/gmock_main.cc
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/src/gmock_main.cc
 iostream
 -
 gmock/gmock.h
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/src/gmock/gmock.h
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/src/gmock/gmock.h
 gtest/gtest.h
-/home/lemaker/open-source/Chameleon/3rdparty/gmock-1.7.0/src/gtest/gtest.h
+/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0/src/gtest/gtest.h
 tchar.h
 -
 
