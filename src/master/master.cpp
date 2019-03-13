@@ -663,7 +663,8 @@ namespace master {
 
         LOG(INFO) << "Processing ACKNOWLEDGE call " << uuid << " for task " << taskId.value()
                   << " of framework " << framework->info.name() << " on agent " << slaveId.value();
-        send(m_slavePID, message);
+        //LOG(INFO) << "Heldon m_slavePID : " << m_slavePID;
+        send("salve@172.20.110.59:6061", message);
     }
 
     /**

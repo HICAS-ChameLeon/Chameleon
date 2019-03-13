@@ -213,6 +213,8 @@ namespace chameleon {
 
         void start_mesos_executor(const Future<Nothing>& future, const Framework *framework);
 
+        void start_docker_container(const mesos::TaskInfo& taskInfo, const Framework *framework);
+
         void registerExecutor(const UPID &from,
                               const mesos::FrameworkID &frameworkId,
                               const mesos::ExecutorID &executorId);

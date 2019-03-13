@@ -102,24 +102,23 @@ namespace slave{
             const Option<string>& user,
             const mesos::SlaveID& slaveId,
             const map<string, string>& environment){
-
-        Try<Nothing> touch = os::touch(path::join(directory, "stdout"));
-
-        if (touch.isError()) {
-            return Error("Failed to touch 'stdout': " + touch.error());
-        }
-
-        touch = os::touch(path::join(directory, "stderr"));
+        LOG(INFO)<<"Heldon Enter function DockerContainerizerProcess::Container::create";
+//        Try<Nothing> touch = os::touch(path::join(directory, "stdout"));
+//        if (touch.isError()) {
+//            LOG(INFO)<<"Heldon touch stout error";
+//            return Error("Failed to touch 'stdout': " + touch.error());
+//        }
 
         string containerWorkdir = directory;
 
-        if (touch.isError()) {
-            return Error("Failed to touch 'stderr': " + touch.error());
-        }
+//        if (touch.isError()) {
+//            LOG(INFO)<<"Heldon touch stderr error";
+//            return Error("Failed to touch 'stderr': " + touch.error());
+//        }
 
         Option<mesos::ContainerInfo> containerInfo = None();
         Option<mesos::CommandInfo> commandInfo = None();
-
+        LOG(INFO) << "Heldon ready to return Container";
         return new Container(
                 container_id,
                 taskInfo,
@@ -176,6 +175,7 @@ namespace slave{
             const mesos::SlaveID& slaveId,
             const map<string, string>& environment){
 
+        LOG(INFO)<<"Heldon Enter function DockerContainerizerProcess launch";
         Option<mesos::ContainerInfo> containerInfo;
 
         //assign the containerInfo
@@ -253,7 +253,7 @@ namespace slave{
 
         return container->m_launch = pull(container_id)
                 .then(defer(self(), [=](){
-            return launchExecutorContainer(container_id, directory);
+            return launchExecutorContainer(container_id, container_name);
         }))
         .then(defer(self(), [=](const Docker::Container& docker_container){
             return Future<Docker::Container>(docker_container);
@@ -278,7 +278,7 @@ namespace slave{
         }
 
         Container* container = m_containers.at(container_id);
-
+        LOG(INFO)<<"Heldon container name  = "<<container_name;
         Try<Docker::RunOptions> runOptions = Docker::RunOptions::create(
                 container->m_container,
                 container->m_command,

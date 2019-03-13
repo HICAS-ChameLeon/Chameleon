@@ -143,6 +143,7 @@ namespace slave{
                       m_directory(directory),
                       m_user(user),
                       m_slaveId(slaveId){
+                LOG(INFO)<<"Heldon Enter construct function Container";
 
                 m_resources = m_executor.resources();
 

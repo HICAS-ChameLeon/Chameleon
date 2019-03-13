@@ -163,7 +163,7 @@ namespace chameleon {
      * Author   : weiguow
      * Date     : 2019-1-2
      * */
-    void Slave::runTask(
+    void Slave:: runTask(
             const process::UPID &from,
             const mesos::FrameworkInfo &frameworkInfo,
             const mesos::FrameworkID &frameworkId,
@@ -179,35 +179,41 @@ namespace chameleon {
 
         frameworks[frameworkId.value()] = framework;
 
-        m_tasks.push(taskInfo);
         m_executorInfo = executorInfo;
 
-        LOG(INFO) << "Start executor on framework " << framework->id().value();
+        if(taskInfo.container().type() == mesos::ContainerInfo::MESOS){
+            m_tasks.push(taskInfo);
+            LOG(INFO) << "Start executor on framework " << framework->id().value();
 
-        mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
-        mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
-        mesos::fetcher::URI *uri = new mesos::fetcher::URI();
-        //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
+            mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
+            mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
+            mesos::fetcher::URI *uri = new mesos::fetcher::URI();
+            //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
 
-        uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
-        item->set_allocated_uri(uri);
-        item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
-        const string sanbox_path = os::getcwd();
-        fetcher_info->set_sandbox_directory(sanbox_path);
+            uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
+            item->set_allocated_uri(uri);
+            item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
+            const string sanbox_path = os::getcwd();
+            fetcher_info->set_sandbox_directory(sanbox_path);
 //    process::Future<Nothing> result = manager.download("my_spark",*fetcher_info);
-        process::Future<Nothing> download_result;
-        Promise<Nothing> promise;
-        if(! os::exists(path::join(sanbox_path,"/spark-2.3.0-bin-hadoop2.7"))){
-            LOG(INFO)<<"spark  didn't exist, download it frist";
-            download_result= m_software_resource_manager->download("my_spark", *fetcher_info);
-        }else{
-            LOG(INFO)<<"spark  has existed";
+            process::Future<Nothing> download_result;
+            Promise<Nothing> promise;
+            if(! os::exists(path::join(sanbox_path,"/spark-2.3.0-bin-hadoop2.7"))){
+                LOG(INFO)<<"spark  didn't exist, download it frist";
+                download_result= m_software_resource_manager->download("my_spark", *fetcher_info);
+            }else{
+                LOG(INFO)<<"spark  has existed";
 
-            download_result=promise.future();
-            promise.set(Nothing());
+                download_result=promise.future();
+                promise.set(Nothing());
+            }
+            download_result.onAny(process::defer(self(),&Self::start_mesos_executor,lambda::_1, framework));
         }
-        download_result.onAny(process::defer(self(),&Self::start_mesos_executor,lambda::_1, framework));
-//        start_mesos_executor(framework);
+        else if(taskInfo.container().type() == mesos::ContainerInfo::DOCKER){
+            start_docker_container(taskInfo, framework);
+        }
+
+
     }
 
     void Slave::start_mesos_executor(const Future<Nothing>& future, const Framework *framework) {
@@ -243,23 +249,57 @@ namespace chameleon {
         if (child.isError()) {
             LOG(INFO) << child.error();
         }
+    }
 
-        //TODO:launchExecutor
+    /**
+    * Function name  : start_docker_container
+    * Author         : Heldon
+    * Date           : 2019-03-12
+    * Description    : start the task on docker
+    * Return         : void
+    */
+    void Slave::start_docker_container(const mesos::TaskInfo& taskInfo, const Framework *framework){
+
+
+        const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
+        const std::map<string, string> environment =
+                {
+                        {"MESOS_FRAMEWORK_ID", framework->id().value()},
+                        {"MESOS_EXECUTOR_ID",  m_executorInfo.executor_id().value()},
+                        {"MESOS_SLAVE_PID",    slave_upid},
+                        {"MESOS_SLAVE_ID",     m_slaveInfo.id().value()},
+                        {"MESOS_CHECKPOINT",   "0"}
+                };
+
+        //Compare resources and if executorInfo's resources are different from taskInfo's
+        //then add it to resources
+        mesos::Resources resources = m_executorInfo.resources();
+
+        if (taskInfo.resources().size()) {
+            resources += taskInfo.resources();
+        }
+
+        m_executorInfo.mutable_resources()->CopyFrom(resources);
+
         //launch the container
-//        mesos::ContainerID container_id;
-//        container_id.set_value(UUID::random().toString());
-//
-//        Future<bool> launch;
-//
-//        LOG(INFO)<<"Heldon enter function containerizer->launch";
-//        launch = m_containerizer->launch(
-//                container_id,
-//                taskInfo,
-//                m_executorInfo,
-//                "heldon",
-//                mesos_directory,
-//                m_slaveInfo.id(),
-//                environment);
+        mesos::ContainerID container_id;
+        container_id.set_value(UUID::random().toString());
+
+        const string container_directory = path::join(os::getcwd(), "/container/"+container_id.value());
+        cout<<container_directory<<endl;
+        Future<bool> launch;
+
+        LOG(INFO)<<"Heldon enter function containerizer->launch";
+        LOG(INFO)<<"Heldon m_executorInfo.resources().size() : "<<m_executorInfo.resources().size();
+
+        launch = m_containerizer->launch(
+                container_id,
+                taskInfo,
+                m_executorInfo,
+                container_directory,
+                "heldon",
+                m_slaveInfo.id(),
+                environment);
     }
 
     void Slave::registerExecutor(const UPID &from,
@@ -647,12 +687,6 @@ namespace chameleon {
 using namespace chameleon;
 
 int main(int argc, char *argv[]) {
-    Try<chameleon::slave::DockerContainerizer*> docker_containerizer = chameleon::slave::DockerContainerizer::create();
-    if (docker_containerizer.isError()) {
-        EXIT(EXIT_FAILURE)
-                << "Failed to create a containerizer: " << docker_containerizer.error();
-    }
-
     chameleon::set_storage_paths_of_glog("slave");// provides the program name
     chameleon::set_flags_of_glog();
 
@@ -678,6 +712,12 @@ int main(int argc, char *argv[]) {
 
         chameleon::Slave slave;
 
+        Try<chameleon::slave::DockerContainerizer*> docker_containerizer = chameleon::slave::DockerContainerizer::create();
+        if (docker_containerizer.isError()) {
+            EXIT(EXIT_FAILURE)
+                    << "Failed to create a containerizer: " << docker_containerizer.error();
+        }
+
         slave.setM_containerizer(docker_containerizer.get());
 
         LOG(INFO)<<"Heldon port : "<<stringify(FLAGS_port);
@@ -691,12 +731,13 @@ int main(int argc, char *argv[]) {
         const PID<chameleon::Slave> slave_pid = slave.self();
         LOG(INFO) << slave_pid;
         process::wait(slave.self());
+
+        delete docker_containerizer.get();
+
     } else {
         LOG(INFO) << "To run this program , must set all parameters correctly "
                      "\n read the notice " << google::ProgramUsage();
     }
-
-    delete docker_containerizer.get();
 
     return 0;
 }
