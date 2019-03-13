@@ -42,8 +42,13 @@ $ make
 
 ### master
 ```shell
-$ ./build/src/master/master 
+$ ./build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src/webui
 ```
+
+### Required Flags
+| Flag | Explanation |example | 
+| ------ | ------ | ------ |
+| --webui | the absolute path of webui.  |  For example, --webui=/home/lemaker/open-source/Chameleon/src/webui |
 
 ### Optional Flags
 | Flag | Explanation |example | 

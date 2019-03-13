@@ -278,11 +278,17 @@ namespace master {
 
         const string get_cwd() const;
 
+        void set_webui_path(const string& path);
+
+        const string get_web_ui() const;
+
     private:
 
         string m_uuid;
         // the absolute path of the directory where the master executable exists.
         string m_master_cwd;
+
+        string m_webui_path;
 
         // master states.
         enum {
