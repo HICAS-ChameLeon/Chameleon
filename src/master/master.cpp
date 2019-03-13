@@ -10,6 +10,8 @@
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
 DEFINE_string(supermaster_path, "", "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
+DEFINE_string(webui_path, "", "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
+
 
 /*
  * Function name  : ValidateInt
@@ -50,8 +52,19 @@ static bool validate_super_master_path(const char *flagname, const string &value
 
 }
 
+static bool validate_webui_path(const char *flagname, const string &value) {
+
+    if (os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for webui_path, please make sure the webui_path actually exist!");
+    return false;
+
+}
+
 static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &validate_super_master_path);
+static const bool has_webui_path = gflags::RegisterFlagValidator(&FLAGS_webui_path, &validate_webui_path);
 
 namespace master {
 
@@ -237,8 +250,8 @@ namespace master {
                     return response;
                 });
 
-        provide("", path::join("/home/lemaker/open-source/Chameleon/src/webui", "static/HTML/Control.html"));
-        provide("static","/home/lemaker/open-source/Chameleon/src/webui/static" );
+        provide("", path::join(m_webui_path, "static/HTML/Control.html"));
+        provide("static",path::join(m_webui_path,"/static"));
 
 //     install("stop", &MyProcess::stop);
         install("stop", [=](const UPID &from, const string &body) {
@@ -257,6 +270,14 @@ namespace master {
     // get the absolute path of the directory where the master executable exists
     const string Master::get_cwd() const {
         return m_master_cwd;
+    }
+
+    void Master::set_webui_path(const string &path)  {
+        m_webui_path = path;
+    }
+
+    const string Master::get_web_ui() const {
+        return m_webui_path;
     }
 
     /**
@@ -971,7 +992,7 @@ int main(int argc, char **argv) {
 
     google::CommandLineFlagInfo info;
 
-    if (has_port_Int && has_super_master_path) {
+    if (has_port_Int && has_super_master_path && has_webui_path) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
         process::initialize("master");
@@ -981,6 +1002,8 @@ int main(int argc, char **argv) {
         }else{
             master.set_super_master_path(FLAGS_supermaster_path);
         }
+        // set the webui path for the master
+        master.set_webui_path(FLAGS_webui_path);
 
         PID<Master> cur_master = process::spawn(master);
 
