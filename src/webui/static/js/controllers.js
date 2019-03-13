@@ -833,23 +833,49 @@
 
 
     //开启supermaster对应的Controller
-    chameleon_app.controller('StartSupermasterCtrl',function ($scope,$modal) {
+    chameleon_app.controller('StartSupermasterCtrl', function ($scope, $rootScope, $modal) {
+        //$scope.startSupermaster = response.data.start;
+        console.log('8' + $rootScope.startSupermaster);
+
         var alert_message = "确认开启Supermaster?";
-        $scope.openModal = function() {
-            var modalInstance = $modal.open({
-                templateUrl : 'ControlSupermaster.html',
-                controller : 'StartSupermasterInstanceCtrl',   //shutdown modal对应的Controller
-                resolve : {
-                    date : function() {                //date作为shutdown modal的controller传入的参数
-                        return alert_message;          //用于传递数据
+        $scope.openModal = function () {
+            if ($rootScope.startSupermaster == undefined) {
+                //$scope.startSupermaster = $rootScope.startSupermaster;
+                console.log('9' + $rootScope.startSupermaster);
+                var modalInstance = $modal.open({
+                    templateUrl: 'ControlSupermaster.html',
+                    controller: 'StartSupermasterInstanceCtrl',   //shutdown modal对应的Controller
+                    resolve: {
+                        date: function () {                //date作为shutdown modal的controller传入的参数
+                            return alert_message;          //用于传递数据
+                        }
                     }
-                }
-            })
-        }
+                })
+            }
 
-    });
+                $scope.openModal = function () {
+                    alert("supermaster已经开启");
 
-    chameleon_app.controller('StartSupermasterInstanceCtrl', function($scope, $modalInstance,$http, date) {
+            }
+
+                // $scope.openModal = function() {
+                //     $scope.startSupermaster = $rootScope.startSupermaster;
+                //     console.log($rootScope.startSupermaster);
+                //     var modalInstance = $modal.open({
+                //         templateUrl : 'ControlSupermaster.html',
+                //         controller : 'StartSupermasterInstanceCtrl',   //shutdown modal对应的Controller
+                //         resolve : {
+                //             date : function() {                //date作为shutdown modal的controller传入的参数
+                //                 return alert_message;          //用于传递数据
+                //             }
+                //         }
+                //     })
+                // }
+
+            }
+        });
+
+    chameleon_app.controller('StartSupermasterInstanceCtrl', function($scope,$rootScope,$routeParams, $modalInstance,$http, date) {
         $scope.date= date;
 
         //在这里处理要进行的操作
@@ -858,7 +884,8 @@
                 method: 'GET',
                 url: leadingChameleonMasterURL('/master/start_supermaster')
             }).then(function successCallback(response) {
-                console.log(response);
+                $rootScope.startSupermaster = response.data.start;
+                console.log('10'+$rootScope.startSupermaster);
                 $modalInstance.dismiss('cancel');
             }, function errorCallback(response) {
                 // 请求失败执行代码
