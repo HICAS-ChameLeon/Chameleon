@@ -133,6 +133,10 @@ namespace chameleon {
 
     }
 
+    const string SuperMaster::get_cwd() {
+        return m_super_master_cwd;
+    }
+
     void SuperMaster::registered_master(const UPID &from, const MasterRegisteredMessage &master_registered_message) {
         LOG(INFO) << "accept a mater_registered_message from " << from;
         Future<bool> distinctive = true;
@@ -271,6 +275,7 @@ namespace chameleon {
         }
     }
 
+    // launch the exectuables of maters administered by the current super_master
     bool SuperMaster::launch_masters() {
 //        Try<Subprocess> s = subprocess(
 //                "/home/lemaker/open-source/Chameleon/build/src/master/master --port=6060",
@@ -279,7 +284,10 @@ namespace chameleon {
 //                Subprocess::FD(STDERR_FILENO));
 
         for(const string& master_ip:m_classification_masters){
-            string ssh_command = "ssh "+master_ip+" "+m_master_path+" --port=6060";
+            // since the both the master executable and super_master executable are in the same directory,
+            // so we get the current directory path of super_master exectuable to stands for the path of cd command"
+            string launch_master = " cd "+get_cwd()+" && " + m_master_path+" --port=6060";
+            string ssh_command = "ssh "+master_ip+launch_master;
             Try<Subprocess> s = subprocess(
                     ssh_command,
                     Subprocess::FD(STDIN_FILENO),

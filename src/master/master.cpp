@@ -9,7 +9,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "./super_master", "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
+DEFINE_string(supermaster_path, "", "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 
 /*
  * Function name  : ValidateInt
@@ -40,14 +40,25 @@ static bool ValidateStr(const char *flagname, const string &value) {
     return false;
 }
 
+static bool validate_super_master_path(const char *flagname, const string &value) {
+
+    if (value.empty() || os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for super_master_path, please make sure the super_master_path actually exist!");
+    return false;
+
+}
+
 static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
-static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &ValidateStr);
+static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &validate_super_master_path);
 
 namespace master {
 
     void Master::initialize() {
 
         m_uuid = UUID::random().toString();
+
         // Verify that the version of the library that we linked against is
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -213,9 +224,10 @@ namespace master {
                       * Funtion name    :  Try
                       * @param          :
                       * */
-                      m_super_master_path.append(" --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
+                      // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
+                     const string launcher =  m_super_master_path +" --master_path="+get_cwd()+"/master";
                     Try<Subprocess> super_master = subprocess(
-                           m_super_master_path,
+                            launcher,
                             Subprocess::FD(STDIN_FILENO),
                             Subprocess::FD(STDOUT_FILENO),
                             Subprocess::FD(STDERR_FILENO)
@@ -240,6 +252,11 @@ namespace master {
 
         m_state = RUNNING;
 
+    }
+
+    // get the absolute path of the directory where the master executable exists
+    const string Master::get_cwd() const {
+        return m_master_cwd;
     }
 
     /**
@@ -832,6 +849,7 @@ namespace master {
 
     void Master::set_super_master_path(const string& path) {
         m_super_master_path = path;
+        LOG(INFO)<<"The path of super_master executable is "<<m_super_master_path;
     }
 
     void Master::super_master_control(const UPID &super_master,
@@ -956,9 +974,15 @@ int main(int argc, char **argv) {
 
         process::initialize("master");
         Master master;
+        if(FLAGS_supermaster_path.empty()){
+            master.set_super_master_path(master.get_cwd()+"/super_master");
+        }else{
+            master.set_super_master_path(FLAGS_supermaster_path);
+        }
 
-        master.set_super_master_path(FLAGS_supermaster_path);
         PID<Master> cur_master = process::spawn(master);
+
+
         LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 
         const PID<Master> master_pid = master.self();

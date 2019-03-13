@@ -140,6 +140,8 @@ namespace master {
             m_masterInfo.mutable_address()->set_ip(stringify(self().address.ip));
             m_masterInfo.mutable_address()->set_port(self().address.port);
             m_masterInfo.mutable_address()->set_hostname(hostname);
+
+            m_master_cwd = os::getcwd();
         }
 
         virtual ~Master() {}
@@ -274,10 +276,13 @@ namespace master {
         // super_master related
         void set_super_master_path(const string& path);
 
+        const string get_cwd() const;
 
     private:
 
         string m_uuid;
+        // the absolute path of the directory where the master executable exists.
+        string m_master_cwd;
 
         // master states.
         enum {
