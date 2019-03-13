@@ -27,6 +27,7 @@
 #include <stout/uuid.hpp>
 #include <stout/check.hpp>
 #include <stout/boundedhashmap.hpp>
+#include <stout/path.hpp>
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -71,7 +72,7 @@ using process::UPID;
 using process::PID;
 using process::Future;
 using process::Promise;
-using namespace process::http;
+//using namespace process::http;
 
 using process::http::Request;
 using process::http::OK;

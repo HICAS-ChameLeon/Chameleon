@@ -90,7 +90,7 @@ namespace chameleon {
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-        LOG(INFO) << "slave executable path" << setting::SLAVE_EXE_DIR;
+//        LOG(INFO) << "slave executable path" << setting::SLAVE_EXE_DIR;
 
         msp_masterUPID = make_shared<UPID>(UPID(m_master));
 
