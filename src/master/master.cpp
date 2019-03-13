@@ -54,7 +54,7 @@ static bool validate_super_master_path(const char *flagname, const string &value
 
 static bool validate_webui_path(const char *flagname, const string &value) {
 
-    if (os::exists(value)) {
+    if (value.empty() || os::exists(value)) {
         return true;
     }
     printf("Invalid value for webui_path, please make sure the webui_path actually exist!");
@@ -1003,7 +1003,12 @@ int main(int argc, char **argv) {
             master.set_super_master_path(FLAGS_supermaster_path);
         }
         // set the webui path for the master
-        master.set_webui_path(FLAGS_webui_path);
+        if(FLAGS_webui_path.empty()){
+            master.set_webui_path("/home/lemaker/open-source/Chameleon/src/webui");
+        }else{
+            master.set_webui_path(FLAGS_webui_path);
+        }
+
 
         PID<Master> cur_master = process::spawn(master);
 
