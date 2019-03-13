@@ -148,6 +148,7 @@ namespace chameleon {
         void received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message);
         void received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message);
         void classify_masters_framework();
+        void launch_master_results(const UPID &from, const string &message);
     };
 
 

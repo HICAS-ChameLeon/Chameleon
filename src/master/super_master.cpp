@@ -40,6 +40,7 @@ namespace chameleon {
         install<mesos::scheduler::Call>(&SuperMaster::received_call);
         install<mesos::internal::FrameworkRegisteredMessage>(&SuperMaster::received_registered);
         install<mesos::internal::ResourceOffersMessage>(&SuperMaster::received_resource);
+        install("error",)
 
         // change from one level to two levels
         cluster_levels = 2;
@@ -285,17 +286,20 @@ namespace chameleon {
 //                Subprocess::FD(STDERR_FILENO));
 
         for(const string& master_ip:m_classification_masters){
-            string ssh_command = "ssh "+master_ip+" "+m_master_path+" --port=6060";
-            Try<Subprocess> s = subprocess(
-                    ssh_command,
-                    Subprocess::FD(STDIN_FILENO),
-                    Subprocess::FD(STDOUT_FILENO),
-                    Subprocess::FD(STDERR_FILENO));
+            LOG(INFO) << master_ip << " " << m_master_path;
+            send(UPID("slave@"+master_ip+":6060"),"launch master");
+//            string ssh_command = "ssh "+master_ip+" "+m_master_path+" --port=6060";
+//            Try<Subprocess> s = subprocess(
+//                    ssh_command,
+//                    Subprocess::FD(STDIN_FILENO),
+//                    Subprocess::FD(STDOUT_FILENO),
+//                    Subprocess::FD(STDERR_FILENO));
+//
+//            if (s.isError()) {
+//                LOG(ERROR) << " cannot launch master "<<master_ip;
+//                return false;
+//            }
 
-            if (s.isError()) {
-                LOG(ERROR) << " cannot launch master "<<master_ip;
-                return false;
-            }
         }
         LOG(INFO)<<" launched "<<m_classification_masters.size() << " masters successfully.";
         return true;

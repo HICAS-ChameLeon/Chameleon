@@ -209,6 +209,8 @@ namespace chameleon {
 
         void reregister_to_master(const UPID &from, const ReregisterMasterMessage &message);
 
+        void launch_master(const UPID &super_master, const string &message);
+
         //super_master related
 //        void received_new_master(const UPID& from, const MasterRegisteredMessage& message);
 
