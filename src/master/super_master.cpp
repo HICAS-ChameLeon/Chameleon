@@ -274,6 +274,7 @@ namespace chameleon {
 //                LOG(INFO) << s.ip();
             }
         }
+        classify_masters_framework();
     }
 
     bool SuperMaster::launch_masters() {
@@ -392,8 +393,15 @@ namespace chameleon {
     void SuperMaster::received_call(const UPID &from, const mesos::scheduler::Call &call) {
         LOG(INFO) << "MAKUN Supermaster received call from " << from;
         m_framework = from;
-        send(UPID("master@172.20.110.141:6060"),call);
-        LOG(INFO) << "MAKUN send call to master: master@172.20.110.141:6060";
+        for(auto iter = m_classification_masters_framework.begin();
+            iter != m_classification_masters_framework.end(); iter++){
+            if (iter->first.find("spark") != string::npos) {
+                send(UPID("master@" + iter->second + ":6060"),call);
+                LOG(INFO) << "MAKUN send call to master: master@" << iter->second << ":6060";
+                break;
+            }
+        }
+//        send(UPID("master@172.20.110.141:6060"),call);
     }
 
     void SuperMaster::received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message) {
@@ -406,6 +414,13 @@ namespace chameleon {
         LOG(INFO) << "MAKUN Supermaster received resourceOffers from " << from;
         send(m_framework,message);
         LOG(INFO) << "MAKUN send resourceOffers to " << m_framework;
+    }
+
+    void SuperMaster::classify_masters_framework() {
+        if(m_classification_masters.size() > 1){
+            m_classification_masters_framework.insert(std::pair<string,string>("spark",m_classification_masters[0].data()));
+            m_classification_masters_framework.insert(std::pair<string,string>("flink",m_classification_masters[1].data()));
+        } else m_classification_masters_framework.insert(std::pair<string,string>("spark,flink",m_classification_masters[0].data()));
     }
 
 }

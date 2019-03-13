@@ -124,6 +124,8 @@ namespace chameleon {
         // key: master:ip , value: vector<SlavesInfoControlledByMaster>
         unordered_map<string,vector<SlavesInfoControlledByMaster>> m_classification_slaves;
         vector<string> m_classification_masters;
+        //framework related
+        unordered_map<string,string> m_classification_masters_framework;
         //kill_master related
         OwnedSlavesMessage *m_owned_slaves_message;
         //kill_master end
@@ -145,6 +147,7 @@ namespace chameleon {
         void received_call(const UPID &from, const mesos::scheduler::Call &call);
         void received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message);
         void received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message);
+        void classify_masters_framework();
     };
 
 
