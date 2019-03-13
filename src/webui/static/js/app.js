@@ -9,41 +9,40 @@
         .config(function ($routeProvider) {
             $routeProvider.when('/hardware', {
                 //templateURL：插入ng-view的HTML模板文件
-                templateUrl: '/Chameleon/src/webui/HTML/hardware.html',
+                templateUrl: 'hardware.html',
                 controller: 'UpdateCtrl'
 
             })
                 .when('/runtime', {
-                    templateUrl: '/Chameleon/src/webui/HTML/runtime.html',
+                    templateUrl: 'runtime.html',
                     controller: 'UpdateCtrl'
                 })
                 // network_topology.html
                 .when('/topology', {
-                    templateUrl: '/Chameleon/src/webui/HTML/network_topology.html',
+                    templateUrl: 'network_topology.html',
                     controller: 'TopologyCtrl'
                 })
 
                 // supernetwork_topology.html
                 .when('/topology/super_master', {
-                    templateUrl: '/Chameleon/src/webui/HTML/supernetwork_topology.html',
+                    templateUrl: 'supernetwork_topology.html',
                     controller: 'SuperTopologyCtrl'
                 })
                 // frameworks.html
                 .when('/frameworks',{
-                    templateUrl:
- '/Chameleon/src/webui/HTML/frameworks.html',
+                    templateUrl: 'frameworks.html',
                     controller:'FrameworkCtrl'
                 })
 
                 // framework.html
                 .when('/frameworks/:id.value',{
             templateUrl:
-                '/Chameleon/src/webui/HTML/framework.html',
+                'framework.html',
                     controller:'FrameworkCtrl'
             })
                 // slave.html
                 .when('/slaves/:slave_uuid/ip/:slave_id/cpu_usage/:cpu_used/mem_usage/:mem_used/disk_usage/:disk_used', {
-                    templateUrl: '/Chameleon/src/webui/HTML/slave.html',
+                    templateUrl: 'slave.html',
                     controller: 'SlaveCtrl'
                 })
         })

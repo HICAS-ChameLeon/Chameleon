@@ -24,7 +24,7 @@
     "network",
     "browser"
   ],
-  "main": "./dist/vis.js",
+  "main": "dist/vis.js",
   "scripts": {
     "test": "mocha --compilers js:babel-core/register",
     "build": "gulp",

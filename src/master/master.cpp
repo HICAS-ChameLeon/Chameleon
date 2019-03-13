@@ -224,8 +224,9 @@ namespace master {
                     response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return response;
                 });
-        provide("", path::join("/home/lemaker/open-source/Chameleon/src/webui", "HTML/Control.html"));
-//        provide("static", path::join(flags.webui_dir, "master/static"));
+
+        provide("", path::join("/home/lemaker/open-source/Chameleon/src/webui", "static/HTML/Control.html"));
+        provide("static","/home/lemaker/open-source/Chameleon/src/webui/static" );
 
 //     install("stop", &MyProcess::stop);
         install("stop", [=](const UPID &from, const string &body) {
