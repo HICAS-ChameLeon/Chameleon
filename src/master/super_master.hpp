@@ -79,10 +79,12 @@ namespace chameleon {
     class SuperMaster :public ProtobufProcess<SuperMaster> {
     public:
         explicit SuperMaster(const string& initiator) : ProcessBase("super_master") ,m_initiator(initiator){
-
+                m_super_master_cwd = os::getcwd();
         }
 
         virtual void initialize() override;
+
+        const string get_cwd();
 
         void set_master_path(const string& path);
         void set_first_to_second_master(const string& master);
@@ -104,6 +106,8 @@ namespace chameleon {
     private:
 
         string m_uuid;
+        // the absolute path for the super_master executable
+        string m_super_master_cwd;
         string m_master_path;
         UPID m_framework;
         // represent the masters administered by the current super_master.

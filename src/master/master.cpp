@@ -9,7 +9,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "./super_master", "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
+DEFINE_string(supermaster_path, "", "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 
 /*
  * Function name  : ValidateInt
@@ -40,14 +40,25 @@ static bool ValidateStr(const char *flagname, const string &value) {
     return false;
 }
 
+static bool validate_super_master_path(const char *flagname, const string &value) {
+
+    if (value.empty() || os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for super_master_path, please make sure the super_master_path actually exist!");
+    return false;
+
+}
+
 static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
-static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &ValidateStr);
+static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &validate_super_master_path);
 
 namespace master {
 
     void Master::initialize() {
 
         m_uuid = UUID::random().toString();
+
         // Verify that the version of the library that we linked against is
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -140,7 +151,7 @@ namespace master {
 
         route(
                 "/frameworks",
-                "wangweiguo new version of frameworks",
+                "get all the information of frameworks related with the current master",
                 [this](Request request) {
                     JSON::Object a_framework;
                     JSON::Object a_content = JSON::Object();
@@ -213,9 +224,10 @@ namespace master {
                       * Funtion name    :  Try
                       * @param          :
                       * */
-                      m_super_master_path.append(" --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
+                      // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
+                     const string launcher =  m_super_master_path +" --master_path="+get_cwd()+"/master";
                     Try<Subprocess> super_master = subprocess(
-                           m_super_master_path,
+                            launcher,
                             Subprocess::FD(STDIN_FILENO),
                             Subprocess::FD(STDOUT_FILENO),
                             Subprocess::FD(STDERR_FILENO)
@@ -225,6 +237,8 @@ namespace master {
                     return response;
                 });
 
+        provide("", path::join("/home/lemaker/open-source/Chameleon/src/webui", "static/HTML/Control.html"));
+        provide("static","/home/lemaker/open-source/Chameleon/src/webui/static" );
 
 //     install("stop", &MyProcess::stop);
         install("stop", [=](const UPID &from, const string &body) {
@@ -238,6 +252,11 @@ namespace master {
 
         m_state = RUNNING;
 
+    }
+
+    // get the absolute path of the directory where the master executable exists
+    const string Master::get_cwd() const {
+        return m_master_cwd;
     }
 
     /**
@@ -461,6 +480,7 @@ namespace master {
 
         //this host_name is slave hostname
         offer->set_hostname(self().address.hostname().get());
+//        offer->set_hostname("ccrfox246");
 
         message.add_offers()->MergeFrom(*offer);
         message.add_pids("1");
@@ -520,9 +540,9 @@ namespace master {
                         string cur_slavePID = "slave@";
                         if (task.slave_id().value() == "11111111") {
 //                            cur_slavePID.append("172.20.110.228:6061");
-                              cur_slavePID.append(stringify(self().address.ip)+":6061");
+                              cur_slavePID.append(*m_alive_slaves.begin()+":6061");
                         } else {
-                            cur_slavePID.append(stringify(self().address.ip)+":6061");
+                            cur_slavePID.append(*m_alive_slaves.begin()+":6061");
                         }
                         mesos::TaskInfo task_(task);
 
@@ -663,7 +683,12 @@ namespace master {
 
         LOG(INFO) << "Processing ACKNOWLEDGE call " << uuid << " for task " << taskId.value()
                   << " of framework " << framework->info.name() << " on agent " << slaveId.value();
-        send(m_slavePID, message);
+//        send(m_slavePID, message);
+
+        string cur_slavePID  = "slave@"+ *m_alive_slaves.begin()+":6061";
+        UPID cur_slave(cur_slavePID);
+        send(cur_slave, message);
+
     }
 
     /**
@@ -712,8 +737,9 @@ namespace master {
         message.mutable_framework_id()->MergeFrom(framework->id());
 
 //        string slave_pid = "slave@172.20.110.228:6061";
-        const string slave_pid = stringify(self().address.ip).append(":6061");
-        send(slave_pid, message);
+        string cur_slavePID  = "slave@"+ *m_alive_slaves.begin()+":6061";
+        UPID cur_slave(cur_slavePID);
+        send(cur_slave, message);
 
 //        frameworks.completed.set(framework->id().value(), framework);
     }
@@ -825,6 +851,7 @@ namespace master {
 
     void Master::set_super_master_path(const string& path) {
         m_super_master_path = path;
+        LOG(INFO)<<"The path of super_master executable is "<<m_super_master_path;
     }
 
     void Master::super_master_control(const UPID &super_master,
@@ -949,9 +976,15 @@ int main(int argc, char **argv) {
 
         process::initialize("master");
         Master master;
+        if(FLAGS_supermaster_path.empty()){
+            master.set_super_master_path(master.get_cwd()+"/super_master");
+        }else{
+            master.set_super_master_path(FLAGS_supermaster_path);
+        }
 
-        master.set_super_master_path(FLAGS_supermaster_path);
         PID<Master> cur_master = process::spawn(master);
+
+
         LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 
         const PID<Master> master_pid = master.self();
