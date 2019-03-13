@@ -180,8 +180,6 @@ namespace chameleon {
             void shutdown_executor(const UPID &from,const mesos::FrameworkID &frameworkId,
                     const mesos::ExecutorID &executorId);
 
-
-
             void setM_master(const string &m_master) {Slave::m_master = m_master;}
 
             void setM_interval(const Duration &m_interval) {Slave::m_interval = m_interval;}

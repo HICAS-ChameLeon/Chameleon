@@ -175,8 +175,6 @@ namespace chameleon {
 
             mesos::OfferID new_offer_id();
 
-            string new_slave_id(const string uid);
-
             Slave *get_slave(const string uid);
 
             mesos::Offer* get_offer(const mesos::OfferID &offerid);

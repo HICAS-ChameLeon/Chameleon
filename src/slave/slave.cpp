@@ -56,6 +56,7 @@ namespace chameleon {
 
             msp_masterUPID = make_shared<UPID>(UPID(m_master));
 
+            m_uuid = UUID::random().toString();
             m_slaveInfo.set_hostname(self().address.hostname().get());
             m_slaveInfo.set_port(self().address.port);
             m_slaveInfo.mutable_id()->set_value(m_uuid);
@@ -102,8 +103,6 @@ namespace chameleon {
 
 
             HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
-
-            m_uuid = UUID::random().toString();
             hr_message->set_slave_uuid(m_uuid);
             hr_message->set_slave_hostname(self().address.hostname().get());
             hr_message->set_slave_id(stringify(self().address.ip));
@@ -361,6 +360,8 @@ namespace chameleon {
 
         void Slave::status_update(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
 
+            LOG(INFO) << "slave status update pid get from " << pid.get();
+
             LOG(INFO) << "Handling status update " << update.status().state()
                       << " of framework " << update.framework_id().value();
 
@@ -372,7 +373,7 @@ namespace chameleon {
             LOG(INFO) << "Received status update " << update.status().state()
                       << " of framework " << update.framework_id().value();
 
-            process::dispatch(self(), &Slave::forward_status_update_to_master, update);
+            process::dispatch(self(), &Slave::send_status_update_to_executor, update, pid);
         }
 
         void Slave::forward_status_update_to_master(mesos::internal::StatusUpdate update) {
@@ -388,8 +389,6 @@ namespace chameleon {
             message.set_pid(self()); // The ACK will be first received by the slave.
 
             send(m_master, message);
-
-            process::dispatch(self(), &Slave::send_status_update_to_executor, update, executor->pid);
         }
 
         void Slave::send_status_update_to_executor(
@@ -410,6 +409,8 @@ namespace chameleon {
             } else {
                 LOG(INFO) << "Ignoring update status ";
             }
+
+            process::dispatch(self(), &Slave::forward_status_update_to_master, update);
         }
 
         void Slave::status_update_acknowledgement(
@@ -449,6 +450,8 @@ namespace chameleon {
             mesos::ContainerID containerId;
             containerId.set_value(UUID::random().toString());
 
+            LOG(INFO) << "缺少slave info " << slave->self();
+
             Executor* executor = new Executor(
                     slave,
                     id(),
@@ -471,6 +474,9 @@ namespace chameleon {
             Framework* framework = get_framework(frameworkId);
             Executor* executor = framework->get_executor(executorId);
 
+            LOG(INFO) << "m_slaveInfo.id()" << m_slaveInfo.id().value();
+            LOG(INFO) << "executor-enviorment self " << self();
+
             m_enviornment = executor_environment(
                     executor->info,
                     m_slaveInfo.id(),
@@ -492,6 +498,8 @@ namespace chameleon {
             map<string, string> environment;
 
             Option<string> libprocessIP = os::getenv("LIBPROCESS_IP");
+
+            LOG(INFO) << "slaveId.value && slavepid" << slaveId.value() << " : " << stringify(slavepid.address);
 
             environment["LIBPROCESS_PORT"] = "0";
             environment["MESOS_FRAMEWORK_ID"] = executorInfo.framework_id().value();

@@ -46,9 +46,9 @@ namespace chameleon {
             install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
 
             install<HardwareResourcesMessage>(&Master::update_hardware_resources);
-            //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
 
             install<RuntimeResourcesMessage>(&Master::received_heartbeat);
+
             install<AcceptRegisteredMessage>(&Master::received_registered_message_from_super_master);
 
             install<mesos::internal::StatusUpdateMessage>(
@@ -63,12 +63,13 @@ namespace chameleon {
                     &mesos::internal::StatusUpdateAcknowledgementMessage::task_id,
                     &mesos::internal::StatusUpdateAcknowledgementMessage::uuid);
 
+            install<mesos::scheduler::Call>(&Master::receive);
+
             install<SuperMasterControlMessage>(&Master::super_master_control);
+
             install<TerminatingMasterMessage>(&Master::received_terminating_master_message);
 
 //        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
-
-            install<mesos::scheduler::Call>(&Master::receive);
 
             //change two levels to one related
             install("MAKUN", &Master::get_select_master);
@@ -331,56 +332,58 @@ namespace chameleon {
             Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
 
             mesos::internal::ResourceOffersMessage message;
-            mesos::Offer *offer = new mesos::Offer();
 
-            Slave *slave = find_slave_to_run();
+            foreachvalue(Slave* slave, slaves.registered) {
 
-            // cpus
-            mesos::Resource *cpu_resource = new mesos::Resource();
-            cpu_resource->set_name("cpus");
-            cpu_resource->set_type(mesos::Value_Type_SCALAR);
-            mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
+                mesos::Offer *offer = new mesos::Offer();
 
-            LOG(INFO) << "cpu cores is " << slave->m_hardwareinfo.cpu_collection().cpu_quantity();
-            cpu_scalar->set_value(slave->m_hardwareinfo.cpu_collection().cpu_quantity());
-            cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
-            offer->add_resources()->MergeFrom(*cpu_resource);
+//            Slave *slave = find_slave_to_run();
+                int memory = slave->m_runtimeinfo.mem_usage().mem_available() / 1024;
+                LOG(INFO) << "Slave is " << slave->m_pid
+                          << " cpu cores is " <<  slave->m_hardwareinfo.cpu_collection().cpu_quantity()
+                          << " ; " << " memory avalable is " << memory << " MB";
 
-            // memory
-            mesos::Resource *mem_resource = new mesos::Resource();
-            mem_resource->set_name("mem");
-            mem_resource->set_type(mesos::Value_Type_SCALAR);
-            mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
-            //slave可用内存
+                // cpus
+                mesos::Resource *cpu_resource = new mesos::Resource();
+                cpu_resource->set_name("cpus");
+                cpu_resource->set_type(mesos::Value_Type_SCALAR);
+                mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
+                cpu_scalar->set_value(slave->m_hardwareinfo.cpu_collection().cpu_quantity());
+                cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
+                offer->add_resources()->MergeFrom(*cpu_resource);
 
-            int memory = slave->m_runtimeinfo.mem_usage().mem_available() / 1024;
+                // memory
+                mesos::Resource *mem_resource = new mesos::Resource();
+                mem_resource->set_name("mem");
+                mem_resource->set_type(mesos::Value_Type_SCALAR);
+                mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
+                mem_scalar->set_value(memory);
+                mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
+                offer->add_resources()->MergeFrom(*mem_resource);
 
-            LOG(INFO) << "memory not suite for message " << memory;
-
-            mem_scalar->set_value(memory);
-            mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
-            offer->add_resources()->MergeFrom(*mem_resource);
-
-            // port
-            mesos::Resource *port_resource = new mesos::Resource();
-            port_resource->set_name("ports");
-            port_resource->set_type(mesos::Value_Type_RANGES);
-            mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
-            port_range->set_begin(31000);
-            port_range->set_end(32000);
-            offer->add_resources()->MergeFrom(*port_resource);
+                // port
+                mesos::Resource *port_resource = new mesos::Resource();
+                port_resource->set_name("ports");
+                port_resource->set_type(mesos::Value_Type_RANGES);
+                mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
+                port_range->set_begin(31000);
+                port_range->set_end(32000);
+                offer->add_resources()->MergeFrom(*port_resource);
 
 
-            offer->mutable_id()->MergeFrom(new_offer_id());
-            offer->mutable_framework_id()->MergeFrom(framework->id());
+                offer->mutable_id()->MergeFrom(new_offer_id());
+                offer->mutable_framework_id()->MergeFrom(framework->id());
 
-            offer->mutable_slave_id()->set_value(slave->m_uid);
-            offer->set_hostname(slave->m_hostname);
+                offer->mutable_slave_id()->set_value(slave->m_uid);
+                offer->set_hostname(slave->m_hostname);
 
-            offers.put(offer->id().value(), offer);
+                LOG(INFO) << "offer id " << offer->id().value();
 
-            message.add_offers()->MergeFrom(*offer);
-            message.add_pids(offer->id().value());
+                offers.put(offer->id().value(), offer);
+
+                message.add_offers()->MergeFrom(*offer);
+                message.add_pids(offer->id().value());
+            }
 
             LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
                       << *framework;
@@ -390,65 +393,64 @@ namespace chameleon {
 
         void Master::accept(Framework *framework, mesos::scheduler::Call::Accept accept) {
 
-            string slave_uid;
-            foreach(const mesos::OfferID &offerid, accept.offer_ids()) {
-                mesos::Offer *offer = get_offer(offerid);
-                slave_uid = offer->slave_id().value();
-            }
+            foreach(const mesos::OfferID& offerId, accept.offer_ids() ) {
 
-            Slave *slave = get_slave(slave_uid);
+                LOG(INFO) << "accept_offer_ids " << accept.offer_ids().size();
 
-            //judge the operation type
-            for (int i = 0; i < accept.operations_size(); ++i) {
-                mesos::Offer::Operation *operation = accept.mutable_operations(i);
-                if (operation->type() == mesos::Offer::Operation::LAUNCH) {
-                    if (operation->launch().task_infos().size() > 0) {
-                        LOG(INFO) << "Get offer from framework " << *framework;
-                    } else {
-                        LOG(INFO) << "There is no task to run";
-                    }
-                } else if (operation->type() == mesos::Offer::Operation::LAUNCH_GROUP) {
-                    const mesos::ExecutorInfo &executor = operation->launch_group().executor();
-                    mesos::TaskGroupInfo *taskGroup = operation->mutable_launch_group()->mutable_task_group();
-                    for (int j = 0; j < taskGroup->tasks().size(); ++j) {
-                        mesos::TaskInfo *task = taskGroup->mutable_tasks(j);
-                        if (!task->has_executor()) {
-                            task->mutable_executor()->CopyFrom(executor);
+                const mesos::Offer *offer = get_offer(offerId);
+
+                Slave *slave = get_slave(offer->slave_id().value());
+
+                //judge the operation type
+                for (int i = 0; i < accept.operations_size(); ++i) {
+                    mesos::Offer::Operation *operation = accept.mutable_operations(i);
+                    if (operation->type() == mesos::Offer::Operation::LAUNCH) {
+                        if (operation->launch().task_infos().size() > 0) {
+                            LOG(INFO) << "Get offer from framework " << *framework;
+                        } else {
+                            LOG(INFO) << "There is no task to run";
+                        }
+                    } else if (operation->type() == mesos::Offer::Operation::LAUNCH_GROUP) {
+                        const mesos::ExecutorInfo &executor = operation->launch_group().executor();
+                        mesos::TaskGroupInfo *taskGroup = operation->mutable_launch_group()->mutable_task_group();
+                        for (int j = 0; j < taskGroup->tasks().size(); ++j) {
+                            mesos::TaskInfo *task = taskGroup->mutable_tasks(j);
+                            if (!task->has_executor()) {
+                                task->mutable_executor()->CopyFrom(executor);
+                            }
                         }
                     }
                 }
-            }
 
-            vector<mesos::Offer::Operation> operations;
+                foreach (const mesos::Offer::Operation &operation, accept.operations()) {
+                    switch (operation.type()) {
+                        case mesos::Offer::Operation::LAUNCH: {
+                            mesos::Offer::Operation _operation;
 
-            foreach (const mesos::Offer::Operation &operation, accept.operations()) {
-                switch (operation.type()) {
-                    case mesos::Offer::Operation::LAUNCH: {
-                        mesos::Offer::Operation _operation;
+                            _operation.set_type(mesos::Offer::Operation::LAUNCH);
 
-                        _operation.set_type(mesos::Offer::Operation::LAUNCH);
+                            foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
 
-                        foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
+                                mesos::TaskInfo task_(task);
 
-                            mesos::TaskInfo task_(task);
+                                LOG(INFO) << "Sending task to slave " << slave->m_pid;
 
-                            LOG(INFO) << "Sending task to slave " << slave->m_pid;
+                                mesos::internal::RunTaskMessage message;
+                                message.mutable_framework()->MergeFrom(framework->m_info);
+                                message.set_pid(framework->m_pid.getOrElse(UPID()));
+                                message.mutable_task()->MergeFrom(task_);
+                                message.mutable_framework_id()->MergeFrom(framework->id());
 
-                            mesos::internal::RunTaskMessage message;
-                            message.mutable_framework()->MergeFrom(framework->m_info);
-                            message.set_pid(framework->m_pid.getOrElse(UPID()));
-                            message.mutable_task()->MergeFrom(task_);
-                            message.mutable_framework_id()->MergeFrom(framework->id());
+                                send(slave->m_pid, message);
 
-                            send(slave->m_pid, message);
-
-                            _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
+                                _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case mesos::Offer::Operation::UNKNOWN: {
-                        LOG(WARNING) << "Ignoring unknown offer operation";
-                        break;
+                        case mesos::Offer::Operation::UNKNOWN: {
+                            LOG(WARNING) << "Ignoring unknown offer operation";
+                            break;
+                        }
                     }
                 }
             }
@@ -519,11 +521,12 @@ namespace chameleon {
 
             if (update.has_framework_id()) {
                 LOG(INFO) << "Forwarding status update " << update.status().state()
-                          << " of framework " << update.framework_id().value();
+                          << " to framework " << update.framework_id().value();
 
                 mesos::internal::StatusUpdateMessage message;
                 message.mutable_update()->MergeFrom(update);
                 message.set_pid(pid);   //this pid is slavePID
+                LOG(INFO) << "StatusUpdateMessage send to "<< pid;
 
                 framework->send(message);
             }
@@ -550,6 +553,8 @@ namespace chameleon {
         void Master::acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge) {
             const mesos::SlaveID &slaveId = acknowledge.slave_id();
 
+            LOG(INFO) << "acknowledge slave_id" << acknowledge.slave_id().value();
+
             Slave *slave = get_slave(slaveId.value());
 
             const mesos::TaskID &taskId = acknowledge.task_id();
@@ -565,7 +570,6 @@ namespace chameleon {
 
             LOG(INFO) << "Processing ACKNOWLEDGE call " << uuid << " for task " << taskId.value()
                       << " of framework " << framework->m_info.name() << " on agent " << slaveId.value();
-
             send(slave->m_pid, message);
         }
 
@@ -603,12 +607,6 @@ namespace chameleon {
             mesos::OfferID offerId;
             offerId.set_value(m_masterinfo.id() + "-O" + stringify(m_next_offer_id++));
             return offerId;
-        }
-
-        string Master::new_slave_id(const string uid) {
-            std::ostringstream out;
-            out << uid << "-S" << m_next_slave_id++;
-            return out.str();
         }
 
         void Master::add_slave(master::Slave *slave) {
@@ -653,16 +651,14 @@ namespace chameleon {
 
         void Master::update_hardware_resources(const UPID &from,
                                                const HardwareResourcesMessage &hardware_resources_message) {
-            DLOG(INFO) << "Enter update hardware resources";
+            DLOG(INFO) << "Enter update hardware resources from " << from;
 
             //save slaveinfo - by weiguow
             slaves.registering.insert(from);
 
-            string slaveuid = new_slave_id(hardware_resources_message.slave_uuid());
-
             Slave *slave = new Slave(this,
                                      hardware_resources_message,
-                                     slaveuid,
+                                     hardware_resources_message.slave_uuid(),
                                      hardware_resources_message.slave_hostname(),
                                      from);
 
