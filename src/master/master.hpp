@@ -136,11 +136,14 @@ namespace chameleon {
                 m_masterinfo.mutable_address()->set_ip(stringify(self().address.ip));
                 m_masterinfo.mutable_address()->set_port(self().address.port);
                 m_masterinfo.mutable_address()->set_hostname(stringify(self().address.ip));
+
+                m_master_cwd = os::getcwd();
             }
 
             virtual ~Master() {}
 
             virtual void initialize();
+
 
             void receive(const process::UPID &from, const mesos::scheduler::Call &call);
 
@@ -181,6 +184,7 @@ namespace chameleon {
 
             Framework *get_framework(const mesos::FrameworkID &kFrameworkId);
 
+            /** save slaveinfo-weiguow-2019-2-24*/
             struct Slaves {
                 hashset<process::UPID> registering;
 
@@ -226,9 +230,13 @@ namespace chameleon {
                 } registered;
             } slaves;
 
+            /**
+         * save Frameworkinfo-weiguow-2019-2-22
+         * */
             struct Frameworks {
                 hashmap<string, Framework *> registered;
             } frameworks;
+
 
             void register_participant(const string &hostname);
 
@@ -254,7 +262,25 @@ namespace chameleon {
             // super_master related
             void set_super_master_path(const string &path);
 
+            const string get_cwd() const;
+
+            void set_webui_path(const string& path);
+
+            const string get_web_ui() const;
+
+            void get_select_master(const UPID& from, const string& message);
+
+            void get_slave_infos(const UPID& from, const string& message);
+            // super_master related
+            void set_super_master_path(const string& path);
+
         private:
+
+            string m_uuid;
+            // the absolute path of the directory where the master executable exists.
+            string m_master_cwd;
+
+            string m_webui_path;
 
             // master states.
             enum {
@@ -269,7 +295,6 @@ namespace chameleon {
             unordered_map<string, JSON::Object> m_runtime_resources;
             unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
 
-            string m_uuid;
             set<string> m_alive_slaves;
 
             // super_master_related

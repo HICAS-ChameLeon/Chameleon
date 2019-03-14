@@ -10,11 +10,16 @@ using namespace chameleon::master;
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "./super_master",
-              "the absolute path of supermaster executive. For example, "
-              "-supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
+DEFINE_string(supermaster_path, "", "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
+DEFINE_string(webui_path, "", "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
 
 
+/*
+ * Function name  : ValidateInt
+ * Author         : weiguow
+ * Date           : 2018-12-13
+ * Description    : Determines whether the input parameter is valid
+ * Return         : True or False*/
 static bool ValidateInt(const char *flagname, gflags::int32 value) {
     if (value >= 0 && value < 32768) {
         return true;
@@ -32,11 +37,33 @@ static bool ValidateStr(const char *flagname, const string &value) {
     return false;
 }
 
-const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
-const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &ValidateStr);
+static bool validate_super_master_path(const char *flagname, const string &value) {
 
-namespace chameleon {
-    namespace master {
+    if (value.empty() || os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for super_master_path, please make sure the super_master_path actually exist!");
+    return false;
+
+}
+
+static bool validate_webui_path(const char *flagname, const string &value) {
+
+    if (os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for webui_path, please make sure the webui_path actually exist!");
+    return false;
+
+}
+
+static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
+static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &validate_super_master_path);
+static const bool has_webui_path = gflags::RegisterFlagValidator(&FLAGS_webui_path, &validate_webui_path);
+
+namespace chameleon{
+
+namespace master {
 
         void Master::initialize() {
             // Verify that the version of the library that we linked against is
@@ -226,6 +253,25 @@ namespace chameleon {
 
         }
 
+    const string Master::get_cwd() const {
+        return m_master_cwd;
+    }
+
+    void Master::set_webui_path(const string &path)  {
+        m_webui_path = path;
+    }
+
+    const string Master::get_web_ui() const {
+        return m_webui_path;
+    }
+
+    /**
+      * Function model  :  spark run on chameleon
+      * Author          :  weiguow
+      * Date            :  2018-12-27
+      * Funtion name    :  receive
+      * @param          : UPID& from ,Call& call
+      * */
         void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
             //first call
             if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
@@ -283,6 +329,13 @@ namespace chameleon {
             }
         }
 
+    /**
+ * Function model  :  spark run on chameleon
+ * Author          :  weiguow
+ * Date            :  2018-12-28
+ * Funtion name    :  subscribe
+ * @param          : UPID &from ,Call::Subscribe &subscribe
+ * */
         void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
 
             mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
@@ -319,10 +372,9 @@ namespace chameleon {
 
                 framework->send(message);
 
-                LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful!";
+                LOG(INFO) << "Subscribe framework " << *framework << " successful!";
 
-                const Duration temp_duration = Seconds(0);
-                process::delay(temp_duration, self(), &Master::offer, framework->id());
+                Offer(framework->id());
 
                 return;
             }
@@ -389,6 +441,12 @@ namespace chameleon {
             framework->send(message);
         }
 
+    /**
+* Function model  :  spark run on chameleon
+* Author          :  weiguow
+* Date            :  2018-12-29
+* Funtion name    :  Master::accept
+* */
         void Master::accept(Framework *framework, mesos::scheduler::Call::Accept accept) {
 
             Slave *slave;
@@ -457,12 +515,25 @@ namespace chameleon {
         }
 
 
+    /**
+ * Function     : teardown
+ * Author       : weiguow
+ * Date         : 2-19-2-26
+ * Description  : */
         void Master::teardown_framework(Framework *framework) {
             CHECK_NOTNULL(framework);
             LOG(INFO) << "Processing TEARDOWN call for framework " << *framework;
             remove_framework(framework);
         }
 
+    /**
+ * Function     : remove_framework
+ * Author       : weiguow
+ * Date         : 2019-2-26
+ * Description  : send remove framework info to all connect slave
+     * question : if we need to record which slave is offer to framework
+     *            and just send this message to it
+     * */
         void Master::remove_framework(Framework *framework) {
             CHECK_NOTNULL(framework);
 
@@ -482,7 +553,11 @@ namespace chameleon {
                                 }
         }
 
-
+/**
+     * Function     : Decline
+     * Author       : weiguow
+     * Date         : 2019-2-26
+     * Description  : get message from scheduler*/
         void Master::decline_framework(master::Framework *framework,
                                        const mesos::scheduler::Call::Decline &decline) {
             CHECK_NOTNULL(framework);
@@ -508,6 +583,12 @@ namespace chameleon {
             send(slave->m_pid, message);
         }
 
+    /**
+ * Function     : status_update
+ * Author       : weiguow
+ * Date         : 2019-1-10
+ * Description  : get statusUpdate message from slave and send it to framework
+ * */
         void Master::status_update(mesos::internal::StatusUpdate update, const UPID &pid) {
             LOG(INFO) << "Status update " << update.status().state()
                       << " of framework " << update.framework_id().value()
@@ -532,6 +613,12 @@ namespace chameleon {
             }
         }
 
+    /**
+ * Function     : status_update_acknowledge
+ * Author       : weiguow
+ * Date         : 2019-1-10
+ * Description  : get statusUpdateAcknowledge message from  and send it to slave
+ * */
         void Master::status_update_acknowledgement(
                 const UPID &from,
                 const mesos::SlaveID &slaveId,
@@ -550,6 +637,13 @@ namespace chameleon {
             acknowledge(framework, message);
         }
 
+    /**
+* Function     : acknowledge
+* Author       : weiguow
+* Date         : 2019-1-10
+* Description  : send StatusUpdateAcknowledgementMessage message to
+* slave make sure the status
+* */
         void Master::acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge) {
             const mesos::SlaveID &slaveId = acknowledge.slave_id();
 
@@ -594,6 +688,9 @@ namespace chameleon {
             return slaves.registered.get(m_slave_pid);
         }
 
+    /**
+ * create framework_id, offer_id -weiguow-2019/2/24
+ * */
         mesos::FrameworkID Master::new_framework_id() {
             std::ostringstream out;
             out << m_masterinfo.id() << "-" << std::setw(4)
@@ -609,6 +706,9 @@ namespace chameleon {
             return offerId;
         }
 
+    /**
+* save slaveinfo in struct slaves - by weiguow - 2019/3/5
+* */
         void Master::add_slave(master::Slave *slave) {
             CHECK_NOTNULL(slave);
             CHECK(!slaves.registered.contains(slave->m_uid));
@@ -616,6 +716,9 @@ namespace chameleon {
             link(slave->m_pid);
         }
 
+    /**
+* save slaveinfo in struct frameworks - by weiguow - 2019/2/24
+* */
         void Master::add_framework(Framework *framework) {
 
             frameworks.registered[framework->id().value()] = framework;
@@ -626,6 +729,9 @@ namespace chameleon {
                 }
             }
         }
+    /**
+* use frameworkId to get Framework-weiguow-2019/3/6
+* */
 
         Slave *Master::get_slave(const string uid) {
             return slaves.registered.contains(uid)
@@ -633,12 +739,18 @@ namespace chameleon {
                    : nullptr;
         }
 
+    /**
+* use offer_Id to get Framework-weiguow-2019/3/6
+* */
         mesos::Offer *Master::get_offer(const mesos::OfferID &offerid) {
             return offers.contains(offerid.value())
                    ? offers.get(offerid.value()).get()
                    : nullptr;
         }
 
+    /**
+* use framework_Id to get Framework-weiguow-2019/2/24
+* */
         Framework *Master::get_framework(const mesos::FrameworkID &frameworkId) {
             return frameworks.registered.contains(frameworkId.value())
                    ? frameworks.registered.at(frameworkId.value())
@@ -653,17 +765,14 @@ namespace chameleon {
                                                const HardwareResourcesMessage &hardware_resources_message) {
             DLOG(INFO) << "Enter update hardware resources from " << from;
 
-            //save slaveinfo - by weiguow
+            //save slaveinfo - by weiguow - 2019/3/6
             slaves.registering.insert(from);
-
             Slave *slave = new Slave(this,
                                      hardware_resources_message,
                                      hardware_resources_message.slave_uuid(),
                                      hardware_resources_message.slave_hostname(),
                                      from);
-
             add_slave(slave);
-
             LOG(INFO) << "Slave " << *slave << " registered on " << self() << " successful!";
 
             auto slave_id = hardware_resources_message.slave_id();
@@ -678,7 +787,7 @@ namespace chameleon {
         void Master::received_heartbeat(const UPID &from, const RuntimeResourcesMessage &runtime_resouces_message) {
             LOG(INFO) << "Received a heartbeat message from " << from;
 
-            //save runtimeinfo-by weiguow
+            //save runtimeinfo in slaves.registered slave - by weiguow -2019/3/6
             foreachvalue(Slave *slave, slaves.registered) {
                     if (!slaves.registered.contains(slave->m_uid)) {
                         LOG(INFO) << "This slave is not registered";
@@ -814,9 +923,6 @@ namespace chameleon {
             LOG(INFO) << "MAKUN received select_master_message";
             send(from, "MAKUN2");
         }
-
-        // end of super_mater related
-//    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state)
     }
 }
 
@@ -831,13 +937,23 @@ int main(int argc, char **argv) {
 
     google::CommandLineFlagInfo info;
 
-    if (has_port_Int && has_super_master_path) {
+    if (has_port_Int && has_super_master_path && has_webui_path) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
         process::initialize("master");
         Master master;
+        if(FLAGS_supermaster_path.empty()){
+            master.set_super_master_path(master.get_cwd()+"/super_master");
+        }else{
+            master.set_super_master_path(FLAGS_supermaster_path);
+        }
+
+        // set the webui path for the master
+        master.set_webui_path(FLAGS_webui_path);
 
         PID<Master> cur_master = process::spawn(master);
+
+
         LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 
         const PID<Master> master_pid = master.self();

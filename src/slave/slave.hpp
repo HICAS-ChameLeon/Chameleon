@@ -59,13 +59,18 @@
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
 #include <slave_related.pb.h>
+#include <fetcher.pb.h>
+
 #include <scheduler.pb.h>
 #include <messages.pb.h>
 #include <mesos.pb.h>
+#include <super_master_related.pb.h>
 
 // chameleon headers
-#include <resource_collector/resource_collector.hpp>
-#include <resource_collector/runtime_resources_usage.hpp>
+#include "resource_collector/resource_collector.hpp"
+#include "resource_collector/runtime_resources_usage.hpp"
+#include "software_store/software_resource_manager.hpp"
+
 #include <configuration_glog.hpp>
 #include <chameleon_os.hpp>
 #include <chameleon_string.hpp>
@@ -101,25 +106,31 @@ namespace chameleon {
 
         class Framework;
 
-        class Slave : public ProtobufProcess<Slave> {
-        public:
-            explicit Slave() : ProcessBase("slave"), m_interval() {
-                msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
-                msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
-//            msp_resource_collector = new ResourceCollector();
-            }
+    class Slave : public ProtobufProcess<Slave> {
+    public:
+        explicit Slave();
 
-            Slave(const Slave &slave) = default;
+        Slave(const Slave &slave) = delete;
 
-            virtual ~Slave() {
-                LOG(INFO) << "~ Slave()";
-            }
+        virtual ~Slave();
 
-            virtual void initialize();
+        virtual void initialize();
 
             void register_feedback(const string &hostname);
 
             void send_heartbeat_to_master();
+
+        void setM_master(const string &m_master) {
+            Slave::m_master = m_master;
+        }
+
+        void setM_interval(const Duration &m_interval) {
+            Slave::m_interval = m_interval;
+        }
+
+        void setM_work_dir(const string &m_work_dir) {
+            Slave::m_work_dir = m_work_dir;
+        }
 
             void run_task(const process::UPID &from,
                     const mesos::FrameworkInfo &frameworkInfo,
@@ -195,6 +206,9 @@ namespace chameleon {
 
             shared_ptr<ResourceCollector> msp_resource_collector;
             shared_ptr<RuntimeResourceUsage> msp_runtime_resource_usage;
+        RuntimeResourcesMessage m_runtime_resources;
+//        Option<process::Owned<SlaveHeartbeater>> heartbeater;
+        HardwareResourcesMessage *hr_message;
 
             shared_ptr<UPID> msp_masterUPID;
 
@@ -202,6 +216,7 @@ namespace chameleon {
             string m_master;
             string m_work_dir;
             Duration m_interval;
+        string m_cwd;
 
             hashmap<string, Framework *> m_frameworks;
 
@@ -216,6 +231,16 @@ namespace chameleon {
             void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
 
             void reregister_to_master(const UPID &from, const ReregisterMasterMessage &message);
+
+            SoftwareResourceManager* m_software_resource_manager;
+
+        void launch_master(const UPID &super_master, const string &message);
+
+        //super_master related
+//        void received_new_master(const UPID& from, const MasterRegisteredMessage& message);
+
+            // running task related
+            void modify_command_info_of_running_task(const string& spark_home_path, meso
 
         };
 

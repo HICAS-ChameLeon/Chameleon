@@ -12,8 +12,15 @@ DEFINE_int32(port, 6061, "port");
 
 //The following flags must be set by user
 DEFINE_string(master, "", "master ip and port info");
-DEFINE_string(work_dir, "", "the path to store download file");
+DEFINE_string(work_dir, "work_dir",
+              "the path to store the files of frameworks. The default is build/src/slave/work_dir");
 
+/**
+ * Function name  : ValidateStr
+ * Author         : weiguow
+ * Date           : 2018-12-13
+ * Description    : Determines whether the input parameter is valid
+ * Return         : True or False*/
 static bool ValidateStr(const char *flagname, const string &value) {
     if (!value.empty()) {
         return true;
@@ -39,15 +46,42 @@ static bool ValidateUint(const char *flagname, gflags::uint32 value) {
     return false;
 }
 
+static bool validate_work_dir(const char *flagname, const string &value) {
+
+    if (value == "work_dir" || os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for work_dir, please make sure the work_dir actually exist!");
+    return false;
+
+}
+
 static const bool ht_Uint = gflags::RegisterFlagValidator(&FLAGS_ht, &ValidateUint);
 static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 static const bool master_Str = gflags::RegisterFlagValidator(&FLAGS_master, &ValidateStr);
-//static const bool work_dir_Str = gflags::RegisterFlagValidator(&FLAGS_work_dir, &ValidateStr);
+static const bool work_dir_Str = gflags::RegisterFlagValidator(&FLAGS_work_dir, &validate_work_dir);
 
 constexpr char MESOS_EXECUTOR[] = "chameleon-executor";
 
 namespace chameleon {
     namespace slave {
+
+        Slave::Slave() : ProcessBase("slave"), m_interval() {
+            msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
+            msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
+//        setting::SLAVE_EXE_DIR = os::getcwd();
+            m_cwd = os::getcwd();
+            m_software_resource_manager = new SoftwareResourceManager(m_cwd+"/public_resources");
+
+//            msp_resource_collector = new ResourceCollector();
+        }
+
+        Slave::~Slave() {
+            delete hr_message;
+
+            delete m_software_resource_manager;
+            LOG(INFO) << "~Slave";
+        }
 
         void Slave::initialize() {
             // Verify that the version of the library that we linked against is
@@ -101,6 +135,18 @@ namespace chameleon {
 
             install<ReregisterMasterMessage>(&Slave::reregister_to_master);
 
+        install("launchmaster",&Slave::launch_master);
+
+        // http://172.20.110.228:6061/slave/runtime-resources
+        route(
+                "/runtime-resources",
+                "get the runtime resources of the current slave",
+                [this](Request request) {
+                    JSON::Object result = JSON::protobuf(m_runtime_resources);
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
 
             HardwareResourcesMessage *hr_message = msp_resource_collector->collect_hardware_resources();
             hr_message->set_slave_uuid(m_uuid);
@@ -115,6 +161,35 @@ namespace chameleon {
             heartbeat();
         }
 
+
+        /**
+     * change the spark shell value of the specified command in the task
+     * @param spark_home_path spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
+     *  @param task
+     */
+        void Slave::modify_command_info_of_running_task(const string &spark_home_path, mesos::TaskInfo &task) {
+            if (task.has_command()) {
+                mesos::CommandInfo *new_command_info = new mesos::CommandInfo(task.command());
+                const string shell_value = task.command().value();
+                auto it = shell_value.find("spark-class");
+                if (it != string::npos) {
+                    const string right_part = shell_value.substr(it);
+                    const string left_part = " \"" + spark_home_path + "/bin/";
+                    const string final_value = left_part + right_part;
+                    new_command_info->set_value(final_value);
+                    task.clear_command();
+                    task.set_allocated_command(new_command_info);
+                    LOG(INFO) << "the final value of command shell is " << final_value;
+                }
+            }
+        }
+
+        /**
+     * Funtion  : runTask
+     * Author   : weiguow
+     * Date     : 2019-3-11
+     * Descriptioon : get_executor info
+     * */
         void Slave::run_task(
                 const process::UPID &from,
                 const mesos::FrameworkInfo &frameworkInfo,
@@ -139,6 +214,12 @@ namespace chameleon {
             run(frameworkInfo, executorInfo, task, None(), pid);
         }
 
+        /**
+   * Funtion  : run
+   * Author   : weiguow
+   * Date     : 2019-3-11
+   * Descriptioon : save frameworkinfo into hashmap m_frameworks
+   * */
         void Slave::run(const mesos::FrameworkInfo &frameworkInfo, const mesos::ExecutorInfo &executorInfo,
                         const Option<mesos::TaskInfo> &task, const Option<mesos::TaskGroupInfo> &taskGroup,
                         const UPID &pid) {
@@ -164,6 +245,12 @@ namespace chameleon {
                     executorInfo, task, taskGroup);
         }
 
+        /**
+   * Funtion      : _run
+   * Author       : weiguow
+   * Date         : 2019-3-11
+   * Descriptioon : add executor and lanchexecutor
+   * */
         void Slave::_run(const mesos::FrameworkInfo &frameworkInfo, const mesos::ExecutorInfo &executorInfo,
                          const Option<mesos::TaskInfo> &task, const Option<mesos::TaskGroupInfo> &taskGroup) {
 
@@ -185,6 +272,7 @@ namespace chameleon {
             Executor *executor = framework->get_executor(executorInfo.executor_id());
 
             if (executor == nullptr) {
+
                 //add executor && launchexecutor
                 executor = framework->add_executor(executorInfo);
 
@@ -200,6 +288,13 @@ namespace chameleon {
 
         }
 
+        /**
+   * Funtion  : __run
+   * Author   : weiguow
+   * Date     : 2019-3-11
+   * Descriptioon : make task running in executor,fork child pid, delay one second to wait register_executor successful
+         * question :
+   * */
         void Slave::__run(const mesos::FrameworkInfo &frameworkInfo, const mesos::ExecutorInfo &executorInfo,
                           const Option<mesos::TaskInfo> &task, const Option<mesos::TaskGroupInfo> &taskGroup) {
 
@@ -281,6 +376,13 @@ namespace chameleon {
                               executor->info, task, taskGroup);
         }
 
+
+        /**
+   * Funtion  : ___run
+   * Author   : weiguow
+   * Date     : 2019-3-11
+   * Descriptioon : send RunTaskMessage  to executor
+   * */
         void Slave::___run(const mesos::FrameworkInfo &frameworkInfo, const mesos::ExecutorInfo &executorInfo,
                            const Option<mesos::TaskInfo> &task, const Option<mesos::TaskGroupInfo> &taskGroup) {
             vector<mesos::TaskInfo> tasks;
@@ -314,6 +416,15 @@ namespace chameleon {
 
         }
 
+
+        /**
+   * Funtion  : register_executor
+   * Author   : weiguow
+   * Date     : 2019-3-12
+   * Descriptioon :
+         * question : if we set 3 or more executor to run, the executor state can't be set correctly
+         *
+   * */
         void Slave::register_executor(const UPID &from,
                                       const mesos::FrameworkID &frameworkId,
                                       const mesos::ExecutorID &executorId) {
@@ -358,6 +469,13 @@ namespace chameleon {
 
         }
 
+        /**
+     * Function    : status_update
+     * Author      : weiguow
+     * Date        : 2019-1-8
+     * Description : Encapsulates the statusUpdate message and uses dispatch call _statusUpdate
+     * @param      : update & pid
+     * */
         void Slave::status_update(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
 
             LOG(INFO) << "slave status update pid get from " << pid.get();
@@ -376,6 +494,13 @@ namespace chameleon {
             process::dispatch(self(), &Slave::send_status_update_to_executor, update, pid);
         }
 
+        /**
+    * Functio     : forward_status_update_to_master
+    * Author      : weiguow
+    * Date        : 2019-1-8
+    * Description : get statusupdate message from framework and send it to master
+    * @param      : update & pid
+    * */
         void Slave::forward_status_update_to_master(mesos::internal::StatusUpdate update) {
 
             LOG(INFO) << "Forwarding the update " << update.status().state()
@@ -390,6 +515,14 @@ namespace chameleon {
 
             send(m_master, message);
         }
+        /**
+            * Functio     : _statusUpdate
+            * Author      : weiguow
+            * Date        : 2019-1-8
+            * Description : this function is invoked by the status_update and
+            *               encapsulation StatusUpdateAcknowledgementMessage message
+            * @param      : update & pid
+            * */
 
         void Slave::send_status_update_to_executor(
                 const mesos::internal::StatusUpdate &update,
@@ -413,6 +546,14 @@ namespace chameleon {
             process::dispatch(self(), &Slave::forward_status_update_to_master, update);
         }
 
+        /**
+               * Functio     : status_update_acknowledgement
+               * Author      : weiguow
+               * Date        : 2019-1-8
+               * Description : get statusupdateAcknowledgement from master
+               *               encapsulation StatusUpdateAcknowledgementMessage message
+               * @param      : update & pid
+               * */
         void Slave::status_update_acknowledgement(
                 const UPID &from,
                 const mesos::SlaveID &slaveId,
@@ -432,6 +573,7 @@ namespace chameleon {
                       << " of framework " << frameworkId.value();
         }
 
+
         Framework *Slave::get_framework(const mesos::FrameworkID &frameworkId) const {
             if (m_frameworks.count(frameworkId.value()) > 0) {
                 return m_frameworks.at(frameworkId.value());
@@ -446,6 +588,8 @@ namespace chameleon {
             return nullptr;
         }
 
+        /**
+         * */
         Executor* Framework::add_executor(const mesos::ExecutorInfo &executorInfo) {
             mesos::ContainerID containerId;
             containerId.set_value(UUID::random().toString());
@@ -485,6 +629,12 @@ namespace chameleon {
             //launch container should be done in there
         }
 
+        /**
+     * Function    : statusUpdate
+     * Author      : weiguow
+     * Date        : 2019-3-13
+     * Description : set executor_environment
+         * */
         map<string, string> executor_environment(
                 const mesos::ExecutorInfo &executorInfo,
                 const mesos::SlaveID& slaveId,
@@ -510,7 +660,12 @@ namespace chameleon {
 
             return environment;
         }
-
+        /**
+     * Function  : get_executorinfo
+     * Author    : weiguow
+     * Date      : 2019-1-4
+     * Description  : getExecutorInfo from FrameworkInfo & TaskInfo
+     * */
         mesos::ExecutorInfo Slave::get_executorinfo(
                 const mesos::FrameworkInfo &frameworkInfo,
                 const mesos::TaskInfo &task) const {
@@ -728,18 +883,37 @@ namespace chameleon {
             delete rr_message;
         }
 
-        void Slave::reregister_to_master(const UPID &from, const ReregisterMasterMessage &message) {
+    void Slave::reregister_to_master(const UPID &from, const ReregisterMasterMessage &message) {
 
-            LOG(INFO) << "got a ReregisteredMasterMessage from " << from;
-            if (message.slave_ip() == stringify(self().address.ip)) {
-                m_master = "master@" + message.master_ip() + ":" + message.port();
-                msp_masterUPID.reset(new UPID(m_master));
-                LOG(INFO) << " prepare to  a  heartbeat to the new master " << m_master << " ";
-                send_heartbeat_to_master();
-            }
+        LOG(INFO) << "got a ReregisteredMasterMessage from " << from;
+        if (message.slave_ip() == stringify(self().address.ip)) {
+            m_master = "master@" + message.master_ip() + ":" + message.port();
+            msp_masterUPID.reset(new UPID(m_master));
+
+            LOG(INFO) << " prepare to  a  heartbeat to the new master " << m_master << " ";
+            UPID new_master_ip(m_master);
+            DLOG(INFO) << "Before send message to master";
+            send(new_master_ip, *hr_message);
+            send_heartbeat_to_master();
         }
     }
-}
+
+    //change the way of launch master
+    void Slave::launch_master(const UPID &super_master, const string &message) {
+        LOG(INFO) << self().address << " received message from " << super_master;
+        string launch_command = "/home/lemaker/open-source/Chameleon/build/src/master/master --port=6060";
+        Try<Subprocess> s = subprocess(
+                launch_command,
+                Subprocess::FD(STDIN_FILENO),
+                Subprocess::FD(STDOUT_FILENO),
+                Subprocess::FD(STDERR_FILENO));
+        if (s.isError()) {
+            LOG(ERROR) << "cannot launch master "<< self().address.ip << ":6060";
+            send(super_master,"error");
+        }
+        LOG(INFO) << self().address.ip << ":6060 launched master successfully.";
+        send(super_master,"successed");
+    }
 
 
 using namespace chameleon::slave;
@@ -760,13 +934,25 @@ int main(int argc, char *argv[]) {
     google::ParseCommandLineFlags(&argc, &argv, true);
     google::CommandLineFlagInfo info;
 
-    if (master_Str && port_Int) {
+
+    if (master_Str && port_Int && work_dir_Str) {
+        // first get the absolute path for the default work_dir
+        string work_dir_path = FLAGS_work_dir;
+        if (FLAGS_work_dir == "work_dir") {
+            work_dir_path = path::join(os::getcwd(), FLAGS_work_dir);
+            Try<Nothing> work_dir_create = os::mkdir(work_dir_path);
+            if (work_dir_create.isError()) {
+                printf(work_dir_create.error().c_str());
+                return -1;
+            }
+        }
+
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
         process::initialize("slave");
         Slave slave;
         slave.setM_interval(Seconds(FLAGS_ht));
-        slave.setM_work_dir(FLAGS_work_dir);
+        slave.setM_work_dir(work_dir_path);
 
         string master_ip_and_port = "master@" + stringify(FLAGS_master);
         slave.setM_master(master_ip_and_port);

@@ -42,13 +42,8 @@ $ make
 
 ### master
 ```shell
-$ ./build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src/webui
+$ ./build/src/master/master 
 ```
-
-### Required Flags
-| Flag | Explanation |example | 
-| ------ | ------ | ------ |
-| --webui_path | the absolute path of webui.  |  For example, --webui=/home/lemaker/open-source/Chameleon/src/webui |
 
 ### Optional Flags
 | Flag | Explanation |example | 
@@ -58,7 +53,7 @@ $ ./build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src
 
 ### slave
 ```shell
-$ ./build/src/slave/slave --master=172.20.110.228:6060 --ht=555555
+$ ./build/src/slave/slave --master=172.20.110.228:6060
 ```
 
 ### Required Flags
@@ -76,7 +71,7 @@ $ ./build/src/slave/slave --master=172.20.110.228:6060 --ht=555555
 ### super_master
 
 ```shell
-$./build/src/master/super_master --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master --webui=/home/lemaker/open-source/Chameleon/src/webui
+$./build/src/master/super_master
 ```
 
 ### Required Flags
@@ -86,9 +81,25 @@ $./build/src/master/super_master --master_path=/home/lemaker/open-source/Chamele
 | ------ | ------ | ------ |
 | --master_path | the absolute path of master executive | --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master |
 | --initiator | the ip:port of the current master of first level or supermaster | --initiator=172.20.110.228:6060 |
-| --webui_path | the absolute path of webui.  |  For example, --webui=/home/lemaker/open-source/Chameleon/src/webui |
 
-#### common commands
-ps aux | grep master
+#submitter
 
-sudo kill -9 `ps -ef|grep "master" |grep -v grep|awk '{print $2}'`
+example
+
+$./submitter  --master=172.20.110.228:6060  --port=6062 --path=/home/XXX/spark-2.3.0-bin-hadoop2.7.tgz
+
+explain
+  --port      the port used by the program
+  --master    the master ip and port,example:127.0.0.1:8080
+  --path      the path where the spark package exists
+
+
+
+
+
+
+
+
+
+explain
+  --port     the port used by the program(default 6060)
