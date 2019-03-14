@@ -194,6 +194,9 @@ namespace chameleon {
                 Slave::m_work_dir = m_work_dir;
             }
 
+        protected:
+            void finalize() override;
+
         private:
             friend class Framework;
 

@@ -292,6 +292,7 @@ namespace chameleon {
                         taskGroup.isNone() ? task.get() : Option<mesos::TaskInfo>::none());
 
             }
+
             const string sanbox_path = path::join(m_work_dir, framework->id().value());
             Try<Nothing> mkdir_sanbox = os::mkdir(sanbox_path);
             if (mkdir_sanbox.isError()) {
@@ -305,7 +306,7 @@ namespace chameleon {
             // sanbox_path = Chameleon/build/src/slave/da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000
             //  spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
             const string spark_home_path = path::join(sanbox_path, "spark-2.3.0-bin-hadoop2.7");
-            mesos::TaskInfo copy_task(task);
+            mesos::TaskInfo copy_task(task.get());
             modify_command_info_of_running_task(spark_home_path, copy_task);
 
             process::Future<Nothing> download_result;
@@ -1024,7 +1025,6 @@ int main(int argc, char *argv[]) {
     }
 
     return 0;
-}
 }
 
 
