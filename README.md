@@ -48,7 +48,7 @@ $ ./build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src
 ### Required Flags
 | Flag | Explanation |example | 
 | ------ | ------ | ------ |
-| --webui | the absolute path of webui.  |  For example, --webui=/home/lemaker/open-source/Chameleon/src/webui |
+| --webui_path | the absolute path of webui.  |  For example, --webui=/home/lemaker/open-source/Chameleon/src/webui |
 
 ### Optional Flags
 | Flag | Explanation |example | 
@@ -58,7 +58,7 @@ $ ./build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src
 
 ### slave
 ```shell
-$ ./build/src/slave/slave --master=172.20.110.228:6060
+$ ./build/src/slave/slave --master=172.20.110.228:6060 --ht=555555
 ```
 
 ### Required Flags
@@ -76,7 +76,7 @@ $ ./build/src/slave/slave --master=172.20.110.228:6060
 ### super_master
 
 ```shell
-$./build/src/master/super_master
+$./build/src/master/super_master --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master --webui=/home/lemaker/open-source/Chameleon/src/webui
 ```
 
 ### Required Flags
@@ -86,6 +86,7 @@ $./build/src/master/super_master
 | ------ | ------ | ------ |
 | --master_path | the absolute path of master executive | --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master |
 | --initiator | the ip:port of the current master of first level or supermaster | --initiator=172.20.110.228:6060 |
+| --webui_path | the absolute path of webui.  |  For example, --webui=/home/lemaker/open-source/Chameleon/src/webui |
 
 #### common commands
 ps aux | grep master

@@ -54,7 +54,7 @@ static bool validate_super_master_path(const char *flagname, const string &value
 
 static bool validate_webui_path(const char *flagname, const string &value) {
 
-    if (value.empty() || os::exists(value)) {
+    if (os::exists(value)) {
         return true;
     }
     printf("Invalid value for webui_path, please make sure the webui_path actually exist!");
@@ -238,7 +238,7 @@ namespace master {
                       * @param          :
                       * */
                       // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
-                     const string launcher =  m_super_master_path +" --master_path="+get_cwd()+"/master";
+                     const string launcher =  m_super_master_path +" --master_path="+get_cwd()+"/master"+" --webui_path="+m_webui_path;
                     Try<Subprocess> super_master = subprocess(
                             launcher,
                             Subprocess::FD(STDIN_FILENO),
@@ -1003,13 +1003,9 @@ int main(int argc, char **argv) {
         }else{
             master.set_super_master_path(FLAGS_supermaster_path);
         }
-        // set the webui path for the master
-        if(FLAGS_webui_path.empty()){
-            master.set_webui_path("/home/lemaker/open-source/Chameleon/src/webui");
-        }else{
-            master.set_webui_path(FLAGS_webui_path);
-        }
 
+        // set the webui path for the master
+        master.set_webui_path(FLAGS_webui_path);
 
         PID<Master> cur_master = process::spawn(master);
 
