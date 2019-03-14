@@ -320,11 +320,10 @@ set(GMOCK_ROOT ${PROJECT_SOURCE_DIR}/3rdparty)
 #set(GMOCK_ROOT ${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0)
 message(${GMOCK_URL})
 #message(319 ${GMOCK_ROOT})
-#set(GMOCK_CONFIG_CMD  cd ${GMOCK_ROOT} && ./configure)
-#set(GMOCK_BUILD_CMD   cd ${GMOCK_ROOT} && make -j 4)
-set(GMOCK_CONFIG_CMD  cd ${GMOCK_ROOT} && tar zxvf ./gmock-1.7.0.tar.gz && cd ${GMOCK_ROOT}/gmock-1.7.0 && ./configure)
+set(GMOCK_CONFIG_CMD  cd ${GMOCK_ROOT} && tar zxvf ./gmock-1.7.0.tar.gz && cd ${GMOCK_ROOT}/gmock-1.7.0 && cmake .)
 set(GMOCK_BUILD_CMD   cd ${GMOCK_ROOT}/gmock-1.7.0 && make)
 set(GMOCK_INSTALL_CMD cd ${GMOCK_ROOT}/gmock-1.7.0 )
+
 ExternalProject_Add(
   gmock_1_7
   CONFIGURE_COMMAND ${GMOCK_CONFIG_CMD}
