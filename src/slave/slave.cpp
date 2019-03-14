@@ -232,36 +232,41 @@ namespace chameleon {
         // sanbox_path = Chameleon/build/src/slave/da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000
         //  spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
         const string spark_home_path = path::join(sanbox_path, "spark-2.3.0-bin-hadoop2.7");
-        mesos::TaskInfo copy_task(task);
+        mesos::TaskInfo copy_task(taskInfo);
         modify_command_info_of_running_task(spark_home_path, copy_task);
 
         // queue the task and executor_info
         m_tasks.push(copy_task);
         m_executorInfo = executorInfo;
+        if(taskInfo.container().type() == mesos::ContainerInfo::MESOS){
+            process::Future<Nothing> download_result;
+            Promise<Nothing> promise;
+            if (!os::exists(spark_home_path)) {
+                LOG(INFO) << "spark  didn't exist, download it frist";
+                mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
+                mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
+                mesos::fetcher::URI *uri = new mesos::fetcher::URI();
+                fetcher_info->set_sandbox_directory(sanbox_path);
+                //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
+                uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
+                item->set_allocated_uri(uri);
+                item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
+                download_result = m_software_resource_manager->download("my_spark", *fetcher_info);
+                delete fetcher_info;
 
-        process::Future<Nothing> download_result;
-        Promise<Nothing> promise;
-        if (!os::exists(spark_home_path)) {
-            LOG(INFO) << "spark  didn't exist, download it frist";
-            mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
-            mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
-            mesos::fetcher::URI *uri = new mesos::fetcher::URI();
-            fetcher_info->set_sandbox_directory(sanbox_path);
-            //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
-            uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
-            item->set_allocated_uri(uri);
-            item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
-            download_result = m_software_resource_manager->download("my_spark", *fetcher_info);
-            delete fetcher_info;
+            } else {
+                LOG(INFO) << "the Spark framework has existed";
 
-        } else {
-            LOG(INFO) << "the Spark framework has existed";
-
-            download_result = promise.future();
-            promise.set(Nothing());
-        }
-        download_result.onAny(process::defer(self(), &Self::start_mesos_executor, lambda::_1, framework));
+                download_result = promise.future();
+                promise.set(Nothing());
+            }
+            download_result.onAny(process::defer(self(), &Self::start_mesos_executor, lambda::_1, framework));
 //        start_mesos_executor(framework);
+        }
+        else if(taskInfo.container().type() == mesos::ContainerInfo::DOCKER){
+            start_docker_container(taskInfo, framework);
+        }
+
     }
 
     void Slave::start_mesos_executor(const Future<Nothing> &future, const Framework *framework) {
