@@ -975,6 +975,7 @@ namespace master {
         send(from,"MAKUN2");
     }
     // end of super_mater related
+
     std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
         return stream << TaskState_Name(state);
     }
