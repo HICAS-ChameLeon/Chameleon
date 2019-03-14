@@ -793,6 +793,166 @@
         });
 
     });
+    
+    chameleon_app.controller('FrameworkTopologyCtrl',function ($scope, $http,$timeout)
+    {
+        var pollState = function() {
+            $scope.delay = 10000;
+        $http({
+            method: 'GET',
+            url: leadingChameleonMasterURL('/master/runtime-resources')
+        }).then(function successCallback(response) {
+            $scope.master_runtime = response.data.content;
+            console.log(response.data.content);
+            $scope.master_runtime_quantities = response.data.quantity;
+            // console.log(response.data.quantity);
+
+            var DIR = '../icon/refresh-cl/';
+            var vertexes = new Array();
+
+            var my_master = {};
+            vertexes[0] = my_master;
+            my_master.id = 0;
+            my_master.label = "master";
+            my_master.shape = 'image';
+            my_master.image = DIR + 'Hardware-WQN-main.png';
+            my_master.title = "主节点";    //unchangeable
+
+            //my_slaves[0] = my_master;
+            var index_slave = 1;
+            var index_edge = -1;
+            var my_edges = [];
+            var cur_index = 0;
+            //var framework_index = 0;
+            console.log('2'+$scope.master_runtime_quantities);
+            if ($scope.master_runtime_quantities >= 1) {
+                my_edges = [];
+                for (var i in $scope.master_runtime) {
+                    var slave = $scope.master_runtime[i];
+
+                    var temp_slave = {}; // 添加一个顶点
+                    cur_index++; // 全局id
+                    temp_slave.label = "slave" + cur_index;
+                    // console.log('57 '+cur_index);
+                    temp_slave.id = cur_index;
+                    temp_slave.shape = 'image';
+                    temp_slave.image = DIR + 'Hardware-WQN-server.png';
+                    temp_slave.title = $scope.master_runtime[i].slave_id;
+                    vertexes[cur_index] = temp_slave; // cur_index 同时代表 顶点集合 my_slaves 的下标
+                    // console.info(vertexes);
+                    var temp_edge = {}; // 添加一条边 master -> temp_slave
+                    temp_edge.from = 0;
+                    temp_edge.to = temp_slave.id;
+                    temp_edge.arrows = 'to';
+                    temp_edge.label = Math.round($scope.master_runtime[i].net_usage.net_used * 100) / 100 + 'KiB/s';
+                    index_edge++; // 边集合 my_edges 的下标
+                    my_edges[index_edge] = temp_edge;
+
+
+                }
+            } else      {
+                my_edges = [];
+            }
+
+            $http({
+                method: 'GET',
+                url: leadingChameleonMasterURL('/master/frameworks')
+            }).then(function successCallback(response) {
+                $scope.framework = response.data.content;
+                $scope.framework_quantities = response.data.quantity;
+
+                if($scope.framework_quantities >=1)
+                {
+                    //var my_edges = [];
+                    var framework_index = cur_index;
+                    for (var f in $scope.framework)
+                    {
+                        //   添加framework运行节点
+                        var temp_framework = {};
+                        framework_index++;
+                        console.log('9'+framework_index);
+                        temp_framework.label = $scope.framework[f].name;
+                        temp_framework.id = framework_index;
+                        temp_framework.group = 'internet';
+                        temp_framework.title = $scope.framework[f].id;
+                        // temp_framework.value = Math.ceil(Math.round($scope.master_runtime[i].cpu_usage.cpu_used) / 10);
+                        vertexes[framework_index] = temp_framework;
+                        // 添加连接cpu节点的边, temp_slave -> temp_cpu
+                        var edge_framework = {};
+                        index_edge++;
+                        console.log('5'+index_edge);
+                        edge_framework.from = my_master.id;
+                        console.log('0'+my_master.id);
+                        edge_framework.to = temp_framework.id;
+                        console.log('3'+temp_framework.id);
+                        edge_framework.arrows = 'to';
+                        my_edges[index_edge] = edge_framework;
+                    }
+
+
+                }
+
+                var nodes = new vis.DataSet(vertexes);
+
+
+                var edges = new vis.DataSet(my_edges);
+
+                var container = document.getElementById('mynetwork');
+                var data = {
+                    nodes: nodes,
+                    edges: edges
+                };
+
+                var options = {
+                    interaction: {
+                        navigationButtons: true,
+                        keyboard: true
+                    },
+                    groups: {
+                        'switch': {
+                            shape: 'dot',
+                            color: '#FF9900' // orange
+                        },
+                        desktop: {
+                            shape: 'dot',
+                            color: "#109618" // green
+                        },
+                        mobile: {
+                            shape: 'dot',
+                            color: "#5A1E5C" // purple
+                        },
+                        server: {
+                            shape: 'dot',
+                            color: "#c53c3d" // red
+                        },
+                        internet: {
+                            shape: 'square',
+                            color: "#c50ac2" // blue
+                        }
+                    }
+
+                };
+
+                var network = new vis.Network(container, data, options);
+
+                // add event listeners
+                network.on('select', function (params) {
+                    document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
+                });
+
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+            });
+
+
+
+        }, function errorCallback(response) {
+            // 请求失败执行代码
+        });
+            $timeout(pollState, $scope.delay);
+        };
+        pollState();
+    });
 
     //模态框对应的Controller
     chameleon_app.controller('ShutdownCtrl', function($scope,$modal) {
