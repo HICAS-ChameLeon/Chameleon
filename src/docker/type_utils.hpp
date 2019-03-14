@@ -25,7 +25,7 @@
 
 #include <google/protobuf/repeated_field.h>
 
-#include <mesos/mesos.hpp>
+#include <mesos.pb.h>
 
 #include <stout/hashmap.hpp>
 #include <stout/stringify.hpp>

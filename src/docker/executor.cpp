@@ -20,7 +20,7 @@
 #include <string>
 
 //#include <mesos/executor.hpp>
-#include <mesos/mesos.hpp>
+#include <mesos.pb.h>
 
 #include <process/delay.hpp>
 #include <process/id.hpp>

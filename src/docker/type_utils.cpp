@@ -17,7 +17,7 @@
 #include <ostream>
 
 #include <attributes.hpp>
-#include <mesos/mesos.hpp>
+#include <mesos.pb.h>
 #include <resources.hpp>
 #include <type_utils.hpp>
 

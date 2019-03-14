@@ -19,7 +19,7 @@
 
 #include <iosfwd>
 
-#include <mesos/mesos.hpp>
+#include <mesos.pb.h>
 
 #include <stout/try.hpp>
 

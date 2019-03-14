@@ -7,7 +7,7 @@
 #include <string>
 
 // protobuf dependencies
-#include <mesos/mesos.hpp>
+#include <mesos.pb.h>
 
 // stout dependencies
 #include <stout/option.hpp>
