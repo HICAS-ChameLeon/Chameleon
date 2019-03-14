@@ -1,5 +1,0 @@
-namespace chameleon {
-    namespace scheduler {
-
-    }
-}

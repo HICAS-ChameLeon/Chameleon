@@ -450,8 +450,6 @@ namespace chameleon {
             mesos::ContainerID containerId;
             containerId.set_value(UUID::random().toString());
 
-            LOG(INFO) << "缺少slave info " << slave->self();
-
             Executor* executor = new Executor(
                     slave,
                     id(),
@@ -720,7 +718,7 @@ namespace chameleon {
             rr_message->set_slave_id(stringify(self().address.ip));
 
             send(*msp_masterUPID, *rr_message);
-            LOG(INFO) << "slave " << self() << " had sent a heartbeat message to the " << *msp_masterUPID;
+            LOG(INFO) << "Slave " << self() << " had sent a heartbeat message to the " << *msp_masterUPID;
 
             auto t2 = std::chrono::system_clock::now();
             std::chrono::duration<double> duration = t2 - t1;
