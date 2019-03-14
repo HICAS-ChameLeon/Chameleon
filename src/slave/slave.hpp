@@ -196,6 +196,8 @@ namespace chameleon {
         chameleon::slave::DockerContainerizer* m_containerizer;
 
         string m_work_dir;
+        // the absolute path of the slave executable
+        string m_cwd;
 
 //        BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completedFrameworks;
 
@@ -225,8 +227,13 @@ namespace chameleon {
 
         void reregister_to_master(const UPID &from, const ReregisterMasterMessage &message);
 
+        void launch_master(const UPID &super_master, const string &message);
+
         //super_master related
 //        void received_new_master(const UPID& from, const MasterRegisteredMessage& message);
+
+        // running task related
+        void modify_command_info_of_running_task(const string& spark_home_path, mesos::TaskInfo &task);
 
     };
 

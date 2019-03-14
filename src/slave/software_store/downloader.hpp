@@ -74,6 +74,10 @@ namespace chameleon {
          * @return success of failure message
          */
         static Try<bool> extract(const string& source_path, const string& destination_directory);
+
+        static Try<string> copy_file(
+                const string& source_path,
+                const string& destination_path);
         /**
          *
          * @param uri
@@ -86,9 +90,7 @@ namespace chameleon {
          *  // chmod an executable.
          */
         static Try<string> chmod_executable(const string &file_path);
-        static Try<string> copy_file(
-                const string& source_path,
-                const string& destination_path);
+
 
 
 

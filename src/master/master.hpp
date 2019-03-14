@@ -27,6 +27,7 @@
 #include <stout/uuid.hpp>
 #include <stout/check.hpp>
 #include <stout/boundedhashmap.hpp>
+#include <stout/path.hpp>
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -71,7 +72,7 @@ using process::UPID;
 using process::PID;
 using process::Future;
 using process::Promise;
-using namespace process::http;
+//using namespace process::http;
 
 using process::http::Request;
 using process::http::OK;
@@ -139,6 +140,8 @@ namespace master {
             m_masterInfo.mutable_address()->set_ip(stringify(self().address.ip));
             m_masterInfo.mutable_address()->set_port(self().address.port);
             m_masterInfo.mutable_address()->set_hostname(hostname);
+
+            m_master_cwd = os::getcwd();
         }
 
         virtual ~Master() {}
@@ -273,10 +276,19 @@ namespace master {
         // super_master related
         void set_super_master_path(const string& path);
 
+        const string get_cwd() const;
+
+        void set_webui_path(const string& path);
+
+        const string get_web_ui() const;
 
     private:
 
         string m_uuid;
+        // the absolute path of the directory where the master executable exists.
+        string m_master_cwd;
+
+        string m_webui_path;
 
         // master states.
         enum {
@@ -366,6 +378,7 @@ namespace master {
                              << " framework " << this->state;
             } else {
                 master->send(pid.get(), message);
+                LOG(INFO) << "master send message to " << pid.get();
             }
         }
 

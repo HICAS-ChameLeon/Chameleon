@@ -11,6 +11,7 @@
 
 DEFINE_string(master_path, "", "the absolute path of master executive. For example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
 DEFINE_string(initiator, "localhost:6060", "the ip:port of the current master of first level or supermaster. For example, --initiator=172.20.110.228:6060");
+DEFINE_string(webui_path, "", "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
 
 static bool ValidateStr(const char *flagname, const string &value) {
     if (!value.empty()) {
@@ -20,8 +21,20 @@ static bool ValidateStr(const char *flagname, const string &value) {
            "%s\n", flagname, value.c_str());;
     return false;
 }
+
+static bool validate_webui_path(const char *flagname, const string &value) {
+
+    if (value.empty() || os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for webui_path, please make sure the webui_path actually exist!");
+    return false;
+
+}
 static const bool has_master_path = gflags::RegisterFlagValidator(&FLAGS_master_path, &ValidateStr);
 static const bool has_initiator = gflags::RegisterFlagValidator(&FLAGS_initiator, &ValidateStr);
+static const bool has_webui_path = gflags::RegisterFlagValidator(&FLAGS_webui_path, &validate_webui_path);
+
 
 namespace chameleon {
     void SuperMaster::initialize() {
@@ -35,6 +48,13 @@ namespace chameleon {
         install("KILL",&SuperMaster::owned_masters_message);
         //kill_master end
         install("MAKUN2",&SuperMaster::recevied_slave_infos);
+
+        //franework related
+        install<mesos::scheduler::Call>(&SuperMaster::received_call);
+        install<mesos::internal::FrameworkRegisteredMessage>(&SuperMaster::received_registered);
+        install<mesos::internal::ResourceOffersMessage>(&SuperMaster::received_resource);
+        install("error",&SuperMaster::launch_master_results);
+        install("successed",&SuperMaster::launch_master_results);
 
         // change from one level to two levels
         cluster_levels = 2;
@@ -131,6 +151,18 @@ namespace chameleon {
                 });
 
 
+    }
+
+    const string SuperMaster::get_cwd() {
+        return m_super_master_cwd;
+    }
+
+    void SuperMaster::set_webui_path(const string &path)  {
+        m_webui_path = path;
+    }
+
+    const string SuperMaster::get_web_ui() const {
+        return m_webui_path;
     }
 
     void SuperMaster::registered_master(const UPID &from, const MasterRegisteredMessage &master_registered_message) {
@@ -269,49 +301,55 @@ namespace chameleon {
 //                LOG(INFO) << s.ip();
             }
         }
+        classify_masters_framework();
     }
 
-    bool SuperMaster::launch_masters() {
-//        Try<Subprocess> s = subprocess(
-//                "/home/lemaker/open-source/Chameleon/build/src/master/master --port=6060",
-//                Subprocess::FD(STDIN_FILENO),
-//                Subprocess::FD(STDOUT_FILENO),
-//                Subprocess::FD(STDERR_FILENO));
-
-        for(const string& master_ip:m_classification_masters){
-            string ssh_command = "ssh "+master_ip+" "+m_master_path+" --port=6060";
-            Try<Subprocess> s = subprocess(
-                    ssh_command,
-                    Subprocess::FD(STDIN_FILENO),
-                    Subprocess::FD(STDOUT_FILENO),
-                    Subprocess::FD(STDERR_FILENO));
-
-            if (s.isError()) {
-                LOG(ERROR) << " cannot launch master "<<master_ip;
-                return false;
-            }
+    // launch the exectuables of maters administered by the current super_master
+    void SuperMaster::launch_masters() {
+        for(const string& master_ip:m_classification_masters) {
+            send(UPID("slave@" + master_ip + ":6061"), "launchmaster");
+            LOG(INFO) << "send message to " << master_ip;
+            // since the both the master executable and super_master executable are in the same directory,
+            // so we get the current directory path of super_master exectuable to stands for the path of cd command"
+//            string launch_master = " cd "+get_cwd()+" && " + m_master_path+" --port=6060";
+//            string ssh_command = "ssh "+master_ip+launch_master;
+//            Try<Subprocess> s = subprocess(
+//                    ssh_command,
+//                    Subprocess::FD(STDIN_FILENO),
+//                    Subprocess::FD(STDOUT_FILENO),
+//                    Subprocess::FD(STDERR_FILENO));
+//            if (s.isError()) {
+//                LOG(ERROR) << " cannot launch master "<<master_ip;
+//                return false;
+//            }
         }
-        LOG(INFO)<<" launched "<<m_classification_masters.size() << " masters successfully.";
-        return true;
-//        Try<Subprocess> s = subprocess(
-//                "ssh 172.20.110.228 /home/lemaker/open-source/Chameleon/build/src/master/master --port=6060",
-//                Subprocess::FD(STDIN_FILENO),
-//                Subprocess::FD(STDOUT_FILENO),
-//                Subprocess::FD(STDERR_FILENO));
-
-
-
+//        if (is_launch_master == false){
+//            return false;
+//        }
+//        LOG(INFO)<<" launched "<<m_classification_masters.size() << " masters successfully.";
+//        return true;
+    }
+    void SuperMaster::is_launch() {
+        if(is_launch_master){
+            LOG(INFO)<<" launched "<<m_classification_masters.size() << " masters.";
+            LOG(INFO)<<" launched all new masters successfully!";
+            send_super_master_control_message();
+        }else{
+            LOG(INFO) << "launching masters failed!";
+        }
     }
 
     void SuperMaster::create_masters(){
         classify_masters();
-        bool launch_success = launch_masters();
-        if(launch_success){
-            LOG(INFO)<<" launched all new masters successfully!";
-            process::delay(Seconds(3), self(), &Self::send_super_master_control_message);
-        }else{
-            LOG(INFO) << "launching masters failed!";
-        }
+//        bool launch_success = launch_masters();
+        launch_masters();
+        process::delay(Seconds(3),self(),&Self::is_launch);
+//        if(is_launch_master){
+//            LOG(INFO)<<" launched all new masters successfully!";
+//            process::delay(Seconds(3), self(), &Self::send_super_master_control_message);
+//        }else{
+//            LOG(INFO) << "launching masters failed!";
+//        }
     }
 
     void SuperMaster::send_super_master_control_message(){
@@ -383,6 +421,47 @@ namespace chameleon {
 //        process::wait(self());
     }
 
+    //framework related
+    void SuperMaster::received_call(const UPID &from, const mesos::scheduler::Call &call) {
+        LOG(INFO) << "MAKUN Supermaster received call from " << from;
+        m_framework = from;
+        for(auto iter = m_classification_masters_framework.begin();
+            iter != m_classification_masters_framework.end(); iter++){
+            if (iter->first.find("spark") != string::npos) {
+                send(UPID("master@" + iter->second + ":6060"),call);
+                LOG(INFO) << "MAKUN send call to master: master@" << iter->second << ":6060";
+                break;
+            }
+        }
+//        send(UPID("master@172.20.110.141:6060"),call);
+    }
+
+    void SuperMaster::received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message) {
+        LOG(INFO) << "MAKUN Supermaster received frameworkRegistered from " << from;
+        send(m_framework,message);
+        LOG(INFO) << "MAKUN send frameworkRegistered to " << m_framework;
+    }
+
+    void SuperMaster::received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message) {
+        LOG(INFO) << "MAKUN Supermaster received resourceOffers from " << from;
+        send(m_framework,message);
+        LOG(INFO) << "MAKUN send resourceOffers to " << m_framework;
+    }
+
+    void SuperMaster::classify_masters_framework() {
+        if(m_classification_masters.size() > 1){
+            m_classification_masters_framework.insert(std::pair<string,string>("spark",m_classification_masters[0].data()));
+            m_classification_masters_framework.insert(std::pair<string,string>("flink",m_classification_masters[1].data()));
+        } else m_classification_masters_framework.insert(std::pair<string,string>("spark,flink",m_classification_masters[0].data()));
+    }
+
+    void SuperMaster::launch_master_results(const UPID &from, const string &message) {
+        if(message == "error"){
+            LOG(ERROR) << from << " cannot launch master";
+            is_launch_master = false;
+        }
+        LOG(INFO) << from << " launched master successfully.";
+    }
 
 }
 using namespace chameleon;
@@ -399,12 +478,13 @@ int main(int argc, char **argv) {
 
     google::CommandLineFlagInfo info;
 
-    if(has_master_path && has_initiator){
+    if(has_master_path && has_initiator && has_webui_path){
         os::setenv("LIBPROCESS_PORT", "7000");
         process::initialize("super_master");
 
         SuperMaster super_master(FLAGS_initiator);
         super_master.set_master_path(FLAGS_master_path);
+        super_master.set_webui_path(FLAGS_webui_path);
 
         PID<SuperMaster> cur_super_master = process::spawn(super_master);
         LOG(INFO) << "Running super_master on " << process::address().ip << ":" << process::address().port;

@@ -277,22 +277,39 @@ int main() {
 
     const string sanbox_directory = fetcher_info.get().sandbox_directory();
 
+    const Option<string> public_resources_dir = os::getenv("PUBLIC_RESOURCES_DIR");
+    CHECK_SOME(public_resources_dir)<<"Missing PUBLIC_RESOURCES_DIR environment variable";
 
     Downloader downloader;
     for(auto it  = fetcher_info.get().items().begin();it!=fetcher_info.get().items().end();it++){
 
         Try<string> output_file = it->uri().has_output_file()? it->uri().output_file() : downloader.basename(it->uri().value());
         const string destination_path = sanbox_directory+"/"+output_file.get();
-        Try<string> result = downloader.download(it->uri().value(),destination_path,"/home/lemaker");
-        if(result.isError()){
-            std::cout<<result.get()<<std::endl;
+        LOG(INFO)<<"destination_path"<<destination_path;
+
+        // judge whether the resources we want to download has existed
+        // First we will download the  framework resources into the public resource directory  and extract it
+        // Second we will copy the compressed archives of framework resources from the public resource directory to the framework sanbox directory,
+        //  so the public resource directory functions as the cache.
+        const string has_resources_path = path::join(public_resources_dir.get(),output_file.get());
+        if(os::exists(has_resources_path)){
+            downloader.copy_file(has_resources_path,destination_path);
+            downloader.extract(destination_path, sanbox_directory);
+        }else{
+            Try<string> result = downloader.download(it->uri().value(),has_resources_path,"/home/lemaker");
+            if(result.isError()){
+                std::cout<<result.get()<<std::endl;
+            }
+
+            Try<bool> result_extract = downloader.extract(has_resources_path, public_resources_dir.get());
+            if(result_extract.isError()){
+                std::cout<<result_extract.get()<<std::endl;
+            }
+
+            downloader.copy_file(has_resources_path,destination_path);
+            downloader.extract(destination_path, sanbox_directory);
         }
 
-
-        Try<bool> result_extract = downloader.extract(destination_path, sanbox_directory);
-        if(result_extract.isError()){
-            std::cout<<result_extract.get()<<std::endl;
-        }
     }
 //    hdfs://ccrfox246:9000/user/lemaker/HiBench/Bayes/Input/part-00000
 //    const string source_uri = "http://mirrors.hust.edu.cn/apache/spark/spark-2.3.2/spark-2.3.2-bin-hadoop2.7.tgz";

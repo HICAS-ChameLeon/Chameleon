@@ -1123,7 +1123,10 @@ bool initialize(
   }
 
   if (flags.port.isSome()) {
+<<<<<<< HEAD
       LOG(INFO)<<"Heldon flags.port : "<<flags.port.get();
+=======
+>>>>>>> edea9ff96fb152e33ed04555c4f79fa7b79b6030
       __address__.port = flags.port.get();
   }
 
