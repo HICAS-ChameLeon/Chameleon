@@ -147,6 +147,7 @@ list(APPEND slave_PROTOS scheduler)
 list(APPEND slave_PROTOS mesos)
 list(APPEND slave_PROTOS slave_related)
 list(APPEND slave_PROTOS fetcher)
+list(APPEND slave_PROTOS super_master_related)
 
 list(REMOVE_DUPLICATES slave_PROTOS)
 target_link_libraries(slave ${slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})

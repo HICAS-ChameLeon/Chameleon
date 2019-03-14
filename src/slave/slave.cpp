@@ -139,7 +139,7 @@ namespace chameleon {
 
         install<ReregisterMasterMessage>(&Slave::reregister_to_master);
 
-        install("launchmaster",&Slave::launch_master);
+        install<LaunchMasterMessage>(&Slave::launch_master);
 
         // http://172.20.110.228:6061/slave/runtime-resources
         route(
@@ -669,9 +669,10 @@ namespace chameleon {
     }
 
     //change the way of launch master
-    void Slave::launch_master(const UPID &super_master, const string &message) {
+    void Slave::launch_master(const UPID &super_master, const LaunchMasterMessage &message) {
         LOG(INFO) << self().address << " received message from " << super_master;
-        string launch_command = "/home/lemaker/open-source/Chameleon/build/src/master/master --port=6060";
+//        string launch_command = "/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src/webui";
+        string launch_command = message.master_path() + " " + message.webui_path();
         Try<Subprocess> s = subprocess(
                 launch_command,
                 Subprocess::FD(STDIN_FILENO),
