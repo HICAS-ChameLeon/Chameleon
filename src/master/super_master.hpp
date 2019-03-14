@@ -82,6 +82,10 @@ namespace chameleon {
                 m_super_master_cwd = os::getcwd();
         }
 
+        void set_webui_path(const string& path);
+
+        const string get_web_ui() const;
+
         virtual void initialize() override;
 
         const string get_cwd();
@@ -109,6 +113,9 @@ namespace chameleon {
         // the absolute path for the super_master executable
         string m_super_master_cwd;
         string m_master_path;
+
+        string m_webui_path;
+
         UPID m_framework;
         // represent the masters administered by the current super_master.
         vector<UPID> m_masters;

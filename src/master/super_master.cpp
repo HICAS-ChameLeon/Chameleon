@@ -11,6 +11,7 @@
 
 DEFINE_string(master_path, "", "the absolute path of master executive. For example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
 DEFINE_string(initiator, "localhost:6060", "the ip:port of the current master of first level or supermaster. For example, --initiator=172.20.110.228:6060");
+DEFINE_string(webui_path, "", "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
 
 static bool ValidateStr(const char *flagname, const string &value) {
     if (!value.empty()) {
@@ -20,8 +21,20 @@ static bool ValidateStr(const char *flagname, const string &value) {
            "%s\n", flagname, value.c_str());;
     return false;
 }
+
+static bool validate_webui_path(const char *flagname, const string &value) {
+
+    if (value.empty() || os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for webui_path, please make sure the webui_path actually exist!");
+    return false;
+
+}
 static const bool has_master_path = gflags::RegisterFlagValidator(&FLAGS_master_path, &ValidateStr);
 static const bool has_initiator = gflags::RegisterFlagValidator(&FLAGS_initiator, &ValidateStr);
+static const bool has_webui_path = gflags::RegisterFlagValidator(&FLAGS_webui_path, &validate_webui_path);
+
 
 namespace chameleon {
     void SuperMaster::initialize() {
@@ -142,6 +155,14 @@ namespace chameleon {
 
     const string SuperMaster::get_cwd() {
         return m_super_master_cwd;
+    }
+
+    void SuperMaster::set_webui_path(const string &path)  {
+        m_webui_path = path;
+    }
+
+    const string SuperMaster::get_web_ui() const {
+        return m_webui_path;
     }
 
     void SuperMaster::registered_master(const UPID &from, const MasterRegisteredMessage &master_registered_message) {
@@ -457,12 +478,13 @@ int main(int argc, char **argv) {
 
     google::CommandLineFlagInfo info;
 
-    if(has_master_path && has_initiator){
+    if(has_master_path && has_initiator && has_webui_path){
         os::setenv("LIBPROCESS_PORT", "7000");
         process::initialize("super_master");
 
         SuperMaster super_master(FLAGS_initiator);
         super_master.set_master_path(FLAGS_master_path);
+        super_master.set_webui_path(FLAGS_webui_path);
 
         PID<SuperMaster> cur_super_master = process::spawn(super_master);
         LOG(INFO) << "Running super_master on " << process::address().ip << ":" << process::address().port;

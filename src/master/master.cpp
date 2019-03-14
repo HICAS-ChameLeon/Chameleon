@@ -238,7 +238,7 @@ namespace master {
                       * @param          :
                       * */
                       // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
-                     const string launcher =  m_super_master_path +" --master_path="+get_cwd()+"/master";
+                     const string launcher =  m_super_master_path +" --master_path="+get_cwd()+"/master"+" --webui_path="+m_webui_path;
                     Try<Subprocess> super_master = subprocess(
                             launcher,
                             Subprocess::FD(STDIN_FILENO),
@@ -1003,6 +1003,7 @@ int main(int argc, char **argv) {
         }else{
             master.set_super_master_path(FLAGS_supermaster_path);
         }
+
         // set the webui path for the master
         master.set_webui_path(FLAGS_webui_path);
 
