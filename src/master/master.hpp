@@ -370,8 +370,6 @@ namespace chameleon {
 
             bool connected() const { return state == ACTIVE || state == INACTIVE; }
 
-            bool recovered() const { return state == RECOVERED; }
-
             const mesos::FrameworkID id() const { return m_info.id(); }
 
             Master *const m_master;
@@ -381,6 +379,10 @@ namespace chameleon {
 
             process::Time m_registered_time;
             process::Time m_unregistered_time;
+
+            Framework(const Framework &) = delete;
+
+            Framework &operator = (const Framework &);
 
         private:
             Framework(Master *const _master,
@@ -392,9 +394,7 @@ namespace chameleon {
                 state(state),
                 m_registered_time(time) {}
 
-            Framework(const Framework &);
 
-            Framework &operator=(const Framework &);
 
         };
 

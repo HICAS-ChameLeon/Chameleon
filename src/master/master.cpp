@@ -374,7 +374,7 @@ namespace master {
 
                 LOG(INFO) << "Subscribe framework " << *framework << " successful!";
 
-                Offer(framework->id());
+                offer(framework->id());
 
                 return;
             }
