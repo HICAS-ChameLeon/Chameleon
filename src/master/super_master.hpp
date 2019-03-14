@@ -92,7 +92,7 @@ namespace chameleon {
 
         Future<bool> is_repeated_registered(const UPID &upid);
 
-        bool launch_masters();
+        void launch_masters();
 
         void record_master(const Future<bool> &future, const UPID &from,
                            const MasterRegisteredMessage &master_registered_message);
@@ -130,6 +130,7 @@ namespace chameleon {
         vector<string> m_classification_masters;
         //framework related
         unordered_map<string,string> m_classification_masters_framework;
+        bool is_launch_master = true;
         //kill_master related
         OwnedSlavesMessage *m_owned_slaves_message;
         //kill_master end
@@ -153,6 +154,7 @@ namespace chameleon {
         void received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message);
         void classify_masters_framework();
         void launch_master_results(const UPID &from, const string &message);
+        void is_launch();
     };
 
 

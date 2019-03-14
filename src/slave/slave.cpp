@@ -139,7 +139,7 @@ namespace chameleon {
 
         install<ReregisterMasterMessage>(&Slave::reregister_to_master);
 
-        install("launch master",&Slave::launch_master);
+        install("launchmaster",&Slave::launch_master);
 
         // http://172.20.110.228:6061/slave/runtime-resources
         route(
@@ -670,6 +670,7 @@ namespace chameleon {
 
     //change the way of launch master
     void Slave::launch_master(const UPID &super_master, const string &message) {
+        LOG(INFO) << self().address << " received message from " << super_master;
         string launch_command = "/home/lemaker/open-source/Chameleon/build/src/master/master --port=6060";
         Try<Subprocess> s = subprocess(
                 launch_command,
@@ -677,7 +678,7 @@ namespace chameleon {
                 Subprocess::FD(STDOUT_FILENO),
                 Subprocess::FD(STDERR_FILENO));
         if (s.isError()) {
-            LOG(ERROR) << " cannot launch master "<< self().address.ip << ":6060";
+            LOG(ERROR) << "cannot launch master "<< self().address.ip << ":6060";
             send(super_master,"error");
         }
         LOG(INFO) << self().address.ip << ":6060 launched master successfully.";
