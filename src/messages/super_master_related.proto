@@ -62,3 +62,5 @@ message AdministeredSlavesMessage{
 
     repeated SlavesInfoControlledByMaster my_slaves = 4;
 }
+
+

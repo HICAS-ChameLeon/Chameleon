@@ -671,7 +671,7 @@ namespace chameleon {
     //change the way of launch master
     void Slave::launch_master(const UPID &super_master, const string &message) {
         LOG(INFO) << self().address << " received message from " << super_master;
-        string launch_command = "/home/lemaker/open-source/Chameleon/build/src/master/master --port=6060";
+        string launch_command = "/home/lemaker/open-source/Chameleon/build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src/webui --port=6060";
         Try<Subprocess> s = subprocess(
                 launch_command,
                 Subprocess::FD(STDIN_FILENO),
