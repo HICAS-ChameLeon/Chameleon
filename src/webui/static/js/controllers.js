@@ -836,11 +836,10 @@
     chameleon_app.controller('StartSupermasterCtrl', function ($scope, $rootScope, $modal) {
         //$scope.startSupermaster = response.data.start;
         console.log('8' + $rootScope.startSupermaster);
-
-        var alert_message = "确认开启Supermaster?";
         $scope.openModal = function () {
             if ($rootScope.startSupermaster == undefined) {
                 //$scope.startSupermaster = $rootScope.startSupermaster;
+                var alert_message = "确认开启Supermaster?";
                 console.log('9' + $rootScope.startSupermaster);
                 var modalInstance = $modal.open({
                     templateUrl: 'ControlSupermaster.html',
