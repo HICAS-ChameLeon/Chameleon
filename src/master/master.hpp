@@ -27,6 +27,7 @@
 #include <stout/uuid.hpp>
 #include <stout/check.hpp>
 #include <stout/boundedhashmap.hpp>
+#include <stout/path.hpp>
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -71,7 +72,7 @@ using process::UPID;
 using process::PID;
 using process::Future;
 using process::Promise;
-using namespace process::http;
+//using namespace process::http;
 
 using process::http::Request;
 using process::http::OK;
@@ -81,7 +82,9 @@ using process::Subprocess;
 namespace chameleon {
     namespace master {
         class Framework;
+
         class Master;
+
         class Slave {
         public:
             Slave(Master *const _master,
@@ -162,11 +165,12 @@ namespace chameleon {
             void status_update(mesos::internal::StatusUpdate update, const UPID &pid);
 
             void status_update_acknowledgement(const UPID &from, const mesos::SlaveID &slaveId,
-                    const mesos::FrameworkID &frameworkId, const mesos::TaskID &taskId, const string &uuid);
+                                               const mesos::FrameworkID &frameworkId, const mesos::TaskID &taskId,
+                                               const string &uuid);
 
             void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
 
-            Slave* find_slave_to_run();
+            Slave *find_slave_to_run();
 
             void add_slave(Slave *slave);
 
@@ -180,7 +184,7 @@ namespace chameleon {
 
             Slave *get_slave(const string uid);
 
-            mesos::Offer* get_offer(const mesos::OfferID &offerid);
+            mesos::Offer *get_offer(const mesos::OfferID &offerid);
 
             Framework *get_framework(const mesos::FrameworkID &kFrameworkId);
 
@@ -246,7 +250,7 @@ namespace chameleon {
              * @param hardware_resources_message
              */
             void update_hardware_resources(const UPID &from,
-                    const HardwareResourcesMessage &hardware_resources_message);
+                                           const HardwareResourcesMessage &hardware_resources_message);
 
             /**
              * get a heartbeat message from a slave. The heartbeat message contains the runtime resource usage statistics of the slave.
@@ -264,15 +268,10 @@ namespace chameleon {
 
             const string get_cwd() const;
 
-            void set_webui_path(const string& path);
+            void set_webui_path(const string &path);
 
             const string get_web_ui() const;
 
-            void get_select_master(const UPID& from, const string& message);
-
-            void get_slave_infos(const UPID& from, const string& message);
-            // super_master related
-            void set_super_master_path(const string& path);
 
         private:
 
@@ -310,16 +309,15 @@ namespace chameleon {
             string m_super_master_path;
 
             void super_master_control(const UPID &super_master,
-                    const SuperMasterControlMessage &super_master_control_message);
+                                      const SuperMasterControlMessage &super_master_control_message);
 
             void received_registered_message_from_super_master(const UPID &super_master,
-                    const AcceptRegisteredMessage &message);
+                                                               const AcceptRegisteredMessage &message);
 
             void received_terminating_master_message(const UPID &super_master,
-                    const TerminatingMasterMessage &message);
+                                                     const TerminatingMasterMessage &message);
 
-
-            hashmap<string, mesos::Offer*> offers;
+            hashmap<string, mesos::Offer *> offers;
             hashmap<UPID, RuntimeResourcesMessage> m_slave_usage;
             mesos::MasterInfo m_masterinfo;
 
@@ -329,6 +327,7 @@ namespace chameleon {
 
             process::UPID m_slave_pid;
         };
+
 
         class Framework {
         public:
@@ -380,20 +379,22 @@ namespace chameleon {
             process::Time m_registered_time;
             process::Time m_unregistered_time;
 
-            Framework(const Framework &) = delete;
+            Framework(
+                    const Framework &) = delete;
 
-            Framework &operator = (const Framework &);
+            Framework &operator=(const Framework &);
 
         private:
-            Framework(Master *const _master,
+            Framework(Master *
+            const _master,
                       const mesos::FrameworkInfo &_info,
-                      State state,
+                      State
+                      state,
                       const process::Time &time
             ) : m_master(_master),
                 m_info(_info),
                 state(state),
                 m_registered_time(time) {}
-
 
 
         };

@@ -10,8 +10,10 @@ using namespace chameleon::master;
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "", "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
-DEFINE_string(webui_path, "", "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
+DEFINE_string(supermaster_path, "",
+              "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
+DEFINE_string(webui_path, "",
+              "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
 
 
 /*
@@ -28,6 +30,12 @@ static bool ValidateInt(const char *flagname, gflags::int32 value) {
     return false;
 }
 
+/**
+ * Function name  : ValidateStr
+ * Author         : weiguow
+ * Date           : 2018-12-13
+ * Description    : Determines whether the input parameter is valid
+ * Return         : True or False*/
 static bool ValidateStr(const char *flagname, const string &value) {
     if (!value.empty()) {
         return true;
@@ -48,7 +56,6 @@ static bool validate_super_master_path(const char *flagname, const string &value
 }
 
 static bool validate_webui_path(const char *flagname, const string &value) {
-
     if (os::exists(value)) {
         return true;
     }
@@ -58,12 +65,12 @@ static bool validate_webui_path(const char *flagname, const string &value) {
 }
 
 static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
-static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &validate_super_master_path);
+static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path,
+                                                                        &validate_super_master_path);
 static const bool has_webui_path = gflags::RegisterFlagValidator(&FLAGS_webui_path, &validate_webui_path);
 
-namespace chameleon{
-
-namespace master {
+namespace chameleon {
+    namespace master {
 
         void Master::initialize() {
             // Verify that the version of the library that we linked against is
@@ -148,9 +155,10 @@ namespace master {
                         return ok_response;
                     });
 
+
             route(
                     "/frameworks",
-                    "wangweiguo new version of frameworks",
+                    "get all the information of frameworks related with the current master",
                     [this](Request request) {
                         JSON::Object a_framework;
                         JSON::Object a_content = JSON::Object();
@@ -188,6 +196,7 @@ namespace master {
                     });
 
 
+
             // http://172.20.110.228:6060/master/stop-cluster
             route(
                     "/stop-cluster",
@@ -206,7 +215,6 @@ namespace master {
                             send(current_slave, m);
                             LOG(INFO) << self() << "sent a shutdown message to " << current_slave;
                         }
-
                         result.values["stop"] = "success";
 
                         OK ok_response(stringify(result));
@@ -238,6 +246,8 @@ namespace master {
                         return response;
                     });
 
+            provide("", path::join(m_webui_path, "static/HTML/Control.html"));
+            provide("static", path::join(m_webui_path, "/static"));
 
 //     install("stop", &MyProcess::stop);
             install("stop", [=](const UPID &from, const string &body) {
@@ -253,25 +263,25 @@ namespace master {
 
         }
 
-    const string Master::get_cwd() const {
-        return m_master_cwd;
-    }
+        const string Master::get_cwd() const {
+            return m_master_cwd;
+        }
 
-    void Master::set_webui_path(const string &path)  {
-        m_webui_path = path;
-    }
+        void Master::set_webui_path(const string &path) {
+            m_webui_path = path;
+        }
 
-    const string Master::get_web_ui() const {
-        return m_webui_path;
-    }
+        const string Master::get_web_ui() const {
+            return m_webui_path;
+        }
 
-    /**
-      * Function model  :  spark run on chameleon
-      * Author          :  weiguow
-      * Date            :  2018-12-27
-      * Funtion name    :  receive
-      * @param          : UPID& from ,Call& call
-      * */
+        /**
+          * Function model  :  spark run on chameleon
+          * Author          :  weiguow
+          * Date            :  2018-12-27
+          * Funtion name    :  receive
+          * @param          : UPID& from ,Call& call
+          * */
         void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
             //first call
             if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
@@ -329,13 +339,13 @@ namespace master {
             }
         }
 
-    /**
- * Function model  :  spark run on chameleon
- * Author          :  weiguow
- * Date            :  2018-12-28
- * Funtion name    :  subscribe
- * @param          : UPID &from ,Call::Subscribe &subscribe
- * */
+        /**
+         * Function model  :  spark run on chameleon
+         * Author          :  weiguow
+         * Date            :  2018-12-28
+         * Funtion name    :  subscribe
+         * @param          : UPID &from ,Call::Subscribe &subscribe
+         * */
         void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
 
             mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
@@ -380,6 +390,13 @@ namespace master {
             }
         }
 
+
+        /**
+        * Function model  :  spark run on chameleon
+        * Author          :  weiguow
+        * Date            :  2019-3-6
+        * Funtion name    :  offer slave to framework
+        * */
         void Master::offer(const mesos::FrameworkID &frameworkId) {
             Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
 
@@ -387,53 +404,54 @@ namespace master {
 
             foreachvalue(Slave *slave, slaves.registered) {
 
-                    mesos::Offer *offer = new mesos::Offer();
+                                    mesos::Offer *offer = new mesos::Offer();
 
-                    int memory = slave->m_runtimeinfo.mem_usage().mem_available() / 1024;
-                    LOG(INFO) << slave->m_pid
-                              << " cpu cores is "
-                              << slave->m_hardwareinfo.cpu_collection().cpu_quantity()
-                              << " ; " << " memory avalable is " << memory << " MB";
+                                    int memory = slave->m_runtimeinfo.mem_usage().mem_available() / 1024;
+                                    LOG(INFO) << slave->m_pid
+                                              << " cpu cores is "
+                                              << slave->m_hardwareinfo.cpu_collection().cpu_quantity()
+                                              << " ; " << " memory avalable is " << memory << " MB";
 
-                    // cpus
-                    mesos::Resource *cpu_resource = new mesos::Resource();
-                    cpu_resource->set_name("cpus");
-                    cpu_resource->set_type(mesos::Value_Type_SCALAR);
-                    mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
-                    cpu_scalar->set_value(slave->m_hardwareinfo.cpu_collection().cpu_quantity());
-                    cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
-                    offer->add_resources()->MergeFrom(*cpu_resource);
+                                    // cpus
+                                    mesos::Resource *cpu_resource = new mesos::Resource();
+                                    cpu_resource->set_name("cpus");
+                                    cpu_resource->set_type(mesos::Value_Type_SCALAR);
+                                    mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
+                                    cpu_scalar->set_value(slave->m_hardwareinfo.cpu_collection().cpu_quantity());
+                                    cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
+                                    offer->add_resources()->MergeFrom(*cpu_resource);
 
-                    // memory
-                    mesos::Resource *mem_resource = new mesos::Resource();
-                    mem_resource->set_name("mem");
-                    mem_resource->set_type(mesos::Value_Type_SCALAR);
-                    mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
-                    mem_scalar->set_value(memory);
-                    mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
-                    offer->add_resources()->MergeFrom(*mem_resource);
+                                    // memory
+                                    mesos::Resource *mem_resource = new mesos::Resource();
+                                    mem_resource->set_name("mem");
+                                    mem_resource->set_type(mesos::Value_Type_SCALAR);
+                                    mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
+                                    mem_scalar->set_value(memory);
+                                    mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
+                                    offer->add_resources()->MergeFrom(*mem_resource);
 
-                    // port
-                    mesos::Resource *port_resource = new mesos::Resource();
-                    port_resource->set_name("ports");
-                    port_resource->set_type(mesos::Value_Type_RANGES);
-                    mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
-                    port_range->set_begin(31000);
-                    port_range->set_end(32000);
-                    offer->add_resources()->MergeFrom(*port_resource);
+                                    // port
+                                    mesos::Resource *port_resource = new mesos::Resource();
+                                    port_resource->set_name("ports");
+                                    port_resource->set_type(mesos::Value_Type_RANGES);
+                                    mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
+                                    port_range->set_begin(31000);
+                                    port_range->set_end(32000);
+                                    offer->add_resources()->MergeFrom(*port_resource);
 
 
-                    offer->mutable_id()->MergeFrom(new_offer_id());
-                    offer->mutable_framework_id()->MergeFrom(framework->id());
+                                    offer->mutable_id()->MergeFrom(new_offer_id());
+                                    offer->mutable_framework_id()->MergeFrom(framework->id());
 
-                    offer->mutable_slave_id()->set_value(slave->m_uid);
-                    offer->set_hostname(slave->m_hostname);
+                                    offer->mutable_slave_id()->set_value(slave->m_uid);
+                                    offer->set_hostname(slave->m_hostname);
 
-                    offers.put(offer->id().value(), offer);
 
-                    message.add_offers()->MergeFrom(*offer);
-                    message.add_pids(offer->id().value());
-            }
+                                    offers.put(offer->id().value(), offer);
+
+                                    message.add_offers()->MergeFrom(*offer);
+                                    message.add_pids(offer->id().value());
+                                }
 
             LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
                       << *framework;
@@ -441,12 +459,12 @@ namespace master {
             framework->send(message);
         }
 
-    /**
-* Function model  :  spark run on chameleon
-* Author          :  weiguow
-* Date            :  2018-12-29
-* Funtion name    :  Master::accept
-* */
+        /**
+        * Function model  :  spark run on chameleon
+        * Author          :  weiguow
+        * Date            :  2018-12-29
+        * Funtion name    :  Master::accept
+        * */
         void Master::accept(Framework *framework, mesos::scheduler::Call::Accept accept) {
 
             Slave *slave;
@@ -482,8 +500,6 @@ namespace master {
                 switch (operation.type()) {
                     case mesos::Offer::Operation::LAUNCH: {
 
-//                            LOG(INFO) << "operation taskinfo size " << operation
-
                         mesos::Offer::Operation _operation;
 
                         _operation.set_type(mesos::Offer::Operation::LAUNCH);
@@ -515,25 +531,26 @@ namespace master {
         }
 
 
-    /**
- * Function     : teardown
- * Author       : weiguow
- * Date         : 2-19-2-26
- * Description  : */
+        /**
+         * Function     : teardown_framework
+         * Author       : weiguow
+         * Date         : 2019-2-26
+         * Description  :
+         * */
         void Master::teardown_framework(Framework *framework) {
             CHECK_NOTNULL(framework);
             LOG(INFO) << "Processing TEARDOWN call for framework " << *framework;
             remove_framework(framework);
         }
 
-    /**
- * Function     : remove_framework
- * Author       : weiguow
- * Date         : 2019-2-26
- * Description  : send remove framework info to all connect slave
-     * question : if we need to record which slave is offer to framework
-     *            and just send this message to it
-     * */
+        /**
+         * Function     : remove_framework
+         * Author       : weiguow
+         * Date         : 2019-2-26
+         * Description  : send remove framework info to all connect slave
+         * question     : if we need to record which slave is offer to framework
+         *                and just send this message to it
+         * */
         void Master::remove_framework(Framework *framework) {
             CHECK_NOTNULL(framework);
 
@@ -553,11 +570,12 @@ namespace master {
                                 }
         }
 
-/**
-     * Function     : Decline
-     * Author       : weiguow
-     * Date         : 2019-2-26
-     * Description  : get message from scheduler*/
+        /**
+          * Function     : decline_framework
+          * Author       : weiguow
+          * Date         : 2019-2-26
+          * Description  : get message from scheduler
+          * */
         void Master::decline_framework(master::Framework *framework,
                                        const mesos::scheduler::Call::Decline &decline) {
             CHECK_NOTNULL(framework);
@@ -565,6 +583,13 @@ namespace master {
                       << " for framework " << *framework;
         }
 
+        /**
+         * Function     : shutdown_slave_executor
+         * Author       : weiguow
+         * Date         : 2019-3-6
+         * Description  : get message from scheduler, send this message to slave
+         * question     : this message does not send to slave
+         * */
         void Master::shutdown_slave_executor(master::Framework *framework,
                                              const mesos::scheduler::Call::Shutdown &shutdown) {
             CHECK_NOTNULL(framework);
@@ -583,12 +608,12 @@ namespace master {
             send(slave->m_pid, message);
         }
 
-    /**
- * Function     : status_update
- * Author       : weiguow
- * Date         : 2019-1-10
- * Description  : get statusUpdate message from slave and send it to framework
- * */
+        /**
+         * Function     : status_update
+         * Author       : weiguow
+         * Date         : 2019-1-10
+         * Description  : get statusUpdate message from slave and send it to framework
+         * */
         void Master::status_update(mesos::internal::StatusUpdate update, const UPID &pid) {
             LOG(INFO) << "Status update " << update.status().state()
                       << " of framework " << update.framework_id().value()
@@ -604,6 +629,7 @@ namespace master {
                 LOG(INFO) << "Forwarding status update " << update.status().state()
                           << " to framework " << update.framework_id().value();
 
+
                 mesos::internal::StatusUpdateMessage message;
                 message.mutable_update()->MergeFrom(update);
                 message.set_pid(pid);   //this pid is slavePID
@@ -613,12 +639,12 @@ namespace master {
             }
         }
 
-    /**
- * Function     : status_update_acknowledge
- * Author       : weiguow
- * Date         : 2019-1-10
- * Description  : get statusUpdateAcknowledge message from  and send it to slave
- * */
+        /**
+         * Function     : status_update_acknowledge
+         * Author       : weiguow
+         * Date         : 2019-1-10
+         * Description  : get statusUpdateAcknowledge message from  and send it to slave
+         * */
         void Master::status_update_acknowledgement(
                 const UPID &from,
                 const mesos::SlaveID &slaveId,
@@ -637,13 +663,13 @@ namespace master {
             acknowledge(framework, message);
         }
 
-    /**
-* Function     : acknowledge
-* Author       : weiguow
-* Date         : 2019-1-10
-* Description  : send StatusUpdateAcknowledgementMessage message to
-* slave make sure the status
-* */
+        /**
+        * Function     : acknowledge
+        * Author       : weiguow
+        * Date         : 2019-1-10
+        * Description  : send StatusUpdateAcknowledgementMessage message to
+        * slave make sure the status
+        * */
         void Master::acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge) {
             const mesos::SlaveID &slaveId = acknowledge.slave_id();
 
@@ -677,6 +703,7 @@ namespace master {
 
                                     RuntimeResourcesMessage rrm = m_slave_usage.get(slave->m_pid).get();
 
+
                                     cur_mem_rate = rrm.mem_usage().mem_available() / rrm.mem_usage().mem_total();
 
                                     if (min_use_rate > cur_mem_rate) {
@@ -688,9 +715,9 @@ namespace master {
             return slaves.registered.get(m_slave_pid);
         }
 
-    /**
- * create framework_id, offer_id -weiguow-2019/2/24
- * */
+        /**
+         * create framework_id, offer_id -weiguow-2019/2/24
+         * */
         mesos::FrameworkID Master::new_framework_id() {
             std::ostringstream out;
             out << m_masterinfo.id() << "-" << std::setw(4)
@@ -706,9 +733,9 @@ namespace master {
             return offerId;
         }
 
-    /**
-* save slaveinfo in struct slaves - by weiguow - 2019/3/5
-* */
+        /**
+        * save slaveinfo in struct slaves - by weiguow - 2019/3/5
+        * */
         void Master::add_slave(master::Slave *slave) {
             CHECK_NOTNULL(slave);
             CHECK(!slaves.registered.contains(slave->m_uid));
@@ -716,9 +743,9 @@ namespace master {
             link(slave->m_pid);
         }
 
-    /**
-* save slaveinfo in struct frameworks - by weiguow - 2019/2/24
-* */
+        /**
+        * save slaveinfo in struct frameworks - by weiguow - 2019/2/24
+        * */
         void Master::add_framework(Framework *framework) {
 
             frameworks.registered[framework->id().value()] = framework;
@@ -729,28 +756,28 @@ namespace master {
                 }
             }
         }
-    /**
-* use frameworkId to get Framework-weiguow-2019/3/6
-* */
 
+        /**
+        * use frameworkId to get Framework-weiguow-2019/3/6
+        * */
         Slave *Master::get_slave(const string uid) {
             return slaves.registered.contains(uid)
                    ? slaves.registered.get(uid)
                    : nullptr;
         }
 
-    /**
-* use offer_Id to get Framework-weiguow-2019/3/6
-* */
+        /**
+        * use offer_Id to get Framework-weiguow-2019/3/6
+        * */
         mesos::Offer *Master::get_offer(const mesos::OfferID &offerid) {
             return offers.contains(offerid.value())
                    ? offers.get(offerid.value()).get()
                    : nullptr;
         }
 
-    /**
-* use framework_Id to get Framework-weiguow-2019/2/24
-* */
+        /**
+        * use framework_Id to get Framework-weiguow-2019/2/24
+        * */
         Framework *Master::get_framework(const mesos::FrameworkID &frameworkId) {
             return frameworks.registered.contains(frameworkId.value())
                    ? frameworks.registered.at(frameworkId.value())
@@ -760,6 +787,7 @@ namespace master {
         void Master::register_participant(const string &hostname) {
             DLOG(INFO) << "master receive register message from " << hostname;
         }
+
 
         void Master::update_hardware_resources(const UPID &from,
                                                const HardwareResourcesMessage &hardware_resources_message) {
@@ -789,16 +817,16 @@ namespace master {
 
             //save runtimeinfo in slaves.registered slave - by weiguow -2019/3/6
             foreachvalue(Slave *slave, slaves.registered) {
-                    if (!slaves.registered.contains(slave->m_uid)) {
-                        LOG(INFO) << "This slave is not registered";
-                        return;
-                    }
-                    Slave *slave_ = get_slave(slave->m_uid);
-                    if (!m_slave_usage.contains(slave->m_pid)) {
-                        m_slave_usage.put(slave->m_pid, runtime_resouces_message);
-                        slave->m_runtimeinfo = runtime_resouces_message;
-                    }
-            }
+                                    if (!slaves.registered.contains(slave->m_uid)) {
+                                        LOG(INFO) << "This slave is not registered";
+                                        return;
+                                    }
+                                    Slave *slave_ = get_slave(slave->m_uid);
+                                    if (!m_slave_usage.contains(slave->m_pid)) {
+                                        m_slave_usage.put(slave->m_pid, runtime_resouces_message);
+                                        slave->m_runtimeinfo = runtime_resouces_message;
+                                    }
+                                }
 
             auto slave_id = runtime_resouces_message.slave_id();
             m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
@@ -825,11 +853,19 @@ namespace master {
             }
         }
 
+
+        void Master::set_super_master_path(const string &path) {
+            m_super_master_path = path;
+            LOG(INFO) << "The path of super_master executable is " << m_super_master_path;
+        }
+
+
         // super_master related
         void Master::super_master_control(const UPID &super_master,
                                           const SuperMasterControlMessage &super_master_control_message) {
             LOG(INFO) << " get a super_master_control_message from super_master" << super_master;
-            LOG(INFO) << " passive in super_master_control_message is " << super_master_control_message.passive();
+            LOG(INFO) << " passive in super_master_control_message is "
+                      << super_master_control_message.passive();
 
             // change current status to REGISTERRING to register from supermaster.
             m_state = REGISTERING;
@@ -889,9 +925,8 @@ namespace master {
             }
         }
 
-        void
-        Master::received_terminating_master_message(const UPID &super_master,
-                                                    const TerminatingMasterMessage &message) {
+        void Master::received_terminating_master_message(const UPID &super_master,
+                                                         const TerminatingMasterMessage &message) {
             LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
             if (message.master_id() == stringify(self().address.ip)) {
                 LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
@@ -909,7 +944,8 @@ namespace master {
                     reregister_master_message->set_slave_ip(*iter);
                     UPID slave_id("slave@" + *iter + ":6061");
                     send(slave_id, *reregister_master_message);
-                    LOG(INFO) << self() << " send new_master_message: " << reregister_master_message->master_ip()
+                    LOG(INFO) << self() << " send new_master_message: "
+                              << reregister_master_message->master_ip()
                               << " to salve: " << slave_id;
                 }
                 delete reregister_master_message;
@@ -927,6 +963,7 @@ namespace master {
 }
 
 int main(int argc, char **argv) {
+
     chameleon::set_storage_paths_of_glog("master");// provides the program name
     chameleon::set_flags_of_glog();
 
@@ -942,9 +979,9 @@ int main(int argc, char **argv) {
 
         process::initialize("master");
         Master master;
-        if(FLAGS_supermaster_path.empty()){
-            master.set_super_master_path(master.get_cwd()+"/super_master");
-        }else{
+        if (FLAGS_supermaster_path.empty()) {
+            master.set_super_master_path(master.get_cwd() + "/super_master");
+        } else {
             master.set_super_master_path(FLAGS_supermaster_path);
         }
 

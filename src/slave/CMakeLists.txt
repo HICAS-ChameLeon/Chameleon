@@ -2,7 +2,6 @@
 add_subdirectory(software_store)
 include_directories(resource_collector)
 
-
 # set the gtest 1.7 relevant library names.
 set(GTEST_LIBS gmock gtest gflags)
 
@@ -114,6 +113,7 @@ set(runtime_resource_SRCS
         resource_collector/runtime_resources_usage.hpp
         resource_collector/runtime_resources_usage.cpp)
 
+
 set(slave_SRCS
         slave.hpp
         slave.cpp
@@ -124,6 +124,7 @@ set(slave_SRCS
 set(software_resources_SRCS
         software_store/software_resource_manager.hpp
         software_store/software_resource_manager.cpp)
+
 
 list(APPEND slave_SRCS ${runtime_resource_SRCS})
 list(APPEND slave_SRCS ${cpu_SRCS})

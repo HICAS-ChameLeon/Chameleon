@@ -318,8 +318,10 @@ endif (NOT WIN32)
 # trying to build them with CMake.
 set(GMOCK_ROOT ${PROJECT_SOURCE_DIR}/3rdparty/gmock-1.7.0)
 #message(319 ${GMOCK_ROOT})
-set(GMOCK_CONFIG_CMD  cd ${GMOCK_ROOT} && ./configure)
-set(GMOCK_BUILD_CMD   cd ${GMOCK_ROOT} && make -j 4)
+#set(GMOCK_CONFIG_CMD  cd ${GMOCK_ROOT} && ./configure)
+#set(GMOCK_BUILD_CMD   cd ${GMOCK_ROOT} && make -j 4)
+set(GMOCK_CONFIG_CMD  cd ${GMOCK_ROOT} && cmake .)
+set(GMOCK_BUILD_CMD   cd ${GMOCK_ROOT} && make)
 set(GMOCK_INSTALL_CMD cd ${GMOCK_ROOT} )
 ExternalProject_Add(
   gmock_1_7
