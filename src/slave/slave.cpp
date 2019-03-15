@@ -730,6 +730,10 @@ namespace chameleon {
         }
     }
 
+    void Slave::setM_containerizer(slave::DockerContainerizer *m_containerizer) {
+        Slave::m_containerizer = m_containerizer;
+    }
+
     /**
      *     launch master by subprocess
      *  lele, makun
