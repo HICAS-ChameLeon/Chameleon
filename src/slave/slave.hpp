@@ -162,7 +162,6 @@ namespace chameleon {
                 const process::UPID& from,
                 const mesos::FrameworkID& frameworkId);
 
-    protected:
     public:
         void setM_containerizer(slave::DockerContainerizer *m_containerizer);
 

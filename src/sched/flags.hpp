@@ -23,11 +23,11 @@
 
 #include "logging/flags.hpp"
 
-#include "messages/messages.hpp"
+#include "docker/messages.hpp"
 
 #include "sched/constants.hpp"
 
-namespace mesos {
+namespace chameleon {
 namespace internal {
 namespace scheduler {
 
