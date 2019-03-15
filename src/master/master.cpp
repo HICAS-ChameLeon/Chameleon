@@ -243,6 +243,7 @@ namespace master {
                             Subprocess::FD(STDOUT_FILENO),
                             Subprocess::FD(STDERR_FILENO)
                     );
+                    result.values["start"] = "success";
                     OK response(stringify(result));
                     response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return response;
