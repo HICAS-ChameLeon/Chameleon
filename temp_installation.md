@@ -1,6 +1,6 @@
 #Docker_launch
 
-##what you should do before "make"
+##What you should do before "make"
 
 ###1.find the path of libmesos-1.3.2.so
 ```shell
@@ -34,4 +34,34 @@ $cd build
 $cmake ..
 
 $make 
+```
+
+##How to launch a task by docker  
+### Required Flags
+
+
+
+| Flag     | Explanation |Example | 
+| -------- | ----------- | ------ |
+| --master | The master node pid. | --webui=172.20.110.59:6060 |
+| --docker_image | The docker image name. | --docker_image="heldon/hello_docker"|
+| --command | The docker container entry command. | --command= "java -jar /hello_docker.jar" |
+
+###Optional Flags
+|Flags|Explanation|Example|
+|-----|-----------|-------|
+|--cpu|Allocate how much Cpu per task.(default:1) | --cpu=0.5|
+|--mem|Allocate memory(MB) per task.(default:32)|--mem=32|
+
+first of all, ensure that master and slave node have been started  
+then,  
+**example:**
+```shell
+$cd build/src/slave
+
+$./docker_launch --master=172.20.110.59:6060 --docker_image="heldon/hello_docker" --cpu=0.5 --command="java -jar /hello_docker.jar"
+```
+**Output:**
+```Shell
+Hello,Heldon!
 ```
