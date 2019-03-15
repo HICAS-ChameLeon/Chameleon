@@ -28,6 +28,11 @@
                     templateUrl: 'supernetwork_topology.html',
                     controller: 'SuperTopologyCtrl'
                 })
+                //framework_topology.html
+                .when('/framework_topology',{
+                    templateUrl:'framework_topology.html',
+                    controller: 'FrameworkTopologyCtrl'
+                })
                 // frameworks.html
                 .when('/frameworks',{
                     templateUrl: 'frameworks.html',
