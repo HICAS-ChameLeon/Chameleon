@@ -2,15 +2,15 @@
 
 ##what you should do before "make"
 
-###1.find the path of libmesos-3.1.2.so
+###1.find the path of libmesos-1.3.2.so
 ```shell
 #find the path
-$locate libmesos-3.1.2.so
+$locate libmesos-1.3.2.so
 ```
 
 copy the path to Chameleon/src/slave/CMakeLists.txt : line194
 ```cmake
-link_libraries(here is your libmesos-3.1.2.so path)
+link_libraries(here is your libmesos-1.3.2.so path)
 ```
 
 ###2.modify mesos.hpp
