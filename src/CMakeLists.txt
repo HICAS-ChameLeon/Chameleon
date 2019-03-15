@@ -8,6 +8,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
 include_directories(${CMAKE_SOURCE_DIR}/src/docker)
 include_directories(${CMAKE_SOURCE_DIR}/src/logging)
 include_directories(${CMAKE_SOURCE_DIR}/src/linux)
+include_directories(${CMAKE_SOURCE_DIR}/src/sched)
 
 
 
