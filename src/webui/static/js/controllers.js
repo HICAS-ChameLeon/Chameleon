@@ -901,7 +901,8 @@
                         console.log('9'+framework_index);
                         temp_framework.label = $scope.framework[f].name;
                         temp_framework.id = framework_index;
-                        temp_framework.group = 'internet';
+                        temp_framework.shape = 'image';
+                        temp_framework.image =DIR + 'Hardware-WQN-spark.png'
                         temp_framework.title = $scope.framework[f].id;
                         // temp_framework.value = Math.ceil(Math.round($scope.master_runtime[i].cpu_usage.cpu_used) / 10);
                         vertexes[framework_index] = temp_framework;
