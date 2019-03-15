@@ -63,4 +63,9 @@ message AdministeredSlavesMessage{
     repeated SlavesInfoControlledByMaster my_slaves = 4;
 }
 
-
+//launch new master parameter configuration
+message LaunchMasterMessage{
+    required string port = 1;
+    required string master_path =2 ;
+    required string webui_path = 3;
+}

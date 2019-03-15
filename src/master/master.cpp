@@ -47,7 +47,7 @@ static bool validate_super_master_path(const char *flagname, const string &value
     if (value.empty() || os::exists(value)) {
         return true;
     }
-    printf("Invalid value for super_master_path, please make sure the super_master_path actually exist!");
+    printf("Invalid value for super_master_path, please make sure the super_master_path actually exist!\n");
     return false;
 
 }
