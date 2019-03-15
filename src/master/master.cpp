@@ -80,8 +80,6 @@ namespace master {
         nextSlaveId = 0;
         nextOfferId = 0;
 
-        install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
-
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
 
@@ -804,7 +802,7 @@ namespace master {
 
         auto slaveid = hardware_resources_message.slave_id();
 
-        slaves.registering.insert(from);
+//        slaves.registering.insert(from);
 
         if (m_hardware_resources.find(slaveid) == m_hardware_resources.end()) {
             JSON::Object object = JSON::protobuf(hardware_resources_message);

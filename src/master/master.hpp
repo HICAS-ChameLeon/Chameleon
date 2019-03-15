@@ -40,7 +40,6 @@
 #include <process/subprocess.hpp>
 
 // protobuf
-#include <participant_info.pb.h>
 #include <hardware_resource.pb.h>
 #include <job.pb.h>
 #include <runtime_resource.pb.h>
@@ -182,48 +181,48 @@ namespace master {
 
         hashmap<string, mesos::Offer*> offers;
 
-        /**
-         * save slaveinfo-weiguow-2019-2-24*/
-        struct Slaves {
-
-            hashset<process::UPID> registering;
-
-            struct {
-                Slave* get(const mesos::SlaveID &slaveId) const {
-                    return ids.get(slaveId.value()).getOrElse(nullptr);
-                }
-
-                Slave* get(const process::UPID &pid) const {
-                    return pids.get(pid).getOrElse(nullptr);
-                }
-
-                void put(Slave* slave)
-                {
-                    CHECK_NOTNULL(slave);
-
-                    ids[slave->id.value()] = slave;
-                    pids[slave->pid] = slave;
-                }
-
-
-                size_t size() const { return ids.size(); }
-
-                typedef hashmap<string, Slave*>::iterator iterator;
-                typedef hashmap<string, Slave*>::const_iterator const_iterator;
-
-                iterator begin() { return ids.begin(); }
-                iterator end()   { return ids.end();   }
-
-                const_iterator begin() const { return ids.begin(); }
-                const_iterator end()   const { return ids.end();   }
-
-            public:
-                hashmap<string, Slave*> ids;
-                hashmap<process::UPID, Slave*> pids;
-            } registered;
-
-
-        } slaves;
+//        /**
+//         * save slaveinfo-weiguow-2019-2-24*/
+//        struct Slaves {
+//
+//            hashset<process::UPID> registering;
+//
+//            struct {
+//                Slave* get(const mesos::SlaveID &slaveId) const {
+//                    return ids.get(slaveId.value()).getOrElse(nullptr);
+//                }
+//
+//                Slave* get(const process::UPID &pid) const {
+//                    return pids.get(pid).getOrElse(nullptr);
+//                }
+//
+//                void put(Slave* slave)
+//                {
+//                    CHECK_NOTNULL(slave);
+//
+//                    ids[slave->id.value()] = slave;
+//                    pids[slave->pid] = slave;
+//                }
+//
+//
+//                size_t size() const { return ids.size(); }
+//
+//                typedef hashmap<string, Slave*>::iterator iterator;
+//                typedef hashmap<string, Slave*>::const_iterator const_iterator;
+//
+//                iterator begin() { return ids.begin(); }
+//                iterator end()   { return ids.end();   }
+//
+//                const_iterator begin() const { return ids.begin(); }
+//                const_iterator end()   const { return ids.end();   }
+//
+//            public:
+//                hashmap<string, Slave*> ids;
+//                hashmap<process::UPID, Slave*> pids;
+//            } registered;
+//
+//
+//        } slaves;
 
         /**
          * save Frameworkinfo-weiguow-2019-2-22
@@ -297,7 +296,6 @@ namespace master {
             RUNNING
         } m_state;
 
-        unordered_map<UPID, ParticipantInfo> m_participants;
         unordered_map<string, JSON::Object> m_hardware_resources;
         unordered_map<string, HardwareResourcesMessage> m_proto_hardware_resources;
         set<string> m_alive_slaves;
