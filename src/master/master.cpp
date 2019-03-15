@@ -442,7 +442,7 @@ namespace master {
 
         offer->mutable_slave_id()->MergeFrom(*slaveID);
 
-        offer->set_hostname("221b");
+        offer->set_hostname("heldon");
         return offer;
     }
 

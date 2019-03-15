@@ -74,6 +74,8 @@
 #include <configuration_glog.hpp>
 #include <chameleon_os.hpp>
 #include <chameleon_string.hpp>
+#include <containerizer/docker.hpp>
+#include <docker.hpp>
 
 using std::string;
 using std::queue;
@@ -161,6 +163,10 @@ namespace chameleon {
                 const mesos::FrameworkID& frameworkId);
 
     protected:
+    public:
+        void setM_containerizer(slave::DockerContainerizer *m_containerizer);
+
+    protected:
         void finalize() override;
 
     private:
@@ -187,6 +193,8 @@ namespace chameleon {
 
         mesos::TaskInfo m_task;
 
+        chameleon::slave::DockerContainerizer* m_containerizer;
+
         string m_work_dir;
         // the absolute path of the slave executable
         string m_cwd;
@@ -206,6 +214,8 @@ namespace chameleon {
         void shutdown(const UPID &master, const ShutdownMessage &shutdown_message);
 
         void start_mesos_executor(const Future<Nothing>& future, const Framework *framework);
+
+        void start_docker_container(const mesos::TaskInfo& taskInfo, const Framework *framework);
 
         void registerExecutor(const UPID &from,
                               const mesos::FrameworkID &frameworkId,

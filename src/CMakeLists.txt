@@ -5,6 +5,13 @@ include_directories(${CMAKE_BINARY_DIR}/src/messages)
 include_directories(${CMAKE_SOURCE_DIR}/src/log)
 include_directories(${CMAKE_SOURCE_DIR}/src/common)
 include_directories(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
+include_directories(${CMAKE_SOURCE_DIR}/src/docker)
+include_directories(${CMAKE_SOURCE_DIR}/src/logging)
+include_directories(${CMAKE_SOURCE_DIR}/src/linux)
+include_directories(${CMAKE_SOURCE_DIR}/src/sched)
+
+
+
 
 # libprocess libraries headers directories
 include_directories(${PROCESS_LIB_DIRS})
@@ -31,5 +38,11 @@ add_subdirectory(slave)
 add_subdirectory(submitter)
 
 add_subdirectory(launcher)
+add_subdirectory(docker)
 
-#add_subdirectory(my_hello)
+#set(sched_SRC
+#        sched/constants.hpp
+#        sched/flags.hpp
+#        sched/sched.cpp)
+#
+#add_library(sched "STATIC" ${sched_SRC})
