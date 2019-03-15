@@ -1,4 +1,4 @@
-//
+ //
 // Created by lemaker on 18-12-4.
 //
 
@@ -24,7 +24,7 @@ namespace chameleon {
         /*Use statfs to get disk's rest storage,available storage*/
         struct statfs diskInfo;
         /*Find the information under the path "/home" */
-        statfs("/home", &diskInfo);
+        statfs("/", &diskInfo);
 
         /*The number of bytes contained in each block*/
         unsigned long long blocksize = diskInfo.f_bsize;
