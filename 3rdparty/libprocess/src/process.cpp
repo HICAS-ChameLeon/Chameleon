@@ -2449,6 +2449,7 @@ void SocketManager::close(int_fd s)
       // termination logic is not run twice.
       Socket socket = iterator->second;
       sockets.erase(iterator);
+
       Try<Nothing> shutdown = socket.shutdown();
       if (shutdown.isError()) {
         LOG(ERROR) << "Failed to shutdown socket with fd " << socket.get()
