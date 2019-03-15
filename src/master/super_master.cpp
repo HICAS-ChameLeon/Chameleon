@@ -142,7 +142,8 @@ namespace chameleon {
                     JSON::Object result = JSON::Object();
                     LOG(INFO) << "MAKUN KILL MASTER";
                     string new_master_ip = select_master();
-                    result.values["new_master_ip"] = new_master_ip;
+                    result.values["stop"] = "success";
+                    //result.values["new_master_ip"] = new_master_ip;
                     OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     //select_master();
