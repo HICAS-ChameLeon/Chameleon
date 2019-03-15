@@ -24,10 +24,10 @@ static bool ValidateStr(const char *flagname, const string &value) {
 
 static bool validate_webui_path(const char *flagname, const string &value) {
 
-    if (value.empty() || os::exists(value)) {
+    if (os::exists(value)) {
         return true;
     }
-    printf("Invalid value for webui_path, please make sure the webui_path actually exist!");
+    printf("Invalid value for webui_path, please make sure the webui_path actually exist!\n");
     return false;
 
 }
@@ -307,8 +307,12 @@ namespace chameleon {
 
     // launch the exectuables of maters administered by the current super_master
     void SuperMaster::launch_masters() {
+        LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
+        launch_master_message->set_port("6060");
+        launch_master_message->set_master_path(m_master_path);
+        launch_master_message->set_webui_path(m_webui_path);
         for(const string& master_ip:m_classification_masters) {
-            send(UPID("slave@" + master_ip + ":6061"), "launchmaster");
+            send(UPID("slave@" + master_ip + ":6061"), *launch_master_message);
             LOG(INFO) << "send message to " << master_ip;
             // since the both the master executable and super_master executable are in the same directory,
             // so we get the current directory path of super_master exectuable to stands for the path of cd command"
