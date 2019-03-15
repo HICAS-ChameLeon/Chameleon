@@ -720,11 +720,9 @@ static void transport(Message* message, ProcessBase* sender = nullptr)
 {
   if (message->to.address == __address__) {
     // Local message.
-    LOG(INFO)<<"Heldon local";
     process_manager->deliver(message->to, new MessageEvent(message), sender);
   } else {
     // Remote message.
-    LOG(INFO)<<"Heldon remote";
     socket_manager->send(message);
   }
 }
@@ -1118,12 +1116,10 @@ bool initialize(
   }
 
   if (flags.ip.isSome()) {
-    LOG(INFO)<<"Heldon flags.ip : "<<flags.ip.get();
     __address__.ip = flags.ip.get();
   }
 
   if (flags.port.isSome()) {
-      LOG(INFO)<<"Heldon flags.port : "<<flags.port.get();
       __address__.port = flags.port.get();
   }
 
@@ -2150,7 +2146,7 @@ void SocketManager::send_connect(
 {
   if (future.isDiscarded() || future.isFailed()) {
     if (future.isFailed()) {
-      LOG(INFO) << "Failed to send '" << message->name << "' to '"
+      VLOG(1) << "Failed to send '" << message->name << "' to '"
               << message->to.address << "', connect: " << future.failure();
     }
 
@@ -2291,7 +2287,6 @@ void SocketManager::send(Message* message, const SocketImpl::Kind& kind)
   }
 
   if (connect) {
-    LOG(INFO)<<"Heldon connect = true";
     CHECK_SOME(socket);
     socket->connect(address)
       .onAny(lambda::bind(
@@ -2454,7 +2449,6 @@ void SocketManager::close(int_fd s)
       // termination logic is not run twice.
       Socket socket = iterator->second;
       sockets.erase(iterator);
-      LOG(INFO)<<"Heldon socket shutdown";
       Try<Nothing> shutdown = socket.shutdown();
       if (shutdown.isError()) {
         LOG(ERROR) << "Failed to shutdown socket with fd " << socket.get()
@@ -3711,7 +3705,6 @@ void ProcessBase::send(
     size_t length)
 {
   if (!to) {
-    LOG(INFO)<<"Heldon !UPID";
     return;
   }
 

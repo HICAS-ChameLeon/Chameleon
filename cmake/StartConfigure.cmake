@@ -131,8 +131,8 @@ include(Process3rdpartyConfigure)
 #  CACHE STRING "Target for the default executor")
 #
 #set(
-#  MESOS_CONTAINERIZER mesos-docker
-#  CACHE STRING "Target for docker")
+#  MESOS_CONTAINERIZER mesos-containerizer
+#  CACHE STRING "Target for containerizer")
 #
 #set(
 #  MESOS_DOCKER_EXECUTOR mesos-docker-executor
