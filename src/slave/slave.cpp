@@ -668,7 +668,12 @@ namespace chameleon {
         }
     }
 
-    //change the way of launch master
+    /**
+     *     launch master by subprocess
+     *  lele, makun
+     * @param super_master
+     * @param message
+     */
     void Slave::launch_master(const UPID &super_master, const LaunchMasterMessage &message) {
         LOG(INFO) << self().address << " received message from " << super_master;
 //        string launch_command = "/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src/webui";
