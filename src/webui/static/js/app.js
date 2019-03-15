@@ -10,7 +10,7 @@
             $routeProvider.when('/hardware', {
                 //templateURL：插入ng-view的HTML模板文件
                 templateUrl: 'hardware.html',
-                controller: 'UpdateCtrl'
+                controller: 'HardwareCtrl'
 
             })
                 .when('/runtime', {

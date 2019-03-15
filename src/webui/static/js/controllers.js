@@ -66,15 +66,15 @@
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
-            $http({
-                method: 'GET',
-                url: leadingChameleonMasterURL('/master/hardware-resources')
-            }).then(function successCallback(response) {
-                $scope.hardware = response.data.content;
-                $scope.master_hardware_quantities = response.data.quantity;
-            }, function errorCallback(response) {
-                // 请求失败执行代码
-            });
+            // $http({
+            //     method: 'GET',
+            //     url: leadingChameleonMasterURL('/master/hardware-resources')
+            // }).then(function successCallback(response) {
+            //     $scope.hardware = response.data.content;
+            //     $scope.master_hardware_quantities = response.data.quantity;
+            // }, function errorCallback(response) {
+            //     // 请求失败执行代码
+            // });
             $timeout(pollState, $scope.delay);
         };
         pollState();
@@ -95,7 +95,35 @@
         }
     });
 
-    chameleon_app.controller('HardwareCtrl', function($scope,$route, $http) {
+    chameleon_app.controller('HardwareCtrl', function($scope,$route, $http,$timeout) {
+
+        var pollState = function() {
+            $scope.delay = 3600000;
+
+            // $http.jsonp(leadingMasterURL('/master/runtime-resources?jsonp=JSON_CALLBACK'))
+            //     .success(function (response) {
+            //         console.log(response);
+            //
+            //         $scope.runtime = response.data.content;
+            //         $scope.master_runtime_quantities = response.data.quantity;
+            //         //$scope.masters.runtime.quantities = response.data.quantity;
+            //     })
+            //     .error(function (reason){
+            //        alert(reason);
+            //     });
+            $http({
+                method: 'GET',
+                url: leadingChameleonMasterURL('/master/hardware-resources')
+            }).then(function successCallback(response) {
+                $scope.hardware = response.data.content;
+                $scope.master_hardware_quantities = response.data.quantity;
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+            });
+            $timeout(pollState, $scope.delay);
+        };
+        pollState();
+
     });
 
     chameleon_app.controller('RuntimeCtrl', function($scope,$rootScope,$http) {
