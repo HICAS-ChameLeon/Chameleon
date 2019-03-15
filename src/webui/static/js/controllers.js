@@ -462,7 +462,7 @@
             my_master.label = "master";
             my_master.shape = 'image';
             my_master.image = DIR + 'Hardware-WQN-main.png';
-            my_master.title = "主节点";    //unchangeable
+            //my_master.title = "主节点";    //unchangeable
 
             //my_slaves[0] = my_master;
             var index_slave = 1;
@@ -477,8 +477,8 @@
 
                     var temp_slave = {}; // 添加一个顶点
                     cur_index++; // 全局id
+                    my_master.title = $scope.master_runtime[0].slave_id+':6060'
                     temp_slave.label = "slave" + cur_index;
-                    // console.log('57 '+cur_index);
                     temp_slave.id = cur_index;
                     temp_slave.shape = 'image';
                     temp_slave.image = DIR + 'Hardware-WQN-server.png';
@@ -640,7 +640,7 @@
             my_supermaster.label = "super_master";
             my_supermaster.shape = 'image';
             my_supermaster.image = DIR + 'Hardware-WQN-superserver.png';
-            my_supermaster.title = '超级节点';
+            my_supermaster.title = $scope.supermaster[0].ip+':7000';
 
             var index_master = 1;
             var index_superedge = -1;
@@ -666,7 +666,7 @@
                         my_master.label = "master";
                         my_master.shape = 'image';
                         my_master.image = DIR + 'Hardware-WQN-main.png';
-                        my_master.title = $scope.master_runtime[i].slave_id;
+                        my_master.title = $scope.master_runtime[i].slave_id +':6060';
                         var temp_superedge = {};       //添加一条super_master到my_master的边
                         //console.log('5'+my_supermaster.id);
                         temp_superedge.from = my_supermaster.id;
@@ -844,8 +844,7 @@
             my_master.label = "master";
             my_master.shape = 'image';
             my_master.image = DIR + 'Hardware-WQN-main.png';
-            my_master.title = "主节点";    //unchangeable
-
+            //my_master.title = "主节点";    //unchangeable
             //my_slaves[0] = my_master;
             var index_slave = 1;
             var index_edge = -1;
@@ -860,6 +859,8 @@
 
                     var temp_slave = {}; // 添加一个顶点
                     cur_index++; // 全局id
+
+                    my_master.title = $scope.master_runtime[0].slave_id+':6060';   //master节点需要用到slave的消息，所以写在这里
                     temp_slave.label = "slave" + cur_index;
                     // console.log('57 '+cur_index);
                     temp_slave.id = cur_index;
@@ -898,7 +899,6 @@
                         //   添加framework运行节点
                         var temp_framework = {};
                         framework_index++;
-                        console.log('9'+framework_index);
                         temp_framework.label = $scope.framework[f].name;
                         temp_framework.id = framework_index;
                         temp_framework.shape = 'image';
@@ -909,11 +909,8 @@
                         // 添加连接cpu节点的边, temp_slave -> temp_cpu
                         var edge_framework = {};
                         index_edge++;
-                        console.log('5'+index_edge);
                         edge_framework.from = my_master.id;
-                        console.log('0'+my_master.id);
                         edge_framework.to = temp_framework.id;
-                        console.log('3'+temp_framework.id);
                         edge_framework.arrows = 'to';
                         my_edges[index_edge] = edge_framework;
                     }
