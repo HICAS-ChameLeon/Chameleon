@@ -44,37 +44,17 @@
 
         var pollState = function() {
            $scope.delay = 2000;
-
-            // $http.jsonp(leadingMasterURL('/master/runtime-resources?jsonp=JSON_CALLBACK'))
-            //     .success(function (response) {
-            //         console.log(response);
-            //
-            //         $scope.runtime = response.data.content;
-            //         $scope.master_runtime_quantities = response.data.quantity;
-            //         //$scope.masters.runtime.quantities = response.data.quantity;
-            //     })
-            //     .error(function (reason){
-            //        alert(reason);
-            //     });
-
             $http({
                 method: 'GET',
                 url: leadingChameleonMasterURL('/master/runtime-resources')
             }).then(function successCallback(response) {
-                $scope.runtime = response.data.content;
-                $scope.master_runtime_quantities = response.data.quantity;
+                $scope.master = {
+                    runtime    : response.data.content,
+                    quantities : response.data.quantity,
+                };
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
-            // $http({
-            //     method: 'GET',
-            //     url: leadingChameleonMasterURL('/master/hardware-resources')
-            // }).then(function successCallback(response) {
-            //     $scope.hardware = response.data.content;
-            //     $scope.master_hardware_quantities = response.data.quantity;
-            // }, function errorCallback(response) {
-            //     // 请求失败执行代码
-            // });
             $timeout(pollState, $scope.delay);
         };
         pollState();
@@ -99,24 +79,15 @@
 
         var pollState = function() {
             $scope.delay = 3600000;
-
-            // $http.jsonp(leadingMasterURL('/master/runtime-resources?jsonp=JSON_CALLBACK'))
-            //     .success(function (response) {
-            //         console.log(response);
-            //
-            //         $scope.runtime = response.data.content;
-            //         $scope.master_runtime_quantities = response.data.quantity;
-            //         //$scope.masters.runtime.quantities = response.data.quantity;
-            //     })
-            //     .error(function (reason){
-            //        alert(reason);
-            //     });
             $http({
                 method: 'GET',
                 url: leadingChameleonMasterURL('/master/hardware-resources')
             }).then(function successCallback(response) {
-                $scope.hardware = response.data.content;
-                $scope.master_hardware_quantities = response.data.quantity;
+
+                $scope.master = {
+                    hardware   : response.data.content,
+                    quantities : response.data.quantity,
+                };
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
@@ -207,7 +178,7 @@
 
                 }
             ]
-        })
+        });
 
         var myChart = echarts.init(document.getElementById('mem'));
 
@@ -290,7 +261,7 @@
 
                 }
             ]
-        })
+        });
 
         var myChart = echarts.init(document.getElementById('disk'));
 
@@ -361,7 +332,7 @@
 
                 }
             ]
-        })
+        });
 
         var myChart = echarts.init(document.getElementById('swap'));
 
@@ -432,13 +403,7 @@
 
                 }
             ]
-        })
-
-        console.log("40  "+ $scope.slave_uuid);
-        console.log( $scope.slave_id );
-        console.log($scope.cpu_used);
-        console.log($scope.mem_used);
-
+        });
     });
 
     //网络拓扑图的Controller
@@ -448,10 +413,10 @@
             method: 'GET',
             url: leadingChameleonMasterURL('/master/runtime-resources')
         }).then(function successCallback(response) {
-            $scope.master_runtime = response.data.content;
-            console.log(response.data.content);
-            $scope.master_runtime_quantities = response.data.quantity;
-            // console.log(response.data.quantity);
+            $scope.master = {
+                runtime    : response.data.content,
+                quantities : response.data.quantity,
+            };
 
             var DIR = '../icon/refresh-cl/';
             var vertexes = new Array();
@@ -464,32 +429,29 @@
             my_master.image = DIR + 'Hardware-WQN-main.png';
             //my_master.title = "主节点";    //unchangeable
 
-            //my_slaves[0] = my_master;
             var index_slave = 1;
             var index_edge = -1;
             var my_edges = [];
             var cur_index = 0;
 
-            if ($scope.master_runtime_quantities >= 1) {
+            if ($scope.master.quantities >= 1) {
                 my_edges = [];
-                for (var i in $scope.master_runtime) {
-                    var slave = $scope.master_runtime[i];
-
+                for (var i in $scope.master.runtime) {
                     var temp_slave = {}; // 添加一个顶点
                     cur_index++; // 全局id
-                    my_master.title = $scope.master_runtime[0].slave_id+':6060'
+                    my_master.title = $scope.master.runtime[0].slave_id+':6060';
                     temp_slave.label = "slave" + cur_index;
                     temp_slave.id = cur_index;
                     temp_slave.shape = 'image';
                     temp_slave.image = DIR + 'Hardware-WQN-server.png';
-                    temp_slave.title = $scope.master_runtime[i].slave_id;
-                    vertexes[cur_index] = temp_slave; // cur_index 同时代表 顶点集合 my_slaves 的下标
-                    // console.info(vertexes);
-                    var temp_edge = {}; // 添加一条边 master -> temp_slave
+                    temp_slave.title = $scope.master.runtime[i].slave_id;
+                    vertexes[cur_index] = temp_slave;   // cur_index 同时代表 顶点集合 my_slaves 的下标
+
+                    var temp_edge = {};   // 添加一条边 master -> temp_slave
                     temp_edge.from = 0;
                     temp_edge.to = temp_slave.id;
                     temp_edge.arrows = 'to';
-                    temp_edge.label = Math.round($scope.master_runtime[i].net_usage.net_used * 100) / 100 + 'KiB/s';
+                    temp_edge.label = Math.round($scope.master.runtime[i].net_usage.net_used * 100) / 100 + 'KiB/s';
                     index_edge++; // 边集合 my_edges 的下标
                     my_edges[index_edge] = temp_edge;
 
@@ -499,8 +461,8 @@
                     temp_cpu.label = "cpu";
                     temp_cpu.id = cur_index;
                     temp_cpu.group = 'server';
-                    temp_cpu.title = Math.round($scope.master_runtime[i].cpu_usage.cpu_used);
-                    temp_cpu.value = Math.ceil(Math.round($scope.master_runtime[i].cpu_usage.cpu_used) / 10);
+                    temp_cpu.title = Math.round($scope.master.runtime[i].cpu_usage.cpu_used);
+                    temp_cpu.value = Math.ceil(Math.round($scope.master.runtime[i].cpu_usage.cpu_used) / 10);
                     vertexes[cur_index] = temp_cpu;
                     // 添加连接cpu节点的边, temp_slave -> temp_cpu
                     var edge_cpu = {};
@@ -516,8 +478,8 @@
                     temp_disk.label = "disk";
                     temp_disk.id = cur_index;
                     temp_disk.group = 'switch';
-                    temp_disk.title = Math.round(100 - $scope.master_runtime[i].disk_usage.available_percent);
-                    temp_disk.value = Math.ceil(Math.round(100 - $scope.master_runtime[i].disk_usage.available_percent) / 10);
+                    temp_disk.title = Math.round(100 - $scope.master.runtime[i].disk_usage.available_percent);
+                    temp_disk.value = Math.ceil(Math.round(100 - $scope.master.runtime[i].disk_usage.available_percent) / 10);
                     vertexes[cur_index] = temp_disk;
                     // 添加连接cpu节点的边, temp_slave -> temp_cpu
                     var edge_disk = {};
@@ -533,8 +495,8 @@
                     temp_mem.label = "mem";
                     temp_mem.id = cur_index;
                     temp_mem.group = 'desktop';
-                    temp_mem.title = Math.round($scope.master_runtime[i].mem_usage.mem_available / $scope.master_runtime[i].mem_usage.mem_total * 100);
-                    temp_mem.value = Math.ceil(Math.round($scope.master_runtime[i].mem_usage.mem_available / $scope.master_runtime[i].mem_usage.mem_total * 100) / 10);
+                    temp_mem.title = Math.round($scope.master.runtime[i].mem_usage.mem_available / $scope.master.runtime[i].mem_usage.mem_total * 100);
+                    temp_mem.value = Math.ceil(Math.round($scope.master.runtime[i].mem_usage.mem_available / $scope.master.runtime[i].mem_usage.mem_total * 100) / 10);
                     vertexes[cur_index] = temp_mem;
                     // 添加连接mem节点的边, temp_slave -> temp_mem
                     var edge_mem = {};
@@ -550,7 +512,7 @@
                     temp_swap.label = "swap";
                     temp_swap.id = cur_index;
                     temp_swap.group = 'mobile';
-                    temp_swap.title = $scope.master_runtime[i].mem_usage.swap_free / $scope.master_runtime[i].mem_usage.swap_total * 100;
+                    temp_swap.title = $scope.master.runtime[i].mem_usage.swap_free / $scope.master.runtime[i].mem_usage.swap_total * 100;
                     vertexes[cur_index] = temp_swap;
                     // 添加连接net节点的边, temp_slave -> temp_net
                     var edge_swap = {};
@@ -626,10 +588,12 @@
             method: 'GET',
             url: leadingChameleonSuperMasterURL('/super_master/super_master')
         }).then(function successCallback(response) {
-            $scope.supermaster = response.data.content;
-            // console.log(response.data.content);
-            $scope.supermaster_quantities = response.data.quantity;
-            // console.log(response.data.quantity);
+
+            $scope.supermaster = {
+                resource   : response.data.content,
+                quantities : response.data.quantity,
+            };
+
             var DIR = '../icon/refresh-cl/';
 
             var vertexes_super = new Array()
@@ -640,51 +604,51 @@
             my_supermaster.label = "super_master";
             my_supermaster.shape = 'image';
             my_supermaster.image = DIR + 'Hardware-WQN-superserver.png';
-            my_supermaster.title = $scope.supermaster[0].ip+':7000';
+            my_supermaster.title = $scope.supermaster.resource[0].ip+':7000';
 
             var index_master = 1;
             var index_superedge = -1;
             var my_superedges = [];
             var cur_masterindex = 0;
-           // console.log('9'+$scope.supermaster_quantities);
-            if ($scope.supermaster_quantities >= 1) {
+
+            if ($scope.supermaster.quantities >= 1) {
                 my_superedges = [];   //构造一条边
                 $http({
                     method: 'GET',
                     url: leadingChameleonMasterURL('/master/runtime-resources')
                 }).then(function successCallback(response) {
-                    $scope.master_runtime = response.data.content;
-                     console.log($scope.runtime);
-                    $scope.master_runtime_quantities = response.data.quantity;
-                    //console.log(response.data.quantity);
-                    for (var i in $scope.supermaster) {
-                        //var master = $scope.master_runtime[i];
+
+                    $scope.master = {
+                        runtime    : response.data.content,
+                        quantities : response.data.quantity,
+                    };
+
+                    for (var i in $scope.supermaster.resource) {
                         var my_master = {};    //构造一个master节点
-                        vertexes_super[0 + $scope.supermaster_quantities] = my_master;
-                        cur_masterindex++      //全局变量
+                        vertexes_super[0 + $scope.supermaster.quantities] = my_master;
+                        cur_masterindex++;      //全局变量
                         my_master.id = cur_masterindex;
                         my_master.label = "master";
                         my_master.shape = 'image';
                         my_master.image = DIR + 'Hardware-WQN-main.png';
-                        my_master.title = $scope.master_runtime[i].slave_id +':6060';
+                        my_master.title = $scope.master.runtime[i].slave_id +':6060';
                         var temp_superedge = {};       //添加一条super_master到my_master的边
-                        //console.log('5'+my_supermaster.id);
+
                         temp_superedge.from = my_supermaster.id;
                         temp_superedge.to = my_master.id;
                         temp_superedge.arrows = 'to';
                         index_superedge++;
                         my_superedges[index_superedge] = temp_superedge;
                     }
-                    if ($scope.master_runtime_quantities >= 1) {
-                        //my_superedges = [];
-                        for (var j in $scope.master_runtime) {
+                    if ($scope.master.quantities >= 1) {
+                        for (var j in $scope.master.runtime) {
                             var temp_slave = {};       // 添加一个slave节点
                             cur_masterindex++;
                             //console.log('2' + cur_masterindex);
                             temp_slave.id = cur_masterindex;
                             temp_slave.shape = 'image';
                             temp_slave.image = DIR + 'Hardware-WQN-server.png';
-                            temp_slave.title = $scope.master_runtime[i].slave_id;
+                            temp_slave.title = $scope.master.runtime[i].slave_id;
                             vertexes_super[cur_masterindex] = temp_slave;
 
                             var temp_edge = {};        // 添加一条边 master -> temp_slave
@@ -700,8 +664,8 @@
                             temp_cpu.label = "cpu";
                             temp_cpu.id = cur_masterindex;
                             temp_cpu.group = 'server';
-                            temp_cpu.title = Math.round($scope.master_runtime[i].cpu_usage.cpu_used);
-                            temp_cpu.value = Math.ceil(Math.round($scope.master_runtime[i].cpu_usage.cpu_used) / 10);
+                            temp_cpu.title = Math.round($scope.master.runtime[i].cpu_usage.cpu_used);
+                            temp_cpu.value = Math.ceil(Math.round($scope.master.runtime[i].cpu_usage.cpu_used) / 10);
                             vertexes_super[cur_masterindex] = temp_cpu;
                             // 添加连接cpu节点的边, temp_slave -> temp_cpu
                             var edge_cpu = {};
@@ -717,8 +681,8 @@
                             temp_disk.label = "disk";
                             temp_disk.id = cur_masterindex;
                             temp_disk.group = 'switch';
-                            temp_disk.title = Math.round(100 - $scope.master_runtime[i].disk_usage.available_percent);
-                            temp_disk.value = Math.ceil(Math.round(100 - $scope.master_runtime[i].disk_usage.available_percent) / 10);
+                            temp_disk.title = Math.round(100 - $scope.master.runtime[i].disk_usage.available_percent);
+                            temp_disk.value = Math.ceil(Math.round(100 - $scope.master.runtime[i].disk_usage.available_percent) / 10);
                             vertexes_super[cur_masterindex] = temp_disk;
                             // 添加连接cpu节点的边, temp_slave -> temp_cpu
                             var edge_disk = {};
@@ -734,8 +698,8 @@
                             temp_mem.label = "mem";
                             temp_mem.id = cur_masterindex;
                             temp_mem.group = 'desktop';
-                            temp_mem.title = Math.round($scope.master_runtime[i].mem_usage.mem_available / $scope.master_runtime[i].mem_usage.mem_total * 100);
-                            temp_mem.value = Math.ceil(Math.round($scope.master_runtime[i].mem_usage.mem_available / $scope.master_runtime[i].mem_usage.mem_total * 100) / 10);
+                            temp_mem.title = Math.round($scope.master.runtime[i].mem_usage.mem_available / $scope.master.runtime[i].mem_usage.mem_total * 100);
+                            temp_mem.value = Math.ceil(Math.round($scope.master.runtime[i].mem_usage.mem_available / $scope.master.runtime[i].mem_usage.mem_total * 100) / 10);
                             vertexes_super[cur_masterindex] = temp_mem;
                             // 添加连接mem节点的边, temp_slave -> temp_mem
                             var edge_mem = {};
@@ -751,7 +715,7 @@
                             temp_swap.label = "swap";
                             temp_swap.id = cur_masterindex;
                             temp_swap.group = 'mobile';
-                            temp_swap.title = $scope.master_runtime[i].mem_usage.swap_free / $scope.master_runtime[i].mem_usage.swap_total * 100;
+                            temp_swap.title = $scope.master.runtime[i].mem_usage.swap_free / $scope.master.runtime[i].mem_usage.swap_total * 100;
                             vertexes_super[cur_masterindex] = temp_swap;
                             // 添加连接net节点的边, temp_slave -> temp_net
                             var edge_swap = {};
@@ -830,12 +794,13 @@
             method: 'GET',
             url: leadingChameleonMasterURL('/master/runtime-resources')
         }).then(function successCallback(response) {
-            $scope.master_runtime = response.data.content;
-            console.log(response.data.content);
-            $scope.master_runtime_quantities = response.data.quantity;
-            // console.log(response.data.quantity);
 
-            var DIR = '../icon/refresh-cl/';
+            $scope.master = {
+                runtime    : response.data.content,
+                quantities : response.data.quantity,
+            };
+
+            let DIR = '../icon/refresh-cl/';
             var vertexes = new Array();
 
             var my_master = {};
@@ -845,35 +810,33 @@
             my_master.shape = 'image';
             my_master.image = DIR + 'Hardware-WQN-main.png';
             //my_master.title = "主节点";    //unchangeable
-            //my_slaves[0] = my_master;
+
             var index_slave = 1;
             var index_edge = -1;
             var my_edges = [];
             var cur_index = 0;
-            //var framework_index = 0;
-            console.log('2'+$scope.master_runtime_quantities);
-            if ($scope.master_runtime_quantities >= 1) {
+
+            if ($scope.master.quantities >= 1) {
                 my_edges = [];
-                for (var i in $scope.master_runtime) {
-                    var slave = $scope.master_runtime[i];
+                for (var i in $scope.master.runtime) {
+                    var slave = $scope.master.runtime[i];
 
                     var temp_slave = {}; // 添加一个顶点
-                    cur_index++; // 全局id
+                    cur_index++;         // 全局id
 
-                    my_master.title = $scope.master_runtime[0].slave_id+':6060';   //master节点需要用到slave的消息，所以写在这里
+                    my_master.title = $scope.master.runtime[0].slave_id+':6060';   //master节点需要用到slave的消息，所以写在这里
                     temp_slave.label = "slave" + cur_index;
-                    // console.log('57 '+cur_index);
                     temp_slave.id = cur_index;
                     temp_slave.shape = 'image';
                     temp_slave.image = DIR + 'Hardware-WQN-server.png';
-                    temp_slave.title = $scope.master_runtime[i].slave_id;
+                    temp_slave.title = $scope.master.runtime[i].slave_id;
                     vertexes[cur_index] = temp_slave; // cur_index 同时代表 顶点集合 my_slaves 的下标
-                    // console.info(vertexes);
+
                     var temp_edge = {}; // 添加一条边 master -> temp_slave
                     temp_edge.from = 0;
                     temp_edge.to = temp_slave.id;
                     temp_edge.arrows = 'to';
-                    temp_edge.label = Math.round($scope.master_runtime[i].net_usage.net_used * 100) / 100 + 'KiB/s';
+                    temp_edge.label = Math.round($scope.master.runtime[i].net_usage.net_used * 100) / 100 + 'KiB/s';
                     index_edge++; // 边集合 my_edges 的下标
                     my_edges[index_edge] = temp_edge;
 
@@ -887,23 +850,29 @@
                 method: 'GET',
                 url: leadingChameleonMasterURL('/master/frameworks')
             }).then(function successCallback(response) {
-                $scope.framework = response.data.content;
-                $scope.framework_quantities = response.data.quantity;
 
-                if($scope.framework_quantities >=1)
+                $scope.master = {
+                    framework:
+                        {
+                            resource  : response.data.content,
+                            quantities: response.data.quantity,
+                        }
+                };
+
+                if($scope.master.framework.quantities >=1)
                 {
                     //var my_edges = [];
                     var framework_index = cur_index;
-                    for (var f in $scope.framework)
+                    for (var f in $scope.master.framework.resource)
                     {
                         //   添加framework运行节点
                         var temp_framework = {};
                         framework_index++;
-                        temp_framework.label = $scope.framework[f].name;
+                        temp_framework.label = $scope.master.framework.resource[f].name;
                         temp_framework.id = framework_index;
                         temp_framework.shape = 'image';
                         temp_framework.image =DIR + 'Hardware-WQN-spark.png'
-                        temp_framework.title = $scope.framework[f].id;
+                        temp_framework.title = $scope.master.framework.resource[f].id;
                         // temp_framework.value = Math.ceil(Math.round($scope.master_runtime[i].cpu_usage.cpu_used) / 10);
                         vertexes[framework_index] = temp_framework;
                         // 添加连接cpu节点的边, temp_slave -> temp_cpu
@@ -919,8 +888,6 @@
                 }
 
                 var nodes = new vis.DataSet(vertexes);
-
-
                 var edges = new vis.DataSet(my_edges);
 
                 var container = document.getElementById('mynetwork');
@@ -1125,8 +1092,14 @@
                 method: 'GET',
                 url: leadingChameleonMasterURL('/master/frameworks')
             }).then(function successCallback(response) {
-                $scope.framework = response.data.content;
-                $scope.framework_quantities = response.data.quantity;
+
+                $scope.master = {
+                    framework:
+                        {
+                            resource  : response.data.content,
+                            quantities: response.data.quantity,
+                        }
+                };
             }, function errorCallback(response) {
             });
             $timeout(pollState, $scope.delay);

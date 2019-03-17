@@ -9,6 +9,7 @@ add_subdirectory(resource_collector)
 set(GTEST_LIBS gmock gtest gflags)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR})
+include_directories(/usr/lib/mesos/include)
 
 #Gpu
 set(Gpu_Collector_SRCS
@@ -192,6 +193,6 @@ target_link_libraries(slave ${slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} $
 #list(APPEND docker_launch_PROTOS mesos)
 #list(APPEND docker_launch_PROTOS scheduler)
 #list(REMOVE_DUPLICATES docker_launch_PROTOS)
-link_libraries(/home/lemaker/Lab/chameleon/mesos-1.3.2/build/src/.libs/libmesos-1.3.2.so)
+link_libraries(/usr/lib/libmesos-1.3.2.so)
 add_executable(docker_launch docker_launch.cpp)
 target_link_libraries(docker_launch ${PROCESS_LIBS} mesos-1.3.2 glog gflags)
