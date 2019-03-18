@@ -890,8 +890,8 @@
                         // 添加连接cpu节点的边, temp_slave -> temp_cpu
                         var edge_framework = {};
                         index_edge++;
-                        edge_framework.from = my_master.id;
-                        edge_framework.to = temp_framework.id;
+                        edge_framework.from = temp_framework.id;
+                        edge_framework.to = my_master.id;
                         edge_framework.arrows = 'to';
                         my_edges[index_edge] = edge_framework;
                     }
