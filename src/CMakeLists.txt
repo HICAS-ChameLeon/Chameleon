@@ -40,10 +40,10 @@ add_subdirectory(submitter)
 add_subdirectory(launcher)
 add_subdirectory(docker)
 
-set(sched_SRC
-        sched/constants.hpp
-        sched/flags.hpp
-        sched/sched.cpp
-        common/parse.hpp)
-
-add_library(sched "STATIC" ${sched_SRC})
+#set(sched_SRC
+#        sched/constants.hpp
+#        sched/flags.hpp
+#        sched/sched.cpp
+#        common/parse.hpp)
+#
+#add_library(sched "STATIC" ${sched_SRC})
