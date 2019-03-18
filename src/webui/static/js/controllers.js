@@ -1,10 +1,22 @@
+/*
+ * Copyright  ：SIAT 异构智能计算体系结构与系统研究中心
+ * Author     ：Jessicalllo  sherlock_vip@163.com
+ * Date       ：18-11-26
+ * Description：conrtollers.js
+ */
+
 (function() {
     'use strict';
 
     var chameleon_app = angular.module('Chameleon');
-
+    /**
+     * Function model  :  Represents the current location of the text range or cursor selected by the user
+     * Author          :  Jessicallo
+     * Date            :  2019-3-1
+     * Funtion name    :  hasSelectedText
+     * */
     function hasSelectedText() {
-        if (window.getSelection) {        // 支持所有浏览器，除了IE9之前的版本
+        if (window.getSelection) {            // 支持所有浏览器，除了IE9之前的版本
             var range = window.getSelection();
             return range.toString().length > 0;
         }
@@ -406,7 +418,7 @@
         });
     });
 
-    //网络拓扑图的Controller
+    //拓扑图的Controller
     chameleon_app.controller('TopologyCtrl', function($scope, $http) {
 
         $http({
