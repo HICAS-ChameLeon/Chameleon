@@ -47,7 +47,7 @@ static bool validate_super_master_path(const char *flagname, const string &value
     if (value.empty() || os::exists(value)) {
         return true;
     }
-    printf("Invalid value for super_master_path, please make sure the super_master_path actually exist!");
+    printf("Invalid value for super_master_path, please make sure the super_master_path actually exist!\n");
     return false;
 
 }
@@ -66,7 +66,7 @@ static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &Val
 static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &validate_super_master_path);
 static const bool has_webui_path = gflags::RegisterFlagValidator(&FLAGS_webui_path, &validate_webui_path);
 
-namespace master {
+namespace chameleon {
 
     void Master::initialize() {
 
@@ -79,8 +79,6 @@ namespace master {
         nextFrameworkId = 0;
         nextSlaveId = 0;
         nextOfferId = 0;
-
-        install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
 
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
@@ -245,6 +243,7 @@ namespace master {
                             Subprocess::FD(STDOUT_FILENO),
                             Subprocess::FD(STDERR_FILENO)
                     );
+                    result.values["start"] = "success";
                     OK response(stringify(result));
                     response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return response;
@@ -511,7 +510,7 @@ namespace master {
 //        message.add_pids("2");
 
 
-        LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
+        LOG(INFO) << "Sending " << message.offers_size()<< " offer to framework "
                   << framework->pid.get();
 
         framework->send(message);
@@ -594,7 +593,7 @@ namespace master {
      * Author       : weiguow
      * Date         : 2-19-2-26
      * Description  : */
-    void Master::teardown(master::Framework *framework) {
+    void Master::teardown(Framework *framework) {
         CHECK_NOTNULL(framework);
 
         LOG(INFO) << "Processing TEARDOWN call for framework " << *framework;
@@ -608,7 +607,7 @@ namespace master {
      * Date         : 2-19-2-26
      * Description  : */
 
-    void Master::decline(master::Framework *framework, const mesos::scheduler::Call::Decline &decline) {
+    void Master::decline(Framework *framework, const mesos::scheduler::Call::Decline &decline) {
         CHECK_NOTNULL(framework);
 
         LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
@@ -624,7 +623,7 @@ namespace master {
      * Author       : weiguow
      * Date         : 2-19-2-26
      * Description  : */
-    void Master::shutdown(master::Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown) {
+    void Master::shutdown(Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown) {
         CHECK_NOTNULL(framework);
 
         const mesos::SlaveID &slaveID = shutdown.slave_id();
@@ -804,7 +803,7 @@ namespace master {
 
         auto slaveid = hardware_resources_message.slave_id();
 
-        slaves.registering.insert(from);
+//        slaves.registering.insert(from);
 
         if (m_hardware_resources.find(slaveid) == m_hardware_resources.end()) {
             JSON::Object object = JSON::protobuf(hardware_resources_message);
@@ -980,7 +979,7 @@ namespace master {
     }
 }
 
-using namespace master;
+using namespace chameleon;
 
 int main(int argc, char **argv) {
     chameleon::set_storage_paths_of_glog("master");// provides the program name

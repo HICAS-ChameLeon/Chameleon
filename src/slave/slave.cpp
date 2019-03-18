@@ -142,7 +142,7 @@ namespace chameleon {
 
         install<ReregisterMasterMessage>(&Slave::reregister_to_master);
 
-        install("launchmaster",&Slave::launch_master);
+        install<LaunchMasterMessage>(&Slave::launch_master);
 
         // http://172.20.110.228:6061/slave/runtime-resources
         route(
@@ -733,15 +733,39 @@ namespace chameleon {
     void Slave::setM_containerizer(slave::DockerContainerizer *m_containerizer) {
         Slave::m_containerizer = m_containerizer;
     }
-    //change the way of launch master
-    void Slave::launch_master(const UPID &super_master, const string &message) {
+
+    /**
+     *     launch master by subprocess
+     *  lele, makun
+     * @param super_master
+     * @param message
+     */
+    void Slave::launch_master(const UPID &super_master, const LaunchMasterMessage &message) {
         LOG(INFO) << self().address << " received message from " << super_master;
-        string launch_command = "/home/lemaker/open-source/Chameleon/build/src/master/master --port=6060";
+//        string launch_command = "/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src/webui";
+        string launch_command = message.master_path() + " --webui_path=" + message.webui_path();
+        const string stdoutPath = path::join(m_cwd, "stdout");
+        Try<int_fd> out = os::open(
+                stdoutPath,
+                O_WRONLY | O_CREAT | O_TRUNC | O_NONBLOCK | O_CLOEXEC,
+                S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        if (out.isError()) {
+            LOG(INFO) << "Failed to create 'stdout' file: " + stdoutPath + " . " +out.error();
+        }
+        string stderrPath = path::join(m_cwd, "stderr");
+        Try<int_fd> err = os::open(
+                stderrPath,
+                O_WRONLY | O_CREAT | O_TRUNC | O_NONBLOCK | O_CLOEXEC,
+                S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        if (err.isError()) {
+            os::close(out.get());
+            LOG(INFO) << "Failed to create 'stderr' file: " + err.error();
+        }
         Try<Subprocess> s = subprocess(
                 launch_command,
                 Subprocess::FD(STDIN_FILENO),
-                Subprocess::FD(STDOUT_FILENO),
-                Subprocess::FD(STDERR_FILENO));
+                Subprocess::FD(out.get(), Subprocess::IO::OWNED),
+                Subprocess::FD(err.get(), Subprocess::IO::OWNED));
         if (s.isError()) {
             LOG(ERROR) << "cannot launch master "<< self().address.ip << ":6060";
             send(super_master,"error");
