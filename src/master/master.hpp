@@ -55,6 +55,7 @@
 #include <chameleon_string.hpp>
 #include <chameleon_os.hpp>
 #include <slave_object.hpp>
+#include <chameleon_resources.hpp>
 #include "scheduler.hpp"
 
 using std::string;
@@ -230,7 +231,7 @@ namespace chameleon {
          * save Frameworkinfo-weiguow-2019-2-22
          * */
         struct Frameworks {
-
+            // key: framework ID, value: Framework
             hashmap<string, Framework*> registered;
 
 //            BoundedHashMap<string, Framework*> completed;
@@ -266,9 +267,9 @@ namespace chameleon {
 
         void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
 
-        void addFramework(Framework *framework);
+        void add_framework(Framework *framework);
 
-        void removeFramework(Framework* framework);
+        void remove_framework(Framework *framework);
 
         void deactivate(Framework* framework, bool rescind);
 

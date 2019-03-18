@@ -89,11 +89,13 @@ namespace chameleon {
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
         install<AcceptRegisteredMessage>(&Master::received_registered_message_from_super_master);
 
+        //  send the status update message of the tasks from master to the specific framework
         install<mesos::internal::StatusUpdateMessage>(
                 &Master::statusUpdate,
                 &mesos::internal::StatusUpdateMessage::update,
                 &mesos::internal::StatusUpdateMessage::pid);
 
+        // send the status update acknowledement message from master to the specific slave
         install<mesos::internal::StatusUpdateAcknowledgementMessage>(
                 &Master::statusUpdateAcknowledgement,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::slave_id,
@@ -362,8 +364,6 @@ namespace chameleon {
 
         mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
 
-        Framework *framework = getFramework(frameworkInfo.id());
-
         LOG(INFO) << "Received  SUBSCRIBE call for framework "
                   << frameworkInfo.name() << " at " << from;
 
@@ -388,7 +388,7 @@ namespace chameleon {
             frameworkInfo.mutable_id()->CopyFrom(newFrameworkId());
             Framework *framework = new Framework(this, frameworkInfo, from);
 
-            addFramework(framework);
+            add_framework(framework);
 
             message.mutable_framework_id()->MergeFrom(framework->id());
             message.mutable_master_info()->MergeFrom(m_masterInfo);
@@ -465,7 +465,8 @@ namespace chameleon {
         }
 
         vector<mesos::Offer::Operation> operations;
-
+//        ResourcesOfFramework resources_of_framework;
+//        if(m_slave_objects.)
         foreach (const mesos::Offer::Operation &operation, accept.operations()) {
             switch (operation.type()) {
                 case mesos::Offer::Operation::LAUNCH: {
@@ -477,6 +478,14 @@ namespace chameleon {
 
                         if (m_slave_objects.count(task.slave_id().value()) > 0) {
                             shared_ptr<SlaveObject> &current_slave = m_slave_objects.at(task.slave_id().value());
+
+                            if(current_slave->m_framework_resources.count(framework->id().value()) ==0){
+                                // construct the ResourceOfFramework first
+                                current_slave->m_framework_resources[framework->id().value()];
+                            }
+                            // get the reference of the ResourceOfFramework of the current framework
+                            ResourcesOfFramework& resources_of_framework = current_slave->m_framework_resources[framework->id().value()];
+
                             // first, get the actual resource consumption of the task because we want to calculate the available
                             // resource of the specified slave
                             auto consumption = task.resources();
@@ -485,6 +494,7 @@ namespace chameleon {
                                 if (it->name() == "cpus") {
                                     if (current_slave->m_available_cpus > it->scalar().value()) {
                                         current_slave->m_available_cpus -= it->scalar().value();
+                                        resources_of_framework.m_consumped_cpus +=it->scalar().value();
                                     } else {
                                         LOG(INFO) << " the available cpu resources of the " << current_slave->m_upid_str
                                                   << "cannot satisfy the cpu resources requirements of the task "
@@ -494,6 +504,7 @@ namespace chameleon {
                                 } else if (it->name() == "mem") {
                                     if (current_slave->m_available_mem > it->scalar().value()) {
                                         current_slave->m_available_mem -= it->scalar().value();
+                                        resources_of_framework.m_consumped_mem +=it->scalar().value();
                                     } else {
                                         LOG(INFO) << " the available memory resources of the " << current_slave->m_upid_str
                                                   << "cannot satisfy the memory resources requirements of the task "
@@ -540,7 +551,7 @@ namespace chameleon {
 
         LOG(INFO) << "Processing TEARDOWN call for framework " << *framework;
 
-        removeFramework(framework);
+        remove_framework(framework);
     }
 
     /**
@@ -645,11 +656,8 @@ namespace chameleon {
 
         LOG(INFO) << "Processing ACKNOWLEDGE call " << uuid << " for task " << taskId.value()
                   << " of framework " << framework->info.name() << " on agent " << slaveId.value();
-//        send(m_slavePID, message);
 
-        string cur_slavePID = "slave@" + *m_alive_slaves.begin() + ":6061";
-        UPID cur_slave(cur_slavePID);
-        send(cur_slave, message);
+        send(m_slave_objects.at(slaveId.value())->m_upid, message);
 
     }
 
@@ -659,7 +667,7 @@ namespace chameleon {
      * Date         : 2019-2-22
      * Description  : Save Frameworkinfo to master
      * */
-    void Master::addFramework(Framework *framework) {
+    void Master::add_framework(Framework *framework) {
 
         frameworks.registered[framework->id().value()] = framework;
 
@@ -682,28 +690,39 @@ namespace chameleon {
     /**
      * remove framework-weiguow-2019/2/26*
      * */
-    void Master::removeFramework(Framework *framework) {
+    void Master::remove_framework(Framework *framework) {
         CHECK_NOTNULL(framework);
 
         LOG(INFO) << "Removing framework " << *framework;
 
-        if (framework->active()) {
-            CHECK(framework->active());
+        // restore the resources occupied by the framework in the specific slave
+        for(auto it=m_slave_objects.begin();it!=m_slave_objects.end();it++){
+            shared_ptr<SlaveObject>& slave = it->second;
+            if(slave->restore_resource_of_framework(framework->id().value())){
+                if (framework->active()) {
+                    CHECK(framework->active());
 
-            LOG(INFO) << "Deactive framework " << *framework;
+                    LOG(INFO) << "Deactive framework " << *framework;
 
-            framework->state = Framework::State::INACTIVE;
-        }
-        //send ShutdownFrameworkMessage to slave
-        mesos::internal::ShutdownFrameworkMessage message;
-        message.mutable_framework_id()->MergeFrom(framework->id());
+                    framework->state = Framework::State::INACTIVE;
+                }
+                //send ShutdownFrameworkMessage to slave
+                mesos::internal::ShutdownFrameworkMessage message;
+                message.mutable_framework_id()->MergeFrom(framework->id());
+
+                send(slave->m_upid,message);
 
 //        string slave_pid = "slave@172.20.110.228:6061";
-        string cur_slavePID = "slave@" + *m_alive_slaves.begin() + ":6061";
-        UPID cur_slave(cur_slavePID);
-        send(cur_slave, message);
+//                string cur_slavePID = "slave@" + *m_alive_slaves.begin() + ":6061";
+//                UPID cur_slave(cur_slavePID);
+//                send(cur_slave, message);
 
 //        frameworks.completed.set(framework->id().value(), framework);
+            }
+
+        }
+
+
     }
 
 

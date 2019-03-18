@@ -56,6 +56,7 @@
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
 #include <chameleon_os.hpp>
+#include <chameleon_resources.hpp>
 
 using std::string;
 using std::set;
@@ -98,8 +99,11 @@ namespace chameleon {
 
         // key: task_id  value: task_info
 //        unordered_map<string , unique_ptr<mesos::TaskInfo> > m_running_tasks;
+// key: framework_id  value: resources_of_framework
+        unordered_map<string , ResourcesOfFramework> m_framework_resources;
 
         mesos::Offer* construct_a_offer(const string& offer_id, const mesos::FrameworkID &frameworkId);
+        bool restore_resource_of_framework(const string& framework_id);
 
     private:
         SlaveObject(const SlaveObject&);

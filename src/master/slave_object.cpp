@@ -35,6 +35,23 @@ namespace chameleon {
 
     }
 
+     /**
+      *
+      * @param framework_id
+      * @return true: the slaveObject actually has the framework specified by the fraemework_id, otherwise return false
+      */
+     bool SlaveObject::restore_resource_of_framework(const string &framework_id) {
+        if(m_framework_resources.count(framework_id)){
+            const ResourcesOfFramework& resource_framework = m_framework_resources.at(framework_id);
+            m_available_cpus +=resource_framework.m_consumped_cpus;
+            m_available_mem+= resource_framework.m_consumped_mem;
+            m_available_disk += resource_framework.m_consumped_disk;
+            m_framework_resources.erase(framework_id);
+            return true;
+        }
+        return false;
+    }
+
 
     mesos::Offer* SlaveObject::construct_a_offer(const string& offer_id, const mesos::FrameworkID &framework_id) {
         mesos::Offer *offer = new mesos::Offer();
