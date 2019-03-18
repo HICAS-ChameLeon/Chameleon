@@ -9,8 +9,10 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "", "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
-DEFINE_string(webui_path, "", "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
+DEFINE_string(supermaster_path, "",
+              "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
+DEFINE_string(webui_path, "",
+              "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
 
 
 /*
@@ -63,7 +65,8 @@ static bool validate_webui_path(const char *flagname, const string &value) {
 }
 
 static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
-static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &validate_super_master_path);
+static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path,
+                                                                        &validate_super_master_path);
 static const bool has_webui_path = gflags::RegisterFlagValidator(&FLAGS_webui_path, &validate_webui_path);
 
 namespace chameleon {
@@ -111,7 +114,7 @@ namespace chameleon {
         install<mesos::scheduler::Call>(&Master::receive);
 
         //change two levels to one related
-        install("MAKUN",&Master::get_select_master);
+        install("MAKUN", &Master::get_select_master);
 //        install<TerminatingMasterMessage>
 
         // http://172.20.110.228:6060/master/hardware-resources
@@ -167,18 +170,21 @@ namespace chameleon {
                     JSON::Object a_framework;
                     JSON::Object a_content = JSON::Object();
                     if (!this->frameworks.registered.empty()) {
-                       JSON::Array frameworks_array;
+                        JSON::Array frameworks_array;
                         for (auto it = this->frameworks.registered.begin();
                              it != this->frameworks.registered.end(); it++) {
                             Framework *framework = it->second;
                             a_framework = JSON::protobuf(framework->info);
                             if (framework->state == Framework::ACTIVE) {
                                 a_framework.values["state"] = "ACTIVE";
-                            }if (framework->state == Framework::INACTIVE) {
+                            }
+                            if (framework->state == Framework::INACTIVE) {
                                 a_framework.values["state"] = "INACTIVE";
-                            }if (framework->state == Framework::RECOVERED) {
+                            }
+                            if (framework->state == Framework::RECOVERED) {
                                 a_framework.values["state"] = "RECOVERED";
-                            }if (framework->state == Framework::DISCONNECTED) {
+                            }
+                            if (framework->state == Framework::DISCONNECTED) {
                                 a_framework.values["state"] = "DISCONNECTED";
                             }
                             frameworks_array.values.emplace_back(a_framework);
@@ -235,8 +241,10 @@ namespace chameleon {
                       * Funtion name    :  Try
                       * @param          :
                       * */
-                      // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
-                     const string launcher =  m_super_master_path +" --master_path="+get_cwd()+"/master"+" --webui_path="+m_webui_path;
+                    // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
+                    const string launcher =
+                            m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
+                            m_webui_path;
                     Try<Subprocess> super_master = subprocess(
                             launcher,
                             Subprocess::FD(STDIN_FILENO),
@@ -250,7 +258,7 @@ namespace chameleon {
                 });
 
         provide("", path::join(m_webui_path, "static/HTML/Control.html"));
-        provide("static",path::join(m_webui_path,"/static"));
+        provide("static", path::join(m_webui_path, "/static"));
 
 //     install("stop", &MyProcess::stop);
         install("stop", [=](const UPID &from, const string &body) {
@@ -271,7 +279,7 @@ namespace chameleon {
         return m_master_cwd;
     }
 
-    void Master::set_webui_path(const string &path)  {
+    void Master::set_webui_path(const string &path) {
         m_webui_path = path;
     }
 
@@ -399,52 +407,6 @@ namespace chameleon {
         }
     }
 
-    mesos::Offer *Master::create_a_offer(const mesos::FrameworkID &frameworkId) {
-        mesos::Offer *offer = new mesos::Offer();
-
-        Framework *framework = getFramework(frameworkId);
-        // cpus
-        mesos::Resource *cpu_resource = new mesos::Resource();
-        cpu_resource->set_name("cpus");
-        cpu_resource->set_type(mesos::Value_Type_SCALAR);
-        mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
-        cpu_scalar->set_value(4.0);
-        cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
-        offer->add_resources()->MergeFrom(*cpu_resource);
-
-        // memory
-        mesos::Resource *mem_resource = new mesos::Resource();
-        mem_resource->set_name("mem");
-        mem_resource->set_type(mesos::Value_Type_SCALAR);
-        mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
-        mem_scalar->set_value(1200.0);
-        mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
-        offer->add_resources()->MergeFrom(*mem_resource);
-
-        // port
-        mesos::Resource *port_resource = new mesos::Resource();
-        port_resource->set_name("ports");
-        port_resource->set_type(mesos::Value_Type_RANGES);
-
-        mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
-        port_range->set_begin(31000);
-        port_range->set_end(32000);
-        offer->add_resources()->MergeFrom(*port_resource);
-
-        mesos::OfferID offerId;
-        offerId.set_value("22222222");
-        offer->mutable_id()->CopyFrom(offerId);
-
-        offer->mutable_framework_id()->MergeFrom(framework->id());
-
-        mesos::SlaveID *slaveID = new mesos::SlaveID();
-        slaveID->set_value("22222222222");
-
-        offer->mutable_slave_id()->MergeFrom(*slaveID);
-
-        offer->set_hostname("heldon");
-        return offer;
-    }
 
     /**
      * Function model  :  spark run on chameleon
@@ -458,60 +420,15 @@ namespace chameleon {
 
         mesos::internal::ResourceOffersMessage message;
 
+        for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
+            mesos::OfferID new_offer_id = newOfferId();
+            shared_ptr<SlaveObject> slave = it->second;
+            mesos::Offer *offer = slave->construct_a_offer(new_offer_id.value(), frameworkId);
+            message.add_offers()->MergeFrom(*offer);
+            message.add_pids(slave->m_upid_str);
+        }
 
-        mesos::Offer *offer = new mesos::Offer();
-
-
-        // cpus
-        mesos::Resource *cpu_resource = new mesos::Resource();
-        cpu_resource->set_name("cpus");
-        cpu_resource->set_type(mesos::Value_Type_SCALAR);
-        mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
-        cpu_scalar->set_value(4.0);
-        cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
-        offer->add_resources()->MergeFrom(*cpu_resource);
-
-        // memory
-        mesos::Resource *mem_resource = new mesos::Resource();
-        mem_resource->set_name("mem");
-        mem_resource->set_type(mesos::Value_Type_SCALAR);
-        mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
-        mem_scalar->set_value(1000.0);
-        mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
-        offer->add_resources()->MergeFrom(*mem_resource);
-
-        // port
-        mesos::Resource *port_resource = new mesos::Resource();
-        port_resource->set_name("ports");
-        port_resource->set_type(mesos::Value_Type_RANGES);
-
-        mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
-        port_range->set_begin(31000);
-        port_range->set_end(32000);
-        offer->add_resources()->MergeFrom(*port_resource);
-
-        offer->mutable_id()->MergeFrom(newOfferId());
-        offer->mutable_framework_id()->MergeFrom(framework->id());
-
-        //这个slaveID决定了实现master选取分布式集群中节点的基础
-        mesos::SlaveID *slaveID = new mesos::SlaveID();
-//        offer->mutable_slave_id()->MergeFrom(newSlaveId());
-        slaveID->set_value("44444444");
-        offer->mutable_slave_id()->MergeFrom(*slaveID);
-
-        //this host_name is slave hostname
-        offer->set_hostname(self().address.hostname().get());
-//        offer->set_hostname("ccrfox246");
-
-        message.add_offers()->MergeFrom(*offer);
-        message.add_pids("1");
-
-//        mesos::Offer *second_offer = create_a_offer(framework->id());
-//        message.add_offers()->MergeFrom(*second_offer);
-//        message.add_pids("2");
-
-
-        LOG(INFO) << "Sending " << message.offers_size()<< " offer to framework "
+        LOG(INFO) << "Sending " << message.offers_size() << " offer to framework "
                   << framework->pid.get();
 
         framework->send(message);
@@ -558,26 +475,50 @@ namespace chameleon {
 
                     foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
 
-                        string cur_slavePID = "slave@";
-                        if (task.slave_id().value() == "11111111") {
-//                            cur_slavePID.append("172.20.110.228:6061");
-                              cur_slavePID.append(*m_alive_slaves.begin()+":6061");
-                        } else {
-                            cur_slavePID.append(*m_alive_slaves.begin()+":6061");
+                        if (m_slave_objects.count(task.slave_id().value()) > 0) {
+                            shared_ptr<SlaveObject> &current_slave = m_slave_objects.at(task.slave_id().value());
+                            // first, get the actual resource consumption of the task because we want to calculate the available
+                            // resource of the specified slave
+                            auto consumption = task.resources();
+                            for (auto it = consumption.begin(); it != consumption.end(); it++) {
+                                LOG(INFO) << it->name() << " " << it->scalar().value();
+                                if (it->name() == "cpus") {
+                                    if (current_slave->m_available_cpus > it->scalar().value()) {
+                                        current_slave->m_available_cpus -= it->scalar().value();
+                                    } else {
+                                        LOG(INFO) << " the available cpu resources of the " << current_slave->m_upid_str
+                                                  << "cannot satisfy the cpu resources requirements of the task "
+                                                  << task.name() << " So we need to offer resources for it again";
+                                        break;
+                                    }
+                                } else if (it->name() == "mem") {
+                                    if (current_slave->m_available_mem > it->scalar().value()) {
+                                        current_slave->m_available_mem -= it->scalar().value();
+                                    } else {
+                                        LOG(INFO) << " the available memory resources of the " << current_slave->m_upid_str
+                                                  << "cannot satisfy the memory resources requirements of the task "
+                                                  << task.name() << " So we need to offer resources for it again";
+                                        break;
+                                    }
+                                } else {
+
+                                }
+
+                            }
+                            mesos::TaskInfo task_(task);
+                            const process::UPID &slave_upid = current_slave->m_upid;
+                            LOG(INFO) << "Sending task to slave " << slave_upid; //slave(1)@172.20.110.152:5051
+
+                            mesos::internal::RunTaskMessage message;
+                            message.mutable_framework()->MergeFrom(framework->info);
+                            message.set_pid(framework->pid.getOrElse(UPID()));
+                            message.mutable_task()->MergeFrom(task_);
+                            message.mutable_framework_id()->MergeFrom(framework->id());
+
+                            send(slave_upid, message);
+
+                            _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
                         }
-                        mesos::TaskInfo task_(task);
-
-                        LOG(INFO) << "Sending task to slave " << cur_slavePID; //slave(1)@172.20.110.152:5051
-
-                        mesos::internal::RunTaskMessage message;
-                        message.mutable_framework()->MergeFrom(framework->info);
-                        message.set_pid(framework->pid.getOrElse(UPID()));
-                        message.mutable_task()->MergeFrom(task_);
-                        message.mutable_framework_id()->MergeFrom(framework->id());
-
-                        send(cur_slavePID, message);
-
-                        _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
                     }
                     break;
                 }
@@ -706,7 +647,7 @@ namespace chameleon {
                   << " of framework " << framework->info.name() << " on agent " << slaveId.value();
 //        send(m_slavePID, message);
 
-        string cur_slavePID  = "slave@"+ *m_alive_slaves.begin()+":6061";
+        string cur_slavePID = "slave@" + *m_alive_slaves.begin() + ":6061";
         UPID cur_slave(cur_slavePID);
         send(cur_slave, message);
 
@@ -758,7 +699,7 @@ namespace chameleon {
         message.mutable_framework_id()->MergeFrom(framework->id());
 
 //        string slave_pid = "slave@172.20.110.228:6061";
-        string cur_slavePID  = "slave@"+ *m_alive_slaves.begin()+":6061";
+        string cur_slavePID = "slave@" + *m_alive_slaves.begin() + ":6061";
         UPID cur_slave(cur_slavePID);
         send(cur_slave, message);
 
@@ -780,7 +721,7 @@ namespace chameleon {
         out << m_masterInfo.id() << "-" << std::setw(4)
             << std::setfill('0') << nextFrameworkId++;
 
-        LOG(INFO)<<"m_masterInfo.id(): "<<m_masterInfo.id();
+        LOG(INFO) << "m_masterInfo.id(): " << m_masterInfo.id();
 
         mesos::FrameworkID frameworkId;
         frameworkId.set_value(out.str());
@@ -814,13 +755,11 @@ namespace chameleon {
 
 //            UPID temp_upid(from);
             shared_ptr<SlaveObject> slave_object = make_shared<SlaveObject>(from, hardware_resources_message);
-            m_slave_objects.push_back(slave_object);
-//            LOG(INFO)<<m_slave_objects.at(0).use_count();
+            m_slave_objects.insert({slave_object->m_uuid, slave_object});
         }
     }
 
     void Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
-//        LOG(INFO)<<m_slave_objects.at(0).use_count();
         LOG(INFO) << "received a heartbeat message from " << slave;
         auto slave_id = runtime_resouces_message.slave_id();
         m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
@@ -876,9 +815,9 @@ namespace chameleon {
 
     // super_master related
 
-    void Master::set_super_master_path(const string& path) {
+    void Master::set_super_master_path(const string &path) {
         m_super_master_path = path;
-        LOG(INFO)<<"The path of super_master executable is "<<m_super_master_path;
+        LOG(INFO) << "The path of super_master executable is " << m_super_master_path;
     }
 
     void Master::super_master_control(const UPID &super_master,
@@ -947,12 +886,13 @@ namespace chameleon {
         }
     }
 
-    void Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
+    void
+    Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
         LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
         if (message.master_id() == stringify(self().address.ip)) {
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
             terminate(self());
-        } else{
+        } else {
             ReregisterMasterMessage *reregister_master_message = new ReregisterMasterMessage();
             reregister_master_message->set_master_ip(message.master_id());
             reregister_master_message->set_port("6060");
@@ -963,10 +903,10 @@ namespace chameleon {
             for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
 //                LOG(INFO) << *iter;
                 reregister_master_message->set_slave_ip(*iter);
-                UPID slave_id("slave@"+*iter+":6061");
-                send(slave_id,*reregister_master_message);
+                UPID slave_id("slave@" + *iter + ":6061");
+                send(slave_id, *reregister_master_message);
                 LOG(INFO) << self() << " send new_master_message: " << reregister_master_message->master_ip()
-                << " to salve: " <<slave_id;
+                          << " to salve: " << slave_id;
             }
             delete reregister_master_message;
             LOG(INFO) << self() << " is terminating due to change levels to one";
@@ -975,9 +915,9 @@ namespace chameleon {
         }
     }
 
-    void Master::get_select_master(const UPID& from, const string& message) {
+    void Master::get_select_master(const UPID &from, const string &message) {
         LOG(INFO) << "MAKUN received select_master_message";
-        send(from,"MAKUN2");
+        send(from, "MAKUN2");
     }
     // end of super_mater related
 
@@ -1004,9 +944,9 @@ int main(int argc, char **argv) {
 
         process::initialize("master");
         Master master;
-        if(FLAGS_supermaster_path.empty()){
-            master.set_super_master_path(master.get_cwd()+"/super_master");
-        }else{
+        if (FLAGS_supermaster_path.empty()) {
+            master.set_super_master_path(master.get_cwd() + "/super_master");
+        } else {
             master.set_super_master_path(FLAGS_supermaster_path);
         }
 

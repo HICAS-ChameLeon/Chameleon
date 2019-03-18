@@ -98,8 +98,8 @@ namespace chameleon {
         msp_masterUPID = make_shared<UPID>(UPID(m_master));
 
         m_slaveInfo.set_hostname(self().address.hostname().get());
-        m_slaveInfo.mutable_id()->set_value("44444444");
-        m_slaveID.set_value("44444444");
+        m_slaveInfo.mutable_id()->set_value(m_uuid);
+        m_slaveID.set_value(m_uuid);
         m_slaveInfo.set_port(self().address.port);
 
         install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);

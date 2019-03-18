@@ -189,9 +189,7 @@ namespace chameleon {
 
         mesos::SlaveInfo m_slaveInfo;
         mesos::ExecutorInfo m_executorInfo;
-        mesos::ExecutorID m_executorID;
 
-        mesos::TaskInfo m_task;
 
         chameleon::slave::DockerContainerizer* m_containerizer;
 

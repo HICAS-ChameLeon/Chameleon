@@ -90,15 +90,16 @@ namespace chameleon {
         const string m_ip;
         const string m_hostname;
         const string m_uuid;
-        uint32_t m_available_cpus;
-        uint32_t m_available_mem;
+        const string m_upid_str;
+        double m_available_cpus;
+        double m_available_mem;
         uint32_t m_available_disk;
         HardwareResourcesMessage m_hardware_resources;
 
         // key: task_id  value: task_info
 //        unordered_map<string , unique_ptr<mesos::TaskInfo> > m_running_tasks;
 
-        mesos::Offer construct_a_offer();
+        mesos::Offer* construct_a_offer(const string& offer_id, const mesos::FrameworkID &frameworkId);
 
     private:
         SlaveObject(const SlaveObject&);
