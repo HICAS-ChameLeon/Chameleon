@@ -458,6 +458,7 @@ namespace chameleon {
 
         mesos::internal::ResourceOffersMessage message;
 
+
         mesos::Offer *offer = new mesos::Offer();
 
 
@@ -810,10 +811,16 @@ namespace chameleon {
             m_hardware_resources.insert({slaveid, object});
             m_proto_hardware_resources.insert({slaveid, hardware_resources_message});
             m_alive_slaves.insert(slaveid);
+
+//            UPID temp_upid(from);
+            shared_ptr<SlaveObject> slave_object = make_shared<SlaveObject>(from, hardware_resources_message);
+            m_slave_objects.push_back(slave_object);
+//            LOG(INFO)<<m_slave_objects.at(0).use_count();
         }
     }
 
     void Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
+//        LOG(INFO)<<m_slave_objects.at(0).use_count();
         LOG(INFO) << "received a heartbeat message from " << slave;
         auto slave_id = runtime_resouces_message.slave_id();
         m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);

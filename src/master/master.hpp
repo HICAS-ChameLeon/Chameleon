@@ -11,7 +11,7 @@
 #include <vector>
 #include <set>
 #include <memory>
-#include <hash_map>
+#include <unordered_map>
 
 #include <glog/logging.h>
 #include <gflags/gflags.h>
@@ -41,7 +41,6 @@
 
 // protobuf
 #include <hardware_resource.pb.h>
-#include <job.pb.h>
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
 #include <mesos.pb.h>
@@ -54,6 +53,7 @@
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
 #include <chameleon_os.hpp>
+#include <slave_object.hpp>
 #include "scheduler.hpp"
 
 using std::string;
@@ -299,6 +299,7 @@ namespace chameleon {
         unordered_map<string, JSON::Object> m_hardware_resources;
         unordered_map<string, HardwareResourcesMessage> m_proto_hardware_resources;
         set<string> m_alive_slaves;
+        vector<shared_ptr<SlaveObject>> m_slave_objects;
 
         unordered_map<string, JSON::Object> m_runtime_resources;
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;

@@ -163,6 +163,7 @@ namespace chameleon {
 
         m_uuid = UUID::random().toString();
         hr_message->set_slave_uuid(m_uuid);
+        hr_message->set_slave_hostname(self().address.hostname().get());
         DLOG(INFO) << "Before send message to master";
 
         send(*msp_masterUPID, *hr_message);
