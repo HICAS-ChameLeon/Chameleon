@@ -566,6 +566,8 @@ namespace chameleon {
         LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
                   << " for framework " << *framework;
 
+        process::dispatch(self(),Master::Offer,framework->id());
+
         //we should save offer infomation before do this , so we now just leave it- by weiguow
 //        offers.erase(offer->id());
 //        delete offer;
