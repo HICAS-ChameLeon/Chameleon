@@ -479,9 +479,14 @@ namespace chameleon {
                         if (m_slave_objects.count(task.slave_id().value()) > 0) {
                             shared_ptr<SlaveObject> &current_slave = m_slave_objects.at(task.slave_id().value());
 
+                            // the framework will be launched on the current_slave, so we will check whether the current_slave has the framework running on.
                             if(current_slave->m_framework_resources.count(framework->id().value()) ==0){
                                 // construct the ResourceOfFramework first
                                 current_slave->m_framework_resources[framework->id().value()];
+                                if(m_framework_to_slaves.count(framework->id().value()) ==0 ){
+                                    m_framework_to_slaves[framework->id().value()];
+                                }
+                                m_framework_to_slaves[framework->id().value()].insert(current_slave->m_uuid);
                             }
                             // get the reference of the ResourceOfFramework of the current framework
                             ResourcesOfFramework& resources_of_framework = current_slave->m_framework_resources[framework->id().value()];
@@ -566,7 +571,7 @@ namespace chameleon {
         LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
                   << " for framework " << *framework;
 
-        process::dispatch(self(),Master::Offer,framework->id());
+        process::dispatch(self(),&Master::Offer,framework->id());
 
         //we should save offer infomation before do this , so we now just leave it- by weiguow
 //        offers.erase(offer->id());
@@ -698,9 +703,10 @@ namespace chameleon {
         LOG(INFO) << "Removing framework " << *framework;
 
         // restore the resources occupied by the framework in the specific slave
-        for(auto it=m_slave_objects.begin();it!=m_slave_objects.end();it++){
-            shared_ptr<SlaveObject>& slave = it->second;
-            if(slave->restore_resource_of_framework(framework->id().value())){
+        const string& framework_id = framework->id().value();
+        for(auto it=m_framework_to_slaves[framework_id].begin();it!=m_framework_to_slaves[framework_id].end();it++){
+            shared_ptr<SlaveObject>& slave = m_slave_objects[*it];
+            if(slave->restore_resource_of_framework(framework_id)){
                 if (framework->active()) {
                     CHECK(framework->active());
 
@@ -714,28 +720,14 @@ namespace chameleon {
 
                 send(slave->m_upid,message);
 
-//        string slave_pid = "slave@172.20.110.228:6061";
-//                string cur_slavePID = "slave@" + *m_alive_slaves.begin() + ":6061";
-//                UPID cur_slave(cur_slavePID);
-//                send(cur_slave, message);
-
-//        frameworks.completed.set(framework->id().value(), framework);
             }
-
         }
 
-
+        m_framework_to_slaves.erase(framework_id);
     }
 
 
-    /**
-     * create slaveID,frameworkID,masterID-weiguow-2019/2/24
-     * */
-    mesos::SlaveID Master::newSlaveId() {
-        mesos::SlaveID slaveId;
-        slaveId.set_value(m_masterInfo.id() + "-S" + stringify(nextSlaveId++));
-        return slaveId;
-    }
+
 
     mesos::FrameworkID Master::newFrameworkId() {
         std::ostringstream out;
