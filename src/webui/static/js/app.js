@@ -1,3 +1,10 @@
+/*
+ * Copyright  ：SIAT 异构智能计算体系结构与系统研究中心
+ * Author     ：Jessicalllo  sherlock_vip@163.com
+ * Date       ：18-11-26
+ * Description：app.js
+ */
+
 (function () {
     'use strict';
 
@@ -10,7 +17,7 @@
             $routeProvider.when('/hardware', {
                 //templateURL：插入ng-view的HTML模板文件
                 templateUrl: 'hardware.html',
-                controller: 'UpdateCtrl'
+                controller: 'HardwareCtrl'
 
             })
                 .when('/runtime', {

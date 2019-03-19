@@ -13,7 +13,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr ng-repeat="x in runtime">
+                <tr ng-repeat="x in master.runtime">
                     <td>
                         <a href="#/slaves/{{x.slave_uuid}}/ip/{{x.slave_id}}/cpu_usage/{{x.cpu_usage.cpu_used | number:2}}/mem_usage/{{x.mem_usage.mem_available / x.mem_usage.mem_total * 100 | number:2}}/disk_usage/{{x.disk_usage.available_percent | number:2}}">{{x.slave_uuid}}</a>
                         <button class="btn btn-xs btn-default btn-toggle"

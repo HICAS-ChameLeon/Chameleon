@@ -9,6 +9,7 @@ add_subdirectory(resource_collector)
 set(GTEST_LIBS gmock gtest gflags)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR})
+include_directories(/usr/lib/mesos/include)
 
 #Gpu
 set(Gpu_Collector_SRCS
