@@ -159,6 +159,8 @@ namespace chameleon {
         void received_call(const UPID &from, const mesos::scheduler::Call &call);
         void received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message);
         void received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message);
+        void received_status(const UPID &from, const mesos::internal::StatusUpdateMessage &message);
+        void received_acknowledgement(const UPID &from, const mesos::internal::StatusUpdateAcknowledgementMessage &message);
         void classify_masters_framework();
         void launch_master_results(const UPID &from, const string &message);
         void is_launch();
