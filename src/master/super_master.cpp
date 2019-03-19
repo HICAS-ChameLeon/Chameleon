@@ -430,13 +430,13 @@ namespace chameleon {
 
     //framework related
     void SuperMaster::received_call(const UPID &from, const mesos::scheduler::Call &call) {
-//        LOG(INFO) << "MAKUN Supermaster received call from " << from;
+        LOG(INFO) << "MAKUN Supermaster received call from " << from;
         m_framework = from;
         for(auto iter = m_classification_masters_framework.begin();
             iter != m_classification_masters_framework.end(); iter++){
             if (iter->first.find("spark") != string::npos) {
                 send(UPID("master@" + iter->second + ":6060"),call);
-//                LOG(INFO) << "MAKUN send call to master: master@" << iter->second << ":6060";
+                LOG(INFO) << "MAKUN send call to master: master@" << iter->second << ":6060";
                 break;
             }
         }
@@ -444,15 +444,15 @@ namespace chameleon {
     }
 
     void SuperMaster::received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message) {
-//        LOG(INFO) << "MAKUN Supermaster received frameworkRegistered from " << from;
+        LOG(INFO) << "MAKUN Supermaster received frameworkRegistered from " << from;
         send(m_framework,message);
-//        LOG(INFO) << "MAKUN send frameworkRegistered to " << m_framework;
+        LOG(INFO) << "MAKUN send frameworkRegistered to " << m_framework;
     }
 
     void SuperMaster::received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message) {
-//        LOG(INFO) << "MAKUN Supermaster received resourceOffers from " << from;
+        LOG(INFO) << "MAKUN Supermaster received resourceOffers from " << from;
         send(m_framework,message);
-//        LOG(INFO) << "MAKUN send resourceOffers to " << m_framework;
+        LOG(INFO) << "MAKUN send resourceOffers to " << m_framework;
     }
 
     void SuperMaster::received_status(const UPID &from, const mesos::internal::StatusUpdateMessage &message) {

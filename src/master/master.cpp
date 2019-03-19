@@ -386,7 +386,6 @@ namespace chameleon {
             message.mutable_master_info()->MergeFrom(m_masterInfo);
 
             framework->send(message);
-            LOG(INFO)<<"send FrameworkRegisteredMessage";
 
             LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful!";
 //
@@ -515,7 +514,6 @@ namespace chameleon {
                   << framework->pid.get();
 
         framework->send(message);
-        LOG(INFO)<<"send ResourceOffersMessage";
 
         return;
     }
@@ -659,7 +657,6 @@ namespace chameleon {
             message.set_pid(pid);   //this pid is slavePID
 
             framework->send(message);
-            LOG(INFO)<<"send StatusUpdateMessage";
         }
     }
 
@@ -683,7 +680,6 @@ namespace chameleon {
         message.set_uuid(uuid);
 
         acknowledge(framework, message);
-        LOG(INFO)<<"*************************************************";
     }
 
     /**
@@ -764,7 +760,6 @@ namespace chameleon {
         string cur_slavePID  = "slave@"+ *m_alive_slaves.begin()+":6061";
         UPID cur_slave(cur_slavePID);
         send(cur_slave, message);
-        LOG(INFO)<<cur_slave<<" "<<framework->id().value();
 
 //        frameworks.completed.set(framework->id().value(), framework);
     }
