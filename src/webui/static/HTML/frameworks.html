@@ -13,7 +13,7 @@
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="x in framework | filter:{state: 'ACTIVE'}:true">
+    <tr ng-repeat="x in master.framework.resource | filter:{state: 'ACTIVE'}:true">
         <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
         <!--<th><a href="{{x.webui_url}}">{{x.id.value}}</a>-->
         </th>
@@ -96,7 +96,7 @@
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="x in framework | filter:{state:'INACTIVE'}:true ">
+    <tr ng-repeat="x in master.framework.resource | filter:{state:'INACTIVE'}:true ">
         <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
         <!--<th><a href="{{x.webui_url}}">{{x.id.value}}</a>-->
         </th>
