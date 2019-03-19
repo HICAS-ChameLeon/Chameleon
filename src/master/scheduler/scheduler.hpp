@@ -78,12 +78,6 @@ using process::http::InternalServerError;
 namespace chameleon {
     class Scheduler {
     public:
-        explicit Scheduler() {}
-
-        virtual void initialize();
-
-        virtual ~Scheduler();
-
         virtual Try<string> scheduler(unordered_map<string, HardwareResourcesMessage> hardware_resource,
                 unordered_map<string, RuntimeResourcesMessage> runtime_resource) = 0;
 
@@ -99,7 +93,7 @@ namespace chameleon {
         Try<string> scheduler(unordered_map<string, RuntimeResourcesMessage> runtime_resource) override;
     };
 
-    class MetricScheduler : public scheduler {
+    class MetricScheduler : public Scheduler {
         Try<string> scheduler(unordered_map<string, HardwareResourcesMessage> hardware_resource,
                               unordered_map<string, RuntimeResourcesMessage> runtime_resource) override;
     };
