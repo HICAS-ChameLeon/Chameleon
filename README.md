@@ -88,6 +88,8 @@ $./build/src/master/super_master --master_path=/home/lemaker/open-source/Chamele
 | --initiator | the ip:port of the current master of first level or supermaster | --initiator=172.20.110.228:6060 |
 | --webui_path | the absolute path of webui.  |  For example, --webui=/home/lemaker/open-source/Chameleon/src/webui |
 
+### webui
+http://localhost:6060
 #### common commands
 ps aux | grep master
 
