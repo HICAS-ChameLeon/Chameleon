@@ -297,6 +297,7 @@ namespace chameleon {
       * @param          : UPID& from ,Call& call
       * */
     void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
+        LOG(INFO)<<"*********************"<<call.framework_id().value();
         //first call
         if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
             subscribe(from, call.subscribe());
@@ -304,6 +305,7 @@ namespace chameleon {
         }
 
         Framework *framework = getFramework(call.framework_id());
+        LOG(INFO)<<"*********************"<<call.framework_id().value()<<"*********************";
 
         if (framework == nullptr) {
             LOG(INFO) << "Framework cannot be found";
@@ -379,6 +381,7 @@ namespace chameleon {
                                         message.mutable_framework_id()->MergeFrom(framework->id());
                                         message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
                                         framework->send(message);
+                                        LOG(INFO)<<"MAKUN send FrameworkRegisteredMessage1";
                                         return;
                                     }
                                 }
@@ -394,6 +397,7 @@ namespace chameleon {
             message.mutable_master_info()->MergeFrom(m_masterInfo);
 
             framework->send(message);
+            LOG(INFO)<<"MAKUN send FrameworkRegisteredMessage2";
 
             LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful!";
 //
@@ -432,6 +436,7 @@ namespace chameleon {
                   << framework->pid.get();
 
         framework->send(message);
+        LOG(INFO)<<"MAKUN send ResourceOffersMessage";
 
         return;
     }
@@ -610,6 +615,7 @@ namespace chameleon {
             message.set_pid(pid);   //this pid is slavePID
 
             framework->send(message);
+            LOG(INFO)<<"MAKUN send StatusUpdateMessage";
         }
     }
 

@@ -431,6 +431,8 @@ namespace chameleon {
     //framework related
     void SuperMaster::received_call(const UPID &from, const mesos::scheduler::Call &call) {
         LOG(INFO) << "MAKUN Supermaster received call from " << from;
+//        Framework *framework = getFramework(call.framework_id());
+        LOG(INFO)<<"*********************"<<call.framework_id().value();
         m_framework = from;
         for(auto iter = m_classification_masters_framework.begin();
             iter != m_classification_masters_framework.end(); iter++){
