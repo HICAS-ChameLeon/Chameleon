@@ -8,7 +8,7 @@
 #include "software_resource_manager.hpp"
 namespace chameleon{
 
-    SoftwareResourceManager::SoftwareResourceManager(const string& public_resources_):m_public_resources(public_resources_),process(new DownloadProcess(public_resources_)) {
+    SoftwareResourceManager::SoftwareResourceManager(const string& slave_path_, const string& public_resources_):m_public_resources(public_resources_),m_slave_path(slave_path_),process(new DownloadProcess(public_resources_)) {
         initialize();
     }
 
