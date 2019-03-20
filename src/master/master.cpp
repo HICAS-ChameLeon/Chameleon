@@ -298,6 +298,10 @@ namespace chameleon {
       * */
     void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
         LOG(INFO)<<"*********************"<<call.framework_id().value();
+        LOG(INFO)<<m_masterInfo.ip()<<" "<<m_masterInfo.port()<<" "<<
+        m_masterInfo.pid()<<" "<<m_masterInfo.version()<<" "<<
+        m_masterInfo.hostname()<<m_masterInfo.id();
+
         //first call
         if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
             subscribe(from, call.subscribe());

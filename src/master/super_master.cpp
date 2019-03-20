@@ -8,6 +8,7 @@
 #include <super_master_related.pb.h>
 #include "super_master.hpp"
 #include "master.hpp"
+#include <stack>
 
 DEFINE_string(master_path, "", "the absolute path of master executive. For example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
 DEFINE_string(initiator, "localhost:6060", "the ip:port of the current master of first level or supermaster. For example, --initiator=172.20.110.228:6060");
@@ -48,6 +49,7 @@ namespace chameleon {
         install("KILL",&SuperMaster::owned_masters_message);
         //kill_master end
         install("MAKUN2",&SuperMaster::recevied_slave_infos);
+        install<>(&SuperMaster::received_acknowledgement);
 
         //franework related
         install<mesos::scheduler::Call>(&SuperMaster::received_call);
@@ -430,19 +432,35 @@ namespace chameleon {
 
     //framework related
     void SuperMaster::received_call(const UPID &from, const mesos::scheduler::Call &call) {
-        LOG(INFO) << "MAKUN Supermaster received call from " << from;
-//        Framework *framework = getFramework(call.framework_id());
-        LOG(INFO)<<"*********************"<<call.framework_id().value();
-        m_framework = from;
+        mesos::MasterInfo *master_info = new mesos::MasterInfo();
         for(auto iter = m_classification_masters_framework.begin();
             iter != m_classification_masters_framework.end(); iter++){
             if (iter->first.find("spark") != string::npos) {
-                send(UPID("master@" + iter->second + ":6060"),call);
-                LOG(INFO) << "MAKUN send call to master: master@" << iter->second << ":6060";
+                master_info->set_pid("master@"+iter->second+":6060");
+                vector<string> master_ip = strings::tokenize(iter->second,".");
+                unsigned int master_ip_int = std::stoi(master_ip[0])+256*(std::stoi(master_ip[1])+
+                        256*(std::stoi(master_ip[2])+256*(std::stoi(master_ip[3]))));
+                LOG(INFO)<<master_ip_int;
+                master_info->set_ip(master_ip_int);
+                master_info->set_port(6060);
+                master_info->set_id("111622f1-1e63-456e-8fc5-e64ebb30fcb8-0000");
+                send(from,*master_info);
+                LOG(INFO)<<"send MasterInfo";
                 break;
             }
         }
-//        send(UPID("master@172.20.110.141:6060"),call);
+//        LOG(INFO) << "MAKUN Supermaster received call from " << from;
+////        Framework *framework = getFramework(call.framework_id());
+//        LOG(INFO)<<"*********************"<<call.framework_id().value();
+//        m_framework = from;
+//        for(auto iter = m_classification_masters_framework.begin();
+//            iter != m_classification_masters_framework.end(); iter++){
+//            if (iter->first.find("spark") != string::npos) {
+//                send(UPID("master@" + iter->second + ":6060"),call);
+//                LOG(INFO) << "MAKUN send call to master: master@" << iter->second << ":6060";
+//                break;
+//            }
+//        }
     }
 
     void SuperMaster::received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message) {

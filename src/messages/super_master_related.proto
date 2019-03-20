@@ -4,6 +4,7 @@ import "hardware_resource.proto";
 import "runtime_resource.proto";
 
 
+
 message MasterRegisteredMessage
 {
     required string master_id =1;
