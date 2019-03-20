@@ -174,7 +174,7 @@ list(REMOVE_DUPLICATES slave_SRCS)
 
 add_executable(slave ${slave_SRCS})
 
-set(slave_PROTOS monitor_info)
+#set(slave_PROTOS monitor_info)
 list(APPEND slave_PROTOS hardware_resource)
 list(APPEND slave_PROTOS runtime_resource)
 list(APPEND slave_PROTOS job)

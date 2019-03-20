@@ -103,7 +103,7 @@ namespace chameleon {
         m_slaveID.set_value(m_uuid);
         m_slaveInfo.set_port(self().address.port);
 
-        install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
+        //install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
         install<ShutdownMessage>(&Slave::shutdown);
 
         //get from executor
@@ -744,7 +744,8 @@ namespace chameleon {
     void Slave::launch_master(const UPID &super_master, const LaunchMasterMessage &message) {
         LOG(INFO) << self().address << " received message from " << super_master;
 //        string launch_command = "/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src/webui";
-        string launch_command = message.master_path() + " --webui_path=" + message.webui_path();
+        string launch_command = "valgrind --tool=memcheck --leak-check=full --track-origins=yes --leak-resolution=high --show-reachable=yes --log-file=memchecklog"
+                + message.master_path() + " --webui_path=" + message.webui_path();
         const string stdoutPath = path::join(m_cwd, "stdout");
         Try<int_fd> out = os::open(
                 stdoutPath,
