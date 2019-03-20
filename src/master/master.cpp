@@ -80,8 +80,7 @@ namespace chameleon {
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
         nextFrameworkId = 0;
-        nextSlaveId = 0;
-        nextOfferId = 0;
+        m_scheduler = make_shared<CoarseGrainedScheduler>();
 
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
@@ -411,8 +410,8 @@ namespace chameleon {
 
         mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
 
-        LOG(INFO) << "Received  SUBSCRIBE call for framework "
-                  << frameworkInfo.name() << " at " << from;
+//        LOG(INFO) << "Received  SUBSCRIBE call for framework "
+//                  << frameworkInfo.name() << " at " << from;
 
         if (!frameworkInfo.has_id() || frameworkInfo.id().value().empty()) {
 
@@ -420,8 +419,8 @@ namespace chameleon {
             // Check if this framework is already subscribed (because it retries).
             foreachvalue (Framework *framework, frameworks.registered) {
                                     if (framework->pid == from) {
-                                        LOG(INFO) << "Framework " << *framework
-                                                  << " already subscribed, resending acknowledgement";
+//                                        LOG(INFO) << "Framework " << *framework
+//                                                  << " already subscribed, resending acknowledgement";
                                         mesos::internal::FrameworkRegisteredMessage message;
                                         message.mutable_framework_id()->MergeFrom(framework->id());
                                         message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
@@ -466,15 +465,8 @@ namespace chameleon {
         Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
 
         mesos::internal::ResourceOffersMessage message;
-
-        for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
-            mesos::OfferID new_offer_id = newOfferId();
-            shared_ptr<SlaveObject> slave = it->second;
-            mesos::Offer *offer = slave->construct_a_offer(new_offer_id.value(), frameworkId);
-            message.add_offers()->MergeFrom(*offer);
-            LOG(INFO)<<offer->slave_id().value();
-            message.add_pids(slave->m_upid_str);
-        }
+        LOG(INFO)<<"start scheduling to provide offers";
+        m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
         if(message.offers_size()>0){
             framework->send(message);
@@ -793,11 +785,6 @@ namespace chameleon {
         return frameworkId;
     }
 
-    mesos::OfferID Master::newOfferId() {
-        mesos::OfferID offerId;
-        offerId.set_value(m_masterInfo.id() + "-O" + stringify(nextOfferId++));
-        return offerId;
-    }
 
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;
