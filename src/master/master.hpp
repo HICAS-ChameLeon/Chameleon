@@ -54,9 +54,10 @@
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
 #include <chameleon_os.hpp>
-#include "slave_object.hpp"
 #include <chameleon_resources.hpp>
-#include "scheduler.hpp"
+#include <slave_object.hpp>
+#include <scheduler_interface.hpp>
+#include <coarse_grained_scheduler.hpp>
 
 using std::string;
 using std::set;
@@ -176,7 +177,6 @@ namespace chameleon {
          * make random ID-weiguow-2019/2/24
          * */
         mesos::FrameworkID newFrameworkId();
-        mesos::OfferID newOfferId();
 
         Framework *getFramework(const mesos::FrameworkID &frameworkId);
 
@@ -266,14 +266,11 @@ namespace chameleon {
         // key: slave_ip, value: runtime_resources
         unordered_map<string, JSON::Object> m_runtime_resources;
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
-//        unordered_map<string,HardwareResource> m_topology_resources;
 
-        const string test_slave_UPID = "slave@172.20.110.69:6061";
-        const string test_master_UPID = "slave@172.20.110.228:6061";
+        // scheduler related
+        shared_ptr<SchedulerInterface> m_scheduler;
 
         int64_t nextFrameworkId;
-        int64_t nextOfferId;
-        int64_t nextSlaveId;
 
         mesos::MasterInfo m_masterInfo;
 
@@ -292,8 +289,6 @@ namespace chameleon {
          * @param ip  slave.ip
          */
         void received_reply_shutdown_message(const string &ip, const bool &is_shutdown);
-
-        mesos::Offer* create_a_offer(const mesos::FrameworkID& frameworkId);
 
         // super_master related
         string m_super_master_path;
