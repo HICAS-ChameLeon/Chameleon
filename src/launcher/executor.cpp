@@ -5,7 +5,6 @@
 #include <stout/protobuf.hpp>
 #include "executor.hpp"
 
-
 namespace chameleon {
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskID& taskId)
     {
@@ -20,59 +19,53 @@ namespace chameleon {
             const Option<string>& _user,
             const Option<string>& _taskCommand,
             const mesos::FrameworkID& _frameworkId,
-            const mesos::ExecutorID& _executorId) : ProcessBase("CommandExecutor")
+            const mesos::ExecutorID& _executorId) : ProcessBase("CommandExecutor"),
+            taskId(None()),
+            executorId(_executorId),
+            frameworkId(_frameworkId),
+            launched(false)
             {
-                std::cout<<"yxxxx CommandExecutor Construct start"<<std::endl;
-
+                //std::cout<<"yxxxx CommandExecutor Construct start"<<std::endl;
+                LOG(INFO) << "yxxxx CommandExecutor Construct start" ;
+                /* use method 'CommandExecutor::launch' to executor TaskInfo */
                 install<mesos::TaskInfo>(
                         &CommandExecutor::launch);
             }
 
     void CommandExecutor::initialize() {
-        std::cout<<"yxxxx CommandExecutor initialize"<<std::endl;
+       // std::cout<<"yxxxx CommandExecutor initialize"<<std::endl;
+        LOG(INFO) << "yxxxx CommandExecutor initialize" ;
         process::UPID commandExecutorPid = self();
         std::cout<<commandExecutorPid<<std::endl;
         m_driver = new ChameleonExecutorDriver();
         m_driver->start(commandExecutorPid);
     }
 
-/*
-    pid_t CommandExecutor::launchTaskSubprocess(
-            const mesos::CommandInfo& command,
-            const string& launcherDir,
-            const mesos::Environment& environment,
-            const Option<string>& user,
-            const Option<string>& rootfs,
-            const Option<string>& sandboxDirectory,
-            const Option<string>& workingDirectory){
 
-//        string commandString = strings::format(
-//                "%s %s <POSSIBLY-SENSITIVE-DATA>",
-//                path::join(launcherDir, MESOS_CONTAINERIZER),
-//                MesosContainerizerLaunch::NAME).get();
-
-*/
-/*        std::cout << "yxxxxx  Running '" << commandString << "'" << std::endl;
-
-        Try<process::Subprocess> s = subprocess(
-                path::join(launcherDir, MESOS_CONTAINERIZER),
-                process::Subprocess::FD(STDIN_FILENO),
-                process::Subprocess::FD(STDOUT_FILENO),
-                process::Subprocess::FD(STDERR_FILENO),
-                None(),
-                None(),
-                {process::Subprocess::ChildHook::SETSID()});*//*
-
-
-
-        return s->pid();
-    }
-*/
 
     void CommandExecutor::launch(const mesos::TaskInfo &task) {
-        LOG(INFO) << "yxxxxxxx CommandExecutor asked to run task '" << task.task_id()<< "'";
-       // taskData = TaskData(task);
+
+        if (launched) {
+            LOG(INFO) << "yxxxxxxx CommandExecutor launched(flase) ";
+            mesos::TaskStatus status = CommandExecutor::createTaskStatus(
+                    task.task_id(),
+                    mesos::TASK_FAILED,
+                    None(),
+                    "Attempted to run multiple tasks using a \"command\" executor");
+
+            forward(status);
+            return;
+        }
+        LOG(INFO) << "yxxxxxxx CommandExecutor createTaskStatus '" ;
         taskId = task.task_id();
+        mesos::TaskStatus status = CommandExecutor::createTaskStatus(taskId.get(), mesos::TASK_RUNNING);
+        forward(status);
+        launched = true;
+
+        LOG(INFO) << "yxxxxxxx CommandExecutor asked to run task '" << task.task_id()<< "'";
+
+       // taskData = TaskData(task);
+
         // Determine the command to launch the task.
         mesos::CommandInfo command;
 
@@ -141,25 +134,85 @@ namespace chameleon {
 
         //--------------------------------------------------
 
-        std::cout << "\n yxxxxxx Starting task " << taskId.get() << std::endl;
+       // std::cout << "\n yxxxxxx Starting task " << taskId.get() << std::endl;
+        LOG(INFO) << " yxxxxxx Starting task " << taskId.get();
 
-/*        pid = launchTaskSubprocess(
-                command,
-                launcherDir,
-                launchEnvironment,
-                user,
-                rootfs,
-                sandboxDirectory,
-                workingDirectory);*/
-     //   const string *com = command.mutable_value();
+        /*begin run taskInfo*/
         Try<process::Subprocess> exec = process::subprocess(
                 *command.mutable_value(),
                 process::Subprocess::FD(STDIN_FILENO),
                 process::Subprocess::FD(STDOUT_FILENO),
                 process::Subprocess::FD(STDERR_FILENO) );
 
-        std::cout << "\n yxxxxx  Forked command at " << pid << std::endl;
+        LOG(INFO) << " yxxxxx  Forked command at " << pid;
+      //  std::cout << "\n yxxxxx  Forked command at " << pid << std::endl;
 
+    }
+
+
+    // Use this helper to create a status update from scratch.
+    mesos::TaskStatus CommandExecutor::createTaskStatus(const mesos::TaskID &_taskId, const mesos::TaskState &state,
+                                                        const Option<mesos::TaskStatus::Reason> &reason,
+                                                        const Option<string> &message) {
+        LOG(INFO) << " yxxxxx  createTaskStatus 1 " ;
+        mesos::TaskStatus status = chameleon::protobuf::createTaskStatus(
+                _taskId,
+                state,
+                UUID::random(),
+                process::Clock::now().secs());
+
+        status.mutable_executor_id()->CopyFrom(executorId);
+        status.set_source(mesos::TaskStatus::SOURCE_EXECUTOR);
+
+        if (reason.isSome()) {
+            status.set_reason(reason.get());
+        }
+
+        if (message.isSome()) {
+            status.set_message(message.get());
+        }
+
+        return status;
+    }
+
+
+    std::ostream& operator<<(std::ostream& stream, const mesos::ExecutorID& executorId)
+    {
+        return stream << executorId.value();
+    }
+
+    // Use this helper to create a status update from scratch.
+    mesos::TaskStatus CommandExecutor::createTaskStatus(const mesos::TaskID &_taskId, const mesos::TaskState &state) {
+        LOG(INFO) << " yxxxxx  createTaskStatus 2 " ;
+        mesos::TaskStatus status = chameleon::protobuf::createTaskStatus(
+                _taskId,
+                state,
+                UUID::random(),
+                process::Clock::now().secs());
+        LOG(INFO) << " yxxxxx  createTaskStatus executorId "<<executorId;
+        status.mutable_executor_id()->CopyFrom(executorId);
+        status.set_source(mesos::TaskStatus::SOURCE_EXECUTOR);
+
+        return status;
+    }
+
+    void CommandExecutor::forward(const mesos::TaskStatus &status) {
+        //mesos::executor::Call call;
+      //  call.set_type(mesos::executor::Call::UPDATE);
+
+      //  call.mutable_framework_id()->CopyFrom(frameworkId);
+      //  call.mutable_executor_id()->CopyFrom(executorId);
+
+        //call.mutable_update()->mutable_status()->CopyFrom(status);
+
+        // Capture the status update.
+       // unacknowledgedUpdates[UUID::fromBytes(status.uuid()).get()] = call.update();
+        // Overwrite the last task status.
+        //lastTaskStatus = status;
+
+    //    mesos->send(evolve(call));
+        LOG(INFO) << " yxxxxx  CommandExecutor  forward" ;
+        m_driver->sendStatusUpdate(status);
     }
 
 
@@ -188,7 +241,9 @@ namespace chameleon {
             "If specified, this is the overrided command for launching the\n"
             "task (instead of the command from TaskInfo).");
 
-/*        add(&Flags::task_environment,
+        //exist bug  113--158
+/*
+ *       add(&Flags::task_environment,
             "task_environment",
             "If specified, this is a JSON-ified `Environment` protobuf that\n"
             "should be added to the executor's environment before launching\n"

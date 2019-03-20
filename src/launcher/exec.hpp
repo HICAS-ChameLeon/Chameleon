@@ -36,6 +36,12 @@
 
 namespace chameleon{
 
+    /*
+     * className：ExecutorDriver
+     * date：19/1/12
+     * author：ZhangYixin 1968959287@qq.com
+     * description： start Executor.
+     */
     class ExecutorDriver
     {
     public:
@@ -106,8 +112,6 @@ namespace chameleon{
 
     private:
         friend class chameleon::ChameleonExecutorDriver;
-
-
 
         process::UPID slave;
         chameleon::ChameleonExecutorDriver* driver;
