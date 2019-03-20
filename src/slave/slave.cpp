@@ -75,7 +75,7 @@ namespace chameleon {
         msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
 //        setting::SLAVE_EXE_DIR = os::getcwd();
         m_cwd = os::getcwd();
-        m_software_resource_manager = new SoftwareResourceManager(m_cwd+"/public_resources");
+        m_software_resource_manager = new SoftwareResourceManager(m_cwd, m_cwd+"/public_resources");
 
 //            msp_resource_collector = new ResourceCollector();
     }
@@ -92,6 +92,7 @@ namespace chameleon {
         // Verify that the version of the library that we linked against is
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
+        m_uuid = UUID::random().toString();
 
 //        LOG(INFO) << "slave executable path" << setting::SLAVE_EXE_DIR;
 
@@ -161,7 +162,6 @@ namespace chameleon {
         string slave_id = stringify(self().address.ip);
         hr_message->set_slave_id(slave_id);
 
-        m_uuid = UUID::random().toString();
         hr_message->set_slave_uuid(m_uuid);
         hr_message->set_slave_hostname(self().address.hostname().get());
         DLOG(INFO) << "Before send message to master";

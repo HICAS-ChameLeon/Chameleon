@@ -54,9 +54,10 @@
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
 #include <chameleon_os.hpp>
-#include <slave_object.hpp>
 #include <chameleon_resources.hpp>
-#include "scheduler.hpp"
+#include <slave_object.hpp>
+#include <scheduler_interface.hpp>
+#include <coarse_grained_scheduler.hpp>
 
 using std::string;
 using std::set;
@@ -127,8 +128,7 @@ namespace chameleon {
         friend class Slave;
 
         explicit Master() : ProcessBase("master") {
-            msp_spark_slave = make_shared<UPID>(UPID(test_slave_UPID));
-            msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
+
             m_state = INITIALIZING;
 
             m_masterInfo.set_id(UUID::random().toString());
@@ -176,56 +176,11 @@ namespace chameleon {
         /**
          * make random ID-weiguow-2019/2/24
          * */
-        mesos::SlaveID newSlaveId();
         mesos::FrameworkID newFrameworkId();
-        mesos::OfferID newOfferId();
 
         Framework *getFramework(const mesos::FrameworkID &frameworkId);
 
         hashmap<string, mesos::Offer*> offers;
-
-//        /**
-//         * save slaveinfo-weiguow-2019-2-24*/
-//        struct Slaves {
-//
-//            hashset<process::UPID> registering;
-//
-//            struct {
-//                Slave* get(const mesos::SlaveID &slaveId) const {
-//                    return ids.get(slaveId.value()).getOrElse(nullptr);
-//                }
-//
-//                Slave* get(const process::UPID &pid) const {
-//                    return pids.get(pid).getOrElse(nullptr);
-//                }
-//
-//                void put(Slave* slave)
-//                {
-//                    CHECK_NOTNULL(slave);
-//
-//                    ids[slave->id.value()] = slave;
-//                    pids[slave->pid] = slave;
-//                }
-//
-//
-//                size_t size() const { return ids.size(); }
-//
-//                typedef hashmap<string, Slave*>::iterator iterator;
-//                typedef hashmap<string, Slave*>::const_iterator const_iterator;
-//
-//                iterator begin() { return ids.begin(); }
-//                iterator end()   { return ids.end();   }
-//
-//                const_iterator begin() const { return ids.begin(); }
-//                const_iterator end()   const { return ids.end();   }
-//
-//            public:
-//                hashmap<string, Slave*> ids;
-//                hashmap<process::UPID, Slave*> pids;
-//            } registered;
-//
-//
-//        } slaves;
 
         /**
          * save Frameworkinfo-weiguow-2019-2-22
@@ -299,26 +254,23 @@ namespace chameleon {
             RUNNING
         } m_state;
 
+        // key: slave_ip, value: hardware_resources
         unordered_map<string, JSON::Object> m_hardware_resources;
         unordered_map<string, HardwareResourcesMessage> m_proto_hardware_resources;
         set<string> m_alive_slaves;
-        // key: slave_uuid, value: hared_ptr<SlaveObject>
+        // key: slave_uuid, value: shared_ptr<SlaveObject>
         unordered_map<string, shared_ptr<SlaveObject>> m_slave_objects;
+        // key: framework ID value:  the unordered_set of slave_uuids. It records the slaves where the framework is running on.
+        unordered_map<string,unordered_set<string>> m_framework_to_slaves;
 
+        // key: slave_ip, value: runtime_resources
         unordered_map<string, JSON::Object> m_runtime_resources;
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
-//        unordered_map<string,HardwareResource> m_topology_resources;
 
-        const string test_slave_UPID = "slave@172.20.110.69:6061";
-        const string test_master_UPID = "slave@172.20.110.228:6061";
-        shared_ptr<UPID> msp_spark_slave;
-        shared_ptr<UPID> msp_spark_master;
-
-        string m_slavePID;
+        // scheduler related
+        shared_ptr<SchedulerInterface> m_scheduler;
 
         int64_t nextFrameworkId;
-        int64_t nextOfferId;
-        int64_t nextSlaveId;
 
         mesos::MasterInfo m_masterInfo;
 
@@ -337,8 +289,6 @@ namespace chameleon {
          * @param ip  slave.ip
          */
         void received_reply_shutdown_message(const string &ip, const bool &is_shutdown);
-
-        mesos::Offer* create_a_offer(const mesos::FrameworkID& frameworkId);
 
         // super_master related
         string m_super_master_path;

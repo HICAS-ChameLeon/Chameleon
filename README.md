@@ -42,7 +42,8 @@ $ make
 
 ### master
 ```shell
-$ ./build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src/webui
+$ cd ./build/src/master/
+$ ./master --webui_path=/home/lemaker/open-source/Chameleon/src/webui
 ```
 
 ### Required Flags
@@ -58,7 +59,8 @@ $ ./build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src
 
 ### slave
 ```shell
-$ ./build/src/slave/slave --master=172.20.110.228:6060 --ht=555555
+ cd ./build/src/slave/
+$ ./slave --master=172.20.110.228:6060 --ht=555555
 ```
 
 ### Required Flags
@@ -76,7 +78,8 @@ $ ./build/src/slave/slave --master=172.20.110.228:6060 --ht=555555
 ### super_master
 
 ```shell
-$./build/src/master/super_master --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master --webui=/home/lemaker/open-source/Chameleon/src/webui
+$ cd ./build/src/master/
+$./super_master --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master --webui=/home/lemaker/open-source/Chameleon/src/webui
 ```
 
 ### Required Flags

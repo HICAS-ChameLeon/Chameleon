@@ -80,8 +80,7 @@ namespace chameleon {
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
         nextFrameworkId = 0;
-        nextSlaveId = 0;
-        nextOfferId = 0;
+        m_scheduler = make_shared<CoarseGrainedScheduler>();
 
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
@@ -189,8 +188,33 @@ namespace chameleon {
                             if (framework->state == Framework::DISCONNECTED) {
                                 a_framework.values["state"] = "DISCONNECTED";
                             }
+
+                            const string& framework_id = framework->id().value();
+
+                            // find the relevant resources consumped on different slaves of the framework
+                            JSON::Array slaves_array;
+                            double sum_cpus = 0;
+                            double  sum_mem = 0;
+                            unordered_set<string>& slaves_uuids = m_framework_to_slaves[framework_id];
+                            for(auto it=slaves_uuids.begin();it!=slaves_uuids.end();it++){
+                                shared_ptr<SlaveObject>& slave_object = m_slave_objects[*it];
+                                const ResourcesOfFramework& resources_of_framework = slave_object->m_framework_resources[framework_id];
+                                JSON::Object resources_record = JSON::Object();
+                                resources_record.values["slave_uuid"] = *it;
+                                resources_record.values["cpus"] = resources_of_framework.m_consumped_cpus;
+                                sum_cpus += resources_of_framework.m_consumped_cpus;
+                                resources_record.values["mem"] = resources_of_framework.m_consumped_mem;
+                                sum_mem += resources_of_framework.m_consumped_mem;
+                                slaves_array.values.emplace_back(resources_record);
+                            }
+                            a_framework.values["slaves"] = slaves_array;
+                            a_framework.values["cpus"] = sum_cpus;
+                            a_framework.values["mem"] = sum_mem;
+
                             frameworks_array.values.emplace_back(a_framework);
                         }
+
+
                         a_content.values["quantity"] = frameworks_array.values.size();
                         a_content.values["content"] = frameworks_array;
                     } else {
@@ -200,6 +224,28 @@ namespace chameleon {
                     }
 
                     OK ok_response(stringify(a_content));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+        route(
+                "/framework_id",
+                "get all the information of frameworks related with the current master",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_framework_to_slaves.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_framework_to_slaves.begin();
+                             it != this->m_framework_to_slaves.end(); it++) {
+                            unordered_set <string> slave_uuid = it->second;
+                            for (auto its = slave_uuid.begin(); its != slave_uuid.end(); its++) {
+                                array.values.push_back(*its);
+                            }
+                            result.values["quantity"] = array.values.size();
+                            result.values["content"] = array;
+                        }
+                    }
+                    OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
                 });
@@ -370,8 +416,8 @@ namespace chameleon {
 
         mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
 
-        LOG(INFO) << "Received  SUBSCRIBE call for framework "
-                  << frameworkInfo.name() << " at " << from;
+//        LOG(INFO) << "Received  SUBSCRIBE call for framework "
+//                  << frameworkInfo.name() << " at " << from;
 
         if (!frameworkInfo.has_id() || frameworkInfo.id().value().empty()) {
 
@@ -379,8 +425,8 @@ namespace chameleon {
             // Check if this framework is already subscribed (because it retries).
             foreachvalue (Framework *framework, frameworks.registered) {
                                     if (framework->pid == from) {
-                                        LOG(INFO) << "Framework " << *framework
-                                                  << " already subscribed, resending acknowledgement";
+//                                        LOG(INFO) << "Framework " << *framework
+//                                                  << " already subscribed, resending acknowledgement";
                                         mesos::internal::FrameworkRegisteredMessage message;
                                         message.mutable_framework_id()->MergeFrom(framework->id());
                                         message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
@@ -427,21 +473,17 @@ namespace chameleon {
         Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
 
         mesos::internal::ResourceOffersMessage message;
+        LOG(INFO)<<"start scheduling to provide offers";
+        m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
-        for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
-            mesos::OfferID new_offer_id = newOfferId();
-            shared_ptr<SlaveObject> slave = it->second;
-            mesos::Offer *offer = slave->construct_a_offer(new_offer_id.value(), frameworkId);
-            message.add_offers()->MergeFrom(*offer);
-            message.add_pids(slave->m_upid_str);
+        if(message.offers_size()>0){
+            framework->send(message);
+
+            LOG(INFO) << "Sent " << message.offers_size() << " offer to framework "
+                      << framework->pid.get();
+        }else{
+            LOG(INFO)<<"available offer size is 0, the master doesn't have sufficient resources for the framework's requirement.";
         }
-
-        LOG(INFO) << "Sending " << message.offers_size() << " offer to framework "
-                  << framework->pid.get();
-
-        framework->send(message);
-        LOG(INFO)<<"MAKUN send ResourceOffersMessage";
-
         return;
     }
 
@@ -488,9 +530,14 @@ namespace chameleon {
                         if (m_slave_objects.count(task.slave_id().value()) > 0) {
                             shared_ptr<SlaveObject> &current_slave = m_slave_objects.at(task.slave_id().value());
 
+                            // the framework will be launched on the current_slave, so we will check whether the current_slave has the framework running on.
                             if(current_slave->m_framework_resources.count(framework->id().value()) ==0){
                                 // construct the ResourceOfFramework first
                                 current_slave->m_framework_resources[framework->id().value()];
+                                if(m_framework_to_slaves.count(framework->id().value()) ==0 ){
+                                    m_framework_to_slaves[framework->id().value()];
+                                }
+                                m_framework_to_slaves[framework->id().value()].insert(current_slave->m_uuid);
                             }
                             // get the reference of the ResourceOfFramework of the current framework
                             ResourcesOfFramework& resources_of_framework = current_slave->m_framework_resources[framework->id().value()];
@@ -574,6 +621,8 @@ namespace chameleon {
 
         LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
                   << " for framework " << *framework;
+
+        process::dispatch(self(),&Master::Offer,framework->id());
 
         //we should save offer infomation before do this , so we now just leave it- by weiguow
 //        offers.erase(offer->id());
@@ -706,9 +755,10 @@ namespace chameleon {
         LOG(INFO) << "Removing framework " << *framework;
 
         // restore the resources occupied by the framework in the specific slave
-        for(auto it=m_slave_objects.begin();it!=m_slave_objects.end();it++){
-            shared_ptr<SlaveObject>& slave = it->second;
-            if(slave->restore_resource_of_framework(framework->id().value())){
+        const string& framework_id = framework->id().value();
+        for(auto it=m_framework_to_slaves[framework_id].begin();it!=m_framework_to_slaves[framework_id].end();it++){
+            shared_ptr<SlaveObject>& slave = m_slave_objects[*it];
+            if(slave->restore_resource_of_framework(framework_id)){
                 if (framework->active()) {
                     CHECK(framework->active());
 
@@ -722,28 +772,14 @@ namespace chameleon {
 
                 send(slave->m_upid,message);
 
-//        string slave_pid = "slave@172.20.110.228:6061";
-//                string cur_slavePID = "slave@" + *m_alive_slaves.begin() + ":6061";
-//                UPID cur_slave(cur_slavePID);
-//                send(cur_slave, message);
-
-//        frameworks.completed.set(framework->id().value(), framework);
             }
-
         }
 
-
+        m_framework_to_slaves.erase(framework_id);
     }
 
 
-    /**
-     * create slaveID,frameworkID,masterID-weiguow-2019/2/24
-     * */
-    mesos::SlaveID Master::newSlaveId() {
-        mesos::SlaveID slaveId;
-        slaveId.set_value(m_masterInfo.id() + "-S" + stringify(nextSlaveId++));
-        return slaveId;
-    }
+
 
     mesos::FrameworkID Master::newFrameworkId() {
         std::ostringstream out;
@@ -758,11 +794,6 @@ namespace chameleon {
         return frameworkId;
     }
 
-    mesos::OfferID Master::newOfferId() {
-        mesos::OfferID offerId;
-        offerId.set_value(m_masterInfo.id() + "-O" + stringify(nextOfferId++));
-        return offerId;
-    }
 
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;
