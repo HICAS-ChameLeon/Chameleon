@@ -189,9 +189,8 @@ namespace chameleon {
                             if (framework->state == Framework::DISCONNECTED) {
                                 a_framework.values["state"] = "DISCONNECTED";
                             }
-                            frameworks_array.values.emplace_back(a_framework);
-                            const string& framework_id = framework->id().value();
 
+                            const string& framework_id = framework->id().value();
 
                             // find the relevant resources consumped on different slaves of the framework
                             JSON::Array slaves_array;
@@ -213,7 +212,7 @@ namespace chameleon {
                             a_framework.values["cpus"] = sum_cpus;
                             a_framework.values["mem"] = sum_mem;
 
-
+                            frameworks_array.values.emplace_back(a_framework);
                         }
 
 
@@ -473,6 +472,7 @@ namespace chameleon {
             shared_ptr<SlaveObject> slave = it->second;
             mesos::Offer *offer = slave->construct_a_offer(new_offer_id.value(), frameworkId);
             message.add_offers()->MergeFrom(*offer);
+            LOG(INFO)<<offer->slave_id().value();
             message.add_pids(slave->m_upid_str);
         }
 

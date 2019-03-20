@@ -91,6 +91,7 @@ namespace chameleon {
 
         mesos::SlaveID *slaveID = new mesos::SlaveID();
         slaveID->set_value(m_uuid);
+        LOG(INFO)<<m_uuid;
         offer->mutable_slave_id()->MergeFrom(*slaveID);
 
         offer->set_hostname(m_hostname);
