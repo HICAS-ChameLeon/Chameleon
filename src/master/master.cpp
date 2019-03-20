@@ -746,27 +746,46 @@ namespace chameleon {
         LOG(INFO) << "Removing framework " << *framework;
 
         // restore the resources occupied by the framework in the specific slave
-        const string& framework_id = framework->id().value();
-        for(auto it=m_framework_to_slaves[framework_id].begin();it!=m_framework_to_slaves[framework_id].end();it++){
-            shared_ptr<SlaveObject>& slave = m_slave_objects[*it];
-            if(slave->restore_resource_of_framework(framework_id)){
-                if (framework->active()) {
-                    CHECK(framework->active());
+        const string framework_id = framework->id().value();
+        LOG(INFO) << "Removing "<<framework_id ;
+        if(m_framework_to_slaves.count(framework_id)){
+            unordered_set<string>& slave_uuids = m_framework_to_slaves.at(framework_id);
+            LOG(INFO) << "Removing 752" ;
 
-                    LOG(INFO) << "Deactive framework " << *framework;
+            if(!slave_uuids.empty()){
+                for(auto it=slave_uuids.begin();it!=slave_uuids.end();it++){
+                    shared_ptr<SlaveObject>& slave = m_slave_objects[*it];
+                    if(slave!= nullptr){
+                        LOG(INFO)<<"restore begins";
+                        if(slave->restore_resource_of_framework(framework_id)){
+                            if (framework->active()) {
+//                            CHECK(framework->active());
 
-                    framework->state = Framework::State::INACTIVE;
+                                LOG(INFO) << "Deactive framework " << *framework;
+
+                                framework->state = Framework::State::INACTIVE;
+                            }
+                            //send ShutdownFrameworkMessage to slave
+                            mesos::internal::ShutdownFrameworkMessage message;
+                            message.mutable_framework_id()->MergeFrom(framework->id());
+
+                            send(slave->m_upid,message);
+
+                        }
+                    }else{
+                        LOG(INFO)<< "slave == nullptr";
+                    }
+
                 }
-                //send ShutdownFrameworkMessage to slave
-                mesos::internal::ShutdownFrameworkMessage message;
-                message.mutable_framework_id()->MergeFrom(framework->id());
-
-                send(slave->m_upid,message);
+            }else{
+                LOG(INFO)<< "slave_uuids == empty";
 
             }
+
+
+            m_framework_to_slaves.erase(framework_id);
         }
 
-        m_framework_to_slaves.erase(framework_id);
     }
 
 
