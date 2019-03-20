@@ -476,11 +476,14 @@ namespace chameleon {
             message.add_pids(slave->m_upid_str);
         }
 
-        LOG(INFO) << "Sending " << message.offers_size() << " offer to framework "
-                  << framework->pid.get();
+        if(message.offers_size()>0){
+            framework->send(message);
 
-        framework->send(message);
-
+            LOG(INFO) << "Sent " << message.offers_size() << " offer to framework "
+                      << framework->pid.get();
+        }else{
+            LOG(INFO)<<"available offer size is 0, the master doesn't have sufficient resources for the framework's requirement.";
+        }
         return;
     }
 
