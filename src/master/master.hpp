@@ -54,7 +54,7 @@
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
 #include <chameleon_os.hpp>
-#include <slave_object.hpp>
+#include "slave_object.hpp"
 #include <chameleon_resources.hpp>
 #include "scheduler.hpp"
 

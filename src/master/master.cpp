@@ -189,8 +189,33 @@ namespace chameleon {
                             if (framework->state == Framework::DISCONNECTED) {
                                 a_framework.values["state"] = "DISCONNECTED";
                             }
+
+                            const string& framework_id = framework->id().value();
+
+                            // find the relevant resources consumped on different slaves of the framework
+                            JSON::Array slaves_array;
+                            double sum_cpus = 0;
+                            double  sum_mem = 0;
+                            unordered_set<string>& slaves_uuids = m_framework_to_slaves[framework_id];
+                            for(auto it=slaves_uuids.begin();it!=slaves_uuids.end();it++){
+                                shared_ptr<SlaveObject>& slave_object = m_slave_objects[*it];
+                                const ResourcesOfFramework& resources_of_framework = slave_object->m_framework_resources[framework_id];
+                                JSON::Object resources_record = JSON::Object();
+                                resources_record.values["slave_uuid"] = *it;
+                                resources_record.values["cpus"] = resources_of_framework.m_consumped_cpus;
+                                sum_cpus += resources_of_framework.m_consumped_cpus;
+                                resources_record.values["mem"] = resources_of_framework.m_consumped_mem;
+                                sum_mem += resources_of_framework.m_consumped_mem;
+                                slaves_array.values.emplace_back(resources_record);
+                            }
+                            a_framework.values["slaves"] = slaves_array;
+                            a_framework.values["cpus"] = sum_cpus;
+                            a_framework.values["mem"] = sum_mem;
+
                             frameworks_array.values.emplace_back(a_framework);
                         }
+
+
                         a_content.values["quantity"] = frameworks_array.values.size();
                         a_content.values["content"] = frameworks_array;
                     } else {
@@ -200,6 +225,28 @@ namespace chameleon {
                     }
 
                     OK ok_response(stringify(a_content));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+        route(
+                "/framework_id",
+                "get all the information of frameworks related with the current master",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_framework_to_slaves.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_framework_to_slaves.begin();
+                             it != this->m_framework_to_slaves.end(); it++) {
+                            unordered_set <string> slave_uuid = it->second;
+                            for (auto its = slave_uuid.begin(); its != slave_uuid.end(); its++) {
+                                array.values.push_back(*its);
+                            }
+                            result.values["quantity"] = array.values.size();
+                            result.values["content"] = array;
+                        }
+                    }
+                    OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
                 });
@@ -425,14 +472,18 @@ namespace chameleon {
             shared_ptr<SlaveObject> slave = it->second;
             mesos::Offer *offer = slave->construct_a_offer(new_offer_id.value(), frameworkId);
             message.add_offers()->MergeFrom(*offer);
+            LOG(INFO)<<offer->slave_id().value();
             message.add_pids(slave->m_upid_str);
         }
 
-        LOG(INFO) << "Sending " << message.offers_size() << " offer to framework "
-                  << framework->pid.get();
+        if(message.offers_size()>0){
+            framework->send(message);
 
-        framework->send(message);
-
+            LOG(INFO) << "Sent " << message.offers_size() << " offer to framework "
+                      << framework->pid.get();
+        }else{
+            LOG(INFO)<<"available offer size is 0, the master doesn't have sufficient resources for the framework's requirement.";
+        }
         return;
     }
 
