@@ -54,7 +54,7 @@
 #include <process/subprocess.hpp>
 
 // protobuf
-#include <monitor_info.pb.h>
+//#include <monitor_info.pb.h>
 #include <job.pb.h>
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>

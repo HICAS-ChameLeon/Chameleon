@@ -114,8 +114,6 @@ namespace chameleon {
          * */
         install<mesos::scheduler::Call>(&Master::receive);
 
-        //change two levels to one related
-        install("MAKUN", &Master::get_select_master);
 //        install<TerminatingMasterMessage>
 
         // http://172.20.110.228:6060/master/hardware-resources
@@ -987,11 +985,6 @@ namespace chameleon {
             terminate(self());
             process::wait(self());
         }
-    }
-
-    void Master::get_select_master(const UPID &from, const string &message) {
-        LOG(INFO) << "MAKUN received select_master_message";
-        send(from, "MAKUN2");
     }
     // end of super_mater related
 
