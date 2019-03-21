@@ -47,7 +47,7 @@
                 })
 
                 // framework.html
-                .when('/frameworks/framework_id', {
+                .when('/frameworks/:framework_uuid', {
                     templateUrl: 'framework.html',
                     controller: 'FrameworkCtrl'
                 })

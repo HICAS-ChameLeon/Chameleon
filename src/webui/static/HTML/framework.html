@@ -1,7 +1,7 @@
 <div class="row">
     <div  class=" col-md-3 col-lg-3">
         <div class="well">
-            <dl ng-repeat="x in master.framework.resource" class="inline clearfix">
+            <dl ng-repeat="x in master.framework.resource | filter:{state: 'ACTIVE'}:true" class="inline clearfix">
                 <dt>Name:</dt>
                 <dd>{{x.name}}</dd>
                 <dt>Web UI:</dt>
@@ -10,19 +10,17 @@
                 <dd>{{x.user}}</dd>
                 <dt>Roles:</dt>
                 <dd>*</dd>
-                <dt>Registered:</dt>
-                <dd>*</dd>
                 <dt>Active tasks:</dt>
                 <dd>0</dd>
             </dl>
         </div>
     </div>
     <div class="col-md-9">
-            <table m-table table-content="framework.tasks" title="Active Tasks"
+            <table m-table table-content="framework.tasks" title="运行的slaves"
                    class="table table-striped table-bordered table-condensed">
                 <thead>
                 <tr>
-                    <th data-key="id">slave</th>
+                    <th data-key="id">slave_uuid</th>
                     <th data-key="name">cpus</th>
                     <th data-key="role">mems</th>
 
@@ -30,7 +28,7 @@
                 </thead>
                 <tbody>
                 <tr ng-repeat="x in slaves">
-                    <th><a href="#/frameworks/framework_id">{{x.slave_uuid}}</a>
+                    <th>{{x.slave_uuid}}
                     </th>
                     <th>
                         {{x.cpus}}
@@ -38,37 +36,10 @@
                     <th>
                         {{x.mem}}
                     </th>
-                    <th>
-                        {{x.name}}
-                    </th>
                 </tr>
 
                 </tbody>
             </table>
-
-        <table m-table table-content="framework.tasks" title="Unreachable Tasks"
-               class="table table-striped table-bordered table-condensed">
-            <thead>
-            <tr>
-                <th data-key="id">slave</th>
-                <th data-key="name">cpus</th>
-                <th data-key="role">mems</th>
-                <th></th>
-            </tr>
-            </thead>
-        </table>
-
-        <table m-table table-content="framework.tasks" title="Completed Tasks"
-               class="table table-striped table-bordered table-condensed">
-            <thead>
-            <tr>
-                <th data-key="id">slave</th>
-                <th data-key="name">cpus</th>
-                <th data-key="role">mems</th>
-                <th></th>
-            </tr>
-            </thead>
-        </table>
 
     </div>
 </div>
