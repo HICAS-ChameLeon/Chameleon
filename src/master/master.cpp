@@ -194,12 +194,13 @@ namespace chameleon {
                             // find the relevant resources consumped on different slaves of the framework
                             JSON::Array slaves_array;
                             double sum_cpus = 0;
-                            double  sum_mem = 0;
-                            if(!framework_id.empty() && m_framework_to_slaves.count(framework_id)){
-                                unordered_set<string>& slaves_uuids = m_framework_to_slaves[framework_id];
-                                for(auto it=slaves_uuids.begin();it!=slaves_uuids.end();it++){
-                                    shared_ptr<SlaveObject>& slave_object = m_slave_objects[*it];
-                                    const ResourcesOfFramework& resources_of_framework = slave_object->m_framework_resources[framework_id];
+                            double sum_mem = 0;
+                            if (m_framework_to_slaves.count(framework_id)) {
+                                unordered_set<string> &slaves_uuids = m_framework_to_slaves.at(framework_id);
+                                for (auto it = slaves_uuids.begin(); it != slaves_uuids.end(); it++) {
+                                    shared_ptr<SlaveObject> &slave_object = m_slave_objects.at(*it);
+                                    const ResourcesOfFramework &resources_of_framework = slave_object->m_framework_resources.at(
+                                            framework_id);
                                     JSON::Object resources_record = JSON::Object();
                                     resources_record.values["slave_uuid"] = *it;
                                     resources_record.values["cpus"] = resources_of_framework.m_consumped_cpus;
@@ -240,7 +241,7 @@ namespace chameleon {
                         JSON::Array array;
                         for (auto it = this->m_framework_to_slaves.begin();
                              it != this->m_framework_to_slaves.end(); it++) {
-                            unordered_set <string> slave_uuid = it->second;
+                            unordered_set<string> slave_uuid = it->second;
                             for (auto its = slave_uuid.begin(); its != slave_uuid.end(); its++) {
                                 array.values.push_back(*its);
                             }
@@ -468,16 +469,17 @@ namespace chameleon {
         Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
 
         mesos::internal::ResourceOffersMessage message;
-        LOG(INFO)<<"start scheduling to provide offers";
-        m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+        LOG(INFO) << "start scheduling to provide offers";
+        m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
 
-        if(message.offers_size()>0){
+        if (message.offers_size() > 0) {
             framework->send(message);
 
             LOG(INFO) << "Sent " << message.offers_size() << " offer to framework "
                       << framework->pid.get();
-        }else{
-            LOG(INFO)<<"available offer size is 0, the master doesn't have sufficient resources for the framework's requirement.";
+        } else {
+            LOG(INFO)
+                    << "available offer size is 0, the master doesn't have sufficient resources for the framework's requirement.";
         }
         return;
     }
@@ -526,16 +528,16 @@ namespace chameleon {
                             shared_ptr<SlaveObject> &current_slave = m_slave_objects.at(task.slave_id().value());
 
                             // the framework will be launched on the current_slave, so we will check whether the current_slave has the framework running on.
-                            if(current_slave->m_framework_resources.count(framework->id().value()) ==0){
+                            if (current_slave->m_framework_resources.count(framework->id().value()) == 0) {
                                 // construct the ResourceOfFramework first
                                 current_slave->m_framework_resources[framework->id().value()];
-                                if(m_framework_to_slaves.count(framework->id().value()) ==0 ){
+                                if (m_framework_to_slaves.count(framework->id().value()) == 0) {
                                     m_framework_to_slaves[framework->id().value()];
                                 }
                                 m_framework_to_slaves[framework->id().value()].insert(current_slave->m_uuid);
                             }
                             // get the reference of the ResourceOfFramework of the current framework
-                            ResourcesOfFramework& resources_of_framework = current_slave->m_framework_resources[framework->id().value()];
+                            ResourcesOfFramework &resources_of_framework = current_slave->m_framework_resources[framework->id().value()];
 
                             // first, get the actual resource consumption of the task because we want to calculate the available
                             // resource of the specified slave
@@ -545,7 +547,7 @@ namespace chameleon {
                                 if (it->name() == "cpus") {
                                     if (current_slave->m_available_cpus > it->scalar().value()) {
                                         current_slave->m_available_cpus -= it->scalar().value();
-                                        resources_of_framework.m_consumped_cpus +=it->scalar().value();
+                                        resources_of_framework.m_consumped_cpus += it->scalar().value();
                                     } else {
                                         LOG(INFO) << " the available cpu resources of the " << current_slave->m_upid_str
                                                   << "cannot satisfy the cpu resources requirements of the task "
@@ -555,9 +557,10 @@ namespace chameleon {
                                 } else if (it->name() == "mem") {
                                     if (current_slave->m_available_mem > it->scalar().value()) {
                                         current_slave->m_available_mem -= it->scalar().value();
-                                        resources_of_framework.m_consumped_mem +=it->scalar().value();
+                                        resources_of_framework.m_consumped_mem += it->scalar().value();
                                     } else {
-                                        LOG(INFO) << " the available memory resources of the " << current_slave->m_upid_str
+                                        LOG(INFO) << " the available memory resources of the "
+                                                  << current_slave->m_upid_str
                                                   << "cannot satisfy the memory resources requirements of the task "
                                                   << task.name() << " So we need to offer resources for it again";
                                         break;
@@ -617,7 +620,7 @@ namespace chameleon {
         LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
                   << " for framework " << *framework;
 
-        process::dispatch(self(),&Master::Offer,framework->id());
+        process::dispatch(self(), &Master::Offer, framework->id());
 
         //we should save offer infomation before do this , so we now just leave it- by weiguow
 //        offers.erase(offer->id());
@@ -750,17 +753,17 @@ namespace chameleon {
 
         // restore the resources occupied by the framework in the specific slave
         const string framework_id = framework->id().value();
-        LOG(INFO) << "Removing "<<framework_id ;
-        if(m_framework_to_slaves.count(framework_id)){
-            unordered_set<string>& slave_uuids = m_framework_to_slaves.at(framework_id);
-            LOG(INFO) << "Removing 752" ;
+        LOG(INFO) << "Removing " << framework_id;
+        if (m_framework_to_slaves.count(framework_id)) {
+            unordered_set<string> &slave_uuids = m_framework_to_slaves.at(framework_id);
+            LOG(INFO) << "Removing 752";
 
-            if(!slave_uuids.empty()){
-                for(auto it=slave_uuids.begin();it!=slave_uuids.end();it++){
-                    shared_ptr<SlaveObject>& slave = m_slave_objects[*it];
-                    if(slave!= nullptr){
-                        LOG(INFO)<<"restore begins";
-                        if(slave->restore_resource_of_framework(framework_id)){
+            if (!slave_uuids.empty()) {
+                for (auto it = slave_uuids.begin(); it != slave_uuids.end(); it++) {
+                    shared_ptr<SlaveObject> &slave = m_slave_objects[*it];
+                    if (slave != nullptr) {
+                        LOG(INFO) << "restore begins";
+                        if (slave->restore_resource_of_framework(framework_id)) {
                             if (framework->active()) {
 //                            CHECK(framework->active());
 
@@ -772,16 +775,16 @@ namespace chameleon {
                             mesos::internal::ShutdownFrameworkMessage message;
                             message.mutable_framework_id()->MergeFrom(framework->id());
 
-                            send(slave->m_upid,message);
+                            send(slave->m_upid, message);
 
                         }
-                    }else{
-                        LOG(INFO)<< "slave == nullptr";
+                    } else {
+                        LOG(INFO) << "slave == nullptr";
                     }
 
                 }
-            }else{
-                LOG(INFO)<< "slave_uuids == empty";
+            } else {
+                LOG(INFO) << "slave_uuids == empty";
 
             }
 
@@ -790,8 +793,6 @@ namespace chameleon {
         }
 
     }
-
-
 
 
     mesos::FrameworkID Master::newFrameworkId() {
