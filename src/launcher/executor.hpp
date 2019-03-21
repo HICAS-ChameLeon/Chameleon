@@ -22,6 +22,7 @@
 // libprocess dependenci
 #include <process/process.hpp>
 #include <process/protobuf.hpp>
+#include <process/future.hpp>
 #include <process/delay.hpp>
 #include <process/subprocess.hpp>
 #include <process/clock.hpp>
@@ -37,11 +38,11 @@ using std::string;
 namespace chameleon {
     class ChameleonExecutorDriver;
 
-    /*
-    * className：CommandExecutor
-    * date：19/1/11
-    * author：ZhangYixin 1968959287@qq.com
-    * description： start Executor.
+    /**
+      * className：CommandExecutor
+      * date：19/1/11
+      * author：ZhangYixin 1968959287@qq.com
+      * description： start Executor.
     */
     class CommandExecutor : public ProtobufProcess<CommandExecutor> {
     public:
@@ -59,6 +60,12 @@ namespace chameleon {
 
         void initialize();
 
+        /**
+         * Function name  : launch
+         * Author         : ZhangYixin
+         * Description    : launch task
+         * Return         : void
+         */
         void launch(const mesos::TaskInfo& task);
 
         mesos::TaskStatus createTaskStatus(
@@ -72,6 +79,8 @@ namespace chameleon {
                 const mesos::TaskState& state);
 
         void forward(const mesos::TaskStatus& status);
+
+        void reaped(pid_t pid, const process::Future<Option<int>>& status_);
 
     private:
         pid_t pid;
@@ -91,6 +100,7 @@ namespace chameleon {
         chameleon::ChameleonExecutorDriver* m_driver;
 
         bool launched;
+        bool terminated;
     };
 
     class Flags : public virtual flags::FlagsBase

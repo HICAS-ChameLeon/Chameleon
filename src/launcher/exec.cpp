@@ -142,7 +142,7 @@ namespace chameleon{
 
        // slave = "slave@172.20.110.100:6061" ;
     //    link(slave);
-        std::cout<<"yxxxx ExecutorProcess send a RegisterExecutorMessage to slave"<<std::endl;
+       // std::cout<<"yxxxx ExecutorProcess send a RegisterExecutorMessage to slave"<<std::endl;
         // Register with slave.
         LOG(INFO)<<" yxxxx ExecutorProcess send a RegisterExecutorMessage to slave ";
         mesos::internal::RegisterExecutorMessage message;
@@ -157,7 +157,7 @@ namespace chameleon{
     void ExecutorProcess::registered(const mesos::ExecutorInfo &executorInfo, const mesos::FrameworkID &frameworkId,
                                      const mesos::FrameworkInfo &frameworkInfo, const mesos::SlaveID &slaveId,
                                      const mesos::SlaveInfo &slaveInfo) {
-        std::cout<<"yxxxxxxx Executor registered on agent "<<slaveId<<std::endl;
+        //std::cout<<"yxxxxxxx Executor registered on agent "<<slaveId<<std::endl;
         LOG(INFO) << "yxxxxxxx Executor registered on agent " << slaveId;
     }
 
@@ -225,6 +225,6 @@ namespace chameleon{
         updates[uuid] = *update;*/
        // LOG(INFO) << " yxxxxx  ExecutorProcess executorId"<<executorId;
         send(slave, message);
-        LOG(INFO) << " yxxxxx  ExecutorProcess  sendStatusUpdate to slave"<<slave;
+        LOG(INFO) << " yxxxxx  ExecutorProcess  sendStatusUpdate to "<<slave;
     }
 }
