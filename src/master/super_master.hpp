@@ -138,29 +138,17 @@ namespace chameleon {
         //framework related
         unordered_map<string,string> m_classification_masters_framework;
         bool is_launch_master = true;
-        //kill_master related
-        OwnedSlavesMessage *m_owned_slaves_message;
-        //kill_master end
+
         void classify_masters();
 
         void create_masters();
         void send_super_master_control_message();
 
-        //kill_master related
-        void owned_masters_message(const UPID& from, const string& name);
-        void kill_master_message(const UPID &from, const OwnedSlavesMessage &message);
-        //kill_master end
-
         const string select_master();
         void send_terminating_master(string master_ip);
-        void recevied_slave_infos(const UPID& from, const string& message);
 
         //framework related
         void received_call(const UPID &from, const mesos::scheduler::Call &call);
-        void received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message);
-        void received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message);
-        void received_status(const UPID &from, const mesos::internal::StatusUpdateMessage &message);
-        void received_acknowledgement(const UPID &from, const mesos::internal::StatusUpdateAcknowledgementMessage &message);
         void classify_masters_framework();
         void launch_master_results(const UPID &from, const string &message);
         void is_launch();
