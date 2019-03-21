@@ -1,7 +1,7 @@
 //
 // Created by root on 19-1-11.
 //
-
+#include <process/reap.hpp>
 #include <stout/protobuf.hpp>
 #include "executor.hpp"
 
@@ -23,6 +23,8 @@ namespace chameleon {
             taskId(None()),
             executorId(_executorId),
             frameworkId(_frameworkId),
+            terminated(false),
+            pid(-1),
             launched(false)
             {
                 //std::cout<<"yxxxx CommandExecutor Construct start"<<std::endl;
@@ -56,15 +58,10 @@ namespace chameleon {
             forward(status);
             return;
         }
-        LOG(INFO) << "yxxxxxxx CommandExecutor createTaskStatus '" ;
+
         taskId = task.task_id();
-        mesos::TaskStatus status = CommandExecutor::createTaskStatus(taskId.get(), mesos::TASK_RUNNING);
-        forward(status);
-        launched = true;
 
         LOG(INFO) << "yxxxxxxx CommandExecutor asked to run task '" << task.task_id()<< "'";
-
-       // taskData = TaskData(task);
 
         // Determine the command to launch the task.
         mesos::CommandInfo command;
@@ -145,7 +142,18 @@ namespace chameleon {
                 process::Subprocess::FD(STDERR_FILENO) );
 
         LOG(INFO) << " yxxxxx  Forked command at " << pid;
-      //  std::cout << "\n yxxxxx  Forked command at " << pid << std::endl;
+      //  std::cout << "\n yxxxxx  Forked command at " << pid << std::endl;[
+
+        // Monitor this process.
+        process::reap(pid)
+                .onAny(defer(self(), &Self::reaped, pid, lambda::_1));
+
+
+        LOG(INFO) << "yxxxxxxx CommandExecutor createTaskStatus '" ;
+
+        mesos::TaskStatus status = CommandExecutor::createTaskStatus(taskId.get(), mesos::TASK_RUNNING);
+        forward(status);
+        launched = true;
 
     }
 
@@ -197,22 +205,69 @@ namespace chameleon {
     }
 
     void CommandExecutor::forward(const mesos::TaskStatus &status) {
-        //mesos::executor::Call call;
-      //  call.set_type(mesos::executor::Call::UPDATE);
-
-      //  call.mutable_framework_id()->CopyFrom(frameworkId);
-      //  call.mutable_executor_id()->CopyFrom(executorId);
-
-        //call.mutable_update()->mutable_status()->CopyFrom(status);
-
-        // Capture the status update.
-       // unacknowledgedUpdates[UUID::fromBytes(status.uuid()).get()] = call.update();
-        // Overwrite the last task status.
-        //lastTaskStatus = status;
-
-    //    mesos->send(evolve(call));
         LOG(INFO) << " yxxxxx  CommandExecutor  forward" ;
         m_driver->sendStatusUpdate(status);
+    }
+
+    void CommandExecutor::reaped(pid_t pid, const process::Future<Option<int>>& status_) {
+        terminated = true;
+       // delay(Seconds(1), self(), &Self::selfTerminate);
+        LOG(INFO) << " yxxxxx  CommandExecutor  terminate self" ;
+        terminate(self());
+        mesos::TaskState taskState;
+        string message;
+/*
+        if (!status_.isReady()) {
+            taskState = mesos::TASK_FAILED;
+            message =
+                    "Failed to get exit status for Command: " +
+                    (status_.isFailed() ? status_.failure() : "future discarded");
+        } else if (status_.get().isNone()) {
+            taskState = mesos::TASK_FAILED;
+            message = "Failed to get exit status for Command";
+        } else {
+            int status = status_.get().get();
+            CHECK(WIFEXITED(status) || WIFSIGNALED(status))
+            << "Unexpected wait status " << status;
+
+            if (killed) {
+                // Send TASK_KILLED if the task was killed as a result of
+                // kill() or shutdown().
+                taskState = TASK_KILLED;
+            } else if (WSUCCEEDED(status)) {
+                taskState = TASK_FINISHED;
+            } else {
+                taskState = TASK_FAILED;
+            }
+
+            message = "Command " + WSTRINGIFY(status);
+        }
+
+        cout << message << " (pid: " << pid << ")" << endl;
+
+        CHECK_SOME(taskId);
+
+        TaskStatus status = createTaskStatus(
+                taskId.get(),
+                taskState,
+                None(),
+                message);
+
+
+        forward(status);*/
+/*
+        Option<string> value = os::getenv("MESOS_HTTP_COMMAND_EXECUTOR");
+        if (value.isSome() && value.get() == "1") {
+            // For HTTP based executor, this is a fail safe in case the agent
+            // doesn't send an ACK for the terminal update for some reason.
+            delay(Seconds(60), self(), &Self::selfTerminate);
+        } else {
+            // For adapter based executor, this is a hack to ensure the status
+            // update is sent to the agent before we exit the process. Without
+            // this we may exit before libprocess has sent the data over the
+            // socket. See MESOS-4111 for more details.
+            delay(Seconds(1), self(), &Self::selfTerminate);
+        }*/
     }
 
 
