@@ -195,11 +195,11 @@ namespace chameleon {
                             JSON::Array slaves_array;
                             double sum_cpus = 0;
                             double  sum_mem = 0;
-                            if(!framework_id.empty() && m_framework_to_slaves.count(framework_id)){
-                                unordered_set<string>& slaves_uuids = m_framework_to_slaves[framework_id];
-                                for(auto it=slaves_uuids.begin();it!=slaves_uuids.end();it++){
-                                    shared_ptr<SlaveObject>& slave_object = m_slave_objects[*it];
-                                    const ResourcesOfFramework& resources_of_framework = slave_object->m_framework_resources[framework_id];
+                            if (!framework_id.empty() && m_framework_to_slaves.count(framework_id)) {
+                                unordered_set<string> &slaves_uuids = m_framework_to_slaves[framework_id];
+                                for (auto it = slaves_uuids.begin(); it != slaves_uuids.end(); it++) {
+                                    shared_ptr<SlaveObject> &slave_object = m_slave_objects[*it];
+                                    const ResourcesOfFramework &resources_of_framework = slave_object->m_framework_resources[framework_id];
                                     JSON::Object resources_record = JSON::Object();
                                     resources_record.values["slave_uuid"] = *it;
                                     resources_record.values["cpus"] = resources_of_framework.m_consumped_cpus;

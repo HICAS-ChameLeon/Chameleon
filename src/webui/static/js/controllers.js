@@ -1112,6 +1112,13 @@
                             quantities: response.data.quantity,
                         }
                 };
+                for (var f in $scope.master.framework.resource)
+                {
+                    for (var g in $scope.master.framework.resource[f].slaves) {
+                        $scope.slaves =$scope.master.framework.resource[f].slaves;
+                       //console.log($scope.slaves);
+                    }
+                }
             }, function errorCallback(response) {
             });
             $timeout(pollState, $scope.delay);
