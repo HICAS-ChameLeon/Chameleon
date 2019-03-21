@@ -189,32 +189,32 @@ namespace chameleon {
                                 a_framework.values["state"] = "DISCONNECTED";
                             }
 
-//                            const string& framework_id = framework->id().value();
-//
-//                            // find the relevant resources consumped on different slaves of the framework
-//                            JSON::Array slaves_array;
-//                            double sum_cpus = 0;
-//                            double  sum_mem = 0;
-//                            if(m_framework_to_slaves.count(framework_id)){
-//                                unordered_set<string>& slaves_uuids = m_framework_to_slaves[framework_id];
-//                                for(auto it=slaves_uuids.begin();it!=slaves_uuids.end();it++){
-//                                    shared_ptr<SlaveObject>& slave_object = m_slave_objects[*it];
-//                                    const ResourcesOfFramework& resources_of_framework = slave_object->m_framework_resources[framework_id];
-//                                    JSON::Object resources_record = JSON::Object();
-//                                    resources_record.values["slave_uuid"] = *it;
-//                                    resources_record.values["cpus"] = resources_of_framework.m_consumped_cpus;
-//                                    sum_cpus += resources_of_framework.m_consumped_cpus;
-//                                    resources_record.values["mem"] = resources_of_framework.m_consumped_mem;
-//                                    sum_mem += resources_of_framework.m_consumped_mem;
-//                                    slaves_array.values.emplace_back(resources_record);
-//                                }
-//                            }
-//
-//                            a_framework.values["slaves"] = slaves_array;
-//                            a_framework.values["cpus"] = sum_cpus;
-//                            a_framework.values["mem"] = sum_mem;
-//
-//                            frameworks_array.values.emplace_back(a_framework);
+                            const string framework_id = framework->id().value();
+
+                            // find the relevant resources consumped on different slaves of the framework
+                            JSON::Array slaves_array;
+                            double sum_cpus = 0;
+                            double  sum_mem = 0;
+                            if(!framework_id.empty() && m_framework_to_slaves.count(framework_id)){
+                                unordered_set<string>& slaves_uuids = m_framework_to_slaves[framework_id];
+                                for(auto it=slaves_uuids.begin();it!=slaves_uuids.end();it++){
+                                    shared_ptr<SlaveObject>& slave_object = m_slave_objects[*it];
+                                    const ResourcesOfFramework& resources_of_framework = slave_object->m_framework_resources[framework_id];
+                                    JSON::Object resources_record = JSON::Object();
+                                    resources_record.values["slave_uuid"] = *it;
+                                    resources_record.values["cpus"] = resources_of_framework.m_consumped_cpus;
+                                    sum_cpus += resources_of_framework.m_consumped_cpus;
+                                    resources_record.values["mem"] = resources_of_framework.m_consumped_mem;
+                                    sum_mem += resources_of_framework.m_consumped_mem;
+                                    slaves_array.values.emplace_back(resources_record);
+                                }
+                            }
+
+                            a_framework.values["slaves"] = slaves_array;
+                            a_framework.values["cpus"] = sum_cpus;
+                            a_framework.values["mem"] = sum_mem;
+
+                            frameworks_array.values.emplace_back(a_framework);
                         }
 
 
