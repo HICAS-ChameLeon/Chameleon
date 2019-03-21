@@ -114,8 +114,6 @@ namespace chameleon {
          * */
         install<mesos::scheduler::Call>(&Master::receive);
 
-        //change two levels to one related
-        install("MAKUN", &Master::get_select_master);
 //        install<TerminatingMasterMessage>
 
         // http://172.20.110.228:6060/master/hardware-resources
@@ -347,11 +345,6 @@ namespace chameleon {
       * @param          : UPID& from ,Call& call
       * */
     void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
-        LOG(INFO)<<"*********************"<<call.framework_id().value();
-        LOG(INFO)<<m_masterInfo.ip()<<" "<<m_masterInfo.port()<<" "<<
-        m_masterInfo.pid()<<" "<<m_masterInfo.version()<<" "<<
-        m_masterInfo.hostname()<<m_masterInfo.id();
-
         //first call
         if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
             subscribe(from, call.subscribe());
@@ -359,7 +352,6 @@ namespace chameleon {
         }
 
         Framework *framework = getFramework(call.framework_id());
-        LOG(INFO)<<"*********************"<<call.framework_id().value()<<"*********************";
 
         if (framework == nullptr) {
             LOG(INFO) << "Framework cannot be found";
@@ -435,7 +427,6 @@ namespace chameleon {
                                         message.mutable_framework_id()->MergeFrom(framework->id());
                                         message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
                                         framework->send(message);
-                                        LOG(INFO)<<"MAKUN send FrameworkRegisteredMessage1";
                                         return;
                                     }
                                 }
@@ -451,7 +442,6 @@ namespace chameleon {
             message.mutable_master_info()->MergeFrom(m_masterInfo);
 
             framework->send(message);
-            LOG(INFO)<<"MAKUN send FrameworkRegisteredMessage2";
 
             LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful!";
 //
@@ -674,7 +664,6 @@ namespace chameleon {
             message.set_pid(pid);   //this pid is slavePID
 
             framework->send(message);
-            LOG(INFO)<<"MAKUN send StatusUpdateMessage";
         }
     }
 
@@ -996,11 +985,6 @@ namespace chameleon {
             terminate(self());
             process::wait(self());
         }
-    }
-
-    void Master::get_select_master(const UPID &from, const string &message) {
-        LOG(INFO) << "MAKUN received select_master_message";
-        send(from, "MAKUN2");
     }
     // end of super_mater related
 

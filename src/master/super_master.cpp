@@ -45,18 +45,9 @@ namespace chameleon {
 
         install<MasterRegisteredMessage>(&SuperMaster::registered_master);
         install<OwnedSlavesMessage>(&SuperMaster::terminating_master);
-        //kill_master related
-        install("KILL",&SuperMaster::owned_masters_message);
-        //kill_master end
-        install("MAKUN2",&SuperMaster::recevied_slave_infos);
-        install<>(&SuperMaster::received_acknowledgement);
 
         //franework related
         install<mesos::scheduler::Call>(&SuperMaster::received_call);
-        install<mesos::internal::FrameworkRegisteredMessage>(&SuperMaster::received_registered);
-        install<mesos::internal::ResourceOffersMessage>(&SuperMaster::received_resource);
-        install<mesos::internal::StatusUpdateMessage>(&SuperMaster::received_status);
-        //install<mesos::internal::StatusUpdateAcknowledgementMessage>(&SuperMaster::received_acknowledgement);
         install("error",&SuperMaster::launch_master_results);
         install("successed",&SuperMaster::launch_master_results);
 
@@ -379,20 +370,6 @@ namespace chameleon {
         }
     }
 
-    //kill_master related
-    void SuperMaster::owned_masters_message(const UPID& kill_master, const string& name){
-        LOG(INFO) << "MAKUN RECIEVED KILL MESSAGE";
-        //OwnedSlavesMessage *owned_slaves = new OwnedSlavesMessage();
-        m_owned_slaves_message = new OwnedSlavesMessage();
-
-        SlaveInfo *t_slave = m_owned_slaves_message->add_slave_infos();
-        m_owned_slaves_message->set_quantity(m_owned_slaves_message->slave_infos_size());
-        send(kill_master, *m_owned_slaves_message);
-        //delete m_owned_slaves_message;
-        LOG(INFO) << " send owned slaves of " << self() << " to kill_master " << kill_master;
-    }
-    //kill_master end
-
     const string SuperMaster::select_master(){
         string master_ip;
         int num_slaves = 0;
@@ -408,26 +385,17 @@ namespace chameleon {
         return master_ip;
     }
     void SuperMaster::send_terminating_master(string master_ip) {
-        //master_ip = "master@"+master_ip+":6060";
-//        UPID master_upid(master_ip);
         TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
         terminating_master->set_master_id(master_ip);
         for (auto iter = m_classification_masters.begin(); iter != m_classification_masters.end(); iter++) {
             if (*iter != master_ip) {
                 *iter = "master@"+*iter+":6060";
                 send(*iter, *terminating_master);
-            } else {
-                UPID master_upid("master@"+master_ip+":6060");
-                send(master_upid,"MAKUN");
             }
         }
         LOG(INFO) << self() << " is terminating due to change levels to one";
         delete(terminating_master);
-    }
-    void SuperMaster::recevied_slave_infos(const UPID& from, const string& message){
-        LOG(INFO) << "MAKUN received message from new master";
         terminate(self());
-//        process::wait(self());
     }
 
     //framework related
@@ -440,55 +408,11 @@ namespace chameleon {
                 vector<string> master_ip = strings::tokenize(iter->second,".");
                 unsigned int master_ip_int = std::stoi(master_ip[0])+256*(std::stoi(master_ip[1])+
                         256*(std::stoi(master_ip[2])+256*(std::stoi(master_ip[3]))));
-                LOG(INFO)<<master_ip_int;
                 master_info->set_ip(master_ip_int);
                 master_info->set_port(6060);
                 master_info->set_id("111622f1-1e63-456e-8fc5-e64ebb30fcb8-0000");
                 send(from,*master_info);
                 LOG(INFO)<<"send MasterInfo";
-                break;
-            }
-        }
-//        LOG(INFO) << "MAKUN Supermaster received call from " << from;
-////        Framework *framework = getFramework(call.framework_id());
-//        LOG(INFO)<<"*********************"<<call.framework_id().value();
-//        m_framework = from;
-//        for(auto iter = m_classification_masters_framework.begin();
-//            iter != m_classification_masters_framework.end(); iter++){
-//            if (iter->first.find("spark") != string::npos) {
-//                send(UPID("master@" + iter->second + ":6060"),call);
-//                LOG(INFO) << "MAKUN send call to master: master@" << iter->second << ":6060";
-//                break;
-//            }
-//        }
-    }
-
-    void SuperMaster::received_registered(const UPID &from, const mesos::internal::FrameworkRegisteredMessage &message) {
-        LOG(INFO) << "MAKUN Supermaster received frameworkRegistered from " << from;
-        send(m_framework,message);
-        LOG(INFO) << "MAKUN send frameworkRegistered to " << m_framework;
-    }
-
-    void SuperMaster::received_resource(const UPID &from, const mesos::internal::ResourceOffersMessage &message) {
-        LOG(INFO) << "MAKUN Supermaster received resourceOffers from " << from;
-        send(m_framework,message);
-        LOG(INFO) << "MAKUN send resourceOffers to " << m_framework;
-    }
-
-    void SuperMaster::received_status(const UPID &from, const mesos::internal::StatusUpdateMessage &message) {
-        LOG(INFO) << "MAKUN received statusUpdate from " << from;
-        send(m_framework,message);
-        LOG(INFO) << "MAKUN send statusUpdate to " << m_framework;
-    }
-
-    void SuperMaster::received_acknowledgement(const UPID &from,
-            const mesos::internal::StatusUpdateAcknowledgementMessage &message) {
-        LOG(INFO) << "MAKUN received statusUpdateAcknowledgement from " << from;
-        for(auto iter = m_classification_masters_framework.begin();
-            iter != m_classification_masters_framework.end(); iter++){
-            if (iter->first.find("spark") != string::npos) {
-                send(UPID("master@" + iter->second + ":6060"),message);
-                LOG(INFO) << "MAKUN send message to master: master@" << iter->second << ":6060";
                 break;
             }
         }
