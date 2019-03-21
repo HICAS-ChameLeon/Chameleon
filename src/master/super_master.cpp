@@ -8,7 +8,6 @@
 #include <super_master_related.pb.h>
 #include "super_master.hpp"
 #include "master.hpp"
-#include <stack>
 
 DEFINE_string(master_path, "", "the absolute path of master executive. For example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
 DEFINE_string(initiator, "localhost:6060", "the ip:port of the current master of first level or supermaster. For example, --initiator=172.20.110.228:6060");
