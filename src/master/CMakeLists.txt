@@ -1,4 +1,4 @@
-PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages participant_info ${CMAKE_BINARY_DIR}/src/messages participant_info)
+#PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages participant_info ${CMAKE_BINARY_DIR}/src/messages participant_info)
 
 include_directories(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
 include_directories(${CMAKE_SOURCE_DIR}/src/master/)
@@ -10,9 +10,10 @@ set(GTEST_LIBS gmock gtest gflags)
 set(master_SRCS
         master.hpp
         master.cpp
-        scheduler.hpp
         slave_object.hpp
-        slave_object.cpp)
+        slave_object.cpp
+        scheduler_interface.hpp
+        coarse_grained_scheduler.hpp)
 set(master_PROTOS job)
 list(APPEND master_PROTOS hardware_resource)
 list(APPEND master_PROTOS runtime_resource)

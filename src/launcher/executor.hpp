@@ -1,7 +1,3 @@
-//
-// Created by root on 19-1-11.
-//
-
 #ifndef CHAMELEON_EXECUTOR_H
 #define CHAMELEON_EXECUTOR_H
 
@@ -26,22 +22,28 @@
 // libprocess dependenci
 #include <process/process.hpp>
 #include <process/protobuf.hpp>
+#include <process/future.hpp>
 #include <process/delay.hpp>
 #include <process/subprocess.hpp>
-
+#include <process/clock.hpp>
 // protobuf
 #include <messages.pb.h>
 #include <mesos.pb.h>
-
 #include <exec.hpp>
 
+#include <chameleon_protobuf_utils.hpp>
+
 using std::string;
-
-
 
 namespace chameleon {
     class ChameleonExecutorDriver;
 
+    /**
+      * className：CommandExecutor
+      * date：19/1/11
+      * author：ZhangYixin 1968959287@qq.com
+      * description： start Executor.
+    */
     class CommandExecutor : public ProtobufProcess<CommandExecutor> {
     public:
         CommandExecutor(
@@ -58,19 +60,29 @@ namespace chameleon {
 
         void initialize();
 
+        /**
+         * Function name  : launch
+         * Author         : ZhangYixin
+         * Description    : launch task
+         * Return         : void
+         */
         void launch(const mesos::TaskInfo& task);
 
-        static pid_t launchTaskSubprocess(
-                const mesos::CommandInfo& command,
-                const string& launcherDir,
-                const mesos::Environment& environment,
-                const Option<string>& user,
-                const Option<string>& rootfs,
-                const Option<string>& sandboxDirectory,
-                const Option<string>& workingDirectory);
+        mesos::TaskStatus createTaskStatus(
+                const mesos::TaskID& _taskId,
+                const mesos::TaskState& state,
+                const Option<mesos::TaskStatus::Reason>& reason,
+                const Option<string>& message);
+
+        mesos::TaskStatus createTaskStatus(
+                const mesos::TaskID& _taskId,
+                const mesos::TaskState& state);
+
+        void forward(const mesos::TaskStatus& status);
+
+        void reaped(pid_t pid, const process::Future<Option<int>>& status_);
 
     private:
-       // Option<TaskData> taskData;
         pid_t pid;
         Option<mesos::FrameworkInfo> frameworkInfo;
         Option<mesos::TaskID> taskId;
@@ -86,6 +98,9 @@ namespace chameleon {
         const mesos::ExecutorID executorId;
 
         chameleon::ChameleonExecutorDriver* m_driver;
+
+        bool launched;
+        bool terminated;
     };
 
     class Flags : public virtual flags::FlagsBase

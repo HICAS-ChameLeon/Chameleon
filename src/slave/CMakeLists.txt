@@ -1,5 +1,5 @@
 
-PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages monitor_info ${CMAKE_BINARY_DIR}/src/messages monitor_info)
+#PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages monitor_info ${CMAKE_BINARY_DIR}/src/messages monitor_info)
 
 add_subdirectory(software_store)
 add_subdirectory(resource_collector)
@@ -174,7 +174,7 @@ list(REMOVE_DUPLICATES slave_SRCS)
 
 add_executable(slave ${slave_SRCS})
 
-set(slave_PROTOS monitor_info)
+#set(slave_PROTOS monitor_info)
 list(APPEND slave_PROTOS hardware_resource)
 list(APPEND slave_PROTOS runtime_resource)
 list(APPEND slave_PROTOS job)

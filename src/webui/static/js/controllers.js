@@ -1096,7 +1096,7 @@
     //spark框架对应的Controller
     chameleon_app.controller('FrameworksCtrl', function() {});
 
-    chameleon_app.controller('FrameworkCtrl',function ($scope, $http, $timeout) {
+    chameleon_app.controller('FrameworkCtrl',function ($scope, $http, $timeout,$routeParams) {
 
         var pollState = function() {
             $scope.delay = 1000;
@@ -1112,6 +1112,15 @@
                             quantities: response.data.quantity,
                         }
                 };
+                for (var f in $scope.master.framework.resource)
+                {
+                    for (var g in $scope.master.framework.resource[f].slaves) {
+                        $scope.slaves =$scope.master.framework.resource[f].slaves;
+                       //console.log($scope.slaves);
+                    }
+                }
+
+                $scope.framework_uuid = $routeParams.framework_uuid;
             }, function errorCallback(response) {
             });
             $timeout(pollState, $scope.delay);

@@ -75,7 +75,7 @@ namespace chameleon {
         msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
 //        setting::SLAVE_EXE_DIR = os::getcwd();
         m_cwd = os::getcwd();
-        m_software_resource_manager = new SoftwareResourceManager(m_cwd+"/public_resources");
+        m_software_resource_manager = new SoftwareResourceManager(m_cwd, m_cwd+"/public_resources");
 
 //            msp_resource_collector = new ResourceCollector();
     }
@@ -92,6 +92,7 @@ namespace chameleon {
         // Verify that the version of the library that we linked against is
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
+        m_uuid = UUID::random().toString();
 
 //        LOG(INFO) << "slave executable path" << setting::SLAVE_EXE_DIR;
 
@@ -102,7 +103,7 @@ namespace chameleon {
         m_slaveID.set_value(m_uuid);
         m_slaveInfo.set_port(self().address.port);
 
-        install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
+        //install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
         install<ShutdownMessage>(&Slave::shutdown);
 
         //get from executor
@@ -161,7 +162,6 @@ namespace chameleon {
         string slave_id = stringify(self().address.ip);
         hr_message->set_slave_id(slave_id);
 
-        m_uuid = UUID::random().toString();
         hr_message->set_slave_uuid(m_uuid);
         hr_message->set_slave_hostname(self().address.hostname().get());
         DLOG(INFO) << "Before send message to master";
@@ -295,7 +295,7 @@ namespace chameleon {
                         {"MESOS_CHECKPOINT",   "0"}
                 };
 
-        const string mesos_executor_path = path::join(os::getcwd(), "mesos_executor/mesos-executor");
+        const string mesos_executor_path = path::join(os::getcwd(), "../launcher/chameleon-executor");
         LOG(INFO) << "start mesos executor finished ";
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,
@@ -744,7 +744,8 @@ namespace chameleon {
     void Slave::launch_master(const UPID &super_master, const LaunchMasterMessage &message) {
         LOG(INFO) << self().address << " received message from " << super_master;
 //        string launch_command = "/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src/webui";
-        string launch_command = message.master_path() + " --webui_path=" + message.webui_path();
+        string launch_command = //"valgrind --tool=memcheck --leak-check=full --track-origins=yes --leak-resolution=high --show-reachable=yes --log-file=memchecklog" +
+                message.master_path() + " --webui_path=" + message.webui_path();
         const string stdoutPath = path::join(m_cwd, "stdout");
         Try<int_fd> out = os::open(
                 stdoutPath,

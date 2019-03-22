@@ -43,7 +43,7 @@ class DownloadProcess;
 class SoftwareResourceManager {
 public:
 
-    explicit SoftwareResourceManager(const string& public_resources_);
+    explicit SoftwareResourceManager(const string& slave_path_, const string& public_resources_);
     SoftwareResourceManager(const process::Owned<DownloadProcess>& process);
 
     void initialize();
@@ -60,7 +60,8 @@ public:
 
 private:
     // path to cache the software resources, the default is build/src/slave/public_resources
-     string m_public_resources;
+     const string m_public_resources;
+     const string m_slave_path;
     process::Owned<DownloadProcess> process;
 
 };
@@ -71,7 +72,7 @@ private:
 class DownloadProcess:public process::Process<DownloadProcess>{
 
 public:
-    DownloadProcess(const string& public_resources_):ProcessBase(process::ID::generate("downloader")),m_public_resources_dir(public_resources_) {
+    DownloadProcess(const string& slave_path_, const string& public_resources_):ProcessBase(process::ID::generate("downloader")),m_slave_path(slave_path_),m_public_resources_dir(public_resources_) {
 
     }
 
@@ -91,7 +92,8 @@ private:
     unordered_map<string, pid_t > m_subprocess_pids;
 
     // path to cache the software resources, the default is build/src/slave/public_resources
-    string m_public_resources_dir;
+    const string m_public_resources_dir;
+    const string m_slave_path;
 };
 
 }
