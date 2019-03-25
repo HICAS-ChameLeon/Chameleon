@@ -82,6 +82,8 @@ namespace chameleon {
 
         void reaped(pid_t pid, const process::Future<Option<int>>& status_);
 
+        void selfTerminate();
+
     private:
         pid_t pid;
         Option<mesos::FrameworkInfo> frameworkInfo;
