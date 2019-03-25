@@ -130,12 +130,13 @@ namespace chameleon {
 
 
         route(  //change from two level to one levels
-                "/kill_master",
+                "/kill_super_master",
                 "kill the super_master of two levels",
                 [this](Request request){
                     JSON::Object result = JSON::Object();
                     LOG(INFO) << "MAKUN KILL MASTER";
                     string new_master_ip = select_master();
+                    send_terminating_master(new_master_ip);
                     result.values["stop"] = "success";
                     //result.values["new_master_ip"] = new_master_ip;
                     OK ok_response(stringify(result));
@@ -380,9 +381,9 @@ namespace chameleon {
             }
         }
         LOG(INFO) << "MAKUN select master ip: " << master_ip;
-        send_terminating_master(master_ip);
         return master_ip;
     }
+
     void SuperMaster::send_terminating_master(string master_ip) {
         TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
         terminating_master->set_master_id(master_ip);
@@ -410,6 +411,10 @@ namespace chameleon {
                 master_info->set_ip(master_ip_int);
                 master_info->set_port(6060);
                 master_info->set_id("111622f1-1e63-456e-8fc5-e64ebb30fcb8-0000");
+                mesos::Address *address = new mesos::Address();
+                address->set_ip(iter->second);
+                address->set_port(6060);
+                master_info->set_allocated_address(address);
                 send(from,*master_info);
                 LOG(INFO)<<"send MasterInfo";
                 break;
