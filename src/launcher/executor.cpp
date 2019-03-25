@@ -140,9 +140,9 @@ namespace chameleon {
                 process::Subprocess::FD(STDOUT_FILENO),
                 process::Subprocess::FD(STDERR_FILENO) );
 
-        LOG(INFO) << " yxxxxx  Forked command at " << pid;
-      //  std::cout << "\n yxxxxx  Forked command at " << pid << std::endl;[
+        pid=exec->pid();
 
+        LOG(INFO) << " yxxxxx  Forked command at " << pid;
 
         process::reap(pid)
                 .onAny(defer(self(), &Self::reaped, pid, lambda::_1));
