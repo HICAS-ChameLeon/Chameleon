@@ -8,8 +8,8 @@
 #include "software_resource_manager.hpp"
 namespace chameleon{
 
-    SoftwareResourceManager::SoftwareResourceManager():process(new DownloadProcess()) {
-        process::spawn(process.get());
+    SoftwareResourceManager::SoftwareResourceManager(const string& slave_path_, const string& public_resources_):m_public_resources(public_resources_),m_slave_path(slave_path_),process(new DownloadProcess(m_slave_path, public_resources_)) {
+        initialize();
     }
 
     SoftwareResourceManager::SoftwareResourceManager(const process::Owned<DownloadProcess>& _process):process(_process){
@@ -22,12 +22,24 @@ namespace chameleon{
         process::wait(process.get());
     }
 
+    void SoftwareResourceManager::initialize() {
+        Try<Nothing> public_resources_create = os::mkdir(m_public_resources);
+        if(public_resources_create.isError()){
+            LOG(FATAL)<<public_resources_create.error();
+            return;
+        }else{
+            process::spawn(process.get());
+        }
+    }
+
     process::Future<Nothing> SoftwareResourceManager::download(const string &framework_name,
                                                                const mesos::fetcher::FetcherInfo &info) {
         return process::dispatch(process.get(),&DownloadProcess::download,framework_name,info);
     }
 
     process::Future<Nothing> DownloadProcess::download(const string &framework_name, const mesos::fetcher::FetcherInfo& info) {
+
+        LOG(INFO)<<"DownloadProcess::download ";
 
         const string stdoutPath = path::join(info.sandbox_directory(), "stdout");
 
@@ -37,7 +49,7 @@ namespace chameleon{
                 S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
         if (out.isError()) {
-            return process::Failure("Failed to create 'stdout' file: " + out.error());
+            return process::Failure("Failed to create 'stdout' file: " + stdoutPath + " . " +out.error());
         }
 
         string stderrPath = path::join(info.sandbox_directory(), "stderr");
@@ -52,13 +64,14 @@ namespace chameleon{
         }
 
 //        string downloader_path = path::join(
-        string downloader_path = path::join(os::getcwd(),"/software_store/downloader");
+        string downloader_path = path::join(m_slave_path,"/software_store/downloader");
 //        string downloader_path = path::join("/home/lemaker/open-source/Chameleon/build/src/slave","/software_store/downloader");
         LOG(INFO)<<"downloader_path "<<downloader_path;
 
         map<string,string> environment;
         environment["CHAMELEON_FETCHER_INFO"] = stringify(JSON::protobuf(info));
         environment["framework_name"] = framework_name;
+        environment["PUBLIC_RESOURCES_DIR"] = m_public_resources_dir;
         LOG(INFO)<<"lele download dependencies of framework_name: "<<framework_name;
         Try<Subprocess> download_subprocess = process::subprocess(
                 downloader_path,

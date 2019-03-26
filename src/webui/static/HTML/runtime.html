@@ -1,0 +1,38 @@
+<div class="tab-pane fade in active" id="runtime">
+    <div class="container-fluid">
+        <div>
+            <table class="table table-hover" >
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>IP</th>
+                    <th>CPU使用率</th>
+                    <th>内存使用率</th>
+                    <th>硬盘使用率</th>
+                    <th>交换空间使用率</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="x in master.runtime">
+                    <td>
+                        <a href="#/slaves/{{x.slave_uuid}}/ip/{{x.slave_id}}/cpu_usage/{{x.cpu_usage.cpu_used | number:2}}/mem_usage/{{x.mem_usage.mem_available / x.mem_usage.mem_total * 100 | number:2}}/disk_usage/{{x.disk_usage.available_percent | number:2}}">{{x.slave_uuid}}</a>
+                        <button class="btn btn-xs btn-default btn-toggle"
+                                clipboard
+                                data-clipboard-text="{{x.slave_uuid}}"
+                                tooltip="复制ID"
+                                tooltip-placement="right"
+                                tooltip-trigger="clipboardhover">
+                        </button>
+                    </td>
+                    <td>{{x.slave_id}}</td>
+                    <td>{{x.cpu_usage.cpu_used | number:2}} %</td>
+                    <td>{{ (1 - x.mem_usage.mem_available / x.mem_usage.mem_total) * 100  | number:1}} %</td>
+                    <td>{{ (100 - x.disk_usage.available_percent) | number:1}} %</td>
+                    <td ng-if="x.mem_usage.swap_total ==0 ">无</td>
+                    <td ng-if="x.mem_usage.swap_total !=0 ">{{ (1 - x.mem_usage.swap_free / x.mem_usage.swap_total)  * 100 | number:1}} %</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

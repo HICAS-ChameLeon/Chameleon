@@ -1,0 +1,111 @@
+<div class="tab-pane fade in active" id="hardware">
+    <div class="container-fluid">
+        <div >
+            <table class="table table-hover" style="table-layout:fixed">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>IP</th>
+                    <th>CPU</th>
+                    <th>Cache</th>
+                    <th>硬盘</th>
+                    <th>GPU</th>
+                    <th>内存</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="x in master.hardware" id="hardware_repeat">
+                    <td id="slave_uuid">
+                        {{x.slave_uuid}}
+                    </td>
+                    <td>
+                        {{x.slave_id}}
+                    </td>
+                    <td>
+                        {{x.cpu_collection.cpu_quantity}}
+                        <a style="float:right" data-toggle="collapse"
+                           href="/#cpu{{x.slave_uuid}}">
+
+                            <svg class="icon" aria-hidden="true">
+                                <use xlink:href="#icon-xiala"></use>
+                            </svg>
+                        </a>
+                        <div id="cpu{{x.slave_uuid}}" class="collapse">
+                            modelname:{{x.cpu_collection.cpu_infos[0].modelname}}
+                            主频:{{x.cpu_collection.cpu_infos[0].cpuMHz}}MHz
+                            最大主频:{{x.cpu_collection.cpu_infos[0].cpumaxMhz}}MHz
+                        </div>
+
+                    </td>
+                    <td>
+                        <div>
+                            三级缓存
+                            <a style="float:right" data-toggle="collapse"
+                               href="/#cache{{x.slave_uuid}}">
+                                <svg class="icon" aria-hidden="true">
+                                    <use xlink:href="#icon-xiala"></use>
+                                </svg>
+                            </a>
+                        </div>
+                        <div id="cache{{x.slave_uuid}}" class="collapse">
+                            l1dcache:{{x.cpu_collection.cpu_infos[0].l1dcache}}
+                            l1dcache:{{x.cpu_collection.cpu_infos[0].l1dcache}}
+                            l2cache:{{x.cpu_collection.cpu_infos[0].l2cache}}
+                            l3cache:{{x.cpu_collection.cpu_infos[0].l3cache}}
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            {{x.disk_collection.disk_quantity}}
+                            <a style="float:right" data-toggle="collapse"
+                               href="/#disk{{x.slave_uuid}}">
+                                <svg class="icon" aria-hidden="true">
+                                    <use xlink:href="#icon-xiala"></use>
+                                </svg>
+                            </a>
+                        </div>
+                        <div id="disk{{x.slave_uuid}}" class="collapse">
+                            name:{{x.disk_collection.disk_infos[0].name}} <br>
+                            size:{{x.disk_collection.disk_infos[0].size}} <br>
+                            type:{{x.disk_collection.disk_infos[0].type}} <br>
+                            speed:{{x.disk_collection.disk_infos[0].disk_speed}}
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            {{x.gpu_collection.gpu_quantity}}
+                            <a style="float:right" data-toggle="collapse"
+                               href="/#gpu{{x.slave_uuid}}">
+                                <svg class="icon" aria-hidden="true">
+                                    <use xlink:href="#icon-xiala"></use>
+                                </svg>
+                            </a>
+                        </div>
+                        <div id="gpu{{x.slave_uuid}}" class="collapse">
+                            vendor:{{x.gpu_collection.gpu_infos[0].vendor}} <br>
+                            physical_id:{{x.gpu_collection.gpu_infos[0].physical_id}} <br>
+                            width:{{x.gpu_collection.gpu_infos[0].width}}
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            {{x.mem_collection.max_size}}
+                            <a style="float:right" data-toggle="collapse"
+                               href="/#mem{{x.slave_uuid}}">
+                                <svg class="icon" aria-hidden="true">
+                                    <use xlink:href="#icon-xiala"></use>
+                                </svg>
+                            </a>
+                        </div>
+                        <div id="mem{{x.slave_uuid}}" class="collapse">
+                            size:{{x.mem_collection.mem_infos[0].size}}
+                            speed:{{x.mem_collection.mem_infos[0].speed}}
+                            type:{{x.mem_collection.mem_infos[0].type}}
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

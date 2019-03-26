@@ -1120,7 +1120,7 @@ bool initialize(
   }
 
   if (flags.port.isSome()) {
-    __address__.port = flags.port.get();
+      __address__.port = flags.port.get();
   }
 
   // Create a "server" socket for communicating.

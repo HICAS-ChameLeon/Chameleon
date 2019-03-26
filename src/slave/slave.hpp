@@ -54,7 +54,7 @@
 #include <process/subprocess.hpp>
 
 // protobuf
-#include <monitor_info.pb.h>
+//#include <monitor_info.pb.h>
 #include <job.pb.h>
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
@@ -74,6 +74,8 @@
 #include <configuration_glog.hpp>
 #include <chameleon_os.hpp>
 #include <chameleon_string.hpp>
+#include <containerizer/docker.hpp>
+#include <docker.hpp>
 
 using std::string;
 using std::queue;
@@ -161,6 +163,10 @@ namespace chameleon {
                 const mesos::FrameworkID& frameworkId);
 
     protected:
+    public:
+        void setM_containerizer(slave::DockerContainerizer *m_containerizer);
+
+    protected:
         void finalize() override;
 
     private:
@@ -183,11 +189,13 @@ namespace chameleon {
 
         mesos::SlaveInfo m_slaveInfo;
         mesos::ExecutorInfo m_executorInfo;
-        mesos::ExecutorID m_executorID;
 
-        mesos::TaskInfo m_task;
+
+        chameleon::slave::DockerContainerizer* m_containerizer;
 
         string m_work_dir;
+        // the absolute path of the slave executable
+        string m_cwd;
 
 //        BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completedFrameworks;
 
@@ -205,6 +213,8 @@ namespace chameleon {
 
         void start_mesos_executor(const Future<Nothing>& future, const Framework *framework);
 
+        void start_docker_container(const mesos::TaskInfo& taskInfo, const Framework *framework);
+
         void registerExecutor(const UPID &from,
                               const mesos::FrameworkID &frameworkId,
                               const mesos::ExecutorID &executorId);
@@ -215,8 +225,13 @@ namespace chameleon {
 
         void reregister_to_master(const UPID &from, const ReregisterMasterMessage &message);
 
+        void launch_master(const UPID &super_master, const LaunchMasterMessage &message);
+
         //super_master related
 //        void received_new_master(const UPID& from, const MasterRegisteredMessage& message);
+
+        // running task related
+        void modify_command_info_of_running_task(const string& spark_home_path, mesos::TaskInfo &task);
 
     };
 

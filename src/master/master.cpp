@@ -9,7 +9,11 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "./super_master", "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
+DEFINE_string(supermaster_path, "",
+              "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
+DEFINE_string(webui_path, "",
+              "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
+
 
 /*
  * Function name  : ValidateInt
@@ -40,23 +44,43 @@ static bool ValidateStr(const char *flagname, const string &value) {
     return false;
 }
 
-static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
-static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path, &ValidateStr);
+static bool validate_super_master_path(const char *flagname, const string &value) {
 
-namespace master {
+    if (value.empty() || os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for super_master_path, please make sure the super_master_path actually exist!\n");
+    return false;
+
+}
+
+static bool validate_webui_path(const char *flagname, const string &value) {
+
+    if (os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for webui_path, please make sure the webui_path actually exist!");
+    return false;
+
+}
+
+static const bool has_port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
+static const bool has_super_master_path = gflags::RegisterFlagValidator(&FLAGS_supermaster_path,
+                                                                        &validate_super_master_path);
+static const bool has_webui_path = gflags::RegisterFlagValidator(&FLAGS_webui_path, &validate_webui_path);
+
+namespace chameleon {
 
     void Master::initialize() {
 
         m_uuid = UUID::random().toString();
+
         // Verify that the version of the library that we linked against is
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
         nextFrameworkId = 0;
-        nextSlaveId = 0;
-        nextOfferId = 0;
-
-        install<ParticipantInfo>(&Master::register_participant, &ParticipantInfo::hostname);
+        m_scheduler = make_shared<CoarseGrainedScheduler>();
 
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
@@ -64,11 +88,13 @@ namespace master {
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
         install<AcceptRegisteredMessage>(&Master::received_registered_message_from_super_master);
 
+        //  send the status update message of the tasks from master to the specific framework
         install<mesos::internal::StatusUpdateMessage>(
                 &Master::statusUpdate,
                 &mesos::internal::StatusUpdateMessage::update,
                 &mesos::internal::StatusUpdateMessage::pid);
 
+        // send the status update acknowledement message from master to the specific slave
         install<mesos::internal::StatusUpdateAcknowledgementMessage>(
                 &Master::statusUpdateAcknowledgement,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::slave_id,
@@ -88,8 +114,6 @@ namespace master {
          * */
         install<mesos::scheduler::Call>(&Master::receive);
 
-        //change two levels to one related
-        install("MAKUN",&Master::get_select_master);
 //        install<TerminatingMasterMessage>
 
         // http://172.20.110.228:6060/master/hardware-resources
@@ -140,27 +164,58 @@ namespace master {
 
         route(
                 "/frameworks",
-                "wangweiguo new version of frameworks",
+                "get all the information of frameworks related with the current master",
                 [this](Request request) {
                     JSON::Object a_framework;
                     JSON::Object a_content = JSON::Object();
                     if (!this->frameworks.registered.empty()) {
-                       JSON::Array frameworks_array;
+                        JSON::Array frameworks_array;
                         for (auto it = this->frameworks.registered.begin();
                              it != this->frameworks.registered.end(); it++) {
                             Framework *framework = it->second;
                             a_framework = JSON::protobuf(framework->info);
                             if (framework->state == Framework::ACTIVE) {
                                 a_framework.values["state"] = "ACTIVE";
-                            }if (framework->state == Framework::INACTIVE) {
+                            }
+                            if (framework->state == Framework::INACTIVE) {
                                 a_framework.values["state"] = "INACTIVE";
-                            }if (framework->state == Framework::RECOVERED) {
+                            }
+                            if (framework->state == Framework::RECOVERED) {
                                 a_framework.values["state"] = "RECOVERED";
-                            }if (framework->state == Framework::DISCONNECTED) {
+                            }
+                            if (framework->state == Framework::DISCONNECTED) {
                                 a_framework.values["state"] = "DISCONNECTED";
                             }
+
+                            const string framework_id = framework->id().value();
+
+                            // find the relevant resources consumped on different slaves of the framework
+                            JSON::Array slaves_array;
+                            double sum_cpus = 0;
+                            double  sum_mem = 0;
+                            if (!framework_id.empty() && m_framework_to_slaves.count(framework_id)) {
+                                unordered_set<string> &slaves_uuids = m_framework_to_slaves[framework_id];
+                                for (auto it = slaves_uuids.begin(); it != slaves_uuids.end(); it++) {
+                                    shared_ptr<SlaveObject> &slave_object = m_slave_objects[*it];
+                                    const ResourcesOfFramework &resources_of_framework = slave_object->m_framework_resources[framework_id];
+                                    JSON::Object resources_record = JSON::Object();
+                                    resources_record.values["slave_uuid"] = *it;
+                                    resources_record.values["cpus"] = resources_of_framework.m_consumped_cpus;
+                                    sum_cpus += resources_of_framework.m_consumped_cpus;
+                                    resources_record.values["mem"] = resources_of_framework.m_consumped_mem;
+                                    sum_mem += resources_of_framework.m_consumped_mem;
+                                    slaves_array.values.emplace_back(resources_record);
+                                }
+                            }
+
+                            a_framework.values["slaves"] = slaves_array;
+                            a_framework.values["cpus"] = sum_cpus;
+                            a_framework.values["mem"] = sum_mem;
+
                             frameworks_array.values.emplace_back(a_framework);
                         }
+
+
                         a_content.values["quantity"] = frameworks_array.values.size();
                         a_content.values["content"] = frameworks_array;
                     } else {
@@ -170,6 +225,28 @@ namespace master {
                     }
 
                     OK ok_response(stringify(a_content));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+        route(
+                "/framework_id",
+                "get all the information of frameworks related with the current master",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_framework_to_slaves.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_framework_to_slaves.begin();
+                             it != this->m_framework_to_slaves.end(); it++) {
+                            unordered_set<string> slave_uuid = it->second;
+                            for (auto its = slave_uuid.begin(); its != slave_uuid.end(); its++) {
+                                array.values.push_back(*its);
+                            }
+                            result.values["quantity"] = array.values.size();
+                            result.values["content"] = array;
+                        }
+                    }
+                    OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
                 });
@@ -213,18 +290,24 @@ namespace master {
                       * Funtion name    :  Try
                       * @param          :
                       * */
-                      m_super_master_path.append(" --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
+                    // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
+                    const string launcher =
+                            m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
+                            m_webui_path;
                     Try<Subprocess> super_master = subprocess(
-                           m_super_master_path,
+                            launcher,
                             Subprocess::FD(STDIN_FILENO),
                             Subprocess::FD(STDOUT_FILENO),
                             Subprocess::FD(STDERR_FILENO)
                     );
+                    result.values["start"] = "success";
                     OK response(stringify(result));
                     response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return response;
                 });
 
+        provide("", path::join(m_webui_path, "static/HTML/Control.html"));
+        provide("static", path::join(m_webui_path, "/static"));
 
 //     install("stop", &MyProcess::stop);
         install("stop", [=](const UPID &from, const string &body) {
@@ -238,6 +321,19 @@ namespace master {
 
         m_state = RUNNING;
 
+    }
+
+    // get the absolute path of the directory where the master executable exists
+    const string Master::get_cwd() const {
+        return m_master_cwd;
+    }
+
+    void Master::set_webui_path(const string &path) {
+        m_webui_path = path;
+    }
+
+    const string Master::get_web_ui() const {
+        return m_webui_path;
     }
 
     /**
@@ -315,10 +411,8 @@ namespace master {
 
         mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
 
-        Framework *framework = getFramework(frameworkInfo.id());
-
-        LOG(INFO) << "Received  SUBSCRIBE call for framework "
-                  << frameworkInfo.name() << " at " << from;
+//        LOG(INFO) << "Received  SUBSCRIBE call for framework "
+//                  << frameworkInfo.name() << " at " << from;
 
         if (!frameworkInfo.has_id() || frameworkInfo.id().value().empty()) {
 
@@ -326,8 +420,8 @@ namespace master {
             // Check if this framework is already subscribed (because it retries).
             foreachvalue (Framework *framework, frameworks.registered) {
                                     if (framework->pid == from) {
-                                        LOG(INFO) << "Framework " << *framework
-                                                  << " already subscribed, resending acknowledgement";
+//                                        LOG(INFO) << "Framework " << *framework
+//                                                  << " already subscribed, resending acknowledgement";
                                         mesos::internal::FrameworkRegisteredMessage message;
                                         message.mutable_framework_id()->MergeFrom(framework->id());
                                         message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
@@ -341,7 +435,7 @@ namespace master {
             frameworkInfo.mutable_id()->CopyFrom(newFrameworkId());
             Framework *framework = new Framework(this, frameworkInfo, from);
 
-            addFramework(framework);
+            add_framework(framework);
 
             message.mutable_framework_id()->MergeFrom(framework->id());
             message.mutable_master_info()->MergeFrom(m_masterInfo);
@@ -360,52 +454,6 @@ namespace master {
         }
     }
 
-    mesos::Offer *Master::create_a_offer(const mesos::FrameworkID &frameworkId) {
-        mesos::Offer *offer = new mesos::Offer();
-
-        Framework *framework = getFramework(frameworkId);
-        // cpus
-        mesos::Resource *cpu_resource = new mesos::Resource();
-        cpu_resource->set_name("cpus");
-        cpu_resource->set_type(mesos::Value_Type_SCALAR);
-        mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
-        cpu_scalar->set_value(4.0);
-        cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
-        offer->add_resources()->MergeFrom(*cpu_resource);
-
-        // memory
-        mesos::Resource *mem_resource = new mesos::Resource();
-        mem_resource->set_name("mem");
-        mem_resource->set_type(mesos::Value_Type_SCALAR);
-        mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
-        mem_scalar->set_value(1200.0);
-        mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
-        offer->add_resources()->MergeFrom(*mem_resource);
-
-        // port
-        mesos::Resource *port_resource = new mesos::Resource();
-        port_resource->set_name("ports");
-        port_resource->set_type(mesos::Value_Type_RANGES);
-
-        mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
-        port_range->set_begin(31000);
-        port_range->set_end(32000);
-        offer->add_resources()->MergeFrom(*port_resource);
-
-        mesos::OfferID offerId;
-        offerId.set_value("22222222");
-        offer->mutable_id()->CopyFrom(offerId);
-
-        offer->mutable_framework_id()->MergeFrom(framework->id());
-
-        mesos::SlaveID *slaveID = new mesos::SlaveID();
-        slaveID->set_value("22222222222");
-
-        offer->mutable_slave_id()->MergeFrom(*slaveID);
-
-        offer->set_hostname("221b");
-        return offer;
-    }
 
     /**
      * Function model  :  spark run on chameleon
@@ -418,63 +466,18 @@ namespace master {
         Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
 
         mesos::internal::ResourceOffersMessage message;
+        LOG(INFO) << "start scheduling to provide offers";
+        m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
 
-        mesos::Offer *offer = new mesos::Offer();
+        if (message.offers_size() > 0) {
+            framework->send(message);
 
-
-        // cpus
-        mesos::Resource *cpu_resource = new mesos::Resource();
-        cpu_resource->set_name("cpus");
-        cpu_resource->set_type(mesos::Value_Type_SCALAR);
-        mesos::Value_Scalar *cpu_scalar = new mesos::Value_Scalar();
-        cpu_scalar->set_value(4.0);
-        cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
-        offer->add_resources()->MergeFrom(*cpu_resource);
-
-        // memory
-        mesos::Resource *mem_resource = new mesos::Resource();
-        mem_resource->set_name("mem");
-        mem_resource->set_type(mesos::Value_Type_SCALAR);
-        mesos::Value_Scalar *mem_scalar = new mesos::Value_Scalar();
-        mem_scalar->set_value(1000.0);
-        mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
-        offer->add_resources()->MergeFrom(*mem_resource);
-
-        // port
-        mesos::Resource *port_resource = new mesos::Resource();
-        port_resource->set_name("ports");
-        port_resource->set_type(mesos::Value_Type_RANGES);
-
-        mesos::Value_Range *port_range = port_resource->mutable_ranges()->add_range();
-        port_range->set_begin(31000);
-        port_range->set_end(32000);
-        offer->add_resources()->MergeFrom(*port_resource);
-
-        offer->mutable_id()->MergeFrom(newOfferId());
-        offer->mutable_framework_id()->MergeFrom(framework->id());
-
-        //这个slaveID决定了实现master选取分布式集群中节点的基础
-        mesos::SlaveID *slaveID = new mesos::SlaveID();
-//        offer->mutable_slave_id()->MergeFrom(newSlaveId());
-        slaveID->set_value("44444444");
-        offer->mutable_slave_id()->MergeFrom(*slaveID);
-
-        //this host_name is slave hostname
-        offer->set_hostname(self().address.hostname().get());
-
-        message.add_offers()->MergeFrom(*offer);
-        message.add_pids("1");
-
-//        mesos::Offer *second_offer = create_a_offer(framework->id());
-//        message.add_offers()->MergeFrom(*second_offer);
-//        message.add_pids("2");
-
-
-        LOG(INFO) << "Sending " << message.offers().size() << " offer to framework "
-                  << framework->pid.get();
-
-        framework->send(message);
-
+            LOG(INFO) << "Sent " << message.offers_size() << " offer to framework "
+                      << framework->pid.get();
+        } else {
+            LOG(INFO)
+                    << "available offer size is 0, the master doesn't have sufficient resources for the framework's requirement.";
+        }
         return;
     }
 
@@ -507,7 +510,8 @@ namespace master {
         }
 
         vector<mesos::Offer::Operation> operations;
-
+//        ResourcesOfFramework resources_of_framework;
+//        if(m_slave_objects.)
         foreach (const mesos::Offer::Operation &operation, accept.operations()) {
             switch (operation.type()) {
                 case mesos::Offer::Operation::LAUNCH: {
@@ -517,26 +521,66 @@ namespace master {
 
                     foreach (const mesos::TaskInfo &task, operation.launch().task_infos()) {
 
-                        string cur_slavePID = "slave@";
-                        if (task.slave_id().value() == "11111111") {
-//                            cur_slavePID.append("172.20.110.228:6061");
-                              cur_slavePID.append(stringify(self().address.ip)+":6061");
-                        } else {
-                            cur_slavePID.append(stringify(self().address.ip)+":6061");
+                        if (m_slave_objects.count(task.slave_id().value()) > 0) {
+                            shared_ptr<SlaveObject> &current_slave = m_slave_objects.at(task.slave_id().value());
+
+                            // the framework will be launched on the current_slave, so we will check whether the current_slave has the framework running on.
+                            if (current_slave->m_framework_resources.count(framework->id().value()) == 0) {
+                                // construct the ResourceOfFramework first
+                                current_slave->m_framework_resources[framework->id().value()];
+                                if (m_framework_to_slaves.count(framework->id().value()) == 0) {
+                                    m_framework_to_slaves[framework->id().value()];
+                                }
+                                m_framework_to_slaves[framework->id().value()].insert(current_slave->m_uuid);
+                            }
+                            // get the reference of the ResourceOfFramework of the current framework
+                            ResourcesOfFramework &resources_of_framework = current_slave->m_framework_resources[framework->id().value()];
+
+                            // first, get the actual resource consumption of the task because we want to calculate the available
+                            // resource of the specified slave
+                            auto consumption = task.resources();
+                            for (auto it = consumption.begin(); it != consumption.end(); it++) {
+                                LOG(INFO) << it->name() << " " << it->scalar().value();
+                                if (it->name() == "cpus") {
+                                    if (current_slave->m_available_cpus > it->scalar().value()) {
+                                        current_slave->m_available_cpus -= it->scalar().value();
+                                        resources_of_framework.m_consumped_cpus += it->scalar().value();
+                                    } else {
+                                        LOG(INFO) << " the available cpu resources of the " << current_slave->m_upid_str
+                                                  << "cannot satisfy the cpu resources requirements of the task "
+                                                  << task.name() << " So we need to offer resources for it again";
+                                        break;
+                                    }
+                                } else if (it->name() == "mem") {
+                                    if (current_slave->m_available_mem > it->scalar().value()) {
+                                        current_slave->m_available_mem -= it->scalar().value();
+                                        resources_of_framework.m_consumped_mem += it->scalar().value();
+                                    } else {
+                                        LOG(INFO) << " the available memory resources of the "
+                                                  << current_slave->m_upid_str
+                                                  << "cannot satisfy the memory resources requirements of the task "
+                                                  << task.name() << " So we need to offer resources for it again";
+                                        break;
+                                    }
+                                } else {
+
+                                }
+
+                            }
+                            mesos::TaskInfo task_(task);
+                            const process::UPID slave_upid = current_slave->m_upid;
+                            LOG(INFO) << "Sending task to slave " << slave_upid; //slave(1)@172.20.110.152:5051
+
+                            mesos::internal::RunTaskMessage message;
+                            message.mutable_framework()->MergeFrom(framework->info);
+                            message.set_pid(framework->pid.getOrElse(UPID()));
+                            message.mutable_task()->MergeFrom(task_);
+                            message.mutable_framework_id()->MergeFrom(framework->id());
+
+                            send(slave_upid, message);
+
+//                            _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
                         }
-                        mesos::TaskInfo task_(task);
-
-                        LOG(INFO) << "Sending task to slave " << cur_slavePID; //slave(1)@172.20.110.152:5051
-
-                        mesos::internal::RunTaskMessage message;
-                        message.mutable_framework()->MergeFrom(framework->info);
-                        message.set_pid(framework->pid.getOrElse(UPID()));
-                        message.mutable_task()->MergeFrom(task_);
-                        message.mutable_framework_id()->MergeFrom(framework->id());
-
-                        send(cur_slavePID, message);
-
-                        _operation.mutable_launch()->add_task_infos()->CopyFrom(task);
                     }
                     break;
                 }
@@ -553,12 +597,12 @@ namespace master {
      * Author       : weiguow
      * Date         : 2-19-2-26
      * Description  : */
-    void Master::teardown(master::Framework *framework) {
+    void Master::teardown(Framework *framework) {
         CHECK_NOTNULL(framework);
 
         LOG(INFO) << "Processing TEARDOWN call for framework " << *framework;
 
-        removeFramework(framework);
+        remove_framework(framework);
     }
 
     /**
@@ -567,11 +611,13 @@ namespace master {
      * Date         : 2-19-2-26
      * Description  : */
 
-    void Master::decline(master::Framework *framework, const mesos::scheduler::Call::Decline &decline) {
+    void Master::decline(Framework *framework, const mesos::scheduler::Call::Decline &decline) {
         CHECK_NOTNULL(framework);
 
         LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
                   << " for framework " << *framework;
+
+        process::dispatch(self(), &Master::Offer, framework->id());
 
         //we should save offer infomation before do this , so we now just leave it- by weiguow
 //        offers.erase(offer->id());
@@ -583,7 +629,7 @@ namespace master {
      * Author       : weiguow
      * Date         : 2-19-2-26
      * Description  : */
-    void Master::shutdown(master::Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown) {
+    void Master::shutdown(Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown) {
         CHECK_NOTNULL(framework);
 
         const mesos::SlaveID &slaveID = shutdown.slave_id();
@@ -663,7 +709,9 @@ namespace master {
 
         LOG(INFO) << "Processing ACKNOWLEDGE call " << uuid << " for task " << taskId.value()
                   << " of framework " << framework->info.name() << " on agent " << slaveId.value();
-        send(m_slavePID, message);
+
+        send(m_slave_objects.at(slaveId.value())->m_upid, message);
+
     }
 
     /**
@@ -672,7 +720,7 @@ namespace master {
      * Date         : 2019-2-22
      * Description  : Save Frameworkinfo to master
      * */
-    void Master::addFramework(Framework *framework) {
+    void Master::add_framework(Framework *framework) {
 
         frameworks.registered[framework->id().value()] = framework;
 
@@ -695,43 +743,61 @@ namespace master {
     /**
      * remove framework-weiguow-2019/2/26*
      * */
-    void Master::removeFramework(Framework *framework) {
+    void Master::remove_framework(Framework *framework) {
         CHECK_NOTNULL(framework);
 
         LOG(INFO) << "Removing framework " << *framework;
 
-        if (framework->active()) {
-            CHECK(framework->active());
+        // restore the resources occupied by the framework in the specific slave
+        const string framework_id = framework->id().value();
+        LOG(INFO) << "Removing " << framework_id;
+        if (m_framework_to_slaves.count(framework_id)) {
+            unordered_set<string> &slave_uuids = m_framework_to_slaves.at(framework_id);
+            LOG(INFO) << "Removing 752";
 
-            LOG(INFO) << "Deactive framework " << *framework;
+            if (!slave_uuids.empty()) {
+                for (auto it = slave_uuids.begin(); it != slave_uuids.end(); it++) {
+                    shared_ptr<SlaveObject> &slave = m_slave_objects[*it];
+                    if (slave != nullptr) {
+                        LOG(INFO) << "restore begins";
+                        if (slave->restore_resource_of_framework(framework_id)) {
+                            if (framework->active()) {
+//                            CHECK(framework->active());
 
-            framework->state = Framework::State::INACTIVE;
+                                LOG(INFO) << "Deactive framework " << *framework;
+
+                                framework->state = Framework::State::INACTIVE;
+                            }
+                            //send ShutdownFrameworkMessage to slave
+                            mesos::internal::ShutdownFrameworkMessage message;
+                            message.mutable_framework_id()->MergeFrom(framework->id());
+
+                            send(slave->m_upid, message);
+
+                        }
+                    } else {
+                        LOG(INFO) << "slave == nullptr";
+                    }
+
+                }
+            } else {
+                LOG(INFO) << "slave_uuids == empty";
+
+            }
+
+
+            m_framework_to_slaves.erase(framework_id);
         }
-        //send ShutdownFrameworkMessage to slave
-        mesos::internal::ShutdownFrameworkMessage message;
-        message.mutable_framework_id()->MergeFrom(framework->id());
 
-//        string slave_pid = "slave@172.20.110.228:6061";
-        const string slave_pid = stringify(self().address.ip).append(":6061");
-        send(slave_pid, message);
-
-//        frameworks.completed.set(framework->id().value(), framework);
     }
 
-
-    /**
-     * create slaveID,frameworkID,masterID-weiguow-2019/2/24
-     * */
-    mesos::SlaveID Master::newSlaveId() {
-        mesos::SlaveID slaveId;
-        slaveId.set_value(m_masterInfo.id() + "-S" + stringify(nextSlaveId++));
-        return slaveId;
-    }
 
     mesos::FrameworkID Master::newFrameworkId() {
         std::ostringstream out;
         out << m_masterInfo.id() << "-" << std::setw(4)
             << std::setfill('0') << nextFrameworkId++;
+
+        LOG(INFO) << "m_masterInfo.id(): " << m_masterInfo.id();
 
         mesos::FrameworkID frameworkId;
         frameworkId.set_value(out.str());
@@ -739,11 +805,6 @@ namespace master {
         return frameworkId;
     }
 
-    mesos::OfferID Master::newOfferId() {
-        mesos::OfferID offerId;
-        offerId.set_value(m_masterInfo.id() + "-O" + stringify(nextOfferId++));
-        return offerId;
-    }
 
     void Master::register_participant(const string &hostname) {
         DLOG(INFO) << "master receive register message from " << hostname;
@@ -755,13 +816,17 @@ namespace master {
 
         auto slaveid = hardware_resources_message.slave_id();
 
-        slaves.registering.insert(from);
+//        slaves.registering.insert(from);
 
         if (m_hardware_resources.find(slaveid) == m_hardware_resources.end()) {
             JSON::Object object = JSON::protobuf(hardware_resources_message);
             m_hardware_resources.insert({slaveid, object});
             m_proto_hardware_resources.insert({slaveid, hardware_resources_message});
             m_alive_slaves.insert(slaveid);
+
+//            UPID temp_upid(from);
+            shared_ptr<SlaveObject> slave_object = make_shared<SlaveObject>(from, hardware_resources_message);
+            m_slave_objects.insert({slave_object->m_uuid, slave_object});
         }
     }
 
@@ -821,8 +886,9 @@ namespace master {
 
     // super_master related
 
-    void Master::set_super_master_path(const string& path) {
+    void Master::set_super_master_path(const string &path) {
         m_super_master_path = path;
+        LOG(INFO) << "The path of super_master executable is " << m_super_master_path;
     }
 
     void Master::super_master_control(const UPID &super_master,
@@ -891,12 +957,13 @@ namespace master {
         }
     }
 
-    void Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
+    void
+    Master::received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message) {
         LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
         if (message.master_id() == stringify(self().address.ip)) {
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
             terminate(self());
-        } else{
+        } else {
             ReregisterMasterMessage *reregister_master_message = new ReregisterMasterMessage();
             reregister_master_message->set_master_ip(message.master_id());
             reregister_master_message->set_port("6060");
@@ -907,10 +974,10 @@ namespace master {
             for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
 //                LOG(INFO) << *iter;
                 reregister_master_message->set_slave_ip(*iter);
-                UPID slave_id("slave@"+*iter+":6061");
-                send(slave_id,*reregister_master_message);
+                UPID slave_id("slave@" + *iter + ":6061");
+                send(slave_id, *reregister_master_message);
                 LOG(INFO) << self() << " send new_master_message: " << reregister_master_message->master_ip()
-                << " to salve: " <<slave_id;
+                          << " to salve: " << slave_id;
             }
             delete reregister_master_message;
             LOG(INFO) << self() << " is terminating due to change levels to one";
@@ -918,18 +985,14 @@ namespace master {
             process::wait(self());
         }
     }
-
-    void Master::get_select_master(const UPID& from, const string& message) {
-        LOG(INFO) << "MAKUN received select_master_message";
-        send(from,"MAKUN2");
-    }
     // end of super_mater related
+
     std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
         return stream << TaskState_Name(state);
     }
 }
 
-using namespace master;
+using namespace chameleon;
 
 int main(int argc, char **argv) {
     chameleon::set_storage_paths_of_glog("master");// provides the program name
@@ -942,14 +1005,23 @@ int main(int argc, char **argv) {
 
     google::CommandLineFlagInfo info;
 
-    if (has_port_Int && has_super_master_path) {
+    if (has_port_Int && has_super_master_path && has_webui_path) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
         process::initialize("master");
         Master master;
+        if (FLAGS_supermaster_path.empty()) {
+            master.set_super_master_path(master.get_cwd() + "/super_master");
+        } else {
+            master.set_super_master_path(FLAGS_supermaster_path);
+        }
 
-        master.set_super_master_path(FLAGS_supermaster_path);
+        // set the webui path for the master
+        master.set_webui_path(FLAGS_webui_path);
+
         PID<Master> cur_master = process::spawn(master);
+
+
         LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
 
         const PID<Master> master_pid = master.self();

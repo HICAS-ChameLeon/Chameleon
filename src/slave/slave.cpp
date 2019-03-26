@@ -5,8 +5,11 @@
  * Description：slave codes
  */
 
+//#include <stout/flags.hpp>
 #include <messages.pb.h>
 #include "slave.hpp"
+//#include "slave_flags.hpp"
+//#include "containerizer/docker.hpp"
 
 //The following flags has default values
 DEFINE_uint32(ht, 6, "Heartbeat interval");
@@ -14,7 +17,8 @@ DEFINE_int32(port, 6061, "port");
 
 //The following flags must be set by user
 DEFINE_string(master, "", "master ip and port info");
-DEFINE_string(work_dir, "", "the path to store download file");
+DEFINE_string(work_dir, "work_dir",
+              "the path to store the files of frameworks. The default is build/src/slave/work_dir");
 
 /**
  * Function name  : ValidateStr
@@ -47,19 +51,31 @@ static bool ValidateUint(const char *flagname, gflags::uint32 value) {
     return false;
 }
 
+static bool validate_work_dir(const char *flagname, const string &value) {
+
+    if (value == "work_dir" || os::exists(value)) {
+        return true;
+    }
+    printf("Invalid value for work_dir, please make sure the work_dir actually exist!");
+    return false;
+
+}
+
 static const bool ht_Uint = gflags::RegisterFlagValidator(&FLAGS_ht, &ValidateUint);
 static const bool port_Int = gflags::RegisterFlagValidator(&FLAGS_port, &ValidateInt);
 static const bool master_Str = gflags::RegisterFlagValidator(&FLAGS_master, &ValidateStr);
-//static const bool work_dir_Str = gflags::RegisterFlagValidator(&FLAGS_work_dir, &ValidateStr);
+static const bool work_dir_Str = gflags::RegisterFlagValidator(&FLAGS_work_dir, &validate_work_dir);
 
 constexpr char MESOS_EXECUTOR[] = "chameleon-executor";
 
 namespace chameleon {
 
-    Slave::Slave() : ProcessBase("slave"), m_interval(), m_software_resource_manager(new SoftwareResourceManager()) {
+    Slave::Slave() : ProcessBase("slave"), m_interval() {
         msp_resource_collector = make_shared<ResourceCollector>(ResourceCollector());
         msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
-        setting::SLAVE_EXE_DIR = os::getcwd();
+//        setting::SLAVE_EXE_DIR = os::getcwd();
+        m_cwd = os::getcwd();
+        m_software_resource_manager = new SoftwareResourceManager(m_cwd, m_cwd+"/public_resources");
 
 //            msp_resource_collector = new ResourceCollector();
     }
@@ -76,17 +92,18 @@ namespace chameleon {
         // Verify that the version of the library that we linked against is
         // compatible with the version of the headers we compiled against.
         GOOGLE_PROTOBUF_VERIFY_VERSION;
+        m_uuid = UUID::random().toString();
 
-        LOG(INFO) << "slave executable path" << setting::SLAVE_EXE_DIR;
+//        LOG(INFO) << "slave executable path" << setting::SLAVE_EXE_DIR;
 
         msp_masterUPID = make_shared<UPID>(UPID(m_master));
 
         m_slaveInfo.set_hostname(self().address.hostname().get());
-        m_slaveInfo.mutable_id()->set_value("44444444");
-        m_slaveID.set_value("44444444");
+        m_slaveInfo.mutable_id()->set_value(m_uuid);
+        m_slaveID.set_value(m_uuid);
         m_slaveInfo.set_port(self().address.port);
 
-        install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
+        //install<MonitorInfo>(&Slave::register_feedback, &MonitorInfo::hostname);
         install<ShutdownMessage>(&Slave::shutdown);
 
         //get from executor
@@ -126,6 +143,8 @@ namespace chameleon {
 
         install<ReregisterMasterMessage>(&Slave::reregister_to_master);
 
+        install<LaunchMasterMessage>(&Slave::launch_master);
+
         // http://172.20.110.228:6061/slave/runtime-resources
         route(
                 "/runtime-resources",
@@ -143,8 +162,8 @@ namespace chameleon {
         string slave_id = stringify(self().address.ip);
         hr_message->set_slave_id(slave_id);
 
-        m_uuid = UUID::random().toString();
         hr_message->set_slave_uuid(m_uuid);
+        hr_message->set_slave_hostname(self().address.hostname().get());
         DLOG(INFO) << "Before send message to master";
 
         send(*msp_masterUPID, *hr_message);
@@ -152,21 +171,63 @@ namespace chameleon {
         LOG(INFO) << "The initialization of slave itself finished.";
         LOG(INFO) << self() << " starts to send heartbeat message to the master";
         heartbeat();
+
     }
+
+    /**
+     * change the spark shell value of the specified command in the task
+     * @param spark_home_path spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
+     *  @param task
+     */
+    void Slave::modify_command_info_of_running_task(const string &spark_home_path, mesos::TaskInfo &task) {
+        if (task.has_command()) {
+            mesos::CommandInfo *new_command_info = new mesos::CommandInfo(task.command());
+            string shell_value = task.command().value();
+            //LOG(INFO) << "the shell_value is " << shell_value;
+            auto it = shell_value.find("spark-class");
+            if (it != string::npos) {
+                const string left_part = " \"" + spark_home_path + "/bin/";
+                //LOG(INFO) << "the left_part command shell is " << left_part;
+
+                const string right_part = shell_value.substr(it);
+                //LOG(INFO) << "the right_part command shell is " << right_part;
+
+                if(strings::contains(right_part,"\"")){
+                    const string final_value = left_part + right_part;
+                    new_command_info->set_value(final_value);
+                    task.clear_command();
+                    task.set_allocated_command(new_command_info);
+                    LOG(INFO) << "the final value of command shell is " << final_value;
+                } else{
+                    vector<string> tokens = strings::split(right_part," ",2);
+                    string arm_right_part = tokens[0] +"\""+" "+tokens[1] ;
+                    //LOG(INFO) << "the arm_right_part command shell is " << arm_right_part;
+                    const string final_value = left_part + arm_right_part;
+                    new_command_info->set_value(final_value);
+                    task.clear_command();
+                    task.set_allocated_command(new_command_info);
+                    LOG(INFO) << "the final value of command shell is " << final_value;
+                }
+            }
+        }
+    }
+
+
+
 
     /**
      * Funtion  : runTask
      * Author   : weiguow
      * Date     : 2019-1-2
      * */
-    void Slave::runTask(
+    void Slave:: runTask(
             const process::UPID &from,
             const mesos::FrameworkInfo &frameworkInfo,
             const mesos::FrameworkID &frameworkId,
             const process::UPID &pid,
-            const mesos::TaskInfo &task) {
+            const mesos::TaskInfo &taskInfo) {
         LOG(INFO) << "Get task from master, start the mesos executor first";
-        const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, task);
+        const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, taskInfo);
 
         Option<process::UPID> frameworkPid = None();
 
@@ -175,44 +236,71 @@ namespace chameleon {
 
         frameworks[frameworkId.value()] = framework;
 
-        m_tasks.push(task);
-        m_executorInfo = executorInfo;
-
         LOG(INFO) << "Start executor on framework " << framework->id().value();
 
-        mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
-        mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
-        mesos::fetcher::URI *uri = new mesos::fetcher::URI();
-        //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
-
-        uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
-        item->set_allocated_uri(uri);
-        item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
-        const string sanbox_path = os::getcwd();
-        fetcher_info->set_sandbox_directory(sanbox_path);
-//    process::Future<Nothing> result = manager.download("my_spark",*fetcher_info);
-        process::Future<Nothing> download_result;
-        Promise<Nothing> promise;
-        if(! os::exists(path::join(sanbox_path,"/spark-2.3.0-bin-hadoop2.7"))){
-            LOG(INFO)<<"spark  didn't exist, download it frist";
-            download_result= m_software_resource_manager->download("my_spark", *fetcher_info);
-        }else{
-            LOG(INFO)<<"spark  has existed";
-
-            download_result=promise.future();
-            promise.set(Nothing());
+//        const string current_cwd = os::getcwd();
+        const string sanbox_path = path::join(m_work_dir, frameworkId.value());
+        Try<Nothing> mkdir_sanbox = os::mkdir(sanbox_path);
+        if (mkdir_sanbox.isError()) {
+            LOG(ERROR) << mkdir_sanbox.error();
+            return;
         }
-        download_result.onAny(process::defer(self(),&Self::start_mesos_executor,lambda::_1, framework));
+
+        // change the spark home of the command information if the running task belongs to spark
+        // spark_home_path = sanbox_path + "spark-2.3.0-bin-hadoop2.7"
+        // for example,
+        // sanbox_path = Chameleon/build/src/slave/da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000
+        //  spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
+        const string spark_home_path = path::join(sanbox_path, "spark-2.3.0-bin-hadoop2.7");
+        mesos::TaskInfo copy_task(taskInfo);
+        modify_command_info_of_running_task(spark_home_path, copy_task);
+
+        // queue the task and executor_info
+        m_tasks.push(copy_task);
+        m_executorInfo = executorInfo;
+        if(taskInfo.container().type() == mesos::ContainerInfo::MESOS){
+            process::Future<Nothing> download_result;
+            Promise<Nothing> promise;
+            if (!os::exists(spark_home_path)) {
+                LOG(INFO) << "spark  didn't exist, download it frist";
+                mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
+                mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
+                mesos::fetcher::URI *uri = new mesos::fetcher::URI();
+                fetcher_info->set_sandbox_directory(sanbox_path);
+                //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
+                uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
+                item->set_allocated_uri(uri);
+                item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
+                download_result = m_software_resource_manager->download("my_spark", *fetcher_info);
+                delete fetcher_info;
+
+            } else {
+                LOG(INFO) << "the Spark framework has existed";
+
+                download_result = promise.future();
+                promise.set(Nothing());
+            }
+            download_result.onAny(process::defer(self(), &Self::start_mesos_executor, lambda::_1, framework));
 //        start_mesos_executor(framework);
+        }
+        else if(taskInfo.container().type() == mesos::ContainerInfo::DOCKER){
+            start_docker_container(taskInfo, framework);
+        }
+
     }
 
-    void Slave::start_mesos_executor(const Future<Nothing>& future, const Framework *framework) {
-        if(!future.isReady()){
-            LOG(ERROR)<<"framework "<<framework->info.name()<<" downloaded failed";
-        }else{
-            LOG(INFO)<<"framework "<<framework->info.name()<<" downloaded successfully";
+    void Slave::start_mesos_executor(const Future<Nothing> &future, const Framework *framework) {
+        if (!future.isReady()) {
+            if (future.isFailed()) {
+                LOG(ERROR) << future.failure();
+            }
+            LOG(ERROR) << "framework " << framework->info.name() << " downloaded failed";
+            return;
+        } else {
+            LOG(INFO) << "framework " << framework->info.name() << " downloaded successfully";
         }
 
+        LOG(INFO)<<"Heldon enter function start_mesos_executor";
         const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
         const string mesos_directory = path::join(os::getcwd(), "/mesos_executor/mesos-directory");
 
@@ -225,8 +313,8 @@ namespace chameleon {
                         {"MESOS_DIRECTORY",    mesos_directory},
                         {"MESOS_CHECKPOINT",   "0"}
                 };
-        const string mesos_executor_path = path::join(os::getcwd(), "mesos_executor/mesos-executor");
 
+        const string mesos_executor_path = path::join(os::getcwd(), "../launcher/chameleon-executor");
         LOG(INFO) << "start mesos executor finished ";
         Try<Subprocess> child = subprocess(
                 mesos_executor_path,
@@ -238,6 +326,57 @@ namespace chameleon {
         if (child.isError()) {
             LOG(INFO) << child.error();
         }
+    }
+
+    /**
+    * Function name  : start_docker_container
+    * Author         : Heldon
+    * Date           : 2019-03-12
+    * Description    : start the task on docker
+    * Return         : void
+    */
+    void Slave::start_docker_container(const mesos::TaskInfo& taskInfo, const Framework *framework){
+
+
+        const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
+        const std::map<string, string> environment =
+                {
+                        {"MESOS_FRAMEWORK_ID", framework->id().value()},
+                        {"MESOS_EXECUTOR_ID",  m_executorInfo.executor_id().value()},
+                        {"MESOS_SLAVE_PID",    slave_upid},
+                        {"MESOS_SLAVE_ID",     m_slaveInfo.id().value()},
+                        {"MESOS_CHECKPOINT",   "0"}
+                };
+
+        //Compare resources and if executorInfo's resources are different from taskInfo's
+        //then add it to resources
+        mesos::Resources resources = m_executorInfo.resources();
+
+        if (taskInfo.resources().size()) {
+            resources += taskInfo.resources();
+        }
+
+        m_executorInfo.mutable_resources()->CopyFrom(resources);
+
+        //launch the container
+        mesos::ContainerID container_id;
+        container_id.set_value(UUID::random().toString());
+
+        const string container_directory = path::join(os::getcwd(), "/container/"+container_id.value());
+        cout<<container_directory<<endl;
+        Future<bool> launch;
+
+        LOG(INFO)<<"Heldon enter function containerizer->launch";
+        LOG(INFO)<<"Heldon m_executorInfo.resources().size() : "<<m_executorInfo.resources().size();
+
+        launch = m_containerizer->launch(
+                container_id,
+                taskInfo,
+                m_executorInfo,
+                container_directory,
+                "heldon",
+                m_slaveInfo.id(),
+                environment);
     }
 
     void Slave::registerExecutor(const UPID &from,
@@ -298,6 +437,7 @@ namespace chameleon {
 
         if (task.has_container()) {
             executorInfo.mutable_container()->CopyFrom(task.container());
+            LOG(INFO)<<"Heldon task has a container" ;
         }
 
         string name = "(Task: " + task.task_id().value() + ") ";
@@ -382,16 +522,16 @@ namespace chameleon {
      * */
     void Slave::statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
 
-        LOG(INFO) << "Handling status update " << update.status().state()
-                  << " of framework " << update.framework_id().value();
+//        LOG(INFO) << "Handling status update " << update.status().state()
+//                  << " of framework " << update.framework_id().value();
 
         update.mutable_status()->set_uuid(update.uuid());
         update.mutable_status()->set_source(
                 pid == UPID() ? mesos::TaskStatus::SOURCE_SLAVE : mesos::TaskStatus::SOURCE_EXECUTOR);
         update.mutable_status()->mutable_executor_id()->CopyFrom(update.executor_id());
 
-        LOG(INFO) << "Received status update " << update.status().state()
-                  << " of framework " << update.framework_id().value();
+//        LOG(INFO) << "Received status update " << update.status().state()
+//                  << " of framework " << update.framework_id().value();
 
         process::dispatch(self(), &Slave::_statusUpdate, update, pid);
     }
@@ -415,9 +555,9 @@ namespace chameleon {
         message.set_uuid(update.uuid());
 
         if (pid.isSome()) {
-            LOG(INFO) << "Sending acknowledgement for status update " << update.status().state()
-                      << " of framework " << update.framework_id().value()
-                      << " to " << pid.get();  //executor(1)@172.20.110.77:39343
+//            LOG(INFO) << "Sending acknowledgement for status update " << update.status().state()
+//                      << " of framework " << update.framework_id().value()
+//                      << " to " << pid.get();  //executor(1)@172.20.110.77:39343
             send(pid.get(), message);
         } else {
             LOG(INFO) << "Ignoring update status ";
@@ -434,8 +574,8 @@ namespace chameleon {
      * */
     void Slave::forward(mesos::internal::StatusUpdate update) {
 
-        LOG(INFO) << "Forwarding the update " << update.status().state()
-                  << " of framework " << update.framework_id().value() << " to " << m_master;
+//        LOG(INFO) << "Forwarding the update " << update.status().state()
+//                  << " of framework " << update.framework_id().value() << " to " << m_master;
 
         mesos::internal::StatusUpdateMessage message;
         message.mutable_update()->MergeFrom(update);
@@ -602,7 +742,7 @@ namespace chameleon {
             m_master = "master@" + message.master_ip() + ":" + message.port();
             msp_masterUPID.reset(new UPID(m_master));
 
-            LOG(INFO)<<" prepare to  a  heartbeat to the new master "<<m_master<<" ";
+            LOG(INFO) << " prepare to  a  heartbeat to the new master " << m_master << " ";
             UPID new_master_ip(m_master);
             DLOG(INFO) << "Before send message to master";
             send(new_master_ip, *hr_message);
@@ -610,11 +750,57 @@ namespace chameleon {
         }
     }
 
+    void Slave::setM_containerizer(slave::DockerContainerizer *m_containerizer) {
+        Slave::m_containerizer = m_containerizer;
+    }
+
+    /**
+     *     launch master by subprocess
+     *  lele, makun
+     * @param super_master
+     * @param message
+     */
+    void Slave::launch_master(const UPID &super_master, const LaunchMasterMessage &message) {
+        LOG(INFO) << self().address << " received message from " << super_master;
+//        string launch_command = "/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/master --webui_path=/home/lemaker/open-source/Chameleon/src/webui";
+        string launch_command = //"valgrind --tool=memcheck --leak-check=full --track-origins=yes --leak-resolution=high --show-reachable=yes --log-file=memchecklog" +
+                message.master_path() + " --webui_path=" + message.webui_path();
+        const string stdoutPath = path::join(m_cwd, "stdout");
+        Try<int_fd> out = os::open(
+                stdoutPath,
+                O_WRONLY | O_CREAT | O_TRUNC | O_NONBLOCK | O_CLOEXEC,
+                S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        if (out.isError()) {
+            LOG(INFO) << "Failed to create 'stdout' file: " + stdoutPath + " . " +out.error();
+        }
+        string stderrPath = path::join(m_cwd, "stderr");
+        Try<int_fd> err = os::open(
+                stderrPath,
+                O_WRONLY | O_CREAT | O_TRUNC | O_NONBLOCK | O_CLOEXEC,
+                S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        if (err.isError()) {
+            os::close(out.get());
+            LOG(INFO) << "Failed to create 'stderr' file: " + err.error();
+        }
+        Try<Subprocess> s = subprocess(
+                launch_command,
+                Subprocess::FD(STDIN_FILENO),
+                Subprocess::FD(out.get(), Subprocess::IO::OWNED),
+                Subprocess::FD(err.get(), Subprocess::IO::OWNED));
+        if (s.isError()) {
+            LOG(ERROR) << "cannot launch master "<< self().address.ip << ":6060";
+            send(super_master,"error");
+        }
+        LOG(INFO) << self().address.ip << ":6060 launched master successfully.";
+        send(super_master,"successed");
+    }
+
 //    void Slave::received_new_master(const UPID& from, const MasterRegisteredMessage& message) {
 //        LOG(INFO) << "MAKUN " << self().address.ip << " received new master ip from " << from;
 //    }
 
-    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
+    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)
+    {
         return stream << TaskState_Name(state);
     }
 }
@@ -623,7 +809,6 @@ namespace chameleon {
 using namespace chameleon;
 
 int main(int argc, char *argv[]) {
-
     chameleon::set_storage_paths_of_glog("slave");// provides the program name
     chameleon::set_flags_of_glog();
 
@@ -639,13 +824,38 @@ int main(int argc, char *argv[]) {
     google::CommandLineFlagInfo info;
 
 
-    if (master_Str && port_Int) {
+    if (master_Str && port_Int && work_dir_Str) {
+        // first get the absolute path for the default work_dir
+        string work_dir_path = FLAGS_work_dir;
+        if (FLAGS_work_dir == "work_dir") {
+            work_dir_path = path::join(os::getcwd(), FLAGS_work_dir);
+            Try<Nothing> work_dir_create = os::mkdir(work_dir_path);
+            if (work_dir_create.isError()) {
+                printf(work_dir_create.error().c_str());
+                return -1;
+            }
+        }
+
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
+//        os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));  // LIBPROCESS_
+        LOG(INFO)<<"Heldon env port : "<< os::getenv("LIBPROCESS_PORT").get();
         process::initialize("slave");
+
         chameleon::Slave slave;
+
+        Try<chameleon::slave::DockerContainerizer*> docker_containerizer = chameleon::slave::DockerContainerizer::create();
+        if (docker_containerizer.isError()) {
+            EXIT(EXIT_FAILURE)
+                    << "Failed to create a containerizer: " << docker_containerizer.error();
+        }
+
+        slave.setM_containerizer(docker_containerizer.get());
+
+        LOG(INFO)<<"Heldon port : "<<stringify(FLAGS_port);
+        LOG(INFO)<<"Heldon address.port : " << process::address().port;
         slave.setM_interval(Seconds(FLAGS_ht));
-        slave.setM_work_dir(FLAGS_work_dir);
+        slave.setM_work_dir(work_dir_path);
 
         string master_ip_and_port = "master@" + stringify(FLAGS_master);
         slave.setM_master(master_ip_and_port);
@@ -654,6 +864,9 @@ int main(int argc, char *argv[]) {
         const PID<chameleon::Slave> slave_pid = slave.self();
         LOG(INFO) << slave_pid;
         process::wait(slave.self());
+
+        delete docker_containerizer.get();
+
     } else {
         LOG(INFO) << "To run this program , must set all parameters correctly "
                      "\n read the notice " << google::ProgramUsage();

@@ -11,7 +11,8 @@
 #include <vector>
 #include <set>
 #include <memory>
-#include <hash_map>
+#include <unordered_map>
+#include <unordered_set>
 
 #include <glog/logging.h>
 #include <gflags/gflags.h>
@@ -27,6 +28,7 @@
 #include <stout/uuid.hpp>
 #include <stout/check.hpp>
 #include <stout/boundedhashmap.hpp>
+#include <stout/path.hpp>
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -39,9 +41,7 @@
 #include <process/subprocess.hpp>
 
 // protobuf
-#include <participant_info.pb.h>
 #include <hardware_resource.pb.h>
-#include <job.pb.h>
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
 #include <mesos.pb.h>
@@ -54,12 +54,16 @@
 #include <configuration_glog.hpp>
 #include <chameleon_string.hpp>
 #include <chameleon_os.hpp>
-#include "scheduler.hpp"
+#include <chameleon_resources.hpp>
+#include <slave_object.hpp>
+#include <scheduler_interface.hpp>
+#include <coarse_grained_scheduler.hpp>
 
 using std::string;
 using std::set;
 using std::vector;
 using std::unordered_map;
+using std::unordered_set;
 using std::shared_ptr;
 using std::make_shared;
 using std::list;
@@ -71,50 +75,50 @@ using process::UPID;
 using process::PID;
 using process::Future;
 using process::Promise;
-using namespace process::http;
+//using namespace process::http;
 
 using process::http::Request;
 using process::http::OK;
 using process::http::InternalServerError;
 using process::Subprocess;
 
-namespace master {
+namespace chameleon {
 
     class Framework;
     class Master;
 
-    class Slave {
-    public:
-        Slave(Master *const _master,
-              const mesos::SlaveInfo &_info,
-              const process::UPID &_pid) :
-                master(_master),
-                info(_info),
-                id(_info.id()),
-                pid(_pid) {
-        };
-
-        ~Slave();
-
-        Master *const master;
-        const mesos::SlaveID id;
-        const mesos::SlaveInfo info;
-        process::UPID pid;
-
-    private:
-
-        //Constructor cannot be redeclared
+//    class Slave {
+//    public:
 //        Slave(Master *const _master,
-//              const mesos::SlaveInfo &_info)
-//                : master(_master),
-//                  info(_info),
-//                  id(info.id()){}
-
-        Slave(const Slave&);
-
-        Slave &operator=(const Slave&);
-
-    };
+//              const mesos::SlaveInfo &_info,
+//              const process::UPID &_pid) :
+//                master(_master),
+//                info(_info),
+//                id(_info.id()),
+//                pid(_pid) {
+//        };
+//
+//        ~Slave();
+//
+//        Master *const master;
+//        const mesos::SlaveID id;
+//        const mesos::SlaveInfo info;
+//        process::UPID pid;
+//
+//    private:
+//
+//        //Constructor cannot be redeclared
+////        Slave(Master *const _master,
+////              const mesos::SlaveInfo &_info)
+////                : master(_master),
+////                  info(_info),
+////                  id(info.id()){}
+//
+//        Slave(const Slave&);
+//
+//        Slave &operator=(const Slave&);
+//
+//    };
 
 
     class Master : public ProtobufProcess<Master> {
@@ -124,8 +128,7 @@ namespace master {
         friend class Slave;
 
         explicit Master() : ProcessBase("master") {
-            msp_spark_slave = make_shared<UPID>(UPID(test_slave_UPID));
-            msp_spark_master = make_shared<UPID>(UPID(test_master_UPID));
+
             m_state = INITIALIZING;
 
             m_masterInfo.set_id(UUID::random().toString());
@@ -139,6 +142,8 @@ namespace master {
             m_masterInfo.mutable_address()->set_ip(stringify(self().address.ip));
             m_masterInfo.mutable_address()->set_port(self().address.port);
             m_masterInfo.mutable_address()->set_hostname(hostname);
+
+            m_master_cwd = os::getcwd();
         }
 
         virtual ~Master() {}
@@ -171,62 +176,17 @@ namespace master {
         /**
          * make random ID-weiguow-2019/2/24
          * */
-        mesos::SlaveID newSlaveId();
         mesos::FrameworkID newFrameworkId();
-        mesos::OfferID newOfferId();
 
         Framework *getFramework(const mesos::FrameworkID &frameworkId);
 
         hashmap<string, mesos::Offer*> offers;
 
         /**
-         * save slaveinfo-weiguow-2019-2-24*/
-        struct Slaves {
-
-            hashset<process::UPID> registering;
-
-            struct {
-                Slave* get(const mesos::SlaveID &slaveId) const {
-                    return ids.get(slaveId.value()).getOrElse(nullptr);
-                }
-
-                Slave* get(const process::UPID &pid) const {
-                    return pids.get(pid).getOrElse(nullptr);
-                }
-
-                void put(Slave* slave)
-                {
-                    CHECK_NOTNULL(slave);
-
-                    ids[slave->id.value()] = slave;
-                    pids[slave->pid] = slave;
-                }
-
-
-                size_t size() const { return ids.size(); }
-
-                typedef hashmap<string, Slave*>::iterator iterator;
-                typedef hashmap<string, Slave*>::const_iterator const_iterator;
-
-                iterator begin() { return ids.begin(); }
-                iterator end()   { return ids.end();   }
-
-                const_iterator begin() const { return ids.begin(); }
-                const_iterator end()   const { return ids.end();   }
-
-            public:
-                hashmap<string, Slave*> ids;
-                hashmap<process::UPID, Slave*> pids;
-            } registered;
-
-
-        } slaves;
-
-        /**
          * save Frameworkinfo-weiguow-2019-2-22
          * */
         struct Frameworks {
-
+            // key: framework ID, value: Framework
             hashmap<string, Framework*> registered;
 
 //            BoundedHashMap<string, Framework*> completed;
@@ -262,21 +222,28 @@ namespace master {
 
         void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
 
-        void addFramework(Framework *framework);
+        void add_framework(Framework *framework);
 
-        void removeFramework(Framework* framework);
+        void remove_framework(Framework *framework);
 
         void deactivate(Framework* framework, bool rescind);
 
-        void get_select_master(const UPID& from, const string& message);
-        void get_slave_infos(const UPID& from, const string& message);
         // super_master related
         void set_super_master_path(const string& path);
 
+        const string get_cwd() const;
+
+        void set_webui_path(const string& path);
+
+        const string get_web_ui() const;
 
     private:
 
         string m_uuid;
+        // the absolute path of the directory where the master executable exists.
+        string m_master_cwd;
+
+        string m_webui_path;
 
         // master states.
         enum {
@@ -285,25 +252,23 @@ namespace master {
             RUNNING
         } m_state;
 
-        unordered_map<UPID, ParticipantInfo> m_participants;
+        // key: slave_ip, value: hardware_resources
         unordered_map<string, JSON::Object> m_hardware_resources;
         unordered_map<string, HardwareResourcesMessage> m_proto_hardware_resources;
         set<string> m_alive_slaves;
+        // key: slave_uuid, value: shared_ptr<SlaveObject>
+        unordered_map<string, shared_ptr<SlaveObject>> m_slave_objects;
+        // key: framework ID value:  the unordered_set of slave_uuids. It records the slaves where the framework is running on.
+        unordered_map<string,unordered_set<string>> m_framework_to_slaves;
 
+        // key: slave_ip, value: runtime_resources
         unordered_map<string, JSON::Object> m_runtime_resources;
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
-//        unordered_map<string,HardwareResource> m_topology_resources;
 
-        const string test_slave_UPID = "slave@172.20.110.69:6061";
-        const string test_master_UPID = "slave@172.20.110.228:6061";
-        shared_ptr<UPID> msp_spark_slave;
-        shared_ptr<UPID> msp_spark_master;
-
-        string m_slavePID;
+        // scheduler related
+        shared_ptr<SchedulerInterface> m_scheduler;
 
         int64_t nextFrameworkId;
-        int64_t nextOfferId;
-        int64_t nextSlaveId;
 
         mesos::MasterInfo m_masterInfo;
 
@@ -322,8 +287,6 @@ namespace master {
          * @param ip  slave.ip
          */
         void received_reply_shutdown_message(const string &ip, const bool &is_shutdown);
-
-        mesos::Offer* create_a_offer(const mesos::FrameworkID& frameworkId);
 
         // super_master related
         string m_super_master_path;
@@ -363,7 +326,7 @@ namespace master {
         void send(const Message &message) {
             if (!connected()) {
                 LOG(WARNING) << "Master attempted to send message to disconnected"
-                             << " framework " << this->state;
+                             << " framework ";
             } else {
                 master->send(pid.get(), message);
             }
@@ -401,10 +364,10 @@ namespace master {
 
     };
 
-    inline std::ostream &operator<<(std::ostream &stream, const Slave &slave) {
-        return stream << slave.id.value() << " at " << slave.pid
-                      << " (" << slave.info.hostname() << ")";
-    }
+//    inline std::ostream &operator<<(std::ostream &stream, const Slave &slave) {
+//        return stream << slave.id.value() << " at " << slave.pid
+//                      << " (" << slave.info.hostname() << ")";
+//    }
 
     inline std::ostream &operator<<(std::ostream &stream, const Framework &framework) {
         stream << framework.id().value() << " (" << framework.info.name() << ")";
