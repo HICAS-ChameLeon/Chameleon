@@ -267,6 +267,7 @@ namespace chameleon {
 
         // scheduler related
         shared_ptr<SchedulerInterface> m_scheduler;
+        shared_ptr<SchedulerInterface> m_wqn_scheduler;
 
         int64_t nextFrameworkId;
 
