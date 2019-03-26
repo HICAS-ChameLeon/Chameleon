@@ -46,7 +46,6 @@ namespace chameleon {
 
 
     void CommandExecutor::launch(const mesos::TaskInfo &task) {
-
         if (launched) {
             LOG(INFO) << "yxxxxxxx CommandExecutor launched(flase) ";
             mesos::TaskStatus status = CommandExecutor::createTaskStatus(
@@ -133,7 +132,7 @@ namespace chameleon {
 
        // std::cout << "\n yxxxxxx Starting task " << taskId.get() << std::endl;
         LOG(INFO) << " yxxxxxx Starting task " << taskId.get();
-
+        LOG(INFO) << " yxxxxxx Starting task " << *command.mutable_value();
         /*begin run taskInfo*/
         Try<process::Subprocess> exec = process::subprocess(
                 *command.mutable_value(),
@@ -141,16 +140,15 @@ namespace chameleon {
                 process::Subprocess::FD(STDOUT_FILENO),
                 process::Subprocess::FD(STDERR_FILENO) );
 
-        LOG(INFO) << " yxxxxx  Forked command at " << pid;
-      //  std::cout << "\n yxxxxx  Forked command at " << pid << std::endl;[
+        pid=exec->pid();
 
-        // Monitor this process.
+        LOG(INFO) << " yxxxxx  Forked command at " << pid;
+
         process::reap(pid)
                 .onAny(defer(self(), &Self::reaped, pid, lambda::_1));
 
 
         LOG(INFO) << "yxxxxxxx CommandExecutor createTaskStatus '" ;
-
         mesos::TaskStatus status = CommandExecutor::createTaskStatus(taskId.get(), mesos::TASK_RUNNING);
         forward(status);
         launched = true;
@@ -211,11 +209,16 @@ namespace chameleon {
 
     void CommandExecutor::reaped(pid_t pid, const process::Future<Option<int>>& status_) {
         terminated = true;
+        mesos::TaskStatus status = createTaskStatus(
+                taskId.get(),
+                mesos::TASK_FINISHED);
+        forward(status);
        // delay(Seconds(1), self(), &Self::selfTerminate);
         LOG(INFO) << " yxxxxx  CommandExecutor  terminate self" ;
-        terminate(self());
-        mesos::TaskState taskState;
-        string message;
+        delay(Seconds(2), self(), &Self::selfTerminate);
+      //  terminate(self());
+       // mesos::TaskState taskState;
+      //  string message;
 /*
         if (!status_.isReady()) {
             taskState = mesos::TASK_FAILED;
@@ -270,6 +273,10 @@ namespace chameleon {
         }*/
     }
 
+    void CommandExecutor::selfTerminate()
+    {
+            terminate(self());
+    }
 
     Flags::Flags() {
         add(&Flags::rootfs,
