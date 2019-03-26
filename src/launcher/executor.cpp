@@ -132,7 +132,7 @@ namespace chameleon {
 
        // std::cout << "\n yxxxxxx Starting task " << taskId.get() << std::endl;
         LOG(INFO) << " yxxxxxx Starting task " << taskId.get();
-
+        LOG(INFO) << " yxxxxxx Starting task " << *command.mutable_value();
         /*begin run taskInfo*/
         Try<process::Subprocess> exec = process::subprocess(
                 *command.mutable_value(),
