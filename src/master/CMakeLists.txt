@@ -1,4 +1,4 @@
-PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages participant_info ${CMAKE_BINARY_DIR}/src/messages participant_info)
+#PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages participant_info ${CMAKE_BINARY_DIR}/src/messages participant_info)
 
 include_directories(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
 include_directories(${CMAKE_SOURCE_DIR}/src/master/)

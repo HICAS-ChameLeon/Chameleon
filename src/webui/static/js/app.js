@@ -47,11 +47,10 @@
                 })
 
                 // framework.html
-                .when('/frameworks/:id.value',{
-            templateUrl:
-                'framework.html',
-                    controller:'FrameworkCtrl'
-            })
+                .when('/frameworks/:framework_uuid', {
+                    templateUrl: 'framework.html',
+                    controller: 'FrameworkCtrl'
+                })
                 // slave.html
                 .when('/slaves/:slave_uuid/ip/:slave_id/cpu_usage/:cpu_used/mem_usage/:mem_used/disk_usage/:disk_used', {
                     templateUrl: 'slave.html',
