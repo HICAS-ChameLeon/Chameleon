@@ -40,7 +40,7 @@ using std::list;
 namespace chameleon {
     class CoarseGrainedScheduler : public SchedulerInterface {
     public:
-        explicit CoarseGrainedScheduler() {
+        explicit CoarseGrainedScheduler():SchedulerInterface("CoarseGrained") {
 
         }
 
