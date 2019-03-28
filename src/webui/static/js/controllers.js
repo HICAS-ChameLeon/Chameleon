@@ -960,10 +960,10 @@
     });
 
     //模态框对应的Controller
-    chameleon_app.controller('ShutdownCtrl', function($scope,$modal) {
+    chameleon_app.controller('ShutdownCtrl', function($scope,$uibModal) {
         var alert_message = "确认关闭所有slave节点?";
         $scope.openModal = function() {
-            var modalInstance = $modal.open({
+            var modalInstance = $uibModal.open({
                 templateUrl : 'shutdown.html',
                 controller : 'ShutdownInstanceCtrl',   //shutdown modal对应的Controller
                 resolve : {
@@ -976,7 +976,7 @@
     });
 
     //模态框对应的Controller
-    chameleon_app.controller('ShutdownInstanceCtrl', function($scope, $modalInstance,$http, date) {
+    chameleon_app.controller('ShutdownInstanceCtrl', function($scope, $uibModalInstance,$http, date) {
         $scope.date= date;
 
         //在这里处理要进行的操作
@@ -986,19 +986,19 @@
                 url: leadingChameleonMasterURL('/master/stop-cluster')
             }).then(function successCallback(response) {
                 console.log(response);
-                $modalInstance.dismiss('cancel');
+                $uibModalInstance.dismiss('cancel');
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
         };
         $scope.cancel = function() {
-            $modalInstance.dismiss('cancel');
+            $uibModalInstance.dismiss('cancel');
         }
     });
 
 
     //开启supermaster对应的Controller
-    chameleon_app.controller('StartSupermasterCtrl', function ($scope, $rootScope, $modal) {
+    chameleon_app.controller('StartSupermasterCtrl', function ($scope, $rootScope, $uibModal) {
         //$scope.startSupermaster = response.data.start;
         console.log('8' + $rootScope.startSupermaster);
         console.log('88'+ $rootScope.stopSupermaster);
@@ -1007,7 +1007,7 @@
                 //$scope.startSupermaster = $rootScope.startSupermaster;
                 var alert_message = "确认开启Supermaster?";
                 console.log('9' + $rootScope.startSupermaster);
-                var modalInstance = $modal.open({
+                var modalInstance = $uibModal.open({
                     templateUrl: 'ControlSupermaster.html',
                     controller: 'StartSupermasterInstanceCtrl',   //shutdown modal对应的Controller
                     resolve: {
@@ -1024,7 +1024,7 @@
             }
         });
 
-    chameleon_app.controller('StartSupermasterInstanceCtrl', function($scope,$rootScope,$routeParams, $modalInstance,$http, date) {
+    chameleon_app.controller('StartSupermasterInstanceCtrl', function($scope,$rootScope,$routeParams, $uibModalInstance,$http, date) {
         $scope.date= date;
 
         //在这里处理要进行的操作
@@ -1035,25 +1035,25 @@
             }).then(function successCallback(response) {
                 $rootScope.startSupermaster = response.data.start;
                 console.log('10'+$rootScope.startSupermaster);
-                $modalInstance.dismiss('cancel');
+                $uibModalInstance.dismiss('cancel');
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
         };
         $scope.cancel = function() {
-            $modalInstance.dismiss('cancel');
+            $uibModalInstance.dismiss('cancel');
         }
     });
 
     //关闭supermaster对应的Controller
-    chameleon_app.controller('StopSupermasterCtrl',function ($scope,$rootScope,$modal) {
+    chameleon_app.controller('StopSupermasterCtrl',function ($scope,$rootScope,$uibModal) {
         console.log('5' + $rootScope.stopSupermaster);
 
         var alert_message = "确认停止Supermaster?";
         $scope.openModal = function() {
             if ($rootScope.stopSupermaster == undefined)
             {
-                var modalInstance = $modal.open({
+                var modalInstance = $uibModal.open({
                     templateUrl: 'ControlSupermaster.html',
                     controller: 'StopSupermasterInstanceCtrl',   //shutdown modal对应的Controller
                     resolve: {
@@ -1071,7 +1071,7 @@
 
     });
 
-    chameleon_app.controller('StopSupermasterInstanceCtrl', function($scope,$rootScope, $modalInstance,$http, date) {
+    chameleon_app.controller('StopSupermasterInstanceCtrl', function($scope,$rootScope, $uibModalInstance,$http, date) {
         $scope.date= date;
 
         //在这里处理要进行的操作
@@ -1083,13 +1083,13 @@
                 $rootScope.stopSupermaster = response.data.stop;
                 console.log(response);
                 console.log('55' + $rootScope.stopSupermaster);
-                $modalInstance.dismiss('cancel');
+                $uibModalInstance.dismiss('cancel');
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
         };
         $scope.cancel = function() {
-            $modalInstance.dismiss('cancel');
+            $uibModalInstance.dismiss('cancel');
         }
     });
 

@@ -1,3 +1,0 @@
-set(lele_adaptor_tests_SRC adaptor_tests.cpp)
-add_executable(lele_adaptor_tests_main ${lele_adaptor_tests_SRC})
-target_link_libraries(lele_adaptor_tests_main  gmock gtest pthread)

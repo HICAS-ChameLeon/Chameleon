@@ -115,6 +115,18 @@ namespace chameleon {
         install<mesos::scheduler::Call>(&Master::receive);
 
 //        install<TerminatingMasterMessage>
+        route(
+                "/get-scheduler",
+                "get the information of scheduler",
+                [this](Request request) {
+                    const string& scheduler_name = m_scheduler->m_scheduler_name;
+
+                    OK ok_response(scheduler_name);
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+
 
         // http://172.20.110.228:6060/master/hardware-resources
         route(
