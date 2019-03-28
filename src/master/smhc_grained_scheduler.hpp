@@ -39,23 +39,25 @@ using std::list;
 
 namespace chameleon {
 
-    class SMHCGrainedScheduler : public SchedulerInterface{
+    class SMHCGrainedScheduler : public SchedulerInterface {
     public:
-        explicit SMHCGrainedScheduler():SchedulerInterface("SMHCGrained"){
+        explicit SMHCGrainedScheduler() : SchedulerInterface("SMHCGrained") {
         }
-        virtual ~SMHCGrainedScheduler(){
+
+        virtual ~SMHCGrainedScheduler() {
 
         }
-        double F ;
 
-        int a ;
-        double b ;
-        int c ;
-        int d ;
-        int e ;
+        double F;
+        int a;
+        double b;
+        int c;
+        int d;
+        int e;
 
         int x = 1;
         double y = 0.6;
+
         /**
       *  coarse-grained scheduling: we do not consider the fine-grained resources heterogeneity of hardware, such as memory disk.
         *  we will find all the slave objects that can satisfy the framework's wqn-grained resource requirements
@@ -64,17 +66,17 @@ namespace chameleon {
       * @param m_slave_objects
       **/
 
-      void construct_offers(mesos::internal::ResourceOffersMessage &resource_offers_message,
+        void construct_offers(mesos::internal::ResourceOffersMessage &resource_offers_message,
                               const mesos::FrameworkID &framework_id,
                               const unordered_map<string, shared_ptr<SlaveObject>> &m_slave_objects) override {
 
-            LOG(INFO)<<"Wqn-grained scheduling";
+            LOG(INFO) << "Wqn-grained scheduling";
 
-            for(auto it = m_slave_objects.begin();it != m_slave_objects.end();it ++){
+            int result_F=0;
+            shared_ptr<SlaveObject> result_slave;
+
+            for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
                 shared_ptr<SlaveObject> slave = it->second;
-
-                //x = slave->m_hardware_resources.cpu_collection().cpu_quantity();
-                string max_size = slave->m_hardware_resources.mem_collection().max_size();
 
                 auto m_mem_collection = slave->m_hardware_resources.mem_collection();
                 auto m_mem_collection_info = slave->m_hardware_resources.mem_collection().mem_infos();
@@ -84,7 +86,7 @@ namespace chameleon {
                 auto m_disk_collection_info = slave->m_hardware_resources.disk_collection().disk_infos();
 
 
-                for (int i = 0; i < m_slave_objects.size(); i++) {
+                for (int i = 0; i < 1; i++) {
 
 
                     const MemInfo &memInfo = m_mem_collection.mem_infos(i);
@@ -102,8 +104,8 @@ namespace chameleon {
                     }
 
                     string m_modal = cpuInfo.modelname();     //Intel(R) Core(TM) i7-2700K CPU @ 3.50GHz
-                    vector<string> vec_modul = strings::split(m_modal," ");
-                    vector<string> vec2_modul = strings::split(vec_modul[3],"-");
+                    vector<string> vec_modul = strings::split(m_modal, " ");
+                    vector<string> vec2_modul = strings::split(vec_modul[3], "-");
                     string string_a = vec2_modul[0];
                     if (string_a == "i3") {
                         a = 1;
@@ -111,17 +113,21 @@ namespace chameleon {
                         a = 2;
                     } else if (string_a == "i7") {
                         a = 3;
+                    } else if (m_modal.find("E5")!=string::npos){
+                        a = 20;
                     }
 
 
                     b = cpuInfo.cpumhz();                       // cpu clock speed
-                    if ((int(b / 1000)) >= 2 && (int(b / 1000)) < 3) {
+                    if ((int(b / 1000)) >= 0 && (int(b / 1000)) < 2) {
                         b = 1;
-                    } else if ((int(b / 1000)) >= 3) {
+                    } else if ((int(b / 1000)) >= 2 && (int(b / 1000)) < 3) {
                         b = 2;
+                    } else if ((int(b / 1000)) >= 3) {
+                        b = 3;
                     }
 
-                    string m_cpucache = cpuInfo.l3cache();      //l3 cache
+                    string m_cpucache = cpuInfo.l3cache();       //l3 cache
                     vector<string> vec_cpu = strings::split(m_cpucache, "K");
                     c = stoi(vec_mem[0]) / 1000;
                     if (c > 0 && c <= 10) {
@@ -136,12 +142,11 @@ namespace chameleon {
 
                     string m_diskspeed = diskInfo.disk_speed();     //Disk speed
                     e = stoi(m_diskspeed);
-                    if (e < 100)
-                    {
-                        e =1;
-                    } else if(e>=100){
+                    if (e < 100) {
+                        e = 1;
+                    } else if (e >= 100) {
 
-                        e =2;
+                        e = 2;
                     }
 
                     LOG(INFO) << a;
@@ -149,28 +154,23 @@ namespace chameleon {
                     LOG(INFO) << c;
                     LOG(INFO) << d;
                     LOG(INFO) << e;
-                    LOG(INFO) << m_diskspeed;
-                    LOG(INFO) << memInfo.speed();
+                }
+                F = (a + b + c) * x + d * y + e;
+                if(F>result_F){
+                    result_F = F;
+                    result_slave = slave;
                 }
 
-                F = (a+b+c)*x +d*y + e;
-
-                mesos::OfferID offer_id = new_offer_id();
-                mesos::Offer *offer = slave->construct_a_offer(offer_id.value(), framework_id);
-                resource_offers_message.add_offers()->MergeFrom(*offer);
-                LOG(INFO) << offer->slave_id().value();
-                resource_offers_message.add_pids(slave->m_upid_str);
-                LOG(INFO) << F;
-
             }
-
+            mesos::OfferID offer_id = new_offer_id();
+            mesos::Offer *offer = result_slave->construct_a_offer(offer_id.value(), framework_id);
+            resource_offers_message.add_offers()->MergeFrom(*offer);
+            LOG(INFO) << offer->slave_id().value();
+            resource_offers_message.add_pids(result_slave->m_upid_str);
         }
-
-
 
     };
 };
-
 
 
 #endif //CHAMELEON_SMHC_GRAINED_SCHEDULER_HPP

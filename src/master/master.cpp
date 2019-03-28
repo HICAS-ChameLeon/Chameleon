@@ -80,9 +80,9 @@ namespace chameleon {
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
         nextFrameworkId = 0;
-        m_scheduler = make_shared<CoarseGrainedScheduler>();
-
-        m_wqn_scheduler = make_shared<WqnGrainedScheduler>();
+//        m_scheduler = make_shared<CoarseGrainedScheduler>();
+//
+//        m_wqn_scheduler = make_shared<WqnGrainedScheduler>();
 
         m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
 
@@ -119,16 +119,16 @@ namespace chameleon {
         install<mesos::scheduler::Call>(&Master::receive);
 
 //        install<TerminatingMasterMessage>
-        route(
-                "/get-scheduler",
-                "get the information of scheduler",
-                [this](Request request) {
-                    const string& scheduler_name = m_scheduler->m_scheduler_name;
-
-                    OK ok_response(scheduler_name);
-                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                    return ok_response;
-                });
+//        route(
+//                "/get-scheduler",
+//                "get the information of scheduler",
+//                [this](Request request) {
+//                    const string& scheduler_name = m_scheduler->m_scheduler_name;
+//
+//                    OK ok_response(scheduler_name);
+//                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+//                    return ok_response;
+//                });
 
 
 
@@ -484,9 +484,9 @@ namespace chameleon {
         mesos::internal::ResourceOffersMessage message;
         LOG(INFO) << "start scheduling to provide offers";
 
-        m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
-
-        m_wqn_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+//        m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
+//
+//        m_wqn_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
         m_smhc_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
