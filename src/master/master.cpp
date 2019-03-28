@@ -84,6 +84,8 @@ namespace chameleon {
 
         m_wqn_scheduler = make_shared<WqnGrainedScheduler>();
 
+        m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
+
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
 
@@ -481,9 +483,12 @@ namespace chameleon {
 
         mesos::internal::ResourceOffersMessage message;
         LOG(INFO) << "start scheduling to provide offers";
+
         m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
 
         m_wqn_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+
+        m_smhc_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
         if (message.offers_size() > 0) {
             framework->send(message);

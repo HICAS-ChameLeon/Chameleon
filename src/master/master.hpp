@@ -58,6 +58,7 @@
 #include <slave_object.hpp>
 #include <scheduler_interface.hpp>
 #include <coarse_grained_scheduler.hpp>
+#include <smhc_grained_scheduler.hpp>
 
 using std::string;
 using std::set;
@@ -268,6 +269,7 @@ namespace chameleon {
         // scheduler related
         shared_ptr<SchedulerInterface> m_scheduler;
         shared_ptr<SchedulerInterface> m_wqn_scheduler;
+        shared_ptr<SchedulerInterface> m_smhc_scheduler;
 
         int64_t nextFrameworkId;
 

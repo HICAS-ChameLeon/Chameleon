@@ -44,10 +44,6 @@ namespace chameleon {
 
         }
 
-//        explicit SchedulerInterface(const string& name_) : m_next_offer_id(0),m_scheduler_name(name_),m {
-//
-//        }
-
         SchedulerInterface(const SchedulerInterface &) = delete;
 
         SchedulerInterface &operator=(const SchedulerInterface &) = delete;
