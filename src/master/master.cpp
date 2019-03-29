@@ -9,7 +9,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "",
+DEFINE_string(supermaster_path, "/home/lemaker/open-source/Chameleon/build/src/master/super_master",
               "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 DEFINE_string(webui_path, "",
               "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
@@ -936,6 +936,25 @@ namespace chameleon {
             }
         }
 
+        if(super_master_control_message.my_master().size()){
+            LOG(INFO) << self().address << " received message from " << super_master;
+            string launch_command = FLAGS_supermaster_path + " --initiator=" + stringify(self().address)
+                    + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master --webui_path="
+                    + stringify(FLAGS_webui_path) + " --port=7001";
+            Try<Subprocess> s = subprocess(
+                    launch_command,
+                    Subprocess::FD(STDIN_FILENO),
+                    Subprocess::FD(STDOUT_FILENO),
+                    Subprocess::FD(STDERR_FILENO));
+            if (s.isError()) {
+                LOG(ERROR) << "cannot launch super_master "<< self().address.ip << ":7001";
+//                send(super_master,"error");
+            }
+            LOG(INFO) << self().address.ip << ":7001 launched super_master successfully.";
+//            send(super_master,"successed");
+//            for(int i = 0; i < super_master_control_message.my_master().size(); i++){
+//            }
+        }
     }
 
     void Master::received_registered_message_from_super_master(const UPID &super_master,
