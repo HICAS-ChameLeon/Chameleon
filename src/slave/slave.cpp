@@ -182,19 +182,40 @@ namespace chameleon {
     void Slave::modify_command_info_of_running_task(const string &spark_home_path, mesos::TaskInfo &task) {
         if (task.has_command()) {
             mesos::CommandInfo *new_command_info = new mesos::CommandInfo(task.command());
-            const string shell_value = task.command().value();
+            string shell_value = task.command().value();
+            //LOG(INFO) << "the shell_value is " << shell_value;
             auto it = shell_value.find("spark-class");
             if (it != string::npos) {
-                const string right_part = shell_value.substr(it);
                 const string left_part = " \"" + spark_home_path + "/bin/";
-                const string final_value = left_part + right_part;
-                new_command_info->set_value(final_value);
-                task.clear_command();
-                task.set_allocated_command(new_command_info);
-                LOG(INFO) << "the final value of command shell is " << final_value;
+                //LOG(INFO) << "the left_part command shell is " << left_part;
+
+                const string right_part = shell_value.substr(it);
+                //LOG(INFO) << "the right_part command shell is " << right_part;
+
+                //command_info of running task on x86 architecture
+                if(strings::contains(right_part,"\"")){
+                    const string final_value = left_part + right_part;
+                    new_command_info->set_value(final_value);
+                    task.clear_command();
+                    task.set_allocated_command(new_command_info);
+                    LOG(INFO) << "the final value of command shell is " << final_value;
+                } else{
+                    //command info of running task on Arm architecture
+                    vector<string> tokens = strings::split(right_part," ",2);
+                    string arm_right_part = tokens[0] +"\""+" "+tokens[1] ;
+                    //LOG(INFO) << "the arm_right_part command shell is " << arm_right_part;
+                    const string final_value = left_part + arm_right_part;
+                    new_command_info->set_value(final_value);
+                    task.clear_command();
+                    task.set_allocated_command(new_command_info);
+                    LOG(INFO) << "the final value of command shell is " << final_value;
+                }
             }
         }
     }
+
+
+
 
     /**
      * Funtion  : runTask

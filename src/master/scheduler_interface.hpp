@@ -38,7 +38,9 @@ using std::list;
 namespace chameleon {
     class SchedulerInterface {
     public:
-        explicit SchedulerInterface() : m_next_offer_id(0) {
+        const string m_scheduler_name;
+
+        explicit SchedulerInterface(const string& name_) : m_next_offer_id(0),m_scheduler_name(name_) {
 
         }
 
@@ -68,7 +70,6 @@ namespace chameleon {
         }
 
         int64_t m_next_offer_id;
-
 
     };
 }

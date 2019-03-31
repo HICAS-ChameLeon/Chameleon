@@ -1,13 +1,20 @@
 <div class="tab-pane fade in active" id="supernetworktopology">
+    <div class="btn-group" uib-dropdown dropdown-append-to-body>
+        <button id="btn-append-to-body" type="button"
+                class="btn btn-primary" uib-dropdown-toggle>
+            选择层数 <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" uib-dropdown-menu role="menu"
+            aria-labelledby="btn-append-to-body">
+            <li role="menuitem"><a href="#/topology" ng-click="clickItem1()">一层</a></li>
+            <li role="menuitem"><a href="#/topology/super_master">两层</a></li>
+            <li role="menuitem"><a href="">三层</a></li>
+            <li class="divider"></li>
+            <li role="menuitem"><a href="#">恢复</a></li>
+        </ul>
+    </div>
     <thead>
     <tr>
-        <th>
-            <label for="locale">选择层数:</label>
-            <select id="locale" onchange="window.location.href=this.value">
-                <option value="#/topology" >1层</option>
-                <option value="2" selected="selected">2层</option>
-            </select>
-        </th>
         <th>
             一层变两层：
         </th>

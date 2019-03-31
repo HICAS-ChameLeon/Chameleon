@@ -38,11 +38,13 @@ using std::make_shared;
 using std::list;
 
 namespace chameleon {
+
     class CoarseGrainedScheduler : public SchedulerInterface {
     public:
-        explicit CoarseGrainedScheduler() {
+        explicit CoarseGrainedScheduler():SchedulerInterface("CoarseGrained") {
 
         }
+
 
         virtual ~CoarseGrainedScheduler() {
 
@@ -57,9 +59,9 @@ namespace chameleon {
        */
         void construct_offers(mesos::internal::ResourceOffersMessage &resource_offers_message,
                               const mesos::FrameworkID &framework_id,
-                              const unordered_map<string, shared_ptr<SlaveObject>> &slave_objects) override {
+                              const unordered_map<string, shared_ptr<SlaveObject>> &m_slave_objects) override {
             LOG(INFO)<<"coarse-grained scheduling ";
-            for (auto it = slave_objects.begin(); it != slave_objects.end(); it++) {
+            for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
                 mesos::OfferID offer_id = new_offer_id();
                 shared_ptr<SlaveObject> slave = it->second;
                 mesos::Offer *offer = slave->construct_a_offer(offer_id.value(), framework_id);
@@ -70,7 +72,58 @@ namespace chameleon {
 
         }
 
+
+
     };
-}
+
+
+    class WqnGrainedScheduler : public SchedulerInterface{
+    public:
+        explicit WqnGrainedScheduler():SchedulerInterface("WqnGrained"){
+        }
+         virtual ~WqnGrainedScheduler(){
+
+        }
+
+        /**
+      *  coarse-grained scheduling: we do not consider the fine-grained resources heterogeneity of hardware, such as memory disk.
+        *  we will find all the slave objects that can satisfy the framework's wqn-grained resource requirements
+      * @param resource_offers_message
+      * @param framework_id
+      * @param m_slave_objects
+      */
+
+        void construct_offers(mesos::internal::ResourceOffersMessage &resource_offers_message,
+                              const mesos::FrameworkID &framework_id,
+                              const unordered_map<string, shared_ptr<SlaveObject>> &m_slave_objects) override {
+
+            LOG(INFO)<<"Wqn-grained scheduling";
+            for(auto it = m_slave_objects.begin();it != m_slave_objects.end();it ++){
+                shared_ptr<SlaveObject> slave = it->second;
+                string max_size = slave->m_hardware_resources.mem_collection().max_size();
+                LOG(INFO)<<"max size"<<max_size;
+                LOG(INFO)<<"m_available_mem:"<<slave->m_available_mem<<"m_available_cpu:"<<slave->m_available_cpus<<"m_availiable_disk:"<<slave->m_available_disk;
+
+                if(slave->m_available_mem > 0 && slave->m_available_mem<5000)
+                {
+                    mesos::OfferID offer_id = new_offer_id();
+                    mesos::Offer *offer = slave->construct_a_offer(offer_id.value(), framework_id);
+                    resource_offers_message.add_offers()->MergeFrom(*offer);
+                    LOG(INFO) << "wqn slave_id"<<offer->slave_id().value();
+                    resource_offers_message.add_pids(slave->m_upid_str);
+                }
+                else{
+                    LOG(INFO)<< "Memory resources exceeding the limit ";
+                }
+
+
+            }
+
+        }
+
+
+
+    };
+};
 
 #endif //CHAMELEON_COARSE_GRAINED_SCHEDULING_HPP
