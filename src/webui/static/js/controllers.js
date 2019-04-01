@@ -112,6 +112,10 @@
     chameleon_app.controller('RuntimeCtrl', function($scope,$rootScope,$http) {
     });
 
+    chameleon_app.controller('SchedulerCtrl', function($scope,$rootScope,$http) {
+    });
+
+
     //资源利用率饼图的Controller
     chameleon_app.controller('SlaveCtrl', function($scope,$rootScope, $http,$routeParams) {
         $scope.slave_uuid = $routeParams.slave_uuid;

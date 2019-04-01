@@ -72,7 +72,7 @@ namespace chameleon {
 
             LOG(INFO) << "Wqn-grained scheduling";
 
-            int result_F=0;
+            int result_F = 0;
             shared_ptr<SlaveObject> result_slave;
 
             for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
@@ -113,7 +113,7 @@ namespace chameleon {
                         a = 2;
                     } else if (string_a == "i7") {
                         a = 3;
-                    } else if (m_modal.find("E5")!=string::npos){
+                    } else if (m_modal.find("E5") != string::npos) {
                         a = 20;
                     }
 
@@ -156,7 +156,7 @@ namespace chameleon {
                     LOG(INFO) << e;
                 }
                 F = (a + b + c) * x + d * y + e;
-                if(F>result_F){
+                if (F > result_F) {
                     result_F = F;
                     result_slave = slave;
                 }

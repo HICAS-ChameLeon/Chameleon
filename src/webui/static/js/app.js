@@ -24,6 +24,11 @@
                     templateUrl: 'runtime.html',
                     controller: 'UpdateCtrl'
                 })
+
+                .when('/scheduling', {
+                    templateUrl: 'scheduler.html',
+                    controller: 'SchedulerCtrl'
+                })
                 // network_topology.html
                 .when('/topology', {
                     templateUrl: 'network_topology.html',

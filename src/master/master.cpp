@@ -119,16 +119,58 @@ namespace chameleon {
         install<mesos::scheduler::Call>(&Master::receive);
 
 //        install<TerminatingMasterMessage>
-//        route(
-//                "/get-scheduler",
-//                "get the information of scheduler",
-//                [this](Request request) {
-//                    const string& scheduler_name = m_scheduler->m_scheduler_name;
-//
-//                    OK ok_response(scheduler_name);
-//                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-//                    return ok_response;
-//                });
+
+
+        route(
+                "/get-scheduler",
+                "get the information of scheduler",
+                [this](Request request) {
+                    SMHCGrainedScheduler a;
+                    a.construct_offers();
+                    JSON::Object a_schedular ;
+                    JSON::Object a_content = JSON::Object();
+                    if (!this->m_slave_objects.empty()) {
+                        JSON::Array schedular_array;
+                        const string &scheduler_name = m_smhc_scheduler->m_scheduler_name;
+                        for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
+                            shared_ptr<SlaveObject> slave = it->second;
+
+                            auto m_mem_collection = slave->m_hardware_resources.mem_collection();
+                            auto m_cpu_collection = slave->m_hardware_resources.cpu_collection();
+                            auto m_disk_collection = slave->m_hardware_resources.disk_collection();
+                            string uuid = slave->m_uuid;
+
+                            for (int i = 0; i < 1; i++) {
+
+                                const MemInfo &memInfo = m_mem_collection.mem_infos(i);
+                                const CPUInfo &cpuInfo = m_cpu_collection.cpu_infos(i);
+                                const DiskInfo &diskInfo = m_disk_collection.disk_infos(i);
+
+                                string m_speed = memInfo.speed();
+                                string m_modal = cpuInfo.modelname();
+                                string m_cpucache = cpuInfo.l3cache();
+                                string m_diskspeed = diskInfo.disk_speed();
+
+                                a_schedular.values["speed"] = m_speed;
+                                a_schedular.values["modal"] = m_modal;
+                                a_schedular.values["cpucache"] = m_cpucache;
+                                a_schedular.values["diskspeed"] = m_diskspeed;
+                                a_schedular.values["m_schedular_name"] = scheduler_name;
+                                a_schedular.values["uuid"] = uuid;
+                            }
+
+                            schedular_array.values.emplace_back(a_schedular);
+
+                        }
+                        a_content.values["content"] = schedular_array;
+                    } else {
+
+                        a_content.values["content"] = JSON::Object();
+                    }
+                    OK ok_response(stringify(a_content));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
 
 
 
