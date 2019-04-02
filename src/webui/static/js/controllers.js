@@ -113,6 +113,18 @@
     });
 
     chameleon_app.controller('SchedulerCtrl', function($scope,$rootScope,$http) {
+        $http({
+            method: 'GET',
+            url: leadingChameleonMasterURL('/master/get-scheduler')
+        }).then(function successCallback(response) {
+
+            $scope.master = {
+                scheduler: response.data.content,
+                //quantities: response.data.quantity,
+
+            };
+        }, function errorCallback(response) {
+        });
     });
 
 
