@@ -62,14 +62,17 @@ namespace chameleon {
 
         }
 
+        unordered_map<string, string> m_offers;
+
     protected:
         mesos::OfferID new_offer_id() {
             mesos::OfferID offer_id;
-            offer_id.set_value(stringify(m_next_offer_id));
+            offer_id.set_value(stringify(m_next_offer_id++));
             return offer_id;
         }
-
         int64_t m_next_offer_id;
+
+        //save slaveID and offerID
 
     };
 }
