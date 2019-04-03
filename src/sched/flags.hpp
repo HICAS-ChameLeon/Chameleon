@@ -27,11 +27,11 @@
 
 #include "sched/constants.hpp"
 
-namespace chameleon {
+namespace mesos{
 namespace internal {
 namespace scheduler {
 
-class Flags : public virtual logging::Flags
+class Flags : public virtual chameleon::logging::Flags
 {
 public:
   Flags()

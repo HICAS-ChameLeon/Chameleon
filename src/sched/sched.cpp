@@ -14,20 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __WINDOWS__
-#include <dlfcn.h>
-#endif // __WINDOWS__
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef __WINDOWS__
-#include <unistd.h>
-#endif // __WINDOWS__
-
-#ifndef __WINDOWS__
-#include <arpa/inet.h>
-#endif // __WINDOWS__
 
 #include <cmath>
 #include <iostream>
@@ -37,18 +27,18 @@
 #include <sstream>
 #include <string>
 
-#include <mesos/mesos.hpp>
-#include <mesos/module.hpp>
-#include <mesos/scheduler.hpp>
-#include <mesos/type_utils.hpp>
+#include <mesos.pb.h>
+#include <common/module.hpp>
+#include <common/scheduler.hpp>
+#include <docker/type_utils.hpp>
 
-#include <mesos/authentication/authenticatee.hpp>
+#include <common/authentication/authenticatee.hpp>
 
-#include <mesos/master/detector.hpp>
+#include <common/master/detector.hpp>
 
-#include <mesos/module/authenticatee.hpp>
+#include <common/module/authenticatee.hpp>
 
-#include <mesos/scheduler/scheduler.hpp>
+#include <master/scheduler.hpp>
 
 #include <process/defer.hpp>
 #include <process/delay.hpp>
@@ -79,7 +69,7 @@
 #include <stout/utils.hpp>
 #include <stout/uuid.hpp>
 
-#include "authentication/cram_md5/authenticatee.hpp"
+#include "sched/authenticatee.hpp"
 
 #include "common/protobuf_utils.hpp"
 
@@ -89,7 +79,7 @@
 #include "logging/flags.hpp"
 #include "logging/logging.hpp"
 
-#include "messages/messages.hpp"
+#include "docker/messages.hpp"
 
 #include "module/manager.hpp"
 
@@ -1745,7 +1735,7 @@ void MesosSchedulerDriver::initialize() {
   // Initialize logging.
   // TODO(benh): Replace whitespace in framework.name() with '_'?
   if (flags.initialize_driver_logging) {
-    logging::initialize(framework.name(), flags);
+    chameleon::logging::initialize(framework.name(), flags);
   } else {
     VLOG(1) << "Disabling initialization of GLOG logging";
   }

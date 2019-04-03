@@ -287,6 +287,7 @@ namespace chameleon {
       * @param          : UPID& from ,Call& call
       * */
     void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
+        LOG(INFO)<<m_masterInfo.ip()<<" "<<m_masterInfo.port();
         //first call
         if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
             subscribe(from, call.subscribe());

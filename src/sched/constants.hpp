@@ -19,7 +19,7 @@
 
 #include <stout/duration.hpp>
 
-namespace chameleon {
+namespace mesos {
 namespace internal {
 namespace scheduler {
 
