@@ -8,7 +8,7 @@
             aria-labelledby="btn-append-to-body">
             <li role="menuitem"><a href="#/topology" ng-click="clickItem1()">一层</a></li>
             <li role="menuitem"><a href="#/topology/super_master">两层</a></li>
-            <li role="menuitem"><a href="">三层</a></li>
+            <li role="menuitem"><a href="#/topology/super_master_and_super_master">三层</a></li>
             <li class="divider"></li>
             <li role="menuitem"><a href="#">恢复</a></li>
         </ul>
@@ -28,6 +28,14 @@
         </th>
         <th>
             <button ng-controller = "StopSupermasterCtrl" type="button"  class="alert alert-info" ng-click="openModal()">关闭supermaster</button>
+
+        </th>
+
+        <th>
+            一层变三层：
+        </th>
+        <th>
+            <button ng-controller = "StartThreeSupermasterCtrl" type="button" class="alert alert-info" ng-click="openModal()">开启supermaster</button>
 
         </th>
 

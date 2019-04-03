@@ -105,6 +105,12 @@ namespace chameleon {
 
         void terminating_master(const UPID &from, const OwnedSlavesMessage &message);
 
+        struct Node {
+            string node_ip;
+            int32_t node_port;
+            bool is_super_master;
+        } nodes;
+
         virtual ~SuperMaster() {
             LOG(INFO) << " ~SuperMaster";
         }
@@ -143,6 +149,9 @@ namespace chameleon {
         // key: super_master:ip , value: vector<MasterInfoControlledBySuperMaster>
         unordered_map<string,vector<MasterInfoControlledBySuperMaster>> m_classification_masters;
         vector<string> m_vector_super_master;
+
+        vector<Node> m_nodes;
+//        vector<Node,vector<Node>> m_nodes;
 
         //framework related
         unordered_map<string,string> m_master_framework;

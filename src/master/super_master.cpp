@@ -141,6 +141,38 @@ namespace chameleon {
                     return ok_response;
                 });
 
+        route(
+                "/super_supermaster",
+                "start super_master and change from one level to three levels",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_vector_super_master.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_vector_super_master.begin();
+                             it != this->m_vector_super_master.end(); it++) {
+                            for (int j = 0; j < m_vector_super_master.size(); ++j) {
+
+                                //JSON::Object result2 = JSON::Object(stringify(result));
+                                result.values["ip"] = m_vector_super_master[0];
+                                //array.values.push_back(JSON::String(m_vector_masters[j]));
+                                array.values.push_back(result);
+                            }
+
+                        }
+                        result.values["quantity"] = array.values.size();
+                        result.values["content"] = array;
+
+
+                    } else {
+                        result.values["quantity"] = 0;
+                        result.values["content"] = JSON::Object();
+                    }
+
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
 
         route(  //change from two level to one levels
                 "/kill_super_master",
@@ -317,7 +349,7 @@ namespace chameleon {
         classify_masters_framework();
 
         //change to three levels related
-        if (m_level = 3)
+        if (m_level == 3)
             classify_super_masters();
     }
 
@@ -330,6 +362,9 @@ namespace chameleon {
         string super_master_ip;
         for (auto iter = m_vector_masters.begin();iter!=m_vector_masters.end();iter++) {
             string current_ip = *iter;
+//            if(*iter == stringify(self().address.ip)){
+//                break;
+//            }
             if(count > cluster_size){
                 count = 1;
             }
@@ -338,7 +373,7 @@ namespace chameleon {
                 if(current_cluster_number>m_super_masters_size){
                     MasterInfoControlledBySuperMaster a_master;
                     a_master.set_ip(current_ip);
-                    a_master.set_port("7001");
+                    a_master.set_port("6060");
                     m_classification_masters[super_master_ip].push_back(a_master);
                     break;
                 }
@@ -348,7 +383,7 @@ namespace chameleon {
             }
             MasterInfoControlledBySuperMaster a_master;
             a_master.set_ip(current_ip);
-            a_master.set_port("7001");
+            a_master.set_port("6060");
             m_classification_masters[super_master_ip].push_back(a_master);
             count++;
         }

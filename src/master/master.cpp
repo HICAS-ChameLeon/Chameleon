@@ -305,7 +305,35 @@ namespace chameleon {
                     // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
                     const string launcher =
                             m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
-                            m_webui_path;
+                            m_webui_path + " --level=2";
+                    Try<Subprocess> super_master = subprocess(
+                            launcher,
+                            Subprocess::FD(STDIN_FILENO),
+                            Subprocess::FD(STDOUT_FILENO),
+                            Subprocess::FD(STDERR_FILENO)
+                    );
+                    result.values["start"] = "success";
+                    OK response(stringify(result));
+                    response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return response;
+                });
+
+        route(
+                "/start_three_supermaster",
+                "start supermaster by subprocess",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    /**
+                      * Function model  :  start a subprocess of super_master
+                      * Author          :  Jessicallo
+                      * Date            :  2019-2-27
+                      * Funtion name    :  Try
+                      * @param          :
+                      * */
+                    // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
+                    const string launcher =
+                            m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
+                            m_webui_path + " --level=3";
                     Try<Subprocess> super_master = subprocess(
                             launcher,
                             Subprocess::FD(STDIN_FILENO),
@@ -938,7 +966,7 @@ namespace chameleon {
 
         if(super_master_control_message.my_master().size()){
             LOG(INFO) << self().address << " received message from " << super_master;
-            string launch_command = FLAGS_supermaster_path + " --initiator=" + stringify(self().address)
+            string launch_command = m_super_master_path + " --initiator=" + stringify(self().address)
                     + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master --webui_path="
                     + stringify(FLAGS_webui_path) + " --port=7001";
             Try<Subprocess> s = subprocess(
