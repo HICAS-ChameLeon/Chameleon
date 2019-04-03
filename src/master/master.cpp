@@ -485,14 +485,15 @@ namespace chameleon {
         LOG(INFO) << "start scheduling to provide offers";
 
 //        m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
-//
-//        m_wqn_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
+//        m_wqn_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+//
         m_smhc_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+
+
 
         if (message.offers_size() > 0) {
             framework->send(message);
-
             LOG(INFO) << "Sent " << message.offers_size() << " offer to framework "
                       << framework->pid.get();
         } else {
@@ -613,11 +614,6 @@ namespace chameleon {
         }
     }
 
-    /**
-     * Function     : teardown
-     * Author       : weiguow
-     * Date         : 2019-2-26
-     * Description  : */
     void Master::teardown(Framework *framework) {
         CHECK_NOTNULL(framework);
 
@@ -626,26 +622,22 @@ namespace chameleon {
         remove_framework(framework);
     }
 
-    /**
-     * Function     : Decline
-     * Author       : weiguow
-     * Date         : 2-19-2-26
-     * Description  : */
 
     void Master::decline(Framework *framework, const mesos::scheduler::Call::Decline &decline) {
         CHECK_NOTNULL(framework);
-
-        LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
-                  << " for framework " << *framework;
-
-        process::dispatch(self(), &Master::offer, framework->id());
+        for (auto i = decline.offer_ids().begin(); i != decline.offer_ids().end(); i++) {
+            if (decline.offer_ids().size() == m_smhc_scheduler->m_offers.size()) {
+                process::dispatch(self(), &Master::offer, framework->id());
+            }
+            else {
+                LOG(INFO) << "Offer "<< i->value() << " has been declined by framework "
+                << framework->pid.get();
+                m_smhc_scheduler->m_offers.erase(i->value());
+            }
+        }
     }
 
-    /**
-     * Function     : Decline
-     * Author       : weiguow
-     * Date         : 2-19-2-26
-     * Description  : */
+
     void Master::shutdown(Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown) {
         CHECK_NOTNULL(framework);
 
