@@ -71,7 +71,6 @@ namespace chameleon {
 
         int64_t m_next_offer_id;
 
-
     };
 }
 
