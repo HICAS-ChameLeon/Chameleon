@@ -7,4 +7,4 @@ set(sched_SRC
         sched.cpp
         ${CMAKE_SOURCE_DIR}/src/common/parse.hpp)
 
-add_library(sched "STATIC" ${sched_SRC})
+add_library(sched "SHARED" ${sched_SRC})
