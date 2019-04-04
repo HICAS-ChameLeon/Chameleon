@@ -233,6 +233,7 @@ namespace chameleon {
         // running task related
         void modify_command_info_of_running_task(const string& spark_home_path, mesos::TaskInfo &task);
 
+        void modify_command_info_of_flink_task(const string& spark_home_path, mesos::TaskInfo &task);
     };
 
     class SlaveHeartbeater : public process::Process<SlaveHeartbeater> {
