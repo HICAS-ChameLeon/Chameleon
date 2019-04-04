@@ -178,6 +178,7 @@ namespace chameleon {
      * change the spark shell value of the specified command in the task
      * @param spark_home_path spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
      *  @param task
+     * Author : zhangyixin
      */
     void Slave::modify_command_info_of_running_task(const string &spark_home_path, mesos::TaskInfo &task) {
         if (task.has_command()) {
@@ -219,115 +220,9 @@ namespace chameleon {
 
     /**
      * Funtion  : runTask
-     * Author   : weiguow
+     * Author   : weiguow zhangyixin
      * Date     : 2019-1-2
      * */
-/*    void Slave:: runTask(
-            const process::UPID &from,
-            const mesos::FrameworkInfo &frameworkInfo,
-            const mesos::FrameworkID &frameworkId,
-            const process::UPID &pid,
-            const mesos::TaskInfo &taskInfo) {
-        LOG(INFO) << "framework " << frameworkInfo.name() << " ------------------";
-
-        LOG(INFO) << "Get task from master, start the mesos executor first";
-        const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, taskInfo);
-
-        Option<process::UPID> frameworkPid = None();
-
-        Framework *framework = getFramework(frameworkId);
-        framework = new Framework(this, frameworkInfo, frameworkPid);
-
-        frameworks[frameworkId.value()] = framework;
-
-        LOG(INFO) << "Start executor on framework " << framework->id().value();
-
-//        const string current_cwd = os::getcwd();
-        const string sanbox_path = path::join(m_work_dir, frameworkId.value());
-        Try<Nothing> mkdir_sanbox = os::mkdir(sanbox_path);
-        if (mkdir_sanbox.isError()) {
-            LOG(ERROR) << mkdir_sanbox.error();
-            return;
-        }
-
-        // change the spark home of the command information if the running task belongs to spark
-        // spark_home_path = sanbox_path + "spark-2.3.0-bin-hadoop2.7"
-        // for example,
-        // sanbox_path = Chameleon/build/src/slave/da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000
-        //  spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
-        const string spark_home_path = path::join(sanbox_path, "spark-2.3.0-bin-hadoop2.7");
-        mesos::TaskInfo copy_task(taskInfo);
-        modify_command_info_of_running_task(spark_home_path, copy_task);
-
-        // queue the task and executor_info
-        m_tasks.push(copy_task);
-        m_executorInfo = executorInfo;
-        if(taskInfo.container().type() == mesos::ContainerInfo::MESOS){
-            process::Future<Nothing> download_result;
-            Promise<Nothing> promise;
-            if (!os::exists(spark_home_path)) {
-                LOG(INFO) << "spark  didn't exist, download it frist";
-                mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
-                mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
-                mesos::fetcher::URI *uri = new mesos::fetcher::URI();
-                fetcher_info->set_sandbox_directory(sanbox_path);
-                //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
-                uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
-                item->set_allocated_uri(uri);
-                item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
-                download_result = m_software_resource_manager->download("my_spark", *fetcher_info);
-                delete fetcher_info;
-
-            } else {
-                LOG(INFO) << "the Spark framework has existed";
-
-                download_result = promise.future();
-                promise.set(Nothing());
-            }
-            download_result.onAny(process::defer(self(), &Self::start_mesos_executor, lambda::_1, framework));
-//        start_mesos_executor(framework);
-        }
-        else if(taskInfo.container().type() == mesos::ContainerInfo::DOCKER){
-            start_docker_container(taskInfo, framework);
-        }
-
-    }*/
-
-
-    void Slave::modify_command_info_of_flink_task(const string &spark_home_path, mesos::TaskInfo &task) {
-        if (task.has_command()) {
-            mesos::CommandInfo *new_command_info = new mesos::CommandInfo(task.command());
-            string shell_value = task.command().value();
-            LOG(INFO) << "the shell_value is " << shell_value;
-            auto it = shell_value.find("mesos-taskmanager.sh");
-            if (it != string::npos) {
-
-                const string left_part = spark_home_path + "/bin/";
-
-                LOG(INFO) << "the left_part command shell is " << left_part;
-
-                const string right_part = shell_value.substr(it);
-                LOG(INFO) << "the right_part command shell is " << right_part;
-
-                const string final_value = left_part + right_part;
-                new_command_info->set_value(final_value);
-                task.clear_command();
-                task.set_allocated_command(new_command_info);
-                LOG(INFO) << "the final value of command shell is " << final_value;
-
-                string com = strings::remove(spark_home_path,"flink-1.4.2");
-                string command_string = "sudo cp -r /home/zyx/hadoop "+com+"hadoop/";
-                LOG(INFO) << "the command_string is " << command_string;
-                Try<Subprocess> s = subprocess(
-                        command_string ,
-                        process::Subprocess::FD(STDIN_FILENO),
-                        process::Subprocess::FD(STDOUT_FILENO),
-                        process::Subprocess::FD(STDERR_FILENO));
-            }
-
-        }
-    }
-
     void Slave:: runTask(
             const process::UPID &from,
             const mesos::FrameworkInfo &frameworkInfo,
@@ -396,9 +291,92 @@ namespace chameleon {
             else if(taskInfo.container().type() == mesos::ContainerInfo::DOCKER){
                 start_docker_container(taskInfo, framework);
             }
+        } else{
+            // change the spark home of the command information if the running task belongs to spark
+            // spark_home_path = sanbox_path + "spark-2.3.0-bin-hadoop2.7"
+            // for example,
+            // sanbox_path = Chameleon/build/src/slave/da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000
+            //  spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
+            const string spark_home_path = path::join(sanbox_path, "spark-2.3.0-bin-hadoop2.7");
+            mesos::TaskInfo copy_task(taskInfo);
+            modify_command_info_of_running_task(spark_home_path, copy_task);
+
+            // queue the task and executor_info
+            m_tasks.push(copy_task);
+            m_executorInfo = executorInfo;
+            if(taskInfo.container().type() == mesos::ContainerInfo::MESOS){
+                process::Future<Nothing> download_result;
+                Promise<Nothing> promise;
+                if (!os::exists(spark_home_path)) {
+                    LOG(INFO) << "spark  didn't exist, download it frist";
+                    mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
+                    mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
+                    mesos::fetcher::URI *uri = new mesos::fetcher::URI();
+                    fetcher_info->set_sandbox_directory(sanbox_path);
+                    //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
+                    uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
+                    item->set_allocated_uri(uri);
+                    item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
+                    download_result = m_software_resource_manager->download("my_spark", *fetcher_info);
+                    delete fetcher_info;
+
+                } else {
+                    LOG(INFO) << "the Spark framework has existed";
+
+                    download_result = promise.future();
+                    promise.set(Nothing());
+                }
+                download_result.onAny(process::defer(self(), &Self::start_mesos_executor, lambda::_1, framework));
+//        start_mesos_executor(framework);
+            }
+            else if(taskInfo.container().type() == mesos::ContainerInfo::DOCKER){
+                start_docker_container(taskInfo, framework);
+            }
         }
 
     }
+
+
+    /**
+     * Funtion  : modify_command_info_of_flink_task
+     * Author   : zhangyixin
+     * Date     : 2019-3-31
+     * */
+    void Slave::modify_command_info_of_flink_task(const string &spark_home_path, mesos::TaskInfo &task) {
+        if (task.has_command()) {
+            mesos::CommandInfo *new_command_info = new mesos::CommandInfo(task.command());
+            string shell_value = task.command().value();
+            LOG(INFO) << "the shell_value is " << shell_value;
+            auto it = shell_value.find("mesos-taskmanager.sh");
+            if (it != string::npos) {
+
+                const string left_part = spark_home_path + "/bin/";
+
+                LOG(INFO) << "the left_part command shell is " << left_part;
+
+                const string right_part = shell_value.substr(it);
+                LOG(INFO) << "the right_part command shell is " << right_part;
+
+                const string final_value = left_part + right_part;
+                new_command_info->set_value(final_value);
+                task.clear_command();
+                task.set_allocated_command(new_command_info);
+                LOG(INFO) << "the final value of command shell is " << final_value;
+
+                string com = strings::remove(spark_home_path,"flink-1.4.2");
+                string command_string = "sudo cp -r /home/zyx/hadoop "+com+"hadoop/";
+                LOG(INFO) << "the command_string is " << command_string;
+                Try<Subprocess> s = subprocess(
+                        command_string ,
+                        process::Subprocess::FD(STDIN_FILENO),
+                        process::Subprocess::FD(STDOUT_FILENO),
+                        process::Subprocess::FD(STDERR_FILENO));
+            }
+
+        }
+    }
+
+
 
     void Slave::start_mesos_executor(const Future<Nothing> &future, const Framework *framework) {
         if (!future.isReady()) {
