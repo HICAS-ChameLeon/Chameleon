@@ -12,7 +12,7 @@ PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages slave_related ${CMAKE_BINARY_DIR
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages quota ${CMAKE_BINARY_DIR}/src/messages quota)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages master_p ${CMAKE_BINARY_DIR}/src/messages master_p)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages module ${CMAKE_BINARY_DIR}/src/messages module)
-PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages maintenance ${CMAKE_BINARY_DIR}/src/messages maintenance)
+
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages containerizer ${CMAKE_BINARY_DIR}/src/messages containerizer)
 
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages v1 ${CMAKE_BINARY_DIR}/src/messages v1)
