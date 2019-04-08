@@ -78,7 +78,6 @@ namespace chameleon{
             }
             executorId.set_value(value.get());
 
-           // CHECK(process == nullptr);
 
             process = new chameleon::ExecutorProcess(
                     slave,
@@ -170,7 +169,7 @@ namespace chameleon{
     }
 
 
-    std::ostream& operator<<(std::ostream& stream, const mesos::FrameworkID& frameworkId)
+    inline std::ostream& operator<<(std::ostream& stream, const mesos::FrameworkID& frameworkId)
     {
         return stream << frameworkId.value();
     }

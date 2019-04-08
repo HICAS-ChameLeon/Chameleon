@@ -43,7 +43,15 @@ namespace chameleon {
         m_driver->start(commandExecutorPid);
     }
 
+    std::ostream& operator<<(std::ostream& stream, const mesos::ExecutorID& executorId)
+    {
+        return stream << executorId.value();
+    }
 
+    std::ostream& operator<<(std::ostream& stream, const mesos::FrameworkID& frameworkId)
+    {
+        return stream << frameworkId.value();
+    }
 
     void CommandExecutor::launch(const mesos::TaskInfo &task) {
         if (launched) {
@@ -144,19 +152,18 @@ namespace chameleon {
 
         const std::map<string, string> environment_string =
                 {
-                        {"JVM_ARGS", " -Xms3072m -Xmx3072m "},
-                        {"_FLINK_CONTAINER_ID",  "taskmanager-00001"},
-                        {"FRAMEWORK_NAME",    "Flink"},
-                        {"MESOS_EXECUTOR_ID", "taskmanager-00001"},
-                        {"TASK_NAME",  "taskmanager-00001"},
+                       // {"JVM_ARGS", " -Xms3072m -Xmx3072m "},
+                        {"_FLINK_CONTAINER_ID",  executorId.value()},
+                       // {"FRAMEWORK_NAME",    "Flink"},
+                        {"MESOS_EXECUTOR_ID", executorId.value()},
+                        {"TASK_NAME",  taskId.get().value()},
                         {"HADOOP_USER_NAME", "zyx"},
-                        {"PWD",  "/home/zyx/CLionProjects/Chameleon/cmake-build-debug/src/slave"},
-                        {"FLINK_HOME",    "flink"},
+                       // {"PWD",  "/home/zyx/CLionProjects/Chameleon/cmake-build-debug/src/slave"},
+                       // {"FLINK_HOME",    "flink"},
                         {"HADOOP_CONF_DIR",     "hadoop/conf"}
                 };
 
 
-       // std::cout << "\n yxxxxxx Starting task " << taskId.get() << std::endl;
         LOG(INFO) << "Starting task " << taskId.get();
         LOG(INFO) << "command :" << *command.mutable_value();
         /*begin run taskInfo*/
@@ -209,10 +216,10 @@ namespace chameleon {
     }
 
 
-    std::ostream& operator<<(std::ostream& stream, const mesos::ExecutorID& executorId)
+/*    std::ostream& operator<<(std::ostream& stream, const mesos::ExecutorID& executorId)
     {
         return stream << executorId.value();
-    }
+    }*/
 
     // Use this helper to create a status update from scratch.
     mesos::TaskStatus CommandExecutor::createTaskStatus(const mesos::TaskID &_taskId, const mesos::TaskState &state) {
