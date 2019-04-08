@@ -14,7 +14,7 @@ PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages master_p ${CMAKE_BINARY_DIR}/src
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages module ${CMAKE_BINARY_DIR}/src/messages module)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages maintenance ${CMAKE_BINARY_DIR}/src/messages maintenance)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages containerizer ${CMAKE_BINARY_DIR}/src/messages containerizer)
-PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages spec ${CMAKE_BINARY_DIR}/src/messages spec)
+
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages v1 ${CMAKE_BINARY_DIR}/src/messages v1)
 
 
