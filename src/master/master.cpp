@@ -9,7 +9,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "",
+DEFINE_string(supermaster_path, "/home/lemaker/open-source/Chameleon/build/src/master/super_master",
               "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 DEFINE_string(webui_path, "",
               "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
@@ -80,7 +80,11 @@ namespace chameleon {
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
         nextFrameworkId = 0;
-        m_scheduler = make_shared<CoarseGrainedScheduler>();
+//        m_scheduler = make_shared<CoarseGrainedScheduler>();
+//
+//        m_wqn_scheduler = make_shared<WqnGrainedScheduler>();
+
+        m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
 
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
@@ -90,13 +94,13 @@ namespace chameleon {
 
         //  send the status update message of the tasks from master to the specific framework
         install<mesos::internal::StatusUpdateMessage>(
-                &Master::statusUpdate,
+                &Master::status_update,
                 &mesos::internal::StatusUpdateMessage::update,
                 &mesos::internal::StatusUpdateMessage::pid);
 
         // send the status update acknowledement message from master to the specific slave
         install<mesos::internal::StatusUpdateAcknowledgementMessage>(
-                &Master::statusUpdateAcknowledgement,
+                &Master::status_update_acknowledgement,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::slave_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::framework_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::task_id,
@@ -115,16 +119,16 @@ namespace chameleon {
         install<mesos::scheduler::Call>(&Master::receive);
 
 //        install<TerminatingMasterMessage>
-        route(
-                "/get-scheduler",
-                "get the information of scheduler",
-                [this](Request request) {
-                    const string& scheduler_name = m_scheduler->m_scheduler_name;
-
-                    OK ok_response(scheduler_name);
-                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                    return ok_response;
-                });
+//        route(
+//                "/get-scheduler",
+//                "get the information of scheduler",
+//                [this](Request request) {
+//                    const string& scheduler_name = m_scheduler->m_scheduler_name;
+//
+//                    OK ok_response(scheduler_name);
+//                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+//                    return ok_response;
+//                });
 
 
 
@@ -305,7 +309,35 @@ namespace chameleon {
                     // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
                     const string launcher =
                             m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
-                            m_webui_path;
+                            m_webui_path + " --level=2";
+                    Try<Subprocess> super_master = subprocess(
+                            launcher,
+                            Subprocess::FD(STDIN_FILENO),
+                            Subprocess::FD(STDOUT_FILENO),
+                            Subprocess::FD(STDERR_FILENO)
+                    );
+                    result.values["start"] = "success";
+                    OK response(stringify(result));
+                    response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return response;
+                });
+
+        route(
+                "/start_three_supermaster",
+                "start supermaster by subprocess",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    /**
+                      * Function model  :  start a subprocess of super_master
+                      * Author          :  Jessicallo
+                      * Date            :  2019-2-27
+                      * Funtion name    :  Try
+                      * @param          :
+                      * */
+                    // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
+                    const string launcher =
+                            m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
+                            m_webui_path + " --level=3";
                     Try<Subprocess> super_master = subprocess(
                             launcher,
                             Subprocess::FD(STDIN_FILENO),
@@ -362,7 +394,7 @@ namespace chameleon {
             return;
         }
 
-        Framework *framework = getFramework(call.framework_id());
+        Framework *framework = get_framework(call.framework_id());
 
         if (framework == nullptr) {
             LOG(INFO) << "Framework cannot be found";
@@ -460,7 +492,7 @@ namespace chameleon {
 //            //
 //            process::delay(temp_duration, self(), &Master::Offer, framework->id());
 // after subscribed, the framework can be given resource offers.
-            Offer(framework->id());
+            offer(framework->id());
 
             return;
         }
@@ -473,17 +505,23 @@ namespace chameleon {
      * Date            :  2018-12-28
      * Funtion name    :  Master::offer
      * */
-    void Master::Offer(const mesos::FrameworkID &frameworkId) {
+    void Master::offer(const mesos::FrameworkID &frameworkId) {
 
         Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
 
         mesos::internal::ResourceOffersMessage message;
         LOG(INFO) << "start scheduling to provide offers";
-        m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
+
+//        m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
+
+//        m_wqn_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+//
+        m_smhc_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+
+
 
         if (message.offers_size() > 0) {
             framework->send(message);
-
             LOG(INFO) << "Sent " << message.offers_size() << " offer to framework "
                       << framework->pid.get();
         } else {
@@ -604,11 +642,6 @@ namespace chameleon {
         }
     }
 
-    /**
-     * Function     : teardown
-     * Author       : weiguow
-     * Date         : 2-19-2-26
-     * Description  : */
     void Master::teardown(Framework *framework) {
         CHECK_NOTNULL(framework);
 
@@ -617,30 +650,22 @@ namespace chameleon {
         remove_framework(framework);
     }
 
-    /**
-     * Function     : Decline
-     * Author       : weiguow
-     * Date         : 2-19-2-26
-     * Description  : */
 
     void Master::decline(Framework *framework, const mesos::scheduler::Call::Decline &decline) {
         CHECK_NOTNULL(framework);
-
-        LOG(INFO) << "Processing DECLINE call for offers: " << decline.offer_ids().data()
-                  << " for framework " << *framework;
-
-        process::dispatch(self(), &Master::Offer, framework->id());
-
-        //we should save offer infomation before do this , so we now just leave it- by weiguow
-//        offers.erase(offer->id());
-//        delete offer;
+        for (auto i = decline.offer_ids().begin(); i != decline.offer_ids().end(); i++) {
+            if (decline.offer_ids().size() == m_smhc_scheduler->m_offers.size()) {
+                process::dispatch(self(), &Master::offer, framework->id());
+            }
+            else {
+                LOG(INFO) << "Offer "<< i->value() << " has been declined by framework "
+                << framework->pid.get();
+                m_smhc_scheduler->m_offers.erase(i->value());
+            }
+        }
     }
 
-    /**
-     * Function     : Decline
-     * Author       : weiguow
-     * Date         : 2-19-2-26
-     * Description  : */
+
     void Master::shutdown(Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown) {
         CHECK_NOTNULL(framework);
 
@@ -650,25 +675,26 @@ namespace chameleon {
     }
 
     /**
-     * Function     : statusUpdate
+     * Function     : status_update
      * Author       : weiguow
      * Date         : 2019-1-10
      * Description  : get statusUpdate message from slave and send it to framework
      * */
-    void Master::statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid) {
+    void Master::status_update(mesos::internal::StatusUpdate update, const UPID &pid) {
+
         LOG(INFO) << "Status update " << update.status().state()
-                  << " of framework " << update.framework_id().value()
                   << " from agent " << update.slave_id().value();
 
-        Framework *framework = getFramework(update.framework_id());
+        Framework *framework = get_framework(update.framework_id());
 
         if (update.has_uuid()) {
             update.mutable_status()->set_uuid(update.uuid());
         }
 
         if (update.has_framework_id()) {
-            LOG(INFO) << "Forwarding status update " << update.status().state()
-                      << " of framework " << update.framework_id().value();
+
+//            LOG(INFO) << "Sending status update " << update.status().state()
+//                      << " to framework " << update.framework_id().value();
 
             mesos::internal::StatusUpdateMessage message;
             message.mutable_update()->MergeFrom(update);
@@ -679,19 +705,19 @@ namespace chameleon {
     }
 
     /**
-     * Function     : statusUpdateAcknowledge
+     * Function     : status_update_acknowledgement
      * Author       : weiguow
      * Date         : 2019-1-10
-     * Description  : get statusUpdateAcknowledge message from  and send it to slave
+     * Description  : get statusUpdateAcknowledge message from slave
      * */
-    void Master::statusUpdateAcknowledgement(
+    void Master::status_update_acknowledgement(
             const UPID &from,
             const mesos::SlaveID &slaveId,
             const mesos::FrameworkID &frameworkId,
             const mesos::TaskID &taskId,
             const string &uuid) {
-        Framework *framework = getFramework(frameworkId);
-        LOG(INFO) << "statusUpdateAcknowledgement from " << from;
+        Framework *framework = get_framework(frameworkId);
+
         mesos::scheduler::Call::Acknowledge message;
         message.mutable_slave_id()->CopyFrom(slaveId);
         message.mutable_task_id()->CopyFrom(taskId);
@@ -719,11 +745,9 @@ namespace chameleon {
         message.mutable_task_id()->CopyFrom(taskId);
         message.set_uuid(uuid.toBytes());
 
-        LOG(INFO) << "Processing ACKNOWLEDGE call " << uuid << " for task " << taskId.value()
-                  << " of framework " << framework->info.name() << " on agent " << slaveId.value();
+        LOG(INFO) << "Sending acknowledge to slave " <<  m_slave_objects.at(slaveId.value())->m_upid;
 
         send(m_slave_objects.at(slaveId.value())->m_upid, message);
-
     }
 
     /**
@@ -746,7 +770,7 @@ namespace chameleon {
     /**
      * use frameworkId to get Framework-weiguow-2019/2/24
      * */
-    Framework *Master::getFramework(const mesos::FrameworkID &frameworkId) {
+    Framework *Master::get_framework(const mesos::FrameworkID &frameworkId) {
         return frameworks.registered.contains(frameworkId.value())
                ? frameworks.registered.at(frameworkId.value())
                : nullptr;
@@ -936,6 +960,25 @@ namespace chameleon {
             }
         }
 
+        if(super_master_control_message.my_master().size()){
+            LOG(INFO) << self().address << " received message from " << super_master;
+            string launch_command = m_super_master_path + " --initiator=" + stringify(self().address)
+                    + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master --webui_path="
+                    + stringify(FLAGS_webui_path) + " --port=7001";
+            Try<Subprocess> s = subprocess(
+                    launch_command,
+                    Subprocess::FD(STDIN_FILENO),
+                    Subprocess::FD(STDOUT_FILENO),
+                    Subprocess::FD(STDERR_FILENO));
+            if (s.isError()) {
+                LOG(ERROR) << "cannot launch super_master "<< self().address.ip << ":7001";
+//                send(super_master,"error");
+            }
+            LOG(INFO) << self().address.ip << ":7001 launched super_master successfully.";
+//            send(super_master,"successed");
+//            for(int i = 0; i < super_master_control_message.my_master().size(); i++){
+//            }
+        }
     }
 
     void Master::received_registered_message_from_super_master(const UPID &super_master,
@@ -998,10 +1041,6 @@ namespace chameleon {
         }
     }
     // end of super_mater related
-
-    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
-        return stream << TaskState_Name(state);
-    }
 }
 
 using namespace chameleon;
