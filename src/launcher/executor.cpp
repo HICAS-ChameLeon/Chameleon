@@ -28,7 +28,7 @@ namespace chameleon {
             launched(false)
             {
                 //std::cout<<"yxxxx CommandExecutor Construct start"<<std::endl;
-                LOG(INFO) << "yxxxx CommandExecutor Construct start" ;
+                LOG(INFO) << "CommandExecutor Construct start" ;
                 /* use method 'CommandExecutor::launch' to executor TaskInfo */
                 install<mesos::TaskInfo>(
                         &CommandExecutor::launch);
@@ -36,18 +36,26 @@ namespace chameleon {
 
     void CommandExecutor::initialize() {
        // std::cout<<"yxxxx CommandExecutor initialize"<<std::endl;
-        LOG(INFO) << "yxxxx CommandExecutor initialize" ;
         process::UPID commandExecutorPid = self();
-        std::cout<<commandExecutorPid<<std::endl;
+        LOG(INFO) << "CommandExecutor initialize and PID: " <<commandExecutorPid;
+    //    std::cout<<commandExecutorPid<<std::endl;
         m_driver = new ChameleonExecutorDriver();
         m_driver->start(commandExecutorPid);
     }
 
+    std::ostream& operator<<(std::ostream& stream, const mesos::ExecutorID& executorId)
+    {
+        return stream << executorId.value();
+    }
 
+    std::ostream& operator<<(std::ostream& stream, const mesos::FrameworkID& frameworkId)
+    {
+        return stream << frameworkId.value();
+    }
 
     void CommandExecutor::launch(const mesos::TaskInfo &task) {
         if (launched) {
-            LOG(INFO) << "yxxxxxxx CommandExecutor launched(flase) ";
+            LOG(INFO) << "CommandExecutor launched(flase) ";
             mesos::TaskStatus status = CommandExecutor::createTaskStatus(
                     task.task_id(),
                     mesos::TASK_FAILED,
@@ -60,7 +68,7 @@ namespace chameleon {
 
         taskId = task.task_id();
 
-        LOG(INFO) << "yxxxxxxx CommandExecutor asked to run task '" << task.task_id()<< "'";
+        LOG(INFO) << "CommandExecutor asked to run task '" << task.task_id()<< "'";
 
         // Determine the command to launch the task.
         mesos::CommandInfo command;
@@ -83,10 +91,20 @@ namespace chameleon {
 
             command = parse.get();
         } else if (task.has_command()) {
+            LOG(INFO) << "task.has_command()" ;
             command = task.command();
         } else {
             LOG(FATAL) << "Expecting task '" << taskId.get() << "' to have a command";
         }
+
+
+/*        if (command.shell()) {
+            CHECK(command.has_value())
+            << "Shell command of task '" << taskId.get() << "' is not specified";
+        } else {
+            CHECK(command.has_value())
+            << "Executable of task '" << taskId.get() << "' is not specified";
+        }*/
 
         //-------------------------------------------------------------
         hashmap<string, mesos::Environment::Variable> environment;
@@ -112,6 +130,7 @@ namespace chameleon {
         }
 
         if (command.has_environment()) {
+            LOG(INFO) << "-----------   command.has_environment" ;
             foreach (const mesos::Environment::Variable& variable,
                      command.environment().variables()) {
                 const string& name = variable.name();
@@ -122,33 +141,48 @@ namespace chameleon {
                 environment[name] = variable;
             }
         }
+      //  LOG(INFO) << "\n yxxx  environment " << environment.values();
 
         mesos::Environment launchEnvironment;
         foreachvalue (const mesos::Environment::Variable& variable, environment) {
                                 launchEnvironment.add_variables()->CopyFrom(variable);
         }
 
-        //--------------------------------------------------
+      //  LOG(INFO) << "\n yxxx launch launchEnvironment " << launchEnvironment.Utf8DebugString();
 
-       // std::cout << "\n yxxxxxx Starting task " << taskId.get() << std::endl;
-        LOG(INFO) << " yxxxxxx Starting task " << taskId.get();
-        LOG(INFO) << " yxxxxxx Starting task " << *command.mutable_value();
+        const std::map<string, string> environment_string =
+                {
+                       // {"JVM_ARGS", " -Xms3072m -Xmx3072m "},
+                        {"_FLINK_CONTAINER_ID",  executorId.value()},
+                       // {"FRAMEWORK_NAME",    "Flink"},
+                        {"MESOS_EXECUTOR_ID", executorId.value()},
+                        {"TASK_NAME",  taskId.get().value()},
+                        {"HADOOP_USER_NAME", "zyx"},
+                       // {"PWD",  "/home/zyx/CLionProjects/Chameleon/cmake-build-debug/src/slave"},
+                       // {"FLINK_HOME",    "flink"},
+                        {"HADOOP_CONF_DIR",     "hadoop/conf"}
+                };
+
+
+        LOG(INFO) << "Starting task " << taskId.get();
+        LOG(INFO) << "command :" << *command.mutable_value();
         /*begin run taskInfo*/
         Try<process::Subprocess> exec = process::subprocess(
                 *command.mutable_value(),
                 process::Subprocess::FD(STDIN_FILENO),
                 process::Subprocess::FD(STDOUT_FILENO),
-                process::Subprocess::FD(STDERR_FILENO) );
+                process::Subprocess::FD(STDERR_FILENO),
+                environment_string);
 
         pid=exec->pid();
 
-        LOG(INFO) << " yxxxxx  Forked command at " << pid;
+        LOG(INFO) << "Forked command at " << pid;
 
         process::reap(pid)
                 .onAny(defer(self(), &Self::reaped, pid, lambda::_1));
 
 
-        LOG(INFO) << "yxxxxxxx CommandExecutor createTaskStatus '" ;
+        LOG(INFO) << "CommandExecutor createTaskStatus " ;
         mesos::TaskStatus status = CommandExecutor::createTaskStatus(taskId.get(), mesos::TASK_RUNNING);
         forward(status);
         launched = true;
@@ -160,7 +194,7 @@ namespace chameleon {
     mesos::TaskStatus CommandExecutor::createTaskStatus(const mesos::TaskID &_taskId, const mesos::TaskState &state,
                                                         const Option<mesos::TaskStatus::Reason> &reason,
                                                         const Option<string> &message) {
-        LOG(INFO) << " yxxxxx  createTaskStatus 1 " ;
+        LOG(INFO) << "createTaskStatus 1 " ;
         mesos::TaskStatus status = chameleon::protobuf::createTaskStatus(
                 _taskId,
                 state,
@@ -182,20 +216,20 @@ namespace chameleon {
     }
 
 
-    std::ostream& operator<<(std::ostream& stream, const mesos::ExecutorID& executorId)
+/*    std::ostream& operator<<(std::ostream& stream, const mesos::ExecutorID& executorId)
     {
         return stream << executorId.value();
-    }
+    }*/
 
     // Use this helper to create a status update from scratch.
     mesos::TaskStatus CommandExecutor::createTaskStatus(const mesos::TaskID &_taskId, const mesos::TaskState &state) {
-        LOG(INFO) << " yxxxxx  createTaskStatus 2 " ;
+        LOG(INFO) << "createTaskStatus 2 " ;
         mesos::TaskStatus status = chameleon::protobuf::createTaskStatus(
                 _taskId,
                 state,
                 UUID::random(),
                 process::Clock::now().secs());
-        LOG(INFO) << " yxxxxx  createTaskStatus executorId "<<executorId;
+        LOG(INFO) << "createTaskStatus executorId "<<executorId;
         status.mutable_executor_id()->CopyFrom(executorId);
         status.set_source(mesos::TaskStatus::SOURCE_EXECUTOR);
 
@@ -203,7 +237,7 @@ namespace chameleon {
     }
 
     void CommandExecutor::forward(const mesos::TaskStatus &status) {
-        LOG(INFO) << " yxxxxx  CommandExecutor  forward" ;
+        LOG(INFO) << "CommandExecutor  forward" ;
         m_driver->sendStatusUpdate(status);
     }
 
@@ -214,7 +248,7 @@ namespace chameleon {
                 mesos::TASK_FINISHED);
         forward(status);
        // delay(Seconds(1), self(), &Self::selfTerminate);
-        LOG(INFO) << " yxxxxx  CommandExecutor  terminate self" ;
+        LOG(INFO) << "CommandExecutor  terminate self" ;
         delay(Seconds(2), self(), &Self::selfTerminate);
       //  terminate(self());
        // mesos::TaskState taskState;
@@ -343,7 +377,7 @@ int main(int argc, char *argv[]) {
     executorId.set_value(value.get());
 
 
-    std::cout<<"yxxxx CommandExecutor start"<<std::endl;
+    LOG(INFO)<<"CommandExecutor start";
 
     process::Owned<chameleon::CommandExecutor> executor(
             new chameleon::CommandExecutor(
