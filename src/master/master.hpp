@@ -179,7 +179,7 @@ namespace chameleon {
          * */
         mesos::FrameworkID newFrameworkId();
 
-        Framework *getFramework(const mesos::FrameworkID &frameworkId);
+        Framework *get_framework(const mesos::FrameworkID &frameworkId);
 
         hashmap<string, mesos::Offer*> offers;
 
@@ -194,7 +194,7 @@ namespace chameleon {
 
         } frameworks;
 
-        void Offer(const mesos::FrameworkID &frameworkId);
+        void offer(const mesos::FrameworkID &frameworkId);
 
         void receive(
                 const process::UPID &from,
@@ -212,9 +212,9 @@ namespace chameleon {
 
         void shutdown(Framework* framework,const mesos::scheduler::Call::Shutdown& shutdown);
 
-        void statusUpdate(mesos::internal::StatusUpdate update, const UPID &pid);
+        void status_update(mesos::internal::StatusUpdate update, const UPID &pid);
 
-        void statusUpdateAcknowledgement(
+        void status_update_acknowledgement(
                 const UPID &from,
                 const mesos::SlaveID &slaveId,
                 const mesos::FrameworkID &frameworkId,
@@ -267,9 +267,9 @@ namespace chameleon {
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
 
         // scheduler related
-//        shared_ptr<SchedulerInterface> m_scheduler;
+        shared_ptr<SchedulerInterface> m_scheduler;
 //        shared_ptr<SchedulerInterface> m_wqn_scheduler;
-        shared_ptr<SchedulerInterface> m_smhc_scheduler;
+//        shared_ptr<SchedulerInterface> m_smhc_scheduler;
 
         int64_t nextFrameworkId;
 
@@ -381,7 +381,9 @@ namespace chameleon {
         return stream;
     }
 
-    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state);
+    inline std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
+        return stream << TaskState_Name(state);
+    };
 
 }
 

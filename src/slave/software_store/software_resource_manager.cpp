@@ -80,7 +80,7 @@ namespace chameleon{
                 Subprocess::FD(err.get(), Subprocess::IO::OWNED),
                 environment
                 );
-
+        LOG(INFO) << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<download_subprocess.get().pid();
         if(download_subprocess.isError()){
             return process::Failure("Failed to execute downloader:"+download_subprocess.error());
         }

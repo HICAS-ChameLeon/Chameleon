@@ -123,7 +123,7 @@ namespace chameleon {
                                 //JSON::Object result2 = JSON::Object(stringify(result));
                                 //result.values["ip"] = m_vector_masters[0];
                                 //array.values.push_back(JSON::String(m_vector_masters[j]));
-                                array.values.push_back(result);
+                                array.values.push_back(*it);
                             //}
 
                         }
@@ -155,7 +155,7 @@ namespace chameleon {
                                 //JSON::Object result2 = JSON::Object(stringify(result));
                                 //result.values["ip"] = m_vector_super_master[0];
                                 //array.values.push_back(JSON::String(m_vector_masters[j]));
-                                array.values.push_back(result);
+                                array.values.push_back(*it);
                             //}
 
                         }
