@@ -80,11 +80,11 @@ namespace chameleon {
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
         nextFrameworkId = 0;
-//        m_scheduler = make_shared<CoarseGrainedScheduler>();
+        m_scheduler = make_shared<CoarseGrainedScheduler>();
 //
 //        m_wqn_scheduler = make_shared<WqnGrainedScheduler>();
 
-        m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
+//        m_scheduler = make_shared<SMHCGrainedScheduler>();
 
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
         //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
@@ -516,7 +516,7 @@ namespace chameleon {
 
 //        m_wqn_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 //
-        m_smhc_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+        m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
 
 
@@ -654,13 +654,13 @@ namespace chameleon {
     void Master::decline(Framework *framework, const mesos::scheduler::Call::Decline &decline) {
         CHECK_NOTNULL(framework);
         for (auto i = decline.offer_ids().begin(); i != decline.offer_ids().end(); i++) {
-            if (decline.offer_ids().size() == m_smhc_scheduler->m_offers.size()) {
+            if (decline.offer_ids().size() == m_scheduler->m_offers.size()) {
                 process::dispatch(self(), &Master::offer, framework->id());
             }
             else {
                 LOG(INFO) << "Offer "<< i->value() << " has been declined by framework "
                 << framework->pid.get();
-                m_smhc_scheduler->m_offers.erase(i->value());
+                m_scheduler->m_offers.erase(i->value());
             }
         }
     }
