@@ -23,7 +23,7 @@
 #include <master_p.pb.h>
 
 namespace mesos {
-namespace master {
+namespace master_p {
 
 inline std::ostream& operator<<(std::ostream& stream, const Call::Type& type)
 {

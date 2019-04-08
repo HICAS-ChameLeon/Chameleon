@@ -24,7 +24,6 @@ PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages runtime_resource ${CMAKE_BINARY_
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages authentication ${CMAKE_BINARY_DIR}/src/messages authentication)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages allocator ${CMAKE_BINARY_DIR}/src/messages allocator)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages spec ${CMAKE_BINARY_DIR}/src/messages spec)
-PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages maintenance ${CMAKE_BINARY_DIR}/src/messages maintenance)
 # libprocess .so .a libraries directories
 link_directories(${PROCESS_LIB_DIRS})
 

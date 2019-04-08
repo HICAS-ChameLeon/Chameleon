@@ -279,28 +279,28 @@ namespace event {
 // Helper for creating a `TASK_UPDATED` event from a `Task`, its
 // latest state according to the agent, and its status corresponding
 // to the last status update acknowledged from the scheduler.
-mesos::master::Event createTaskUpdated(
+mesos::master_p::Event createTaskUpdated(
     const Task& task,
     const TaskState& state,
     const TaskStatus& status);
 
 
 // Helper for creating a `TASK_ADDED` event from a `Task`.
-mesos::master::Event createTaskAdded(const Task& task);
+mesos::master_p::Event createTaskAdded(const Task& task);
 
 
 // Helper for creating an `Agent` response.
-mesos::master::Response::GetAgents::Agent createAgentResponse(
+mesos::master_p::Response::GetAgents::Agent createAgentResponse(
     const mesos::internal::master::Slave& slave);
 
 
 // Helper for creating an `AGENT_ADDED` event from a `Slave`.
-mesos::master::Event createAgentAdded(
+mesos::master_p::Event createAgentAdded(
     const mesos::internal::master::Slave& slave);
 
 
 // Helper for creating an `AGENT_REMOVED` event from a `SlaveID`.
-mesos::master::Event createAgentRemoved(const SlaveID& slaveId);
+mesos::master_p::Event createAgentRemoved(const SlaveID& slaveId);
 
 } // namespace event {
 } // namespace master {

@@ -22,9 +22,9 @@ import "maintenance.proto";
 
 import "quota.proto";
 
-package mesos.master;
+package mesos.master_p;
 
-option java_package = "org.apache.mesos.master";
+option java_package = "org.apache.mesos.master_p";
 option java_outer_classname = "Protos";
 
 /**
