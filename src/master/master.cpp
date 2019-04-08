@@ -9,7 +9,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/super_master",
+DEFINE_string(supermaster_path, "/home/lemaker/open-source/Chameleon/build/src/master/super_master",
               "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 DEFINE_string(webui_path, "",
               "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
@@ -106,6 +106,7 @@ namespace chameleon {
                 &mesos::internal::StatusUpdateAcknowledgementMessage::task_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::uuid);
 
+        install<LaunchMasterMessage>(&Master::launch_master);
         install<SuperMasterControlMessage>(&Master::super_master_control);
         install<TerminatingMasterMessage>(&Master::received_terminating_master_message);
 
@@ -940,6 +941,10 @@ namespace chameleon {
         LOG(INFO) << "The path of super_master executable is " << m_super_master_path;
     }
 
+    void Master::launch_master(const UPID &super_master, const LaunchMasterMessage &message) {
+        send(super_master,"successed");
+    }
+
     void Master::super_master_control(const UPID &super_master,
                                       const SuperMasterControlMessage &super_master_control_message) {
         LOG(INFO) << " get a super_master_control_message from super_master" << super_master;
@@ -976,7 +981,7 @@ namespace chameleon {
         if(super_master_control_message.my_master().size()){
             LOG(INFO) << self().address << " received message from " << super_master;
             string launch_command = m_super_master_path + " --initiator=" + stringify(self().address)
-                    + " --master_path=/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/master --webui_path="
+                    + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master --webui_path="
                     + stringify(FLAGS_webui_path) + " --port=7001";
             Try<Subprocess> s = subprocess(
                     launch_command,

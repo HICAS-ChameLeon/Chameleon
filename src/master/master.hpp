@@ -293,6 +293,7 @@ namespace chameleon {
 
         // super_master related
         string m_super_master_path;
+        void launch_master(const UPID &super_master, const LaunchMasterMessage &message);
         void super_master_control(const UPID &super_master, const SuperMasterControlMessage &super_master_control_message);
 
         void received_registered_message_from_super_master(const UPID &super_master, const AcceptRegisteredMessage &message);
