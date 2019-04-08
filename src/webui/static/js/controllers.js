@@ -857,17 +857,27 @@
 
                     if ($scope.super_master.quantities >= 1)
                     {
-                        $http({
-                            method: 'GET',
-                            url: leadingChameleonMasterURL('/master/runtime-resources')
-                        }).then(function successCallback(response) {
-
-                            $scope.master = {
-                                runtime: response.data.content,
-                                quantities: response.data.quantity,
-                            };
+                        // $http({
+                        //     method: 'GET',
+                        //     url: leadingChameleonMasterURL('/master/runtime-resources')
+                        // }).then(function successCallback(response) {
+                        //
+                        //     $scope.master = {
+                        //         runtime: response.data.content,
+                        //         quantities: response.data.quantity,
+                        //     };
 
                             for (var i in $scope.supermaster.resource) {
+                                $http({
+                                    method: 'GET',
+                                    url: leadingChameleonMasterURL('/master/runtime-resources')
+                                }).then(function successCallback(response) {
+
+                                    $scope.master = {
+                                        runtime: response.data.content,
+                                        quantities: response.data.quantity,
+                                    };
+
                                 var my_master = {};    //构造一个master节点
                                 vertexes_super[$scope.super_master.quantities + $scope.supermaster.quantities] = my_master;
                                 cur_masterindex++;      //全局变量
@@ -883,7 +893,11 @@
                                 temp_superedge.arrows = 'to';
                                 index_superedge++;
                                 my_superedges[index_superedge] = temp_superedge;
-                            }
+
+                            // }, function errorCallback(response) {
+                            //     // 请求失败执行代码
+                            // });
+                            // }
                             if ($scope.master.quantities >= 1) {
                                 for (var j in $scope.master.runtime) {
                                     var temp_slave = {};       // 添加一个slave节点
@@ -972,6 +986,11 @@
 
                             }
 
+                                }, function errorCallback(response) {
+                                    // 请求失败执行代码
+                                });
+                            }
+
                             var nodes = new vis.DataSet(vertexes_super);
                             var edges = new vis.DataSet(my_superedges);
 
@@ -1018,9 +1037,9 @@
                                 document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
                             });
 
-                        }, function errorCallback(response) {
-                            // 请求失败执行代码
-                        });
+                        // }, function errorCallback(response) {
+                        //     // 请求失败执行代码
+                        // });
                     }
                     // three
                 }, function errorCallback(response) {

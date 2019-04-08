@@ -61,8 +61,8 @@ namespace chameleon {
 
         // change from one level to two levels
 //        cluster_levels = 2;
-        m_masters_size = 1;
-        m_super_masters_size = 1;
+        m_masters_size = 4;
+        m_super_masters_size = 2;
 
         m_uuid = UUID::random().toString();
         const string initiator_pid = "master@"+m_initiator;
@@ -118,13 +118,13 @@ namespace chameleon {
                         JSON::Array array;
                         for (auto it = this->m_vector_masters.begin();
                              it != this->m_vector_masters.end(); it++) {
-                            for (int j = 0; j < m_vector_masters.size(); ++j) {
+                            //for (int j = 0; j < m_vector_masters.size(); ++j) {
 
                                 //JSON::Object result2 = JSON::Object(stringify(result));
-                                result.values["ip"] = m_vector_masters[0];
+                                //result.values["ip"] = m_vector_masters[0];
                                 //array.values.push_back(JSON::String(m_vector_masters[j]));
                                 array.values.push_back(result);
-                            }
+                            //}
 
                         }
                         result.values["quantity"] = array.values.size();
@@ -150,13 +150,13 @@ namespace chameleon {
                         JSON::Array array;
                         for (auto it = this->m_vector_super_master.begin();
                              it != this->m_vector_super_master.end(); it++) {
-                            for (int j = 0; j < m_vector_super_master.size(); ++j) {
+                            //for (int j = 0; j < m_vector_super_master.size(); ++j) {
 
                                 //JSON::Object result2 = JSON::Object(stringify(result));
-                                result.values["ip"] = m_vector_super_master[0];
+                                //result.values["ip"] = m_vector_super_master[0];
                                 //array.values.push_back(JSON::String(m_vector_masters[j]));
                                 array.values.push_back(result);
-                            }
+                            //}
 
                         }
                         result.values["quantity"] = array.values.size();
