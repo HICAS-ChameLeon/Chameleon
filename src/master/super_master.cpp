@@ -5,9 +5,7 @@
  * Description：super_master
  */
 
-#include <super_master_related.pb.h>
 #include "super_master.hpp"
-#include "master.hpp"
 
 DEFINE_string(master_path, "", "the absolute path of master executive. For example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master");
 DEFINE_string(initiator, "localhost:6060", "the ip:port of the current master of first level or supermaster. For example, --initiator=172.20.110.228:6060");
@@ -191,6 +189,9 @@ namespace chameleon {
                     return ok_response;
                 });
 
+        provide("", path::join(m_webui_path, "static/HTML/Control.html"));
+        provide("static", path::join(m_webui_path, "/static"));
+
 
     }
 
@@ -337,18 +338,18 @@ namespace chameleon {
 
         }
 
-        auto find = std::find(m_vector_masters.begin(),m_vector_masters.end(),stringify(process::address().ip));
-        if(find == m_vector_masters.end()){  //not find
-            m_classification_slaves.insert({stringify(process::address().ip),vector<SlavesInfoControlledByMaster>()});
-            for (auto iter = m_classification_slaves.begin(); iter != m_classification_slaves.end(); iter++) {
-                if (iter->first == m_vector_masters[0]){
-                    for(SlavesInfoControlledByMaster s:iter->second)
-                        m_classification_slaves[stringify(process::address().ip)].push_back(s);
-                }
-            }
-            m_classification_slaves.erase(m_vector_masters[0]);
-            m_vector_masters[0] = stringify(process::address().ip);
-        }
+//        auto find = std::find(m_vector_masters.begin(),m_vector_masters.end(),stringify(process::address().ip));
+//        if(find == m_vector_masters.end()){  //not find
+//            m_classification_slaves.insert({stringify(process::address().ip),vector<SlavesInfoControlledByMaster>()});
+//            for (auto iter = m_classification_slaves.begin(); iter != m_classification_slaves.end(); iter++) {
+//                if (iter->first == m_vector_masters[0]){
+//                    for(SlavesInfoControlledByMaster s:iter->second)
+//                        m_classification_slaves[stringify(process::address().ip)].push_back(s);
+//                }
+//            }
+//            m_classification_slaves.erase(m_vector_masters[0]);
+//            m_vector_masters[0] = stringify(process::address().ip);
+//        }
 
         for(auto iter = m_vector_masters.begin();iter!=m_vector_masters.end();iter++){
             vector<SlavesInfoControlledByMaster> slaves_of_master = m_classification_slaves[*iter];
@@ -416,13 +417,13 @@ namespace chameleon {
         launch_master_message->set_master_path(m_master_path);
         launch_master_message->set_webui_path(m_webui_path);
         for(const string& master_ip:m_vector_masters) {
-            if(master_ip == stringify(process::address().ip)){
-                send(UPID("master@" + master_ip + ":6060"), *launch_master_message);
-                LOG(INFO) << "send message to " << master_ip;
-            } else {
+//            if(master_ip == stringify(process::address().ip)){
+//                send(UPID("master@" + master_ip + ":6060"), *launch_master_message);
+ //               LOG(INFO) << "send message to " << master_ip;
+ //           } else {
                 send(UPID("slave@" + master_ip + ":6061"), *launch_master_message);
                 LOG(INFO) << "send message to " << master_ip;
-            }
+ //           }
         }
     }
 
