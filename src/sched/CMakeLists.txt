@@ -9,6 +9,7 @@ set(sched_SRC
         ${CMAKE_SOURCE_DIR}/src/logging/logging.hpp
         ${CMAKE_SOURCE_DIR}/src/logging/logging.cpp
         ${CMAKE_SOURCE_DIR}/src/logging/flags.hpp
-        ${CMAKE_SOURCE_DIR}/src/logging/flags.cpp)
+        ${CMAKE_SOURCE_DIR}/src/logging/flags.cpp
+        ${CMAKE_SOURCE_DIR}/src/common/master/detector.hpp)
 
 add_library(sched "SHARED" ${sched_SRC} )
