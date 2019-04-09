@@ -5,6 +5,7 @@ set(sched_SRC
         constants.hpp
         flags.hpp
         sched.cpp
-        ${CMAKE_SOURCE_DIR}/src/common/parse.hpp)
+        ${CMAKE_SOURCE_DIR}/src/common/parse.hpp
+        ${CMAKE_SOURCE_DIR}/src/logging/logging.hpp)
 
 add_library(sched "SHARED" ${sched_SRC})
