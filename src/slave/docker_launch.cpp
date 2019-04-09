@@ -15,7 +15,7 @@
 #include <boost/lexical_cast.hpp>
 
 //mesos dependencies
-#include <mesos/scheduler.hpp>
+#include <common/scheduler.hpp>
 
 //stout dependencies
 #include <stout/exit.hpp>
