@@ -80,14 +80,11 @@ namespace chameleon {
         GOOGLE_PROTOBUF_VERIFY_VERSION;
 
         nextFrameworkId = 0;
-//        m_scheduler = make_shared<CoarseGrainedScheduler>();
-//
-//        m_wqn_scheduler = make_shared<WqnGrainedScheduler>();
+        m_scheduler = make_shared<CoarseGrainedScheduler>();
 
-        m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
+       // m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
 
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
-        //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
 
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
         install<AcceptRegisteredMessage>(&Master::received_registered_message_from_super_master);
@@ -180,14 +177,10 @@ namespace chameleon {
                     JSON::Object a_schedular ;
                     JSON::Object a_content = JSON::Object();
                     JSON::Array schedular_array;
-                    const string &scheduler_name = m_smhc_scheduler->m_scheduler_name;
+                    const string &scheduler_name = m_scheduler->m_scheduler_name;
 
                     a_schedular.values["m_schedular_name"] = scheduler_name;
                     a_schedular.values["done"]= true;
-
-//                    a_schedular.values["m_schedular_name"] = "Allgained ";
-//                    a_schedular.values["done"]= "false";
-
 
 
                     schedular_array.values.emplace_back(a_schedular);
@@ -201,6 +194,34 @@ namespace chameleon {
                 });
 
 
+        route("/change-scheduler",
+              "change the information of scheduler",
+              [this](Request request) {
+                  JSON::Object a_schedular;
+                  JSON::Object a_content = JSON::Object();
+                  JSON::Array schedular_array;
+                  SchedulerInterface *m_smhc_scheduler = new SMHCGrainedScheduler();
+                 // m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
+//                  const mesos::FrameworkID frameworkId;
+//                  mesos::internal::ResourceOffersMessage message;
+
+//                  m_smhc_scheduler->construct_offers(message, frameworkId, m_slave_objects);
+
+                  const string &scheduler_name = m_smhc_scheduler->m_scheduler_name;
+
+                  a_schedular.values["m_schedular_name"] = scheduler_name;
+                  a_schedular.values["done"] = true;
+
+                  schedular_array.values.emplace_back(a_schedular);
+
+                  a_content.values["content"] = schedular_array;
+
+
+                  OK ok_response(stringify(a_content));
+                  ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                  return ok_response;
+              });
+
 
         // http://172.20.110.228:6060/master/hardware-resources
         route(
@@ -212,7 +233,7 @@ namespace chameleon {
                         JSON::Array array;
                         for (auto it = this->m_hardware_resources.begin();
                              it != this->m_hardware_resources.end(); it++) {
-                            array.values.push_back(it->second);
+                            array.values.emplace_back(it->second);
                         }
                         result.values["quantity"] = array.values.size();
                         result.values["content"] = array;
@@ -554,11 +575,11 @@ namespace chameleon {
         mesos::internal::ResourceOffersMessage message;
         LOG(INFO) << "start scheduling to provide offers";
 
-//        m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
+        m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
 //
 //        m_wqn_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
-        m_smhc_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+       // m_smhc_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
         if (message.offers_size() > 0) {
             framework->send(message);
