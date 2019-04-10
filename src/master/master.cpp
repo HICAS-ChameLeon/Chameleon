@@ -174,19 +174,24 @@ namespace chameleon {
                 "/get-scheduler",
                 "get the information of scheduler",
                 [this](Request request) {
-                    JSON::Object a_schedular ;
+                    JSON::Object goarse_schedular ;
+                    JSON::Object smhc_schedular ;
                     JSON::Object a_content = JSON::Object();
                     JSON::Array schedular_array;
                     const string &scheduler_name = m_scheduler->m_scheduler_name;
 
-                    a_schedular.values["m_schedular_name"] = scheduler_name;
-                    a_schedular.values["done"]= true;
+                    goarse_schedular.values["name"] = scheduler_name;
+                    goarse_schedular.values["done"]= true;
+
+                    smhc_schedular.values["name"] = "SMHCGrained";
+                    smhc_schedular.values["done"]= false;
 
 
-                    schedular_array.values.emplace_back(a_schedular);
+                    schedular_array.values.emplace_back(goarse_schedular);
+                    schedular_array.values.emplace_back(smhc_schedular);
 
                     a_content.values["content"] = schedular_array;
-                    
+
 
                     OK ok_response(stringify(a_content));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
@@ -197,22 +202,28 @@ namespace chameleon {
         route("/change-scheduler",
               "change the information of scheduler",
               [this](Request request) {
-                  JSON::Object a_schedular;
+                  JSON::Object smhc_schedular;
+                  JSON::Object goarse_schedular;
                   JSON::Object a_content = JSON::Object();
                   JSON::Array schedular_array;
                   SchedulerInterface *m_smhc_scheduler = new SMHCGrainedScheduler();
-                 // m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
+
+//                  m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
 //                  const mesos::FrameworkID frameworkId;
 //                  mesos::internal::ResourceOffersMessage message;
-
 //                  m_smhc_scheduler->construct_offers(message, frameworkId, m_slave_objects);
 
                   const string &scheduler_name = m_smhc_scheduler->m_scheduler_name;
 
-                  a_schedular.values["m_schedular_name"] = scheduler_name;
-                  a_schedular.values["done"] = true;
+                  smhc_schedular.values["name"] = scheduler_name;
+                  smhc_schedular.values["done"] = true;
 
-                  schedular_array.values.emplace_back(a_schedular);
+                  goarse_schedular.values["name"] = "GoarseGrained";
+                  goarse_schedular.values["done"] = false;
+
+
+                  schedular_array.values.emplace_back(smhc_schedular);
+                  schedular_array.values.emplace_back(goarse_schedular);
 
                   a_content.values["content"] = schedular_array;
 

@@ -127,8 +127,8 @@
         });
     });
 
-    chameleon_app.controller('ChangeSchedulerCtrl', function($scope, $uibModalInstance,$http, date) {
-        var alert_message = "确认更换Scheduler?";
+    chameleon_app.controller('ChangeSchedulerCtrl', function($scope,$uibModal) {
+        var alert_message = "确认更换算法?";
         $scope.openModal = function() {
             var modalInstance = $uibModal.open({
                 templateUrl : 'shutdown.html',
