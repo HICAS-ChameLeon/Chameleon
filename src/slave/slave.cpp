@@ -777,9 +777,9 @@ namespace chameleon {
         send(*msp_masterUPID, *rr_message);
         if(m_is_fault_tolerance){
             send(m_backup_master,*rr_message);
+            LOG(INFO) << "slave " << self() << " had sent a heartbeat message to the " << m_backup_master;
         }
         LOG(INFO) << "slave " << self() << " had sent a heartbeat message to the " << *msp_masterUPID;
-        LOG(INFO) << "slave " << self() << " had sent a heartbeat message to the " << m_backup_master;
 
         auto t2 = std::chrono::system_clock::now();
         std::chrono::duration<double> duration = t2 - t1;
@@ -849,17 +849,20 @@ namespace chameleon {
             LOG(INFO) << self().address.ip << ":6060 launched master successfully.";
             send(super_master,"successed");
         } else{
-            BackupMasterMessage *backup_master_message = new BackupMasterMessage();
-            backup_master_message->set_ip(stringify(self().address.ip));
-            backup_master_message->set_port("6061");
-            send(super_master,*backup_master_message);
-            delete backup_master_message;
-            LOG(INFO) << self().address.ip << ":6060 launched master successfully.";
+            if (s.isSome()){
+                BackupMasterMessage *backup_master_message = new BackupMasterMessage();
+                backup_master_message->set_ip(stringify(self().address.ip));
+                backup_master_message->set_port("6061");
+                send(super_master,*backup_master_message);
+                delete backup_master_message;
+                LOG(INFO) << self().address.ip << ":6060 launched master successfully.";
+            }
         }
 
     }
 
     void Slave::send_message_to_backup_master(const UPID &master, const BackupMasterMessage &message) {
+        LOG(INFO)<<"received backup master message";
         m_is_fault_tolerance = true;
         m_backup_master = "master@" + message.ip() + ":" + message.port();
     }

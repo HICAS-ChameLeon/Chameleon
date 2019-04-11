@@ -885,12 +885,13 @@ namespace chameleon {
         if (m_is_fault_tolerance && slave_id != stringify(process::address().ip)){
             LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
             launch_master_message->set_port("6060");
-            launch_master_message->set_master_path("");
+            launch_master_message->set_master_path(get_cwd()+"/master");
             launch_master_message->set_webui_path(m_webui_path);
             launch_master_message->set_is_fault_tolerance(true);
             send(slave,*launch_master_message);
             delete launch_master_message;
             LOG(INFO)<<"send launch backup master message to "<<slave;
+            m_is_fault_tolerance = false;
         }
     }
 
@@ -969,7 +970,8 @@ namespace chameleon {
 
         if (is_passive) {
             // is_passive = true means the master was evoked by a super_master,
-            // so in super_master_related.proto at line 30 repeated SlavesInfoControlledByMaster my_slaves=4 is not empty
+            // so in super_master_related.proto at line 30 repeated SlavesInfoControlledByMaster my_slaves=4
+            // is not empty
             for (auto &slave_info:super_master_control_message.my_slaves()) {
                 UPID slave_upid("slave@" + slave_info.ip() + ":" + slave_info.port());
                 ReregisterMasterMessage *register_message = new ReregisterMasterMessage();
