@@ -1,8 +1,8 @@
 //
 // Created by root on 19-1-11.
 //
-#include <process/reap.hpp>
-#include <stout/protobuf.hpp>
+
+
 #include "executor.hpp"
 
 namespace chameleon {
@@ -18,13 +18,14 @@ namespace chameleon {
             const Option<string>& _workingDirectory,
             const Option<string>& _user,
             const Option<string>& _taskCommand,
+            const Option<mesos::Environment> _taskEnvironment,
             const mesos::FrameworkID& _frameworkId,
             const mesos::ExecutorID& _executorId) : ProcessBase("CommandExecutor"),
-            taskId(None()),
-            executorId(_executorId),
-            frameworkId(_frameworkId),
+            m_taskId(None()),
+            m_executorId(_executorId),
+            m_frameworkId(_frameworkId),
             terminated(false),
-            pid(-1),
+            m_pid(-1),
             launched(false)
             {
                 //std::cout<<"yxxxx CommandExecutor Construct start"<<std::endl;
@@ -66,7 +67,7 @@ namespace chameleon {
             return;
         }
 
-        taskId = task.task_id();
+        m_taskId = task.task_id();
 
         LOG(INFO) << "CommandExecutor asked to run task '" << task.task_id()<< "'";
 
@@ -74,11 +75,11 @@ namespace chameleon {
         mesos::CommandInfo command;
 
         //----------------------------------------------------
-        if (taskCommand.isSome()) {
+        if (m_taskCommand.isSome()) {
             // Get CommandInfo from a JSON string.
             std::cout << "\n taskCommand.isSome " << std::endl;
 
-            Try<JSON::Object> object = JSON::parse<JSON::Object>(taskCommand.get());
+            Try<JSON::Object> object = JSON::parse<JSON::Object>(m_taskCommand.get());
             if (object.isError()) {
                 ABORT("Failed to parse JSON: " + object.error());
             }
@@ -94,17 +95,17 @@ namespace chameleon {
             LOG(INFO) << "task.has_command()" ;
             command = task.command();
         } else {
-            LOG(FATAL) << "Expecting task '" << taskId.get() << "' to have a command";
+            LOG(FATAL) << "Expecting task '" << m_taskId.get() << "' to have a command";
         }
 
 
-/*        if (command.shell()) {
+        if (command.shell()) {
             CHECK(command.has_value())
-            << "Shell command of task '" << taskId.get() << "' is not specified";
+            << "Shell command of task '" << m_taskId.get() << "' is not specified";
         } else {
             CHECK(command.has_value())
-            << "Executable of task '" << taskId.get() << "' is not specified";
-        }*/
+            << "Executable of task '" << m_taskId.get() << "' is not specified";
+        }
 
         //-------------------------------------------------------------
         hashmap<string, mesos::Environment::Variable> environment;
@@ -117,9 +118,9 @@ namespace chameleon {
                                 environment[name] = variable;
                             }
 
-        if (taskEnvironment.isSome()) {
+        if (m_taskEnvironment.isSome()) {
             foreach (const mesos::Environment::Variable& variable,
-                     taskEnvironment->variables()) {
+                     m_taskEnvironment->variables()) {
                 const string& name = variable.name();
                 if (environment.contains(name) &&
                     environment[name].value() != variable.value()) {
@@ -149,22 +150,22 @@ namespace chameleon {
         }
 
       //  LOG(INFO) << "\n yxxx launch launchEnvironment " << launchEnvironment.Utf8DebugString();
-
+        string current_user = get_current_user();
         const std::map<string, string> environment_string =
                 {
                        // {"JVM_ARGS", " -Xms3072m -Xmx3072m "},
-                        {"_FLINK_CONTAINER_ID",  executorId.value()},
+                        {"_FLINK_CONTAINER_ID",  m_executorId.value()},
                        // {"FRAMEWORK_NAME",    "Flink"},
-                        {"MESOS_EXECUTOR_ID", executorId.value()},
-                        {"TASK_NAME",  taskId.get().value()},
-                        {"HADOOP_USER_NAME", "zyx"},
+                        {"MESOS_EXECUTOR_ID", m_executorId.value()},
+                        {"TASK_NAME",  m_taskId.get().value()},
+                        {"HADOOP_USER_NAME", current_user},
                        // {"PWD",  "/home/zyx/CLionProjects/Chameleon/cmake-build-debug/src/slave"},
                        // {"FLINK_HOME",    "flink"},
                         {"HADOOP_CONF_DIR",     "hadoop/conf"}
                 };
 
 
-        LOG(INFO) << "Starting task " << taskId.get();
+        LOG(INFO) << "Starting task " << m_taskId.get();
         LOG(INFO) << "command :" << *command.mutable_value();
         /*begin run taskInfo*/
         Try<process::Subprocess> exec = process::subprocess(
@@ -174,23 +175,23 @@ namespace chameleon {
                 process::Subprocess::FD(STDERR_FILENO),
                 environment_string);
 
-        pid=exec->pid();
+        m_pid=exec->pid();
 
-        LOG(INFO) << "Forked command at " << pid;
+        LOG(INFO) << "Forked command at " << m_pid;
 
-        process::reap(pid)
-                .onAny(defer(self(), &Self::reaped, pid, lambda::_1));
+        process::reap(m_pid)
+                .onAny(defer(self(), &Self::reaped, m_pid, lambda::_1));
 
 
         LOG(INFO) << "CommandExecutor createTaskStatus " ;
-        mesos::TaskStatus status = CommandExecutor::createTaskStatus(taskId.get(), mesos::TASK_RUNNING);
+        mesos::TaskStatus status = CommandExecutor::createTaskStatus(m_taskId.get(), mesos::TASK_RUNNING);
         forward(status);
         launched = true;
 
     }
 
 
-    // Use this helper to create a status update from scratch.
+    // Use this helper to create a status update.
     mesos::TaskStatus CommandExecutor::createTaskStatus(const mesos::TaskID &_taskId, const mesos::TaskState &state,
                                                         const Option<mesos::TaskStatus::Reason> &reason,
                                                         const Option<string> &message) {
@@ -201,7 +202,7 @@ namespace chameleon {
                 UUID::random(),
                 process::Clock::now().secs());
 
-        status.mutable_executor_id()->CopyFrom(executorId);
+        status.mutable_executor_id()->CopyFrom(m_executorId);
         status.set_source(mesos::TaskStatus::SOURCE_EXECUTOR);
 
         if (reason.isSome()) {
@@ -229,8 +230,8 @@ namespace chameleon {
                 state,
                 UUID::random(),
                 process::Clock::now().secs());
-        LOG(INFO) << "createTaskStatus executorId "<<executorId;
-        status.mutable_executor_id()->CopyFrom(executorId);
+        LOG(INFO) << "createTaskStatus executorId "<<m_executorId;
+        status.mutable_executor_id()->CopyFrom(m_executorId);
         status.set_source(mesos::TaskStatus::SOURCE_EXECUTOR);
 
         return status;
@@ -244,7 +245,7 @@ namespace chameleon {
     void CommandExecutor::reaped(pid_t pid, const process::Future<Option<int>>& status_) {
         terminated = true;
         mesos::TaskStatus status = createTaskStatus(
-                taskId.get(),
+                m_taskId.get(),
                 mesos::TASK_FINISHED);
         forward(status);
        // delay(Seconds(1), self(), &Self::selfTerminate);
@@ -312,40 +313,53 @@ namespace chameleon {
             terminate(self());
     }
 
+    string CommandExecutor::get_current_user() {
+        Try<process::Subprocess> s = subprocess(
+                "who",
+                process::Subprocess::FD(STDIN_FILENO),
+                process::Subprocess::PIPE(),
+                process::Subprocess::FD(STDERR_FILENO));
+        Future<string> info = io::read(s.get().out().get());
+        string users = info.get();
+        std::vector<string> tokens = strings::split(users," ",2);
+        const string user = tokens[0];
+        LOG(INFO) << "get_current_user : " << user ;
+        return user;
+    }
+
     Flags::Flags() {
-        add(&Flags::rootfs,
+        add(&Flags::m_rootfs,
             "rootfs",
             "The path to the root filesystem for the task");
 
         // The following flags are only applicable when a rootfs is
         // provisioned for this command.
-        add(&Flags::sandbox_directory,
+        add(&Flags::m_sandbox_directory,
             "sandbox_directory",
             "The absolute path for the directory in the container where the\n"
             "sandbox is mapped to");
 
-        add(&Flags::working_directory,
+        add(&Flags::m_working_directory,
             "working_directory",
             "The working directory for the task in the container.");
 
-        add(&Flags::user,
+        add(&Flags::m_user,
             "user",
             "The user that the task should be running as.");
 
-        add(&Flags::task_command,
+        add(&Flags::m_task_command,
             "task_command",
             "If specified, this is the overrided command for launching the\n"
             "task (instead of the command from TaskInfo).");
 
-        //exist bug  113--158
-/*
- *       add(&Flags::task_environment,
+/*        //exist bug  113--158
+        add(&Flags::m_task_environment,
             "task_environment",
             "If specified, this is a JSON-ified `Environment` protobuf that\n"
             "should be added to the executor's environment before launching\n"
             "the task.");*/
 
-        add(&Flags::launcher_dir,
+        add(&Flags::m_launcher_dir,
             "launcher_dir",
             "Directory path of Mesos binaries.",
             PKGLIBEXECDIR);
@@ -381,12 +395,13 @@ int main(int argc, char *argv[]) {
 
     process::Owned<chameleon::CommandExecutor> executor(
             new chameleon::CommandExecutor(
-                    flags.launcher_dir,
-                    flags.rootfs,
-                    flags.sandbox_directory,
-                    flags.working_directory,
-                    flags.user,
-                    flags.task_command,
+                    flags.m_launcher_dir,
+                    flags.m_rootfs,
+                    flags.m_sandbox_directory,
+                    flags.m_working_directory,
+                    flags.m_user,
+                    flags.m_task_command,
+                    flags.m_task_environment,
                     frameworkId,
                     executorId));
 
