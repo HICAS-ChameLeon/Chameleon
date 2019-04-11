@@ -155,7 +155,6 @@ namespace chameleon{
     void ExecutorProcess::registered(const mesos::ExecutorInfo &executorInfo, const mesos::FrameworkID &frameworkId,
                                      const mesos::FrameworkInfo &frameworkInfo, const mesos::SlaveID &slaveId,
                                      const mesos::SlaveInfo &slaveInfo) {
-        //std::cout<<"yxxxxxxx Executor registered on agent "<<slaveId<<std::endl;
         LOG(INFO) << "Executor registered on agent " << slaveId;
     }
 
@@ -219,9 +218,7 @@ namespace chameleon{
 
         LOG(INFO) << "Executor sending status update " << *update;
 
-/*        // Capture the status update.
-        updates[uuid] = *update;*/
-       // LOG(INFO) << " yxxxxx  ExecutorProcess executorId"<<executorId;
+     // Capture the status update.
         send(slave, message);
         LOG(INFO) << "ExecutorProcess  sendStatusUpdate to "<<slave;
     }
