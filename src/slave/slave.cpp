@@ -852,7 +852,7 @@ namespace chameleon {
             if (s.isSome()){
                 BackupMasterMessage *backup_master_message = new BackupMasterMessage();
                 backup_master_message->set_ip(stringify(self().address.ip));
-                backup_master_message->set_port("6061");
+                backup_master_message->set_port("6060");
                 send(super_master,*backup_master_message);
                 delete backup_master_message;
                 LOG(INFO) << self().address.ip << ":6060 launched master successfully.";
