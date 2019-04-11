@@ -238,6 +238,9 @@ namespace chameleon {
 
         const string get_web_ui() const;
 
+        // fault tolerance related
+        void set_fault_tolerance(bool fault_tolerance);
+
     private:
 
         string m_uuid;
@@ -245,6 +248,9 @@ namespace chameleon {
         string m_master_cwd;
 
         string m_webui_path;
+
+        // fault tolerance related
+        bool m_is_fault_tolerance;
 
         // master states.
         enum {
@@ -298,6 +304,8 @@ namespace chameleon {
 
         void received_registered_message_from_super_master(const UPID &super_master, const AcceptRegisteredMessage &message);
         void received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message);
+
+        void received_launch_backup_master(const UPID &slave, const BackupMasterMessage &message);
     };
 
     class Framework {

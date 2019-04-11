@@ -416,6 +416,7 @@ namespace chameleon {
         launch_master_message->set_port("6060");
         launch_master_message->set_master_path(m_master_path);
         launch_master_message->set_webui_path(m_webui_path);
+        launch_master_message->set_is_fault_tolerance(false);
         for(const string& master_ip:m_vector_masters) {
 //            if(master_ip == stringify(process::address().ip)){
 //                send(UPID("master@" + master_ip + ":6060"), *launch_master_message);
