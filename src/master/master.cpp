@@ -318,6 +318,7 @@ namespace chameleon {
                                     const ResourcesOfFramework &resources_of_framework = slave_object->m_framework_resources[framework_id];
                                     JSON::Object resources_record = JSON::Object();
                                     resources_record.values["slave_uuid"] = *it;
+                                    resources_record.values["slave_ip"] = slave_object->m_ip;
                                     resources_record.values["cpus"] = resources_of_framework.m_consumped_cpus;
                                     sum_cpus += resources_of_framework.m_consumped_cpus;
                                     resources_record.values["mem"] = resources_of_framework.m_consumped_mem;
