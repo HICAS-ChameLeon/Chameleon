@@ -1,6 +1,15 @@
 #ifndef CHAMELEON_EXECUTOR_H
 #define CHAMELEON_EXECUTOR_H
 
+#ifdef linux
+#include <unistd.h>
+#include <pwd.h>
+#endif
+
+#ifdef _WIN32
+#include<Windows.h>
+#endif
+
 // C++ 11 dependencies
 #include <iostream>
 #include <unordered_map>

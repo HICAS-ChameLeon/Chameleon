@@ -314,17 +314,34 @@ namespace chameleon {
     }
 
     string CommandExecutor::get_current_user() {
-        Try<process::Subprocess> s = subprocess(
-                "who",
-                process::Subprocess::FD(STDIN_FILENO),
-                process::Subprocess::PIPE(),
-                process::Subprocess::FD(STDERR_FILENO));
-        Future<string> info = io::read(s.get().out().get());
-        string users = info.get();
-        std::vector<string> tokens = strings::split(users," ",2);
-        const string user = tokens[0];
-        LOG(INFO) << "get_current_user : " << user ;
-        return user;
+        #if defined linux   //linux system
+            uid_t userid;
+    struct passwd* pwd;
+    userid=getuid();
+    pwd=getpwuid(userid);
+    return pwd->pw_name;
+
+#elif defined _WIN32  //windows system
+            const int MAX_LEN = 100;
+    char sz_buffer[MAX_LEN];
+    DWORD len = MAX_LEN;
+    if( GetUserName(sz_buffer, &len) )     //we save the username in sz_buffer
+        return sz_buffer;
+
+#else  //outher system
+            return "";
+#endif
+//        Try<process::Subprocess> s = subprocess(
+//                "who",
+//                process::Subprocess::FD(STDIN_FILENO),
+//                process::Subprocess::PIPE(),
+//                process::Subprocess::FD(STDERR_FILENO));
+//        Future<string> info = io::read(s.get().out().get());
+//        string users = info.get();
+//        std::vector<string> tokens = strings::split(users," ",2);
+//        const string user = tokens[0];
+//        LOG(INFO) << "get_current_user : " << user ;
+//        return user;
     }
 
     Flags::Flags() {
