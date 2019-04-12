@@ -112,6 +112,59 @@
     chameleon_app.controller('RuntimeCtrl', function($scope,$rootScope,$http) {
     });
 
+    chameleon_app.controller('SchedulerCtrl', function($scope,$rootScope,$http) {
+        $http({
+            method: 'GET',
+            url: leadingChameleonMasterURL('/master/get-scheduler')
+        }).then(function successCallback(response) {
+
+            $scope.master = {
+                scheduler: response.data.content,
+                //quantities: response.data.quantity,
+
+            };
+        }, function errorCallback(response) {
+        });
+    });
+
+    chameleon_app.controller('ChangeSchedulerCtrl', function($scope,$uibModal) {
+        var alert_message = "确认更换算法?";
+        $scope.openModal = function() {
+            var modalInstance = $uibModal.open({
+                templateUrl : 'shutdown.html',
+                controller : 'ChangeSchedulerInstanceCtrl',   //shutdown modal对应的Controller
+                resolve : {
+                    date : function() {           //date作为shutdown modal的controller传入的参数
+                        return alert_message;     //用于传递数据
+                    }
+                }
+            })
+        }
+
+    });
+
+    chameleon_app.controller('ChangeSchedulerInstanceCtrl', function($scope, $uibModalInstance,$http, date) {
+
+        $scope.date= date;
+
+        //在这里处理要进行的操作
+        $scope.ok = function() {
+            $http({
+                method: 'GET',
+                url: leadingChameleonMasterURL('/master/change-scheduler')
+            }).then(function successCallback(response) {
+                console.log(response);
+                $uibModalInstance.dismiss('cancel');
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+            });
+        };
+        $scope.cancel = function() {
+            $uibModalInstance.dismiss('cancel');
+        }
+    });
+
+
     //资源利用率饼图的Controller
     chameleon_app.controller('SlaveCtrl', function($scope,$rootScope, $http,$routeParams) {
         $scope.slave_uuid = $routeParams.slave_uuid;
