@@ -67,9 +67,9 @@ namespace chameleon {
                 mesos::Offer *offer = slave->construct_a_offer(offer_id.value(), framework_id);
                 resource_offers_message.add_offers()->MergeFrom(*offer);
                 LOG(INFO) << offer->slave_id().value();
+                m_offers[offer->slave_id().value()] = offer->id().value();
                 resource_offers_message.add_pids(slave->m_upid_str);
             }
-
         }
     };
 };

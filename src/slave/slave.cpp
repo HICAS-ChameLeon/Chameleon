@@ -108,12 +108,12 @@ namespace chameleon {
 
         //get from executor
         install<mesos::internal::StatusUpdateMessage>(
-                &Slave::statusUpdate,
+                &Slave::status_update,
                 &mesos::internal::StatusUpdateMessage::update,
                 &mesos::internal::StatusUpdateMessage::pid);
 
         install<mesos::internal::StatusUpdateAcknowledgementMessage>(
-                &Slave::statusUpdateAcknowledgement,
+                &Slave::status_update_acknowledgement,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::slave_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::framework_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::task_id,
@@ -121,14 +121,14 @@ namespace chameleon {
 
 
         install<mesos::internal::RunTaskMessage>(
-                &Slave::runTask,
+                &Slave::run_task,
                 &mesos::internal::RunTaskMessage::framework,
                 &mesos::internal::RunTaskMessage::framework_id,
                 &mesos::internal::RunTaskMessage::pid,
                 &mesos::internal::RunTaskMessage::task);
 
         install<mesos::internal::RegisterExecutorMessage>(
-                &Slave::registerExecutor,
+                &Slave::register_executor,
                 &mesos::internal::RegisterExecutorMessage::framework_id,
                 &mesos::internal::RegisterExecutorMessage::executor_id);
 
@@ -138,7 +138,7 @@ namespace chameleon {
 //                &mesos::internal::ShutdownExecutorMessage::executor_id);
 
         install<mesos::internal::ShutdownFrameworkMessage>(
-                &Slave::shutdownFramework,
+                &Slave::shutdown_framework,
                 &mesos::internal::ShutdownFrameworkMessage::framework_id);
 
         install<ReregisterMasterMessage>(&Slave::reregister_to_master);
@@ -178,12 +178,13 @@ namespace chameleon {
      * change the spark shell value of the specified command in the task
      * @param spark_home_path spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
      *  @param task
+     * Author : zhangyixin
      */
     void Slave::modify_command_info_of_running_task(const string &spark_home_path, mesos::TaskInfo &task) {
         if (task.has_command()) {
             mesos::CommandInfo *new_command_info = new mesos::CommandInfo(task.command());
             string shell_value = task.command().value();
-            //LOG(INFO) << "the shell_value is " << shell_value;
+            LOG(INFO) << "the shell_value is " << shell_value;
             auto it = shell_value.find("spark-class");
             if (it != string::npos) {
                 const string left_part = " \"" + spark_home_path + "/bin/";
@@ -219,21 +220,23 @@ namespace chameleon {
 
     /**
      * Funtion  : runTask
-     * Author   : weiguow
+     * Author   : weiguow zhangyixin
      * Date     : 2019-1-2
      * */
-    void Slave:: runTask(
+    void Slave:: run_task(
             const process::UPID &from,
             const mesos::FrameworkInfo &frameworkInfo,
             const mesos::FrameworkID &frameworkId,
             const process::UPID &pid,
             const mesos::TaskInfo &taskInfo) {
+        LOG(INFO) << "framework " << frameworkInfo.name() << " ------------------";
+
         LOG(INFO) << "Get task from master, start the mesos executor first";
-        const mesos::ExecutorInfo executorInfo = getExecutorInfo(frameworkInfo, taskInfo);
+        const mesos::ExecutorInfo executorInfo = get_executorinfo(frameworkInfo, taskInfo);
 
         Option<process::UPID> frameworkPid = None();
 
-        Framework *framework = getFramework(frameworkId);
+        Framework *framework = get_framework(frameworkId);
         framework = new Framework(this, frameworkInfo, frameworkPid);
 
         frameworks[frameworkId.value()] = framework;
@@ -248,48 +251,132 @@ namespace chameleon {
             return;
         }
 
-        // change the spark home of the command information if the running task belongs to spark
-        // spark_home_path = sanbox_path + "spark-2.3.0-bin-hadoop2.7"
-        // for example,
-        // sanbox_path = Chameleon/build/src/slave/da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000
-        //  spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
-        const string spark_home_path = path::join(sanbox_path, "spark-2.3.0-bin-hadoop2.7");
-        mesos::TaskInfo copy_task(taskInfo);
-        modify_command_info_of_running_task(spark_home_path, copy_task);
+        if(frameworkInfo.name() == "Flink"){
+            const string spark_home_path = path::join(sanbox_path, "flink-1.4.2");
+            LOG(INFO)<<spark_home_path;
 
-        // queue the task and executor_info
-        m_tasks.push(copy_task);
-        m_executorInfo = executorInfo;
-        if(taskInfo.container().type() == mesos::ContainerInfo::MESOS){
-            process::Future<Nothing> download_result;
-            Promise<Nothing> promise;
-            if (!os::exists(spark_home_path)) {
-                LOG(INFO) << "spark  didn't exist, download it frist";
-                mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
-                mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
-                mesos::fetcher::URI *uri = new mesos::fetcher::URI();
-                fetcher_info->set_sandbox_directory(sanbox_path);
-                //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
-                uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
-                item->set_allocated_uri(uri);
-                item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
-                download_result = m_software_resource_manager->download("my_spark", *fetcher_info);
-                delete fetcher_info;
+            mesos::TaskInfo copy_task(taskInfo);
 
-            } else {
-                LOG(INFO) << "the Spark framework has existed";
+            modify_command_info_of_flink_task(spark_home_path, copy_task);
 
-                download_result = promise.future();
-                promise.set(Nothing());
-            }
-            download_result.onAny(process::defer(self(), &Self::start_mesos_executor, lambda::_1, framework));
+            // queue the task and executor_info
+            m_tasks.push(copy_task);
+            m_executorInfo = executorInfo;
+            if(taskInfo.container().type() == mesos::ContainerInfo::MESOS){
+                process::Future<Nothing> download_result;
+                Promise<Nothing> promise;
+                if (!os::exists(spark_home_path)) {
+                    LOG(INFO) << "flink  didn't exist, download it frist";
+                    mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
+                    mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
+                    mesos::fetcher::URI *uri = new mesos::fetcher::URI();
+                    fetcher_info->set_sandbox_directory(sanbox_path);
+                    //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
+                    uri->set_value("http://archive.apache.org/dist/flink/flink-1.4.2/flink-1.4.2-bin-scala_2.11.tgz");
+                    item->set_allocated_uri(uri);
+                    item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
+                    download_result = m_software_resource_manager->download("my_flink", *fetcher_info);
+
+                    delete fetcher_info;
+
+                } else {
+                    LOG(INFO) << "the flink framework has existed";
+
+                    download_result = promise.future();
+                    promise.set(Nothing());
+                }
+                download_result.onAny(process::defer(self(), &Self::start_mesos_executor, lambda::_1, framework));
 //        start_mesos_executor(framework);
-        }
-        else if(taskInfo.container().type() == mesos::ContainerInfo::DOCKER){
-            start_docker_container(taskInfo, framework);
+            }
+            else if(taskInfo.container().type() == mesos::ContainerInfo::DOCKER){
+                start_docker_container(taskInfo, framework);
+            }
+        } else{
+            // change the spark home of the command information if the running task belongs to spark
+            // spark_home_path = sanbox_path + "spark-2.3.0-bin-hadoop2.7"
+            // for example,
+            // sanbox_path = Chameleon/build/src/slave/da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000
+            //  spark_home_path = da88dffc-19bf-47ea-b061-8dc4c16b4d46-0000/spark-2.3.0-bin-hadoop2.7
+            const string spark_home_path = path::join(sanbox_path, "spark-2.3.0-bin-hadoop2.7");
+            mesos::TaskInfo copy_task(taskInfo);
+            modify_command_info_of_running_task(spark_home_path, copy_task);
+
+            // queue the task and executor_info
+            m_tasks.push(copy_task);
+            m_executorInfo = executorInfo;
+            if(taskInfo.container().type() == mesos::ContainerInfo::MESOS){
+                process::Future<Nothing> download_result;
+                Promise<Nothing> promise;
+                if (!os::exists(spark_home_path)) {
+                    LOG(INFO) << "spark  didn't exist, download it frist";
+                    mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
+                    mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
+                    mesos::fetcher::URI *uri = new mesos::fetcher::URI();
+                    fetcher_info->set_sandbox_directory(sanbox_path);
+                    //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
+                    uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
+                    item->set_allocated_uri(uri);
+                    item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
+                    download_result = m_software_resource_manager->download("my_spark", *fetcher_info);
+                    delete fetcher_info;
+
+                } else {
+                    LOG(INFO) << "the Spark framework has existed";
+
+                    download_result = promise.future();
+                    promise.set(Nothing());
+                }
+                download_result.onAny(process::defer(self(), &Self::start_mesos_executor, lambda::_1, framework));
+//        start_mesos_executor(framework);
+            }
+            else if(taskInfo.container().type() == mesos::ContainerInfo::DOCKER){
+                start_docker_container(taskInfo, framework);
+            }
         }
 
     }
+
+
+    /**
+     * Funtion  : modify_command_info_of_flink_task
+     * Author   : zhangyixin
+     * Date     : 2019-3-31
+     * */
+    void Slave::modify_command_info_of_flink_task(const string &spark_home_path, mesos::TaskInfo &task) {
+        if (task.has_command()) {
+            mesos::CommandInfo *new_command_info = new mesos::CommandInfo(task.command());
+            string shell_value = task.command().value();
+            LOG(INFO) << "the shell_value is " << shell_value;
+            auto it = shell_value.find("mesos-taskmanager.sh");
+            if (it != string::npos) {
+
+                const string left_part = spark_home_path + "/bin/";
+
+                LOG(INFO) << "the left_part command shell is " << left_part;
+
+                const string right_part = shell_value.substr(it);
+                LOG(INFO) << "the right_part command shell is " << right_part;
+
+                const string final_value = left_part + right_part;
+                new_command_info->set_value(final_value);
+                task.clear_command();
+                task.set_allocated_command(new_command_info);
+                LOG(INFO) << "the final value of command shell is " << final_value;
+
+                string com = strings::remove(spark_home_path,"flink-1.4.2");
+                string command_string = "sudo cp -r /home/zyx/hadoop "+com+"hadoop/";
+                LOG(INFO) << "the command_string is " << command_string;
+                Try<Subprocess> s = subprocess(
+                        command_string ,
+                        process::Subprocess::FD(STDIN_FILENO),
+                        process::Subprocess::FD(STDOUT_FILENO),
+                        process::Subprocess::FD(STDERR_FILENO));
+            }
+
+        }
+    }
+
+
 
     void Slave::start_mesos_executor(const Future<Nothing> &future, const Framework *framework) {
         if (!future.isReady()) {
@@ -381,14 +468,14 @@ namespace chameleon {
                 environment);
     }
 
-    void Slave::registerExecutor(const UPID &from,
+    void Slave::register_executor(const UPID &from,
                                  const mesos::FrameworkID &frameworkId,
                                  const mesos::ExecutorID &executorId) {
         LOG(INFO) << "Got registration for executor '" << executorId.value()
                   << "' of framework " << frameworkId.value() << " from "
                   << stringify(from);
 
-        Framework *framework = getFramework(frameworkId);
+        Framework *framework = get_framework(frameworkId);
 
         mesos::internal::ExecutorRegisteredMessage message;
         message.mutable_executor_info()->mutable_framework_id()->MergeFrom(framework->id());
@@ -420,9 +507,7 @@ namespace chameleon {
      * Date      : 2019-1-4
      * Description  : getExecutorInfo from FrameworkInfo & TaskInfo
      * */
-    const string flags_laucher_dir = setting::FLAGS_LAUCHER_DIR;
-
-    mesos::ExecutorInfo Slave::getExecutorInfo(
+    mesos::ExecutorInfo Slave::get_executorinfo(
             const mesos::FrameworkInfo &frameworkInfo,
             const mesos::TaskInfo &task) const {
 
@@ -497,14 +582,14 @@ namespace chameleon {
         }
 
         Result<string> path = os::realpath(
-                path::join(flags_laucher_dir, MESOS_EXECUTOR));
+                path::join(setting::FLAGS_LAUCHER_DIR, MESOS_EXECUTOR));
 
         if (path.isSome()) {
             executorInfo.mutable_command()->set_shell(false);
             executorInfo.mutable_command()->set_value(path.get());
             executorInfo.mutable_command()->add_arguments(MESOS_EXECUTOR);
             executorInfo.mutable_command()->add_arguments(
-                    "--launcher_dir=" + flags_laucher_dir);
+                    "--launcher_dir=" + setting::FLAGS_LAUCHER_DIR);
         } else {
             executorInfo.mutable_command()->set_shell(true);
             executorInfo.mutable_command()->set_value(
@@ -516,39 +601,32 @@ namespace chameleon {
     }
 
     /**
-     * Function    : statusUpdate
+     * Function    : status_update
      * Author      : weiguow
      * Date        : 2019-1-8
-     * Description : Encapsulates the statusUpdate message and uses dispatch call _statusUpdate
+     * Description : Encapsulates the statusUpdate message and send ack to executor,
+     * also send status update message to master
      * @param      : update & pid
      * */
-    void Slave::statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
+    void Slave::status_update(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
 
-//        LOG(INFO) << "Handling status update " << update.status().state()
-//                  << " of framework " << update.framework_id().value();
+        LOG(INFO) << "Received status update " << update.status().state()
+          << " of framework " << update.framework_id().value();
 
         update.mutable_status()->set_uuid(update.uuid());
         update.mutable_status()->set_source(
                 pid == UPID() ? mesos::TaskStatus::SOURCE_SLAVE : mesos::TaskStatus::SOURCE_EXECUTOR);
         update.mutable_status()->mutable_executor_id()->CopyFrom(update.executor_id());
 
-//        LOG(INFO) << "Received status update " << update.status().state()
-//                  << " of framework " << update.framework_id().value();
 
-        process::dispatch(self(), &Slave::_statusUpdate, update, pid);
-    }
+        LOG(INFO) << "Sending task update " << update.status().state()
+                  << " to " << m_master;
 
-    /**
-     * Functio     : _statusUpdate
-     * Author      : weiguow
-     * Date        : 2019-1-8
-     * Description : this function is invoked by the updateStatus and
-     *               encapsulation StatusUpdateAcknowledgementMessage message
-     * @param      : update & pid
-     * */
-    void Slave::_statusUpdate(
-            const mesos::internal::StatusUpdate &update,
-            const Option<UPID> &pid) {
+        mesos::internal::StatusUpdateMessage status_update_message;
+        status_update_message.mutable_update()->MergeFrom(update);
+        status_update_message.set_pid(self());
+        send(m_master, status_update_message);
+
 
         mesos::internal::StatusUpdateAcknowledgementMessage message;
         message.mutable_framework_id()->MergeFrom(update.framework_id());
@@ -557,33 +635,14 @@ namespace chameleon {
         message.set_uuid(update.uuid());
 
         if (pid.isSome()) {
-//            LOG(INFO) << "Sending acknowledgement for status update " << update.status().state()
-//                      << " of framework " << update.framework_id().value()
-//                      << " to " << pid.get();  //executor(1)@172.20.110.77:39343
+            LOG(INFO) << "Sending acknowledgement for status update " << update.status().state()
+                      << " to " << pid.get();  //executor(1)@172.20.110.77:39343
             send(pid.get(), message);
         } else {
             LOG(INFO) << "Ignoring update status ";
         }
-        process::dispatch(self(), &Slave::forward, update);
-    }
 
-    /**
-     * Functio     : forward
-     * Author      : weiguow
-     * Date        : 2019-1-10
-     * Description : Call by _statusUpdate, and send StatusUpdateMessage to master
-     * @param      : update
-     * */
-    void Slave::forward(mesos::internal::StatusUpdate update) {
 
-//        LOG(INFO) << "Forwarding the update " << update.status().state()
-//                  << " of framework " << update.framework_id().value() << " to " << m_master;
-
-        mesos::internal::StatusUpdateMessage message;
-        message.mutable_update()->MergeFrom(update);
-        message.set_pid(self()); // The ACK will be first received by the slave.
-
-        send(m_master, message);
     }
 
     /**
@@ -594,7 +653,7 @@ namespace chameleon {
      *               make sure the status update is successful
      * @param      : from, slaveId, frameworkId, taskId, uuid
      * */
-    void Slave::statusUpdateAcknowledgement(
+    void Slave::status_update_acknowledgement(
             const UPID &from,
             const mesos::SlaveID &slaveId,
             const mesos::FrameworkID &frameworkId,
@@ -607,16 +666,13 @@ namespace chameleon {
                          << m_master << " is None";
             return;
         }
-
-        LOG(INFO) << "Status update manager successfully handled status update"
-                  << " acknowledgement for task " << taskId.value()
-                  << " of framework " << frameworkId.value();
+        LOG(INFO) << "Status update manager successfully of framework " << frameworkId.value();
     }
 
     /**
      * get FrameworkInfo by FrameworkId-by weiguow-2019/2/25
      * */
-    Framework *Slave::getFramework(const mesos::FrameworkID &frameworkId) const {
+    Framework *Slave::get_framework(const mesos::FrameworkID &frameworkId) const {
         if (frameworks.count(frameworkId.value()) > 0) {
             return frameworks.at(frameworkId.value());
         }
@@ -624,30 +680,16 @@ namespace chameleon {
     }
 
     /**
-     * removeFramework - by weiguow - 2019-2-26
-     * */
-    void Slave::removeFramework(chameleon::Framework *framework) {
-        CHECK_NOTNULL(framework);
-
-        LOG(INFO) << "Cleaning up framework " << framework->id().value();
-
-        CHECK(framework->state == Framework::RUNNING ||
-              framework->state == Framework::TERMINATING);
-
-        frameworks.erase(framework->id().value());
-    }
-
-    /**
-     * Function     : shutdownFramework
+     * Function     : shutdown_framework
      * Author       : weiguow
      * Date         : 2019-2-26
      * Description  : shutdownFramework after task run over
      * */
-    void Slave::shutdownFramework(const process::UPID &from, const mesos::FrameworkID &frameworkId) {
+    void Slave::shutdown_framework(const process::UPID &from, const mesos::FrameworkID &frameworkId) {
         LOG(INFO) << "Asked to shut down framework " << frameworkId.value()
                   << " by " << from;
 
-        Framework *framework = getFramework(frameworkId);
+        Framework *framework = get_framework(frameworkId);
 
         switch (framework->state) {
             case Framework::TERMINATING:
@@ -659,13 +701,15 @@ namespace chameleon {
 
                 framework->state = Framework::TERMINATING;
 
-                // Remove this framework if it has no pending executors and tasks.
-                removeFramework(framework);
+                LOG(INFO) << "Cleaning up framework " << framework->id().value();
+
+                CHECK(framework->state == Framework::RUNNING ||
+                      framework->state == Framework::TERMINATING);
+
+                frameworks.erase(framework->id().value());
 
                 break;
             default:
-//                LOG(FATAL) << "Framework " << frameworkId.value()
-//                           << " is in unexpected state ";
                 break;
         }
     }
@@ -797,14 +841,12 @@ namespace chameleon {
         send(super_master,"successed");
     }
 
+
+
 //    void Slave::received_new_master(const UPID& from, const MasterRegisteredMessage& message) {
 //        LOG(INFO) << "MAKUN " << self().address.ip << " received new master ip from " << from;
 //    }
 
-    std::ostream& operator<<(std::ostream& stream, const mesos::TaskState& state)
-    {
-        return stream << TaskState_Name(state);
-    }
 }
 
 

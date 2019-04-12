@@ -25,7 +25,7 @@ namespace chameleon{
     ChameleonExecutorDriver::~ChameleonExecutorDriver() {}
 
     mesos::Status ChameleonExecutorDriver::start(process::UPID commandExecutorPid) {
-            std::cout<<"yxxxx ChameleonExecutorDriver start"<<std::endl;
+            LOG(INFO)<<"ChameleonExecutorDriver start";
             commandExecutor = commandExecutorPid;
 /*            if (status != mesos::DRIVER_NOT_STARTED) {
                 return status;
@@ -36,7 +36,7 @@ namespace chameleon{
             mesos::ExecutorID executorId;
 
 
-            std::cout<<"commandExecutorPid:  "<<commandExecutor<<std::endl;
+            LOG(INFO)<<"commandExecutorPid:  "<<commandExecutor;
 
             Option<string> value;
 
@@ -49,7 +49,7 @@ namespace chameleon{
 
             slave = process::UPID(value.get());
 
-            std::cout<<"slaveUPID"<<slave<<std::endl;
+            LOG(INFO)<<"slaveUPID"<<slave;
 
             CHECK(slave) << "Cannot parse MESOS_SLAVE_PID '" << value.get() << "'";
 
@@ -61,8 +61,7 @@ namespace chameleon{
             }
             slaveId.set_value(value.get());
 
-            std::cout<<"slaveId"<<slaveId<<std::endl;
-
+            LOG(INFO)<<"slaveId"<<slaveId;
             // Get framework ID from environment.
             value = os::getenv("MESOS_FRAMEWORK_ID");
             if (value.isNone()) {
@@ -79,7 +78,6 @@ namespace chameleon{
             }
             executorId.set_value(value.get());
 
-           // CHECK(process == nullptr);
 
             process = new chameleon::ExecutorProcess(
                     slave,
@@ -101,7 +99,7 @@ namespace chameleon{
         }*/
 
         //CHECK(process != nullptr);
-        LOG(INFO) << " yxxxxx  ChameleonExecutorDriver  sendStatusUpdate" ;
+        LOG(INFO) << "ChameleonExecutorDriver  sendStatusUpdate" ;
         dispatch(process, &ExecutorProcess::sendStatusUpdate, status);
 
         //return status;
@@ -137,19 +135,19 @@ namespace chameleon{
     }
 
     void ExecutorProcess::initialize() {
-        LOG(INFO) << "yxxxx Executor started at: " << self()
+        LOG(INFO) << "Executor started at: " << self()
                   << " with pid " << getpid();
 
        // slave = "slave@172.20.110.100:6061" ;
     //    link(slave);
        // std::cout<<"yxxxx ExecutorProcess send a RegisterExecutorMessage to slave"<<std::endl;
         // Register with slave.
-        LOG(INFO)<<" yxxxx ExecutorProcess send a RegisterExecutorMessage to slave ";
+        LOG(INFO)<<"ExecutorProcess send a RegisterExecutorMessage to slave ";
         mesos::internal::RegisterExecutorMessage message;
         message.mutable_framework_id()->MergeFrom(frameworkId);
         message.mutable_executor_id()->MergeFrom(executorId);
         send(slave, message);
-        LOG(INFO)<<" yxxxx end send a RegisterExecutorMessage to slave "<<slave;
+        LOG(INFO)<<"end send a RegisterExecutorMessage to slave "<<slave;
     }
 
 
@@ -157,12 +155,11 @@ namespace chameleon{
     void ExecutorProcess::registered(const mesos::ExecutorInfo &executorInfo, const mesos::FrameworkID &frameworkId,
                                      const mesos::FrameworkInfo &frameworkInfo, const mesos::SlaveID &slaveId,
                                      const mesos::SlaveInfo &slaveInfo) {
-        //std::cout<<"yxxxxxxx Executor registered on agent "<<slaveId<<std::endl;
-        LOG(INFO) << "yxxxxxxx Executor registered on agent " << slaveId;
+        LOG(INFO) << "Executor registered on agent " << slaveId;
     }
 
     void ExecutorProcess::runTask(const mesos::TaskInfo &task) {
-        LOG(INFO) << "yxxxxxxx ExecutorProcess runTask " ;
+        LOG(INFO) << "ExecutorProcess runTask " ;
       //  std::cout<<"yxxxxxxx ExecutorProcess begin runTask "<<slaveId<<std::endl;
        // LOG(INFO) << "yxxxxxxx ExecutorProcess runTask " << slaveId;
 //        LOG(INFO) << "yxxxxxxx Executor asked to run task '" << task.task_id() << "'"<<"on"<<commandExecutor;
@@ -171,7 +168,7 @@ namespace chameleon{
     }
 
 
-    std::ostream& operator<<(std::ostream& stream, const mesos::FrameworkID& frameworkId)
+    inline std::ostream& operator<<(std::ostream& stream, const mesos::FrameworkID& frameworkId)
     {
         return stream << frameworkId.value();
     }
@@ -219,12 +216,10 @@ namespace chameleon{
         // the HTTP API, this can be overwritten by the slave instead.
         update->mutable_status()->mutable_slave_id()->CopyFrom(slaveId);
 
-        LOG(INFO) << "yxxxxx Executor sending status update " << *update;
+        LOG(INFO) << "Executor sending status update " << *update;
 
-/*        // Capture the status update.
-        updates[uuid] = *update;*/
-       // LOG(INFO) << " yxxxxx  ExecutorProcess executorId"<<executorId;
+     // Capture the status update.
         send(slave, message);
-        LOG(INFO) << " yxxxxx  ExecutorProcess  sendStatusUpdate to "<<slave;
+        LOG(INFO) << "ExecutorProcess  sendStatusUpdate to "<<slave;
     }
 }

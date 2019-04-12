@@ -82,6 +82,8 @@ namespace chameleon {
                 m_super_master_cwd = os::getcwd();
         }
 
+        void set_level(const int32_t& level);
+
         void set_webui_path(const string& path);
 
         const string get_web_ui() const;
@@ -103,6 +105,12 @@ namespace chameleon {
 
         void terminating_master(const UPID &from, const OwnedSlavesMessage &message);
 
+        struct Node {
+            string node_ip;
+            int32_t node_port;
+            bool is_super_master;
+        } nodes;
+
         virtual ~SuperMaster() {
             LOG(INFO) << " ~SuperMaster";
         }
@@ -115,6 +123,7 @@ namespace chameleon {
         string m_master_path;
 
         string m_webui_path;
+        int32_t m_level;
 
         UPID m_framework;
         // represent the masters administered by the current super_master.
@@ -131,15 +140,27 @@ namespace chameleon {
 
         // represent the current number of masters
         int32_t m_masters_size;
+        // represent the current number of super_masters
+        int32_t m_super_masters_size;
 
         // key: master:ip , value: vector<SlavesInfoControlledByMaster>
         unordered_map<string,vector<SlavesInfoControlledByMaster>> m_classification_slaves;
-        vector<string> m_classification_masters;
+        vector<string> m_vector_masters;
+        // key: super_master:ip , value: vector<MasterInfoControlledBySuperMaster>
+        unordered_map<string,vector<MasterInfoControlledBySuperMaster>> m_classification_masters;
+        vector<string> m_vector_super_master;
+
+        vector<Node> m_nodes;
+//        vector<Node,vector<Node>> m_nodes;
+
         //framework related
-        unordered_map<string,string> m_classification_masters_framework;
+        unordered_map<string,string> m_master_framework;
         bool is_launch_master = true;
+        bool is_launch_super_master = true;
 
         void classify_masters();
+        //change to three levels related
+        void classify_super_masters();
 
         void create_masters();
         void send_super_master_control_message();
