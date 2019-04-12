@@ -151,6 +151,7 @@ namespace chameleon {
 
       //  LOG(INFO) << "\n yxxx launch launchEnvironment " << launchEnvironment.Utf8DebugString();
         string current_user = get_current_user();
+        LOG(INFO) << "get_current_user:" << current_user;
         const std::map<string, string> environment_string =
                 {
                        // {"JVM_ARGS", " -Xms3072m -Xmx3072m "},

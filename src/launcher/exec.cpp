@@ -105,10 +105,6 @@ namespace chameleon{
         //return status;
     }
 
-    void ChameleonExecutorDriver::launch(const mesos::TaskInfo &info) {
-
-    }
-
 
     ExecutorProcess::ExecutorProcess(const process::UPID &_slave, ChameleonExecutorDriver *_driver,
                                      const mesos::SlaveID &_slaveId, const mesos::FrameworkID &_frameworkId,

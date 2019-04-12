@@ -70,7 +70,7 @@ namespace chameleon{
 
         mesos::Status start(process::UPID commandExecutorPid);
 
-        virtual mesos::Status sendStatusUpdate(const mesos::TaskStatus& status);
+        mesos::Status sendStatusUpdate(const mesos::TaskStatus& status);
 
 
     private:
@@ -82,7 +82,6 @@ namespace chameleon{
 
         process::UPID commandExecutor;
 
-        void launch(const mesos::TaskInfo &info);
     };
 
 
