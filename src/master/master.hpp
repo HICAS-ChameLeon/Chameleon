@@ -272,6 +272,8 @@ namespace chameleon {
         unordered_map<string, JSON::Object> m_runtime_resources;
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
 
+        unordered_map<string, double> m_slaves_clock;
+
         // scheduler related
         shared_ptr<SchedulerInterface> m_scheduler;
 //        shared_ptr<SchedulerInterface> m_wqn_scheduler;
