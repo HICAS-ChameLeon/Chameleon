@@ -32,4 +32,4 @@ add_subdirectory(submitter)
 
 add_subdirectory(launcher)
 
-#add_subdirectory(my_hello)
+add_subdirectory(simulator)
