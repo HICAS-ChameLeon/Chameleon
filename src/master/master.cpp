@@ -5,6 +5,7 @@
  * Description：master
  */
 
+#include <slave_related.pb.h>
 #include "master.hpp"
 
 //The following has default value
@@ -13,6 +14,7 @@ DEFINE_string(supermaster_path, "/home/lemaker/open-source/Chameleon/build/src/m
               "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 DEFINE_string(webui_path, "",
               "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
+DEFINE_bool(fault_tolerance, false,"whether master has fault tolerance. For example, --fault_tolerance=true");
 
 
 /*
@@ -103,8 +105,11 @@ namespace chameleon {
                 &mesos::internal::StatusUpdateAcknowledgementMessage::task_id,
                 &mesos::internal::StatusUpdateAcknowledgementMessage::uuid);
 
+        install<LaunchMasterMessage>(&Master::launch_master);
         install<SuperMasterControlMessage>(&Master::super_master_control);
         install<TerminatingMasterMessage>(&Master::received_terminating_master_message);
+
+        install<BackupMasterMessage>(&Master::received_launch_backup_master);
 
 //        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
 
@@ -477,6 +482,10 @@ namespace chameleon {
 
     void Master::set_webui_path(const string &path) {
         m_webui_path = path;
+    }
+
+    void Master::set_fault_tolerance(bool fault_tolerance) {
+        m_is_fault_tolerance = fault_tolerance;
     }
 
     const string Master::get_web_ui() const {
@@ -975,6 +984,17 @@ namespace chameleon {
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
         //add insert slave_id to send new master message to slave
         m_alive_slaves.insert(slave_id);
+        if (m_is_fault_tolerance && slave_id != stringify(process::address().ip)){
+            LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
+            launch_master_message->set_port("6060");
+            launch_master_message->set_master_path(get_cwd()+"/master");
+            launch_master_message->set_webui_path(m_webui_path);
+            launch_master_message->set_is_fault_tolerance(true);
+            send(slave,*launch_master_message);
+            delete launch_master_message;
+            LOG(INFO)<<"send launch backup master message to "<<slave;
+            m_is_fault_tolerance = false;
+        }
     }
 
     Try<string> Master::find_min_cpu_and_memory_rates() {
@@ -1029,6 +1049,10 @@ namespace chameleon {
         LOG(INFO) << "The path of super_master executable is " << m_super_master_path;
     }
 
+    void Master::launch_master(const UPID &super_master, const LaunchMasterMessage &message) {
+        send(super_master,"successed");
+    }
+
     void Master::super_master_control(const UPID &super_master,
                                       const SuperMasterControlMessage &super_master_control_message) {
         LOG(INFO) << " get a super_master_control_message from super_master" << super_master;
@@ -1048,7 +1072,8 @@ namespace chameleon {
 
         if (is_passive) {
             // is_passive = true means the master was evoked by a super_master,
-            // so in super_master_related.proto at line 30 repeated SlavesInfoControlledByMaster my_slaves=4 is not empty
+            // so in super_master_related.proto at line 30 repeated SlavesInfoControlledByMaster my_slaves=4
+            // is not empty
             for (auto &slave_info:super_master_control_message.my_slaves()) {
                 UPID slave_upid("slave@" + slave_info.ip() + ":" + slave_info.port());
                 ReregisterMasterMessage *register_message = new ReregisterMasterMessage();
@@ -1143,6 +1168,14 @@ namespace chameleon {
         }
     }
     // end of super_mater related
+
+    void Master::received_launch_backup_master(const UPID &slave, const BackupMasterMessage &message) {
+        LOG(INFO)<<"received BackupMasterMessage from "<<slave;
+        for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
+            UPID slave_id("slave@" + *iter + ":6061");
+            send(slave_id,message);
+        }
+    }
 }
 
 using namespace chameleon;
@@ -1171,6 +1204,8 @@ int main(int argc, char **argv) {
 
         // set the webui path for the master
         master.set_webui_path(FLAGS_webui_path);
+
+        master.set_fault_tolerance(FLAGS_fault_tolerance);
 
         PID<Master> cur_master = process::spawn(master);
 

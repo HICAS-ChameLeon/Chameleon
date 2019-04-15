@@ -55,7 +55,7 @@
     chameleon_app.controller('UpdateCtrl',function($scope,$http,$timeout){
 
         var pollState = function() {
-           $scope.delay = 2000;
+            $scope.delay = 2000;
             $http({
                 method: 'GET',
                 url: leadingChameleonMasterURL('/master/runtime-resources')
@@ -880,7 +880,7 @@
             var cur_masterindex = 0;
 
             if ($scope.supermaster.quantities >= 1) {
-               // my_superedges = [];   //构造一条边
+                // my_superedges = [];   //构造一条边
                 // three
                 $http({
                     method: 'GET',
@@ -1087,163 +1087,163 @@
         });
 
     });
-    
+
     chameleon_app.controller('FrameworkTopologyCtrl',function ($scope, $http,$timeout)
     {
         var pollState = function() {
             $scope.delay = 10000;
-        $http({
-            method: 'GET',
-            url: leadingChameleonMasterURL('/master/runtime-resources')
-        }).then(function successCallback(response) {
-
-            $scope.master = {
-                runtime    : response.data.content,
-                quantities : response.data.quantity,
-            };
-
-            let DIR = '../icon/refresh-cl/';
-            var vertexes = new Array();
-
-            var my_master = {};
-            vertexes[0] = my_master;
-            my_master.id = 0;
-            my_master.label = "master";
-            my_master.shape = 'image';
-            my_master.image = DIR + 'Hardware-WQN-main.png';
-            //my_master.title = "主节点";    //unchangeable
-
-            var index_slave = 1;
-            var index_edge = -1;
-            var my_edges = [];
-            var cur_index = 0;
-
-            if ($scope.master.quantities >= 1) {
-                my_edges = [];
-                for (var i in $scope.master.runtime) {
-                    var slave = $scope.master.runtime[i];
-
-                    var temp_slave = {}; // 添加一个顶点
-                    cur_index++;         // 全局id
-
-                    my_master.title = $scope.master.runtime[0].slave_id+':6060';   //master节点需要用到slave的消息，所以写在这里
-                    temp_slave.label = "slave" + cur_index;
-                    temp_slave.id = cur_index;
-                    temp_slave.shape = 'image';
-                    temp_slave.image = DIR + 'Hardware-WQN-server.png';
-                    temp_slave.title = $scope.master.runtime[i].slave_id;
-                    vertexes[cur_index] = temp_slave; // cur_index 同时代表 顶点集合 my_slaves 的下标
-
-                    var temp_edge = {}; // 添加一条边 master -> temp_slave
-                    temp_edge.from = 0;
-                    temp_edge.to = temp_slave.id;
-                    temp_edge.arrows = 'to';
-                    temp_edge.label = Math.round($scope.master.runtime[i].net_usage.net_used * 100) / 100 + 'KiB/s';
-                    index_edge++; // 边集合 my_edges 的下标
-                    my_edges[index_edge] = temp_edge;
-
-
-                }
-            } else      {
-                my_edges = [];
-            }
-
             $http({
                 method: 'GET',
-                url: leadingChameleonMasterURL('/master/frameworks')
+                url: leadingChameleonMasterURL('/master/runtime-resources')
             }).then(function successCallback(response) {
 
                 $scope.master = {
-                    framework:
-                        {
-                            resource  : response.data.content,
-                            quantities: response.data.quantity,
-                        }
+                    runtime    : response.data.content,
+                    quantities : response.data.quantity,
                 };
 
-                if($scope.master.framework.quantities >=1)
-                {
-                    //var my_edges = [];
-                    var framework_index = cur_index;
-                    for (var f in $scope.master.framework.resource)
-                    {
-                        //   添加framework运行节点
-                        var temp_framework = {};
-                        framework_index++;
-                        temp_framework.label = $scope.master.framework.resource[f].name;
-                        temp_framework.id = framework_index;
-                        temp_framework.shape = 'image';
-                        temp_framework.image =DIR + 'Hardware-WQN-spark.png'
-                        temp_framework.title = $scope.master.framework.resource[f].id;
-                        // temp_framework.value = Math.ceil(Math.round($scope.master_runtime[i].cpu_usage.cpu_used) / 10);
-                        vertexes[framework_index] = temp_framework;
-                        // 添加连接cpu节点的边, temp_slave -> temp_cpu
-                        var edge_framework = {};
-                        index_edge++;
-                        edge_framework.from = temp_framework.id;
-                        edge_framework.to = my_master.id;
-                        edge_framework.arrows = 'to';
-                        my_edges[index_edge] = edge_framework;
+                let DIR = '../icon/refresh-cl/';
+                var vertexes = new Array();
+
+                var my_master = {};
+                vertexes[0] = my_master;
+                my_master.id = 0;
+                my_master.label = "master";
+                my_master.shape = 'image';
+                my_master.image = DIR + 'Hardware-WQN-main.png';
+                //my_master.title = "主节点";    //unchangeable
+
+                var index_slave = 1;
+                var index_edge = -1;
+                var my_edges = [];
+                var cur_index = 0;
+
+                if ($scope.master.quantities >= 1) {
+                    my_edges = [];
+                    for (var i in $scope.master.runtime) {
+                        var slave = $scope.master.runtime[i];
+
+                        var temp_slave = {}; // 添加一个顶点
+                        cur_index++;         // 全局id
+
+                        my_master.title = $scope.master.runtime[0].slave_id+':6060';   //master节点需要用到slave的消息，所以写在这里
+                        temp_slave.label = "slave" + cur_index;
+                        temp_slave.id = cur_index;
+                        temp_slave.shape = 'image';
+                        temp_slave.image = DIR + 'Hardware-WQN-server.png';
+                        temp_slave.title = $scope.master.runtime[i].slave_id;
+                        vertexes[cur_index] = temp_slave; // cur_index 同时代表 顶点集合 my_slaves 的下标
+
+                        var temp_edge = {}; // 添加一条边 master -> temp_slave
+                        temp_edge.from = 0;
+                        temp_edge.to = temp_slave.id;
+                        temp_edge.arrows = 'to';
+                        temp_edge.label = Math.round($scope.master.runtime[i].net_usage.net_used * 100) / 100 + 'KiB/s';
+                        index_edge++; // 边集合 my_edges 的下标
+                        my_edges[index_edge] = temp_edge;
+
+
                     }
-
-
+                } else      {
+                    my_edges = [];
                 }
 
-                var nodes = new vis.DataSet(vertexes);
-                var edges = new vis.DataSet(my_edges);
+                $http({
+                    method: 'GET',
+                    url: leadingChameleonMasterURL('/master/frameworks')
+                }).then(function successCallback(response) {
 
-                var container = document.getElementById('mynetwork');
-                var data = {
-                    nodes: nodes,
-                    edges: edges
-                };
+                    $scope.master = {
+                        framework:
+                            {
+                                resource  : response.data.content,
+                                quantities: response.data.quantity,
+                            }
+                    };
 
-                var options = {
-                    interaction: {
-                        navigationButtons: true,
-                        keyboard: true
-                    },
-                    groups: {
-                        'switch': {
-                            shape: 'dot',
-                            color: '#FF9900' // orange
-                        },
-                        desktop: {
-                            shape: 'dot',
-                            color: "#109618" // green
-                        },
-                        mobile: {
-                            shape: 'dot',
-                            color: "#5A1E5C" // purple
-                        },
-                        server: {
-                            shape: 'dot',
-                            color: "#c53c3d" // red
-                        },
-                        internet: {
-                            shape: 'square',
-                            color: "#c50ac2" // blue
+                    if($scope.master.framework.quantities >=1)
+                    {
+                        //var my_edges = [];
+                        var framework_index = cur_index;
+                        for (var f in $scope.master.framework.resource)
+                        {
+                            //   添加framework运行节点
+                            var temp_framework = {};
+                            framework_index++;
+                            temp_framework.label = $scope.master.framework.resource[f].name;
+                            temp_framework.id = framework_index;
+                            temp_framework.shape = 'image';
+                            temp_framework.image =DIR + 'Hardware-WQN-spark.png'
+                            temp_framework.title = $scope.master.framework.resource[f].id;
+                            // temp_framework.value = Math.ceil(Math.round($scope.master_runtime[i].cpu_usage.cpu_used) / 10);
+                            vertexes[framework_index] = temp_framework;
+                            // 添加连接cpu节点的边, temp_slave -> temp_cpu
+                            var edge_framework = {};
+                            index_edge++;
+                            edge_framework.from = temp_framework.id;
+                            edge_framework.to = my_master.id;
+                            edge_framework.arrows = 'to';
+                            my_edges[index_edge] = edge_framework;
                         }
+
+
                     }
 
-                };
+                    var nodes = new vis.DataSet(vertexes);
+                    var edges = new vis.DataSet(my_edges);
 
-                var network = new vis.Network(container, data, options);
+                    var container = document.getElementById('mynetwork');
+                    var data = {
+                        nodes: nodes,
+                        edges: edges
+                    };
 
-                // add event listeners
-                network.on('select', function (params) {
-                    document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
+                    var options = {
+                        interaction: {
+                            navigationButtons: true,
+                            keyboard: true
+                        },
+                        groups: {
+                            'switch': {
+                                shape: 'dot',
+                                color: '#FF9900' // orange
+                            },
+                            desktop: {
+                                shape: 'dot',
+                                color: "#109618" // green
+                            },
+                            mobile: {
+                                shape: 'dot',
+                                color: "#5A1E5C" // purple
+                            },
+                            server: {
+                                shape: 'dot',
+                                color: "#c53c3d" // red
+                            },
+                            internet: {
+                                shape: 'square',
+                                color: "#c50ac2" // blue
+                            }
+                        }
+
+                    };
+
+                    var network = new vis.Network(container, data, options);
+
+                    // add event listeners
+                    network.on('select', function (params) {
+                        document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
+                    });
+
+                }, function errorCallback(response) {
+                    // 请求失败执行代码
                 });
+
+
 
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
-
-
-
-        }, function errorCallback(response) {
-            // 请求失败执行代码
-        });
             $timeout(pollState, $scope.delay);
         };
         pollState();
@@ -1308,11 +1308,11 @@
                 })
             }
             $scope.openModal = function () {
-                    alert("supermaster已经开启");
+                alert("supermaster已经开启");
 
             }
-            }
-        });
+        }
+    });
 
     chameleon_app.controller('StartThreeSupermasterCtrl', function ($scope, $rootScope, $uibModal) {
         $scope.openModal = function () {
@@ -1448,7 +1448,7 @@
                 {
                     for (var g in $scope.master.framework.resource[f].slaves) {
                         $scope.slaves =$scope.master.framework.resource[f].slaves;
-                       //console.log($scope.slaves);
+                        //console.log($scope.slaves);
                     }
                 }
 
