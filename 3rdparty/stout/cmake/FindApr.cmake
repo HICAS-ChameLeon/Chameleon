@@ -37,6 +37,7 @@ set(POSSIBLE_APR_LIB_DIRS
   /usr/local/apr/lib
   /usr/local/lib
   /usr/lib
+  /nfsroot/rv/4/riscv64_libraries/lib
   )
 
 set(APR_LIBRARY_NAMES apr-1)
