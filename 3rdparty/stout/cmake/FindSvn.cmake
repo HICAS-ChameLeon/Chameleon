@@ -24,6 +24,7 @@ set(POSSIBLE_SVN_INCLUDE_DIRS
 set(POSSIBLE_SVN_LIB_DIRS
   /usr/lib
   /usr/local/lib
+  /nfsroot/rv/4/riscv64_libraries/lib
   )
 
 set(SVN_LIBRARY_NAMES
