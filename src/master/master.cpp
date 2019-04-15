@@ -500,6 +500,7 @@ namespace chameleon {
       * @param          : UPID& from ,Call& call
       * */
     void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
+        LOG(INFO)<<call.subscribe().framework_info().name();
         //first call
         if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
             subscribe(from, call.subscribe());

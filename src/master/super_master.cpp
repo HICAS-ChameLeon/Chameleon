@@ -506,10 +506,12 @@ namespace chameleon {
 
     //framework related
     void SuperMaster::received_call(const UPID &from, const mesos::scheduler::Call &call) {
+        LOG(INFO)<<call.subscribe().framework_info().name();
         mesos::MasterInfo *master_info = new mesos::MasterInfo();
         for(auto iter = m_master_framework.begin();
             iter != m_master_framework.end(); iter++){
-            if (iter->first.find("spark") != string::npos) {
+            if (call.subscribe().framework_info().name().find("Spark") != string::npos
+            && iter->first.find("spark") != string::npos) {
                 master_info->set_pid("master@"+iter->second+":6060");
                 vector<string> master_ip = strings::tokenize(iter->second,".");
                 unsigned int master_ip_int = std::stoi(master_ip[0])+256*(std::stoi(master_ip[1])+
@@ -522,10 +524,27 @@ namespace chameleon {
                 address->set_port(6060);
                 master_info->set_allocated_address(address);
                 send(from,*master_info);
-                LOG(INFO)<<"send MasterInfo";
+                LOG(INFO)<<"send Spark_MasterInfo "<<address->ip()<<":"<<address->port();
+                break;
+            } else if (call.subscribe().framework_info().name() == "Flink"
+                       && iter->first.find("flink") != string::npos) {
+                master_info->set_pid("master@"+iter->second+":6060");
+                vector<string> master_ip = strings::tokenize(iter->second,".");
+                unsigned int master_ip_int = std::stoi(master_ip[0])+256*(std::stoi(master_ip[1])+
+                                                                          256*(std::stoi(master_ip[2])+256*(std::stoi(master_ip[3]))));
+                master_info->set_ip(master_ip_int);
+                master_info->set_port(6060);
+                master_info->set_id("111622f1-1e63-456e-8fc5-e64ebb30fcb8-0000");
+                mesos::Address *address = new mesos::Address();
+                address->set_ip(iter->second);
+                address->set_port(6060);
+                master_info->set_allocated_address(address);
+                send(from,*master_info);
+                LOG(INFO)<<"send Flink_MasterInfo "<<address->ip()<<":"<<address->port();
                 break;
             }
         }
+        delete master_info;
     }
 
     void SuperMaster::classify_masters_framework() {
