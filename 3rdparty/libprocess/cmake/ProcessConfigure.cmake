@@ -192,7 +192,8 @@ if (ENABLE_SSL)
 endif (ENABLE_SSL)
 
 if (NOT WIN32)
-  find_package(ZLIB REQUIRED)
+#  find_package(ZLIB REQUIRED)
+  find_package(ZLIB REQUIRED PATHS /home/sdc/4/libraries_of_mesos/zlib-1.2.11/ NO_DEFAULT_PATH)
 
   # TODO(hausdorff): (MESOS-3396) The `LINUX` flag comes from MesosConfigure;
   # when we port the bootstrap script to CMake, we should also copy this
