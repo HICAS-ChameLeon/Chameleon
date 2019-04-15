@@ -13,7 +13,7 @@
 #include <stout/option.hpp>
 #include <stout/os.hpp>
 
-#include <mesos.pb.h>
+#include <mesos/scheduler.hpp>
 
 #include "AliTracePreProcessor.h"
 #include "AliTraceLoader.hpp"
@@ -22,7 +22,34 @@
 using namespace mesos;
 
 class SimulatorScheduler : public Scheduler{
+public:
+    //construct function
+    SimulatorScheduler();
 
+    virtual ~SimulatorScheduler();
+
+    virtual void registered(SchedulerDriver*, const FrameworkID&, const MasterInfo&){
+        cout << "Registered!" << endl;
+    }
+
+    virtual void reregistered(SchedulerDriver*, const MasterInfo& masterInfo) {}
+
+    virtual void disconnected(SchedulerDriver* driver) {}
+
+    virtual void resourceOffers(SchedulerDriver* driver, const vector<Offer>& offers){
+
+        for(size_t i = 0; i < offers.size(); i++){
+            LOG(INFO) << "Offers size : " << offers.size();
+            const Offer& offer = offers[i];
+
+            double cpus = 0;
+            double mem = 0;
+
+            for(int i = 0; i < offer.resources_size(); i++){
+
+            }
+        }
+    }
 };
 
 
