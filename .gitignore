@@ -2,6 +2,7 @@
 .idea
 /cmake-build-debug
 /src/test
+risc-v
 gmock-1.7.0
 
 # Prerequisites

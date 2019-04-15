@@ -623,10 +623,7 @@ namespace chameleon {
 
         mesos::internal::ResourceOffersMessage message;
         LOG(INFO) << "start scheduling to provide offers";
-
         m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
-//
-        m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
        // m_smhc_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 

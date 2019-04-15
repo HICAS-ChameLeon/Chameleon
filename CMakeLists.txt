@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 2.8.10)
+SET(CMAKE_SYSTEM_NAME Linux)
+#SET(CMAKE_C_COMPILER “/opt/riscv/bin/riscv64-unknown-elf-gcc”)
+#SET(CMAKE_CXX_COMPILER “/opt/riscv/bin/riscv64-unknown-elf-gcc”)
+#SET(CMAKE_FIND_ROOT_PATH “/opt/riscv”)
+
 
 ADD_DEFINITIONS(
         -std=c++11 # Or -std=c++0x
