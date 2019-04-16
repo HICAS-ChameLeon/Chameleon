@@ -24,6 +24,8 @@ include_directories("/opt/riscv-toolchain/riscv64-unknown-linux-gnu/include")
 link_directories("/opt/riscv-toolchain/riscv64-unknown-linux-gnu/lib")
 include_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/include")
 link_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/lib")
+link_directories("/nfsroot/rv/hpc/riscv_chameleon/lib")
+
 
 
 
