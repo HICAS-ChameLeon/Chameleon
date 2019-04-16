@@ -79,7 +79,7 @@ endif (WIN32)
 # build directory into `configure` as a prefix; so if we're going to move the
 # libraries, we might as well move them to a library folder.)
 if (NOT WIN32)
-  set(GLOG_CONFIG_CMD  ${GLOG_ROOT}/src/../configure --prefix=${GLOG_LIB_ROOT})
+  set(GLOG_CONFIG_CMD  ${GLOG_ROOT}/src/../configure --host=riscv64-unknown-linux-gnu --prefix=${GLOG_LIB_ROOT})
   set(GLOG_BUILD_CMD   make libglog.la)
   set(GLOG_INSTALL_CMD make install)
   # Patch glog to deal with a problem that appears when compiling on clang
