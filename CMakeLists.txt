@@ -19,6 +19,12 @@ project(Chameleon)
 #                   COMMAND  ./my_make.sh
 #        )
 
+### for risc-v crossing compiling
+include_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/")
+link_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/lib")
+
+### end risc-v
+
 # CMAKE MODULE SETUP.f
 #####################
 # Paths that are searched when `include(...)` is called.
@@ -87,6 +93,9 @@ include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build
 include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3/src)
 include_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/windows)
 link_directories(${CMAKE_BINARY_DIR}/3rdparty/glog-0.3.3/src/glog-0.3.3-build/.libs)
+
+
+
 
 add_subdirectory(3rdparty)
 #add_subdirectory(src/my_hello)
