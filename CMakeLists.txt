@@ -20,7 +20,7 @@ project(Chameleon)
 #        )
 
 ### for risc-v crossing compiling
-include_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/")
+include_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/include")
 link_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/lib")
 
 ### end risc-v
