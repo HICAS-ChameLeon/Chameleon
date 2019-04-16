@@ -1,5 +1,10 @@
 #PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages participant_info ${CMAKE_BINARY_DIR}/src/messages participant_info)
 
+# for riscv
+include_directories("/opt/riscv-toolchain/riscv64-unknown-linux-gnu/include")
+link_directories("/opt/riscv-toolchain/riscv64-unknown-linux-gnu/lib")
+# end riscv
+
 include_directories(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
 include_directories(${CMAKE_SOURCE_DIR}/src/master/)
 message(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
