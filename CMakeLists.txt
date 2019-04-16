@@ -20,10 +20,11 @@ project(Chameleon)
 #        )
 
 ### for risc-v crossing compiling
-include_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/include")
-link_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/lib")
 include_directories("/opt/riscv-toolchain/riscv64-unknown-linux-gnu/include")
 link_directories("/opt/riscv-toolchain/riscv64-unknown-linux-gnu/lib")
+include_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/include")
+link_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/lib")
+
 
 
 ### end risc-v
