@@ -88,7 +88,7 @@ if (NOT WIN32)
 
   # NOTE: `libev` is "installed" into a lib directory, see "NOTE: (fix for
   # MESOS-3250)" comment above for explanation.
-  set(LIBEV_CONFIG_CMD  ${LIBEV_ROOT}/configure --prefix=${LIBEV_ROOT}-lib)
+  set(LIBEV_CONFIG_CMD  ${LIBEV_ROOT}/configure --host=riscv64-unknown-linux-gnu --prefix=${LIBEV_ROOT}-lib)
   set(LIBEV_BUILD_CMD   make)
   set(LIBEV_INSTALL_CMD mkdir -p ${LIBEV_LIB_ROOT} && cp -r ${LIBEV_ROOT}-build/.libs/. ${LIBEV_LIB_ROOT})
   # Patch libev to keep it from reaping child processes.
