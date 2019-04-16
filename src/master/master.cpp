@@ -181,9 +181,11 @@ namespace chameleon {
                     const string &scheduler_name = m_scheduler->m_scheduler_name;
 
                     goarse_schedular.values["name"] = scheduler_name;
+                    goarse_schedular.values["id"] = "1";
                     goarse_schedular.values["done"]= true;
 
                     smhc_schedular.values["name"] = "SMHCGrained";
+                    smhc_schedular.values["id"] = "2";
                     smhc_schedular.values["done"]= false;
 
 
@@ -208,6 +210,7 @@ namespace chameleon {
                   JSON::Array schedular_array;
                   SchedulerInterface *m_smhc_scheduler = new SMHCGrainedScheduler();
 
+//                  m_scheduler = new make_shared<CoarseGrainedScheduler>();
 //                  m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
 //                  const mesos::FrameworkID frameworkId;
 //                  mesos::internal::ResourceOffersMessage message;
@@ -216,9 +219,11 @@ namespace chameleon {
                   const string &scheduler_name = m_smhc_scheduler->m_scheduler_name;
 
                   smhc_schedular.values["name"] = scheduler_name;
+                  smhc_schedular.values["id"] = "1";
                   smhc_schedular.values["done"] = true;
 
                   goarse_schedular.values["name"] = "GoarseGrained";
+                  goarse_schedular.values["id"] = "2";
                   goarse_schedular.values["done"] = false;
 
 
@@ -232,6 +237,44 @@ namespace chameleon {
                   ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                   return ok_response;
               });
+
+
+        route(
+                "/post-test",
+                "post a file",
+                [](Request request) {
+                    string request_method = request.method;
+                    std::cout<<request_method <<std::endl;
+                    string& tpath = request.url.path;
+                    std::cout<<tpath<<std::endl;
+                    int param_size = request.url.query.size();
+                    std::cout<< param_size<<std::endl;
+                    for(string key: request.url.query.keys()){
+                        std::cout<<"key:"<<key<<std::endl;
+                        std::cout<<"value:"<<request.url.query[key]<<std::endl;
+                    }
+
+//                int a = numify<int>(request["a"]).get();
+//                int b = numify<int>(request["b"]).get();
+                    string body_str = request.body;
+                    std::cout<<body_str<<std::endl;
+//                    Option<Pipe::Reader> pipe_reader = request.reader;
+//                    if(pipe_reader.isSome()){
+//                        Pipe::Reader reader = pipe_reader.get();
+//                        Future<string> res = reader.readAll();
+//                        if(res.isReady()){
+//                            cout<<"pipe reader content"<<endl;
+//                            cout<<res.get()<<endl;
+//                        }
+//                    }
+                    int a = 3;
+                    int b = 4;
+                    std::ostringstream result;
+                    result << "{ \"result\": " <<"\"" <<request_method+tpath <<"\"" << "}";
+                    std::cout<<result.str()<<std::endl;
+                    JSON::Value body = JSON::parse(result.str()).get();
+                    return OK(body);
+                });
 
 
         // http://172.20.110.228:6060/master/hardware-resources

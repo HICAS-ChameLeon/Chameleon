@@ -125,6 +125,41 @@
             };
         }, function errorCallback(response) {
         });
+
+        $rootScope.selected = [];
+        var updateSelected = function (action, id) {
+            id = "" + id + "";
+            if (action == 'add' && $rootScope.selected.indexOf(id) == -1) {
+                $rootScope.selected.push(id);
+            }
+            if (action == 'remove' && $rootScope.selected.indexOf(id) != -1) {
+                var idx = $rootScope.selected.indexOf(id);
+                $rootScope.selected.splice(idx, 1);
+            }
+        };
+        $scope.updateSelection = function ($event, id) {
+            var checkbox = $event.target;
+            var action = (checkbox.checked ? 'add' : 'remove');
+            updateSelected(action, id);
+        };
+
+        $scope.isSelected = function (id) {
+            return $rootScope.selected.indexOf(id) >= 0;
+        };
+
+        // $scope.getRequiremt = function () {
+        //     var str = "";
+        //     for (var i = 0; i<$scope.selected.length; i++){
+        //         str += "," + $scope.selected[i];
+        //     }
+        //     if(str != ""){
+        //         str = str.substring(1);
+        //     }
+        //     return str;
+        // };
+
+        console.log($scope.selected) ;
+
     });
 
     chameleon_app.controller('ChangeSchedulerCtrl', function($scope,$uibModal) {
@@ -143,21 +178,49 @@
 
     });
 
-    chameleon_app.controller('ChangeSchedulerInstanceCtrl', function($scope, $uibModalInstance,$http, date) {
+    chameleon_app.controller('ChangeSchedulerInstanceCtrl', function($scope,$rootScope,$uibModalInstance,$http, date) {
 
         $scope.date= date;
 
         //在这里处理要进行的操作
+        // $scope.ok = function() {
+        //     $http({
+        //         method: 'GET',
+        //         url: leadingChameleonMasterURL('/master/change-scheduler')
+        //     }).then(function successCallback(response) {
+        //         console.log(response);
+        //         $uibModalInstance.dismiss('cancel');
+        //     }, function errorCallback(response) {
+        //         // 请求失败执行代码
+        //     });
+        // };
+
         $scope.ok = function() {
             $http({
-                method: 'GET',
-                url: leadingChameleonMasterURL('/master/change-scheduler')
-            }).then(function successCallback(response) {
-                console.log(response);
+                method: "POST",
+                url: leadingChameleonMasterURL('/master/post-test'),
+                data:{name:$rootScope.selected,done:true},
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                transformRequest:function (obj) {
+                    var str = [];
+                    for(var p in obj){
+                        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+                    }
+                    return str.join("&");
+                }
+            }).success(function(req) {
+                console.log(req);
                 $uibModalInstance.dismiss('cancel');
-            }, function errorCallback(response) {
-                // 请求失败执行代码
             });
+            // $http({
+            //     method: 'GET',
+            //     url: leadingChameleonMasterURL('/master/change-scheduler')
+            // }).then(function successCallback(response) {
+            //     console.log(response);
+            //     $uibModalInstance.dismiss('cancel');
+            // }, function errorCallback(response) {
+            //     // 请求失败执行代码
+            // });
         };
         $scope.cancel = function() {
             $uibModalInstance.dismiss('cancel');
@@ -1460,5 +1523,85 @@
         pollState();
     });
 
+    chameleon_app.controller('AddStyleCtrl',function($scope)
+    {
+        $scope.tagcategories = [
+            {
+                id: 1,
+                name: 'Color',
+                tags: [
+                    {
+                        id:1,
+                        name:'color1'
+                    },
+                    {
+                        id:2,
+                        name:'color2'
+                    },
+                    {
+                        id:3,
+                        name:'color3'
+                    },
+                    {
+                        id:4,
+                        name:'color4'
+                    },
+                ]
+            },
+            {
+                id:2,
+                name:'Cat',
+                tags:[
+                    {
+                        id:5,
+                        name:'cat1'
+                    },
+                    {
+                        id:6,
+                        name:'cat2'
+                    },
+                ]
+            },
+            {
+                id:3,
+                name:'Scenario',
+                tags:[
+                    {
+                        id:7,
+                        name:'Home'
+                    },
+                    {
+                        id:8,
+                        name:'Work'
+                    },
+                ]
+            }
+        ];
+
+        $scope.selected = [];
+        $scope.selectedTags = [];
+
+        var updateSelected = function(action,id,name){
+            if(action == 'add' && $scope.selected.indexOf(id) == -1){
+                $scope.selected.push(id);
+                $scope.selectedTags.push(name);
+            }
+            if(action == 'remove' && $scope.selected.indexOf(id)!=-1){
+                var idx = $scope.selected.indexOf(id);
+                $scope.selected.splice(idx,1);
+                $scope.selectedTags.splice(idx,1);
+            }
+        }
+
+        $scope.updateSelection = function($event, id){
+            var checkbox = $event.target;
+            var action = (checkbox.checked?'add':'remove');
+            updateSelected(action,id,checkbox.name);
+        }
+
+        $scope.isSelected = function(id){
+            return $scope.selected.indexOf(id)>=0;
+        }
+    });
 
 })();
