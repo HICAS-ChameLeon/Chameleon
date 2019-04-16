@@ -367,14 +367,14 @@ namespace chameleon {
                 task.set_allocated_command(new_command_info);
                 LOG(INFO) << "the final value of command shell is " << final_value;
 
-                string com = strings::remove(spark_home_path,"flink-1.4.2");
-                string command_string = "sudo cp -r /home/zyx/hadoop "+com+"hadoop/";
-                LOG(INFO) << "the command_string is " << command_string;
-                Try<Subprocess> s = subprocess(
-                        command_string ,
-                        process::Subprocess::FD(STDIN_FILENO),
-                        process::Subprocess::FD(STDOUT_FILENO),
-                        process::Subprocess::FD(STDERR_FILENO));
+//                string com = strings::remove(spark_home_path,"flink-1.4.2");
+//                string command_string = "sudo cp -r /home/zyx/hadoop "+com+"hadoop/";
+//                LOG(INFO) << "the command_string is " << command_string;
+//                Try<Subprocess> s = subprocess(
+//                        command_string ,
+//                        process::Subprocess::FD(STDIN_FILENO),
+//                        process::Subprocess::FD(STDOUT_FILENO),
+//                        process::Subprocess::FD(STDERR_FILENO));
             }
 
         }
