@@ -9,7 +9,8 @@ set(protobuf_2_6_INCLUDE_DIR ${protobuf_2_6_ROOT}/include)
 #message(9 ${protobuf_2_6_ROOT})
 
 #set(glag_configure ${protobuf_2_6_ROOT}/src/protobuf_2_6/configure --prefix=${protobuf_2_6_ROOT})
-set(protobuf_2_6_configure cd ${protobuf_2_6_ROOT}/src/protobuf_2_6 && ./autogen.sh && ./configure --prefix=${protobuf_2_6_ROOT})
+#set(protobuf_2_6_configure cd ${protobuf_2_6_ROOT}/src/protobuf_2_6 && ./autogen.sh && ./configure --prefix=${protobuf_2_6_ROOT})
+set(protobuf_2_6_configure cd ${protobuf_2_6_ROOT}/src/protobuf_2_6 && ./autogen.sh && ./configure --host=riscv64-unknown-linux-gnu --prefix=${protobuf_2_6_ROOT})
 
 set(protobuf_2_6_make cd ${protobuf_2_6_ROOT}/src/protobuf_2_6 && make)
 set(protobuf_2_6_install cd ${protobuf_2_6_ROOT}/src/protobuf_2_6 && make install)
