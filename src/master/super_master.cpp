@@ -59,7 +59,7 @@ namespace chameleon {
 
         // change from one level to two levels
 //        cluster_levels = 2;
-        m_masters_size = 4;
+        m_masters_size = 2;
         m_super_masters_size = 2;
 
         m_uuid = UUID::random().toString();
