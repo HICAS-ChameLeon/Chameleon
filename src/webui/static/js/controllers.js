@@ -1234,6 +1234,7 @@
                         var temp_framework = {};
                         framework_index++;
                         temp_framework.label = $scope.master.framework.resource[f].name;
+                       // temp_slave.label = $scope.master.framework.resource[f].hostname;
                         temp_framework.id = framework_index;
                         temp_framework.shape = 'image';
                         temp_framework.image =DIR + 'Hardware-WQN-spark.png'
