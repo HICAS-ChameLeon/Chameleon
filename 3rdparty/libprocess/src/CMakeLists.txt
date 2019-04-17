@@ -156,4 +156,4 @@ set_target_properties(
 
 # ADD LINKER FLAGS (generates, e.g., -lglog on Linux).
 ######################################################
-target_link_libraries(${PROCESS_TARGET} ${PROCESS_LIBS})
+target_link_libraries(${PROCESS_TARGET} ${PROCESS_LIBS} atomic)
