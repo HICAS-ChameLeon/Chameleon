@@ -67,7 +67,9 @@ public:
             //Launch tasks
             vector<TaskInfo> tasks;
 
-            while(m_task_launched < total_tasks)
+            while(m_task_launched < total_tasks){
+
+            }
         }
     }
 

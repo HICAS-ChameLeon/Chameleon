@@ -72,9 +72,10 @@ namespace chameleon{
         environment["CHAMELEON_FETCHER_INFO"] = stringify(JSON::protobuf(info));
         environment["framework_name"] = framework_name;
         environment["PUBLIC_RESOURCES_DIR"] = m_public_resources_dir;
-        Option<string> hadoop_home = os::getenv("HADOOP_HOME");
-        LOG(INFO)<<hadoop_home.get();
-        environment["HADOOP_HOME"] =hadoop_home.get();
+        //Option<string> hadoop_home = os::getenv("HADOOP_HOME");
+        //LOG(INFO)<<hadoop_home.get();
+        //environment["HADOOP_HOME"] = hadoop_home.get();
+        environment["HADOOP_HOME"] = "/home/lemaker/open-source/hadoop-2.7.5";
         LOG(INFO)<<"lele download dependencies of framework_name: "<<framework_name;
         Try<Subprocess> download_subprocess = process::subprocess(
                 downloader_path,

@@ -63,6 +63,7 @@ namespace chameleon {
         cpu_scalar->set_value(m_available_cpus);
         cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
         offer->add_resources()->MergeFrom(*cpu_resource);
+        LOG(INFO) << "Heldon cpu resources : " << cpu_scalar;
 
         // memory
         mesos::Resource *mem_resource = new mesos::Resource();
@@ -72,7 +73,7 @@ namespace chameleon {
         mem_scalar->set_value(m_available_mem);
         mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
         offer->add_resources()->MergeFrom(*mem_resource);
-
+        LOG(INFO) << "Heldon mem resources : " << mem_scalar;
         // port
         mesos::Resource *port_resource = new mesos::Resource();
         port_resource->set_name("ports");
