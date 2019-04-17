@@ -30,6 +30,7 @@ set(POSSIBLE_APR_INCLUDE_DIRS
   /usr/local/apr/include/apr-1
   /usr/include/apr-1
   /usr/include/apr-1.0
+  /home/hpc/04/libraries_of_mesos/apr-1.5.2/include
   )
 
 set(POSSIBLE_APR_LIB_DIRS
@@ -38,6 +39,7 @@ set(POSSIBLE_APR_LIB_DIRS
   /usr/local/lib
   /usr/lib
   /nfsroot/rv/4/riscv64_libraries/lib
+  /home/hpc/04/libraries_of_mesos
   )
 
 set(APR_LIBRARY_NAMES apr-1)
