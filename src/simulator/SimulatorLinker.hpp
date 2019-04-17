@@ -15,7 +15,7 @@ namespace AliSim{
     private:
         SimulatedWallTime* m_simulated_time;
         multimap<uint64_t, Machine_mega> m_machine_mega_map;
-        unordered_map<uint64_t, Task_identifier> m_tasks_map;
+        multimap<uint64_t, Task_identifier> m_tasks_map;
 
         multimap<uint64_t, Task_identifier> m_current_tasks_map;
 
@@ -27,6 +27,8 @@ namespace AliSim{
         void Load_trace_data(AliTraceLoader* trace_loader);
 
         void Get_machine_mega();
+
+        void Get_tasks();
     };
 }
 

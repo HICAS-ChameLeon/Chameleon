@@ -21,10 +21,12 @@
 
 using namespace mesos;
 
+const string trace_path = "/home/heldon/chameleon/ali_clusterdata/alibaba_clusterdata_v2018/";
+
 class SimulatorScheduler : public Scheduler{
 public:
     //construct function
-    SimulatorScheduler();
+    SimulatorScheduler() : m_task_launched(0), m_task_finished(0), total_tasks(10){};
 
     virtual ~SimulatorScheduler();
 
@@ -45,15 +47,35 @@ public:
             double cpus = 0;
             double mem = 0;
 
-            for(int i = 0; i < offer.resources_size(); i++){
+            AliSim::SimulatedWallTime simulated_wall_time(20);
+            AliSim::AliTraceLoader trace_loader(trace_path);
+            AliSim::AliSimulator simulator(simulated_wall_time, trace_loader);
+            simulator.Run();
 
+            for (int i = 0; i < offer.resources_size(); i++) {
+
+                const Resource& resource = offer.resources(i);
+                if (resource.name() == "cpus" &&
+                    resource.type() == Value::SCALAR) {
+                    cpus = resource.scalar().value();
+                } else if (resource.name() == "mem" &&
+                           resource.type() == Value::SCALAR) {
+                    mem = resource.scalar().value();
+                }
             }
+
+            //Launch tasks
+            vector<TaskInfo> tasks;
+
+            while(m_task_launched < total_tasks)
         }
     }
+
+private:
+    int m_task_launched;
+    int m_task_finished;
+    int total_tasks;
 };
-
-
-const string trace_path = "/home/heldon/chameleon/ali_clusterdata/alibaba_clusterdata_v2018/";
 
 int main(int argc, char* argv[]){
 

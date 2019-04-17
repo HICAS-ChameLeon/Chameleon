@@ -46,7 +46,19 @@ namespace AliSim{
         uint64_t start_time;
         uint64_t end_time;
         int32_t plan_cpu;
-        int32_t plan_men;
+        int32_t plan_mem;
+
+        friend ostream &operator<< (ostream &out, Task_identifier task_identifier){
+            cout << "task name : " <<task_identifier.task_name << " ; ";
+            cout << "inst_num : " <<task_identifier.inst_num << " ; ";
+            cout << "job_name : " <<task_identifier.job_name << " ; ";
+            cout << "status : " << task_identifier.status << " ; ";
+            cout << "start_time : " << task_identifier.start_time << endl;
+            cout << "end_time : " << task_identifier.end_time << endl;
+            cout << "plan_cpu : " << task_identifier.plan_cpu << endl;
+            cout << "plan_mem : " << task_identifier.plan_mem << endl;
+            return out;
+        };
     };
 
     enum Task_status{

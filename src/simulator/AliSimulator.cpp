@@ -29,5 +29,6 @@ namespace AliSim{
 
         }
         m_linker->Get_machine_mega();
+        m_linker->Get_tasks();
     }
 }
