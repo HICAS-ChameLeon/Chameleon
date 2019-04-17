@@ -105,6 +105,16 @@ endif (ENABLE_SSL)
 
 # INCLUDE DIRECTIVES FOR PROCESS LIBRARY (generates, e.g., -I/path/to/thing
 # on Linux).
+
+### for risc-v crossing compiling
+include_directories("/opt/riscv-toolchain/riscv64-unknown-linux-gnu/include")
+link_directories("/opt/riscv-toolchain/riscv64-unknown-linux-gnu/lib")
+include_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/include")
+link_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/lib")
+include_directories("/nfsroot/rv/hpc/riscv_chameleon/include")
+link_directories("/nfsroot/rv/hpc/riscv_chameleon/lib")
+
+### end risc-v
 ###########################################################################
 include_directories(SYSTEM ${PROCESS_3RDPARTY_INCLUDE_DIRS})
 #include_directories(${PROCESS_INCLUDE_DIRS})

@@ -27,9 +27,6 @@ link_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/lib")
 include_directories("/nfsroot/rv/hpc/riscv_chameleon/include")
 link_directories("/nfsroot/rv/hpc/riscv_chameleon/lib")
 
-
-
-
 ### end risc-v
 
 # CMAKE MODULE SETUP.f
