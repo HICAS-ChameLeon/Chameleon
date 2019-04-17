@@ -77,6 +77,7 @@ namespace chameleon {
         msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
 //        setting::SLAVE_EXE_DIR = os::getcwd();
         m_cwd = os::getcwd();
+
         m_software_resource_manager = new SoftwareResourceManager(m_cwd, m_cwd+"/public_resources");
 
 //            msp_resource_collector = new ResourceCollector();
@@ -271,12 +272,14 @@ namespace chameleon {
                 Promise<Nothing> promise;
                 if (!os::exists(spark_home_path)) {
                     LOG(INFO) << "flink  didn't exist, download it frist";
+
                     mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
                     mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
                     mesos::fetcher::URI *uri = new mesos::fetcher::URI();
                     fetcher_info->set_sandbox_directory(sanbox_path);
                     //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
-                    uri->set_value("http://archive.apache.org/dist/flink/flink-1.4.2/flink-1.4.2-bin-scala_2.11.tgz");
+//                    uri->set_value("http://archive.apache.org/dist/flink/flink-1.4.2/flink-1.4.2-bin-scala_2.11.tgz");
+                    uri->set_value("hdfs://ccrfox246:9000/flink-1.4.2-bin-scala_2.11.tgz");
                     item->set_allocated_uri(uri);
                     item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
                     download_result = m_software_resource_manager->download("my_flink", *fetcher_info);
@@ -318,7 +321,8 @@ namespace chameleon {
                     mesos::fetcher::URI *uri = new mesos::fetcher::URI();
                     fetcher_info->set_sandbox_directory(sanbox_path);
                     //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
-                    uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
+//                    uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
+                    uri->set_value("hdfs://ccrfox246:9000/spark-2.3.0-bin-hadoop2.7.tgz");
                     item->set_allocated_uri(uri);
                     item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
                     download_result = m_software_resource_manager->download("my_spark", *fetcher_info);
