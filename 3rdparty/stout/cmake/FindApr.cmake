@@ -39,6 +39,7 @@ set(POSSIBLE_APR_LIB_DIRS
   /usr/local/lib
   /usr/lib
   /nfsroot/rv/4/riscv64_libraries/lib
+  /home/hpc/04/riscv64_libraries/lib
   /home/hpc/04/libraries_of_mesos
   )
 
