@@ -4,5 +4,10 @@ message ReregisterMasterMessage
   required string master_ip=1;
   required string port = 2;
   required string slave_ip =3;
+}
 
+message BackupMasterMessage
+{
+  required string ip = 1;
+  required string port = 2;
 }

@@ -8,9 +8,9 @@
 #ifndef CHAMELEON_SUPER_MASTER_HPP
 #define CHAMELEON_SUPER_MASTER_HPP
 // C++ 11 dependencies
+#include <iterator>
 #include <vector>
 #include <set>
-#include<iterator>
 #include <sstream>
 #include <unordered_map>
 // google
@@ -24,7 +24,6 @@
 #include <stout/protobuf.hpp>
 #include <stout/os.hpp>
 #include <stout/uuid.hpp>
-
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -44,7 +43,7 @@
 
 // chameleon headers
 #include <configuration_glog.hpp>
-#include "master.hpp"
+#include <scheduler.pb.h>
 
 
 using std::string;
@@ -65,10 +64,10 @@ using process::http::Request;
 using process::http::OK;
 using process::http::Response;
 
-using namespace process::http;
+//using namespace process::http;
 
-using process::http::Request;
-using process::http::OK;
+//using process::http::Request;
+//using process::http::OK;
 using process::http::InternalServerError;
 
 
