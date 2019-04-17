@@ -605,7 +605,8 @@ namespace chameleon {
 //            //
 //            process::delay(temp_duration, self(), &Master::Offer, framework->id());
 // after subscribed, the framework can be given resource offers.
-            Offer(framework->id());
+            offer(framework->id());
+
             return;
         }
     }

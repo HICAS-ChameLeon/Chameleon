@@ -1,3 +1,10 @@
+/*
+ * Copyright  ：SIAT 异构智能计算体系结构与系统研究中心
+ * Author     ：Jessicalllo  sherlock_vip@163.com
+ * Date       ：18-11-26
+ * Description：app.js
+ */
+
 (function () {
     'use strict';
 
@@ -10,12 +17,17 @@
             $routeProvider.when('/hardware', {
                 //templateURL：插入ng-view的HTML模板文件
                 templateUrl: 'hardware.html',
-                controller: 'UpdateCtrl'
+                controller: 'HardwareCtrl'
 
             })
                 .when('/runtime', {
                     templateUrl: 'runtime.html',
                     controller: 'UpdateCtrl'
+                })
+
+                .when('/scheduling', {
+                    templateUrl: 'scheduler.html',
+                    controller: 'SchedulerCtrl'
                 })
                 // network_topology.html
                 .when('/topology', {
@@ -28,6 +40,15 @@
                     templateUrl: 'supernetwork_topology.html',
                     controller: 'SuperTopologyCtrl'
                 })
+                .when('/topology/super_master_and_super_master', {
+                    templateUrl: 'super_and_supernetwork_topology.html',
+                    controller: 'SuperAndSuperTopologyCtrl'
+                })
+                //framework_topology.html
+                .when('/framework_topology',{
+                    templateUrl:'framework_topology.html',
+                    controller: 'FrameworkTopologyCtrl'
+                })
                 // frameworks.html
                 .when('/frameworks',{
                     templateUrl: 'frameworks.html',
@@ -35,11 +56,10 @@
                 })
 
                 // framework.html
-                .when('/frameworks/:id.value',{
-            templateUrl:
-                'framework.html',
-                    controller:'FrameworkCtrl'
-            })
+                .when('/frameworks/:framework_uuid', {
+                    templateUrl: 'framework.html',
+                    controller: 'FrameworkCtrl'
+                })
                 // slave.html
                 .when('/slaves/:slave_uuid/ip/:slave_id/cpu_usage/:cpu_used/mem_usage/:mem_used/disk_usage/:disk_used', {
                     templateUrl: 'slave.html',

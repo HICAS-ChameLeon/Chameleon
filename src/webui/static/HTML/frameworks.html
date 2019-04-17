@@ -1,51 +1,56 @@
-<table m-table table-content="frameworks" title="Active Frameworks"
-       class="table table-striped table-bordered table-condensed">
-    <thead>
-    <caption>活动中框架</caption>
-    <tr>
-        <th data-key ="id"> ID</th>
-        <th data-key = "hostname">主机名</th>
-        <th>用户</th>
-        <th>框架</th>
-        <th>Web UI</th>
-        <th>活动的任务</th>
-        <th>注册时间</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr ng-repeat="x in framework | filter:{state: 'ACTIVE'}:true">
-        <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
-        <!--<th><a href="{{x.webui_url}}">{{x.id.value}}</a>-->
-        </th>
-        <th>
-            {{x.hostname}}
-        </th>
-        <th>
-            {{x.user}}
-        </th>
-        <th>
-            {{x.name}}
-        </th>
-        <th>
-            <a href="{{x.webui_url}}">{{x.webui_url}}</a>
-        </th>
-        <th>
-            {{x.princple}}
-        </th>
-        <th>
-            {{user}}
-        </th>
-        <th>
-            {{user}}
-        </th>
-    </tr>
-    </tbody>
-</table>
+<div class="well">
+    <h4 class="panel-heading">活动中框架</h4>
+    <table m-table table-content="frameworks" title="Active Frameworks"
+           class="table table-striped table-bordered table-condensed">
+        <thead>
+        <tr>
+            <th data-key="id"> ID</th>
+            <th data-key="hostname">主机名</th>
+            <th>用户</th>
+            <th>框架</th>
+            <th>Web UI</th>
+            <th>活动的任务</th>
+            <th>注册时间</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="x in master.framework.resource | filter:{state: 'ACTIVE'}:true">
+            <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
+                <!--<th><a href="{{x.webui_url}}">{{x.id.value}}</a>-->
+            </th>
+            <th>
+                {{x.hostname}}
+            </th>
+            <th>
+                {{x.user}}
+            </th>
+            <th>
+                {{x.name}}
+            </th>
+            <th>
+                <a href="{{x.webui_url}}">{{x.webui_url}}</a>
+            </th>
+            <th>
+                {{x.princple}}
+            </th>
+            <th>
+                {{user}}
+            </th>
+            <th>
+                {{user}}
+            </th>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="well">
+    <h4 class="panel-heading">未活动框架</h4>
 
 <table m-table table-content="frameworks" title="Inactive Frameworks"
        class="table table-striped table-bordered table-condensed">
     <thead>
-    <caption>未活动框架</caption>
+    <!--<caption>未活动框架</caption>-->
     <tr>
         <th>ID</th>
         <th>主机名</th>
@@ -81,11 +86,13 @@
     <!--</tr>-->
     </tbody>
 </table>
+</div>
 
+<div class="well">
+    <h4 class="panel-heading">已完成框架</h4>
 <table m-table table-content="completed_frameworks" title="Completed Frameworks"
        class="table table-striped table-bordered table-condensed">
     <thead>
-    <caption>已完成框架</caption>
     <tr>
         <th>ID</th>
         <th>主机名</th>
@@ -96,8 +103,8 @@
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="x in framework | filter:{state:'INACTIVE'}:true ">
-        <th><a href="#/frameworks/{{x.id.value}}">{{x.id.value}}</a>
+    <tr ng-repeat="x in master.framework.resource | filter:{state:'INACTIVE'}:true ">
+        <th>{{x.id.value}}
         <!--<th><a href="{{x.webui_url}}">{{x.id.value}}</a>-->
         </th>
         <th>
@@ -119,3 +126,4 @@
     </tr>
     </tbody>
 </table>
+</div>
