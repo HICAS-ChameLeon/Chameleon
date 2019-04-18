@@ -19,12 +19,14 @@ include(FindPackageHelper)
 set(POSSIBLE_SVN_INCLUDE_DIRS
   /usr/include/subversion-1
   /usr/local/include/subversion-1
+  /home/hpc/04/libraries_of_mesos/subversion-1.10.0/riscv64_install/include/subversion-1
   )
 
 set(POSSIBLE_SVN_LIB_DIRS
   /usr/lib
   /usr/local/lib
   /nfsroot/rv/4/riscv64_libraries/lib
+  /home/hpc/04/libraries_of_mesos
   )
 
 set(SVN_LIBRARY_NAMES
