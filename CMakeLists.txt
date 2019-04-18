@@ -27,6 +27,7 @@ include_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/include")
 link_directories("/home/sdc/4/mesos-1.3.2/riscv64_libraries/lib")
 include_directories("/nfsroot/rv/hpc/riscv_chameleon/include")
 link_directories("/nfsroot/rv/hpc/riscv_chameleon/lib")
+link_directories("/home/hpc/04/riscv64_libraries/lib")
 
 include_directories("/home/hpc/04/libraries_of_mesos/apr-1.5.2/include")
 include_directories("/home/hpc/04/libraries_of_mesos/curl-7.60.0/include")
