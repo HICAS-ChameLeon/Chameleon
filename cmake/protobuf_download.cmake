@@ -1,7 +1,9 @@
 include(ExternalProject)
 
 ### protobuf_2_6
-set(protobuf_2_6_URL       https://github.com/google/protobuf/releases/download/v2.6.1/protobuf-2.6.1.tar.gz)
+#set(protobuf_2_6_URL       https://github.com/google/protobuf/releases/download/v2.6.1/protobuf-2.6.1.tar.gz)
+
+set(protobuf_2_6_URL       file://${PROJECT_SOURCE_DIR}/3rdparty/protobuf-2.6.1.tar.gz)
 
 set(protobuf_2_6_ROOT ${CMAKE_BINARY_DIR}/3rdparty/protobuf_2_6)
 set(protobuf_2_6_LIB_DIR ${protobuf_2_6_ROOT}/lib)
