@@ -64,7 +64,6 @@
                     runtime    : response.data.content,
                     quantities : response.data.quantity,
                 };
-                console.log(response.data.content);
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
@@ -182,20 +181,6 @@
     chameleon_app.controller('ChangeSchedulerInstanceCtrl', function($scope,$rootScope,$uibModalInstance,$http, date) {
 
         $scope.date= date;
-
-        //在这里处理要进行的操作
-        // $scope.ok = function() {
-        //     $http({
-        //         method: 'GET',
-        //         url: leadingChameleonMasterURL('/master/change-scheduler')
-        //     }).then(function successCallback(response) {
-        //         console.log(response);
-        //         $uibModalInstance.dismiss('cancel');
-        //     }, function errorCallback(response) {
-        //         // 请求失败执行代码
-        //     });
-        // };
-
         $scope.ok = function() {
             $http({
                 method: "POST",
@@ -213,15 +198,7 @@
                 console.log(req);
                 $uibModalInstance.dismiss('cancel');
             });
-            // $http({
-            //     method: 'GET',
-            //     url: leadingChameleonMasterURL('/master/change-scheduler')
-            // }).then(function successCallback(response) {
-            //     console.log(response);
-            //     $uibModalInstance.dismiss('cancel');
-            // }, function errorCallback(response) {
-            //     // 请求失败执行代码
-            // });
+
         };
         $scope.cancel = function() {
             $uibModalInstance.dismiss('cancel');
@@ -568,19 +545,19 @@
                 for (var i in $scope.master.runtime) {
                     var temp_slave = {}; // 添加一个顶点
                     cur_index++; // 全局id
-                    my_master.title = $scope.master.runtime[0].slave_id+':6060';
-                    temp_slave.label = "slave" + cur_index;
+                    my_master.title = $scope.master.runtime[0].resources.slave_id+':6060';
+                    temp_slave.label = $scope.master.runtime[i].slave_hostname;
                     temp_slave.id = cur_index;
                     temp_slave.shape = 'image';
                     temp_slave.image = DIR + 'Hardware-WQN-server.png';
-                    temp_slave.title = $scope.master.runtime[i].slave_id;
+                    temp_slave.title = $scope.master.runtime[i].resources.slave_id;
                     vertexes[cur_index] = temp_slave;   // cur_index 同时代表 顶点集合 my_slaves 的下标
 
                     var temp_edge = {};   // 添加一条边 master -> temp_slave
                     temp_edge.from = 0;
                     temp_edge.to = temp_slave.id;
                     temp_edge.arrows = 'to';
-                    temp_edge.label = Math.round($scope.master.runtime[i].net_usage.net_used * 100) / 100 + 'KiB/s';
+                    temp_edge.label = Math.round($scope.master.runtime[i].resources.net_usage.net_used * 100) / 100 + 'KiB/s';
                     index_edge++; // 边集合 my_edges 的下标
                     my_edges[index_edge] = temp_edge;
 
@@ -590,8 +567,8 @@
                     temp_cpu.label = "cpu";
                     temp_cpu.id = cur_index;
                     temp_cpu.group = 'server';
-                    temp_cpu.title = Math.round($scope.master.runtime[i].cpu_usage.cpu_used);
-                    temp_cpu.value = Math.ceil(Math.round($scope.master.runtime[i].cpu_usage.cpu_used) / 10);
+                    temp_cpu.title = Math.round($scope.master.runtime[i].resources.cpu_usage.cpu_used);
+                    temp_cpu.value = Math.ceil(Math.round($scope.master.runtime[i].resources.cpu_usage.cpu_used) / 10);
                     vertexes[cur_index] = temp_cpu;
                     // 添加连接cpu节点的边, temp_slave -> temp_cpu
                     var edge_cpu = {};
@@ -607,8 +584,8 @@
                     temp_disk.label = "disk";
                     temp_disk.id = cur_index;
                     temp_disk.group = 'switch';
-                    temp_disk.title = Math.round(100 - $scope.master.runtime[i].disk_usage.available_percent);
-                    temp_disk.value = Math.ceil(Math.round(100 - $scope.master.runtime[i].disk_usage.available_percent) / 10);
+                    temp_disk.title = Math.round(100 - $scope.master.runtime[i].resources.disk_usage.available_percent);
+                    temp_disk.value = Math.ceil(Math.round(100 - $scope.master.runtime[i].resources.disk_usage.available_percent) / 10);
                     vertexes[cur_index] = temp_disk;
                     // 添加连接cpu节点的边, temp_slave -> temp_cpu
                     var edge_disk = {};
@@ -624,8 +601,8 @@
                     temp_mem.label = "mem";
                     temp_mem.id = cur_index;
                     temp_mem.group = 'desktop';
-                    temp_mem.title = Math.round($scope.master.runtime[i].mem_usage.mem_available / $scope.master.runtime[i].mem_usage.mem_total * 100);
-                    temp_mem.value = Math.ceil(Math.round($scope.master.runtime[i].mem_usage.mem_available / $scope.master.runtime[i].mem_usage.mem_total * 100) / 10);
+                    temp_mem.title = Math.round($scope.master.runtime[i].resources.mem_usage.mem_available / $scope.master.runtime[i].resources.mem_usage.mem_total * 100);
+                    temp_mem.value = Math.ceil(Math.round($scope.master.runtime[i].resources.mem_usage.mem_available / $scope.master.runtime[i].resources.mem_usage.mem_total * 100) / 10);
                     vertexes[cur_index] = temp_mem;
                     // 添加连接mem节点的边, temp_slave -> temp_mem
                     var edge_mem = {};
@@ -641,7 +618,7 @@
                     temp_swap.label = "swap";
                     temp_swap.id = cur_index;
                     temp_swap.group = 'mobile';
-                    temp_swap.title = $scope.master.runtime[i].mem_usage.swap_free / $scope.master.runtime[i].mem_usage.swap_total * 100;
+                    temp_swap.title = $scope.master.runtime[i].resources.mem_usage.swap_free / $scope.master.runtime[i].resources.mem_usage.swap_total * 100;
                     vertexes[cur_index] = temp_swap;
                     // 添加连接net节点的边, temp_slave -> temp_net
                     var edge_swap = {};
@@ -760,7 +737,7 @@
                         my_master.label = "master";
                         my_master.shape = 'image';
                         my_master.image = DIR + 'Hardware-WQN-main.png';
-                        my_master.title = $scope.master.runtime[i].slave_id +':6060';
+                        my_master.title = $scope.master.runtime[i].resources.slave_id +':6060';
                         var temp_superedge = {};       //添加一条super_master到my_master的边
 
                         temp_superedge.from = my_supermaster.id;
@@ -777,7 +754,7 @@
                             temp_slave.id = cur_masterindex;
                             temp_slave.shape = 'image';
                             temp_slave.image = DIR + 'Hardware-WQN-server.png';
-                            temp_slave.title = $scope.master.runtime[i].slave_id;
+                            temp_slave.title = $scope.master.runtime[i].resources.slave_id;
                             vertexes_super[cur_masterindex] = temp_slave;
 
                             var temp_edge = {};        // 添加一条边 master -> temp_slave
@@ -793,8 +770,8 @@
                             temp_cpu.label = "cpu";
                             temp_cpu.id = cur_masterindex;
                             temp_cpu.group = 'server';
-                            temp_cpu.title = Math.round($scope.master.runtime[i].cpu_usage.cpu_used);
-                            temp_cpu.value = Math.ceil(Math.round($scope.master.runtime[i].cpu_usage.cpu_used) / 10);
+                            temp_cpu.title = Math.round($scope.master.runtime[i].resources.cpu_usage.cpu_used);
+                            temp_cpu.value = Math.ceil(Math.round($scope.master.runtime[i].resources.cpu_usage.cpu_used) / 10);
                             vertexes_super[cur_masterindex] = temp_cpu;
                             // 添加连接cpu节点的边, temp_slave -> temp_cpu
                             var edge_cpu = {};
@@ -810,8 +787,8 @@
                             temp_disk.label = "disk";
                             temp_disk.id = cur_masterindex;
                             temp_disk.group = 'switch';
-                            temp_disk.title = Math.round(100 - $scope.master.runtime[i].disk_usage.available_percent);
-                            temp_disk.value = Math.ceil(Math.round(100 - $scope.master.runtime[i].disk_usage.available_percent) / 10);
+                            temp_disk.title = Math.round(100 - $scope.master.runtime[i].resources.disk_usage.available_percent);
+                            temp_disk.value = Math.ceil(Math.round(100 - $scope.master.runtime[i].resources.disk_usage.available_percent) / 10);
                             vertexes_super[cur_masterindex] = temp_disk;
                             // 添加连接cpu节点的边, temp_slave -> temp_cpu
                             var edge_disk = {};
@@ -827,8 +804,8 @@
                             temp_mem.label = "mem";
                             temp_mem.id = cur_masterindex;
                             temp_mem.group = 'desktop';
-                            temp_mem.title = Math.round($scope.master.runtime[i].mem_usage.mem_available / $scope.master.runtime[i].mem_usage.mem_total * 100);
-                            temp_mem.value = Math.ceil(Math.round($scope.master.runtime[i].mem_usage.mem_available / $scope.master.runtime[i].mem_usage.mem_total * 100) / 10);
+                            temp_mem.title = Math.round($scope.master.runtime[i].resources.mem_usage.mem_available / $scope.master.runtime[i].resources.mem_usage.mem_total * 100);
+                            temp_mem.value = Math.ceil(Math.round($scope.master.runtime[i].resources.mem_usage.mem_available / $scope.master.runtime[i].resources.mem_usage.mem_total * 100) / 10);
                             vertexes_super[cur_masterindex] = temp_mem;
                             // 添加连接mem节点的边, temp_slave -> temp_mem
                             var edge_mem = {};
@@ -844,7 +821,7 @@
                             temp_swap.label = "swap";
                             temp_swap.id = cur_masterindex;
                             temp_swap.group = 'mobile';
-                            temp_swap.title = $scope.master.runtime[i].mem_usage.swap_free / $scope.master.runtime[i].mem_usage.swap_total * 100;
+                            temp_swap.title = $scope.master.runtime[i].resources.mem_usage.swap_free / $scope.master.runtime[i].resources.mem_usage.swap_total * 100;
                             vertexes_super[cur_masterindex] = temp_swap;
                             // 添加连接net节点的边, temp_slave -> temp_net
                             var edge_swap = {};
@@ -992,7 +969,7 @@
                                 my_master.label = "master";
                                 my_master.shape = 'image';
                                 my_master.image = DIR + 'Hardware-WQN-main.png';
-                                my_master.title = $scope.master.runtime[i].slave_id + ':6060';
+                                my_master.title = $scope.master.runtime[i].resources.slave_id + ':6060';
                                 var temp_superedge = {};       //添加一条super_master到my_master的边
 
                                 temp_superedge.from = my_super_master.id;
@@ -1009,7 +986,7 @@
                                     temp_slave.id = cur_masterindex;
                                     temp_slave.shape = 'image';
                                     temp_slave.image = DIR + 'Hardware-WQN-server.png';
-                                    temp_slave.title = $scope.master.runtime[i].slave_id;
+                                    temp_slave.title = $scope.master.runtime[i].resources.slave_id;
                                     vertexes_super[cur_masterindex] = temp_slave;
 
                                     var temp_edge = {};        // 添加一条边 master -> temp_slave
@@ -1025,8 +1002,8 @@
                                     temp_cpu.label = "cpu";
                                     temp_cpu.id = cur_masterindex;
                                     temp_cpu.group = 'server';
-                                    temp_cpu.title = Math.round($scope.master.runtime[i].cpu_usage.cpu_used);
-                                    temp_cpu.value = Math.ceil(Math.round($scope.master.runtime[i].cpu_usage.cpu_used) / 10);
+                                    temp_cpu.title = Math.round($scope.master.runtime[i].resources.cpu_usage.cpu_used);
+                                    temp_cpu.value = Math.ceil(Math.round($scope.master.runtime[i].resources.cpu_usage.cpu_used) / 10);
                                     vertexes_super[cur_masterindex] = temp_cpu;
                                     // 添加连接cpu节点的边, temp_slave -> temp_cpu
                                     var edge_cpu = {};
@@ -1042,8 +1019,8 @@
                                     temp_disk.label = "disk";
                                     temp_disk.id = cur_masterindex;
                                     temp_disk.group = 'switch';
-                                    temp_disk.title = Math.round(100 - $scope.master.runtime[i].disk_usage.available_percent);
-                                    temp_disk.value = Math.ceil(Math.round(100 - $scope.master.runtime[i].disk_usage.available_percent) / 10);
+                                    temp_disk.title = Math.round(100 - $scope.master.runtime[i].resources.disk_usage.available_percent);
+                                    temp_disk.value = Math.ceil(Math.round(100 - $scope.master.runtime[i].resources.disk_usage.available_percent) / 10);
                                     vertexes_super[cur_masterindex] = temp_disk;
                                     // 添加连接cpu节点的边, temp_slave -> temp_cpu
                                     var edge_disk = {};
@@ -1059,8 +1036,8 @@
                                     temp_mem.label = "mem";
                                     temp_mem.id = cur_masterindex;
                                     temp_mem.group = 'desktop';
-                                    temp_mem.title = Math.round($scope.master.runtime[i].mem_usage.mem_available / $scope.master.runtime[i].mem_usage.mem_total * 100);
-                                    temp_mem.value = Math.ceil(Math.round($scope.master.runtime[i].mem_usage.mem_available / $scope.master.runtime[i].mem_usage.mem_total * 100) / 10);
+                                    temp_mem.title = Math.round($scope.master.runtime[i].resources.mem_usage.mem_available / $scope.master.runtime[i].resources.mem_usage.mem_total * 100);
+                                    temp_mem.value = Math.ceil(Math.round($scope.master.runtime[i].resources.mem_usage.mem_available / $scope.master.runtime[i].resources.mem_usage.mem_total * 100) / 10);
                                     vertexes_super[cur_masterindex] = temp_mem;
                                     // 添加连接mem节点的边, temp_slave -> temp_mem
                                     var edge_mem = {};
@@ -1076,7 +1053,7 @@
                                     temp_swap.label = "swap";
                                     temp_swap.id = cur_masterindex;
                                     temp_swap.group = 'mobile';
-                                    temp_swap.title = $scope.master.runtime[i].mem_usage.swap_free / $scope.master.runtime[i].mem_usage.swap_total * 100;
+                                    temp_swap.title = $scope.master.runtime[i].resources.mem_usage.swap_free / $scope.master.runtime[i].resources.mem_usage.swap_total * 100;
                                     vertexes_super[cur_masterindex] = temp_swap;
                                     // 添加连接net节点的边, temp_slave -> temp_net
                                     var edge_swap = {};
@@ -1189,19 +1166,19 @@
                         var temp_slave = {}; // 添加一个顶点
                         cur_index++;         // 全局id
 
-                        my_master.title = $scope.master.runtime[0].slave_id + ':6060';   //master节点需要用到slave的消息，所以写在这里
-                        temp_slave.label = "slave" + cur_index;
+                        my_master.title = $scope.master.runtime[0].resources.slave_id + ':6060';   //master节点需要用到slave的消息，所以写在这里
+                        temp_slave.label = $scope.master.runtime[i].slave_hostname;
                         temp_slave.id = cur_index;
                         temp_slave.shape = 'image';
                         temp_slave.image = DIR + 'Hardware-WQN-server.png';
-                        temp_slave.title = $scope.master.runtime[i].slave_id;
+                        temp_slave.title = $scope.master.runtime[i].resources.slave_id;
                         vertexes[cur_index] = temp_slave; // cur_index 同时代表 顶点集合 my_slaves 的下标
 
                         var temp_edge = {}; // 添加一条边 master -> temp_slave
                         temp_edge.from = 0;
                         temp_edge.to = temp_slave.id;
                         temp_edge.arrows = 'to';
-                        temp_edge.label = Math.round($scope.master.runtime[i].net_usage.net_used * 100) / 100 + 'KiB/s';
+                        temp_edge.label = Math.round($scope.master.runtime[i].resources.net_usage.net_used * 100) / 100 + 'KiB/s';
                         index_edge++; // 边集合 my_edges 的下标
                         my_edges[index_edge] = temp_edge;
 
