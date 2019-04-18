@@ -30,6 +30,7 @@ link_directories("/nfsroot/rv/hpc/riscv_chameleon/lib")
 
 include_directories("/home/hpc/04/libraries_of_mesos/apr-1.5.2/include")
 include_directories("/home/hpc/04/libraries_of_mesos/curl-7.60.0/include")
+include_directories("/home/hpc/04/libraries_of_mesos/zlib-1.2.11/_install/include")
 
 ### end risc-v
 
