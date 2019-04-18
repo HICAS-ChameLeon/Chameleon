@@ -84,10 +84,7 @@ namespace chameleon {
         nextFrameworkId = 0;
         m_scheduler = make_shared<CoarseGrainedScheduler>();
 
-       // m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
-
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
-
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
         install<AcceptRegisteredMessage>(&Master::received_registered_message_from_super_master);
 
@@ -219,8 +216,6 @@ namespace chameleon {
 //                            cout<<res.get()<<endl;
 //                        }
 //                    }
-                    int a = 3;
-                    int b = 4;
                     std::ostringstream result;
                     result << "{ \"result\": " <<"\"" <<request_method+tpath <<"\"" << "}";
                     std::cout<<result.str()<<std::endl;
