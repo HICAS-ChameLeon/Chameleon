@@ -64,6 +64,7 @@
                     runtime    : response.data.content,
                     quantities : response.data.quantity,
                 };
+                console.log(response.data.content);
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });

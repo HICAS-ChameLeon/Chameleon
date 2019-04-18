@@ -261,21 +261,15 @@ namespace chameleon {
                     JSON::Object resources = JSON::Object();
                     if (!this->m_runtime_resources.empty()) {
                         JSON::Array array;
+                        auto slave = m_slave_objects.begin();
                         for (auto it = this->m_runtime_resources.begin();
                              it != this->m_runtime_resources.end(); it++) {
                             resources.values["resources"] = it->second;
-                            //array.values.push_back(it->second);
-                            if(!this->m_slave_objects.empty()){
-                                for (auto slave = m_slave_objects.begin();slave != m_slave_objects.end();slave++)
-                                {
-                                    shared_ptr<SlaveObject> &slave_object = slave->second;
-                                    resources.values["slave_hostname"] = slave_object->m_hostname;
-                                    array.values.push_back(resources);
-                                }
-                            }
-
+                            shared_ptr<SlaveObject> &slave_object = slave->second;
+                            resources.values["slave_hostname"] = slave_object->m_hostname;
+                            slave++;
+                            array.values.emplace_back(resources);
                         }
-
                         result.values["quantity"] = array.values.size();
                         result.values["content"] = array;
                     } else {

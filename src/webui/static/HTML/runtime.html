@@ -24,7 +24,7 @@
                                 tooltip-trigger="clipboardhover">
                         </button>
                     </td>
-                    <td>{{x.slave_id}}</td>
+                    <td>{{x.resources.slave_id}}</td>
                     <td>{{x.cpu_usage.cpu_used | number:2}} %</td>
                     <td>{{ (1 - x.mem_usage.mem_available / x.mem_usage.mem_total) * 100  | number:1}} %</td>
                     <td>{{ (100 - x.disk_usage.available_percent) | number:1}} %</td>
