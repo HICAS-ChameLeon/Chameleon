@@ -198,24 +198,13 @@ namespace chameleon {
                     std::cout<<tpath<<std::endl;
                     int param_size = request.url.query.size();
                     std::cout<< param_size<<std::endl;
-                    for(string key: request.url.query.keys()){
-                        std::cout<<"key:"<<key<<std::endl;
-                        std::cout<<"value:"<<request.url.query[key]<<std::endl;
-                    }
 
-//                int a = numify<int>(request["a"]).get();
-//                int b = numify<int>(request["b"]).get();
                     string body_str = request.body;
                     std::cout<<body_str<<std::endl;
-//                    Option<Pipe::Reader> pipe_reader = request.reader;
-//                    if(pipe_reader.isSome()){
-//                        Pipe::Reader reader = pipe_reader.get();
-//                        Future<string> res = reader.readAll();
-//                        if(res.isReady()){
-//                            cout<<"pipe reader content"<<endl;
-//                            cout<<res.get()<<endl;
-//                        }
-//                    }
+
+                    SchedulerInterface *m_smhc_scheduler = new SMHCGrainedScheduler();
+                    const string &scheduler_name = m_smhc_scheduler->m_scheduler_name;
+                    if(body_str==m_smhc_scheduler->m_scheduler_name){}
                     std::ostringstream result;
                     result << "{ \"result\": " <<"\"" <<request_method+tpath <<"\"" << "}";
                     std::cout<<result.str()<<std::endl;
