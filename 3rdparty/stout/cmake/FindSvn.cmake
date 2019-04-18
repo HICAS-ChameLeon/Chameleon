@@ -27,6 +27,7 @@ set(POSSIBLE_SVN_LIB_DIRS
   /usr/local/lib
   /nfsroot/rv/4/riscv64_libraries/lib
   /home/hpc/04/libraries_of_mesos
+  /home/hpc/04/riscv64_libraries/lib
   )
 
 set(SVN_LIBRARY_NAMES
