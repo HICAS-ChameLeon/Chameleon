@@ -133,6 +133,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        os::setenv("LIBPROCESS_IP", "192.168.1.2");
 //        os::setenv("LIBPROCESS_PORT", "6061");
 //
 ////        os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));  // LIBPROCESS_
