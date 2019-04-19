@@ -111,6 +111,10 @@ namespace chameleon {
 
         install<BackupMasterMessage>(&Master::received_launch_backup_master);
 
+        // risc-v related
+        install<RiscvHeartbeatMessage>(&Master::received_riscv_heartbeat);
+        // end risc-v
+
 //        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
 
         /**
@@ -1172,6 +1176,14 @@ namespace chameleon {
             UPID slave_id("slave@" + *iter + ":6061");
             send(slave_id,message);
         }
+    }
+
+    void Master::received_riscv_heartbeat(const UPID &riscv_slave, const RiscvHeartbeatMessage& message){
+        LOG(INFO)<<"received RiscvHeartbeatMessage from "<<riscv_slave;
+        m_riscv_slave_ip = message.slave_ip();
+        m_riscv_slave_port = message.slave_port();
+        m_riscv_slave_desc = message.host_desc();
+        m_riscv_slave_uuid = message.slave_uuid();
     }
 }
 

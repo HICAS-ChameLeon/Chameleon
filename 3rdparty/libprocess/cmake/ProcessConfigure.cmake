@@ -192,7 +192,7 @@ if (ENABLE_SSL)
 endif (ENABLE_SSL)
 
 if (NOT WIN32)
-  set(ZLIB_ROOT /home/hpc/04/libraries_of_mesos/zlib-1.2.11/)
+#  set(ZLIB_ROOT /home/hpc/04/libraries_of_mesos/zlib-1.2.11/)
   find_package(ZLIB REQUIRED)
 #  find_package(ZLIB REQUIRED PATHS /home/sdc/4/libraries_of_mesos/zlib-1.2.11/ NO_DEFAULT_PATH)
 

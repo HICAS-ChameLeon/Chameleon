@@ -308,6 +308,15 @@ namespace chameleon {
         void received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message);
 
         void received_launch_backup_master(const UPID &slave, const BackupMasterMessage &message);
+
+        void received_riscv_heartbeat(const UPID &riscv_slave, const RiscvHeartbeatMessage& message);
+
+        // risc-v slave
+        string m_riscv_slave_ip;
+        string m_riscv_slave_port;
+        string m_riscv_slave_uuid;
+        string m_riscv_slave_desc;
+        // end riscv_v
     };
 
     class Framework {

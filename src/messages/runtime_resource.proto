@@ -38,6 +38,15 @@ message NetUsage{
     required float net_used =1;
 }
 
+// risc-v related
+message RiscvHeartbeatMessage{
+    required string slave_ip =1;
+    required string slave_uuid=2;
+    required string slave_port=3;
+    required string host_desc=4;
+}
+// end risc-v related
+
 
 
 

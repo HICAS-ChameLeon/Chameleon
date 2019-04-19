@@ -194,5 +194,6 @@ set(riscv_slave_SRCS
         riscv_slave.hpp
         riscv_slave.cpp)
 
+list(APPEND riscv_slave_PROTOS runtime_resource)
 add_executable(riscv_slave ${riscv_slave_SRCS})
-target_link_libraries(riscv_slave ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})
+target_link_libraries(riscv_slave ${riscv_slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})

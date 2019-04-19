@@ -100,6 +100,21 @@ namespace chameleon {
         LOG(INFO) << self() << " starts to send heartbeat message to the master";
 
     }
+
+    void RiscvSlave::heartbeat(){
+        send_heartbeat_to_master();
+        process::delay(m_interval, self(), &Self::heartbeat);
+    }
+    void RiscvSlave::send_heartbeat_to_master() {
+        RiscvHeartbeatMessage* heartbeat = new RiscvHeartbeatMessage();
+        heartbeat->set_slave_ip(stringify(self().address.ip));
+        heartbeat->set_slave_uuid(m_uuid);
+        heartbeat->set_slave_port(stringify(self().address.port));
+        heartbeat->set_host_desc("Linux (lvna) 4.18.0-ga57318a4 #7 SMP Thu Jan 24 14:42:58 CST 2019 riscv64 GNU/Linux");
+        send(*msp_masterUPID, *heartbeat);
+        delete heartbeat;
+
+    }
 }
 
 

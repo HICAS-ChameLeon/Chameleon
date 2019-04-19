@@ -56,9 +56,8 @@
 
 // protobuf
 //#include <monitor_info.pb.h>
-#include <cluster_operation.pb.h>
-#include <slave_related.pb.h>
-#include <fetcher.pb.h>
+#include <runtime_resource.pb.h>
+
 
 // chameleon headers
 
@@ -107,6 +106,8 @@ namespace chameleon {
         virtual void initialize();
 
         void register_feedback(const string &hostname);
+
+        void heartbeat();
 
         void send_heartbeat_to_master();
 
