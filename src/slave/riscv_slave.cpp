@@ -133,16 +133,14 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        os::setenv("LIBPROCESS_PORT", "6061");
-
-//        os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));  // LIBPROCESS_
-        LOG(INFO)<<"Heldon env port : "<< os::getenv("LIBPROCESS_PORT").get();
+//        os::setenv("LIBPROCESS_PORT", "6061");
+//
+////        os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));  // LIBPROCESS_
+//        LOG(INFO)<<"Heldon env port : "<< os::getenv("LIBPROCESS_PORT").get();
         process::initialize("RiscvSlave");
 
         chameleon::RiscvSlave riscv_slave;
 
-        LOG(INFO)<<"Heldon port : "<<stringify(FLAGS_port);
-        LOG(INFO)<<"Heldon address.port : " << process::address().port;
         riscv_slave.setM_interval(Seconds(FLAGS_ht));
         riscv_slave.setM_work_dir(work_dir_path);
 //        RiscvSlave.setM_fault_tolerance(FLAGS_fault_tolerance);
