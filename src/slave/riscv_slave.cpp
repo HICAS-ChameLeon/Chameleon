@@ -98,7 +98,7 @@ namespace chameleon {
 
         LOG(INFO) << "The initialization of RiscvSlave itself finished.";
         LOG(INFO) << self() << " starts to send heartbeat message to the master";
-
+        heartbeat();
     }
 
     void RiscvSlave::heartbeat(){
