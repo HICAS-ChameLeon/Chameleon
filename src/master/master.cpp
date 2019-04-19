@@ -627,7 +627,7 @@ namespace chameleon {
 
         m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
 //
-        m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+//        m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
        // m_smhc_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 

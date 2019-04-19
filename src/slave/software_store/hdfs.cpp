@@ -111,7 +111,7 @@ namespace chameleon {
                 hadoop = "hadoop";
             }
         }
-
+        LOG(INFO)<<hadoop;
         // Check if the hadoop client is available.
         Try<string> out = os::shell(hadoop + " version 2>&1");
         if (out.isError()) {
