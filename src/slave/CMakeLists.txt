@@ -189,9 +189,10 @@ list(APPEND slave_PROTOS super_master_related)
 list(REMOVE_DUPLICATES slave_PROTOS)
 target_link_libraries(slave ${slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})
 
-#list(APPEND docker_launch_PROTOS mesos)
-#list(APPEND docker_launch_PROTOS scheduler)
-#list(REMOVE_DUPLICATES docker_launch_PROTOS)
-#link_libraries(/usr/lib/libmesos-1.3.2.so)
-#add_executable(docker_launch docker_launch.cpp)
-#target_link_libraries(docker_launch ${PROCESS_LIBS} mesos-1.3.2 glog gflags)
+# lilele 2019-4-19 add risc-v support for slave
+set(riscv_slave_SRCS
+        riscv_slave.hpp
+        riscv_slave.cpp)
+
+add_executable(riscv_slave ${riscv_slave_SRCS})
+target_link_libraries(riscv_slave ${PROCESS_LIBS}  ${PROCESS_TARGET} ${GTEST_LIBS})
