@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
+        os::setenv("LIBPROCESS_PORT", "6061");
 
 //        os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));  // LIBPROCESS_
         LOG(INFO)<<"Heldon env port : "<< os::getenv("LIBPROCESS_PORT").get();
