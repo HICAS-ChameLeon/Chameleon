@@ -112,6 +112,7 @@ namespace chameleon {
         heartbeat->set_slave_port(stringify(self().address.port));
         heartbeat->set_host_desc("Linux (lvna) 4.18.0-ga57318a4 #7 SMP Thu Jan 24 14:42:58 CST 2019 riscv64 GNU/Linux");
         send(*msp_masterUPID, *heartbeat);
+        LOG(INFO)<<"had sent a heartbeat message to "<<*msp_masterUPID.get();
         delete heartbeat;
 
     }
