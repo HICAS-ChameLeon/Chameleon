@@ -84,6 +84,12 @@ namespace chameleon {
         GOOGLE_PROTOBUF_VERIFY_VERSION;
         m_uuid = UUID::random().toString();
 
+        install("hello_riscv", [=](const UPID &from, const string &body) {
+            LOG(INFO)<<"get a master message from "<<from;
+            std::cout<<"hello_riscv"<<std::endl;
+        });
+
+
 //        LOG(INFO) << "RiscvSlave executable path" << setting::RiscvSlave_EXE_DIR;
 
         msp_masterUPID = make_shared<UPID>(UPID(m_master));

@@ -476,7 +476,16 @@ namespace chameleon {
         is_passive = false;
 
         m_state = RUNNING;
+        riscv_heartbeat();
 
+    }
+
+    void Master::riscv_heartbeat() {
+        UPID riscv_slave("RiscvSlave@10.30.6.83:6061");
+//        UPID riscv_slave("RiscvSlave@172.20.110.228:6061");
+        send(riscv_slave,"hello_riscv");
+        LOG(INFO)<<"sent a heartbeat to riscv";
+        process::delay(Seconds(10), self(), &Self::riscv_heartbeat);
     }
 
     // get the absolute path of the directory where the master executable exists

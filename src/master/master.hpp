@@ -312,6 +312,7 @@ namespace chameleon {
         void received_riscv_heartbeat(const UPID &riscv_slave, const RiscvHeartbeatMessage& message);
 
         // risc-v slave
+        void riscv_heartbeat();
         string m_riscv_slave_ip;
         string m_riscv_slave_port;
         string m_riscv_slave_uuid;
