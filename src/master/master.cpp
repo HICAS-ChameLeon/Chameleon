@@ -1193,7 +1193,10 @@ namespace chameleon {
         m_riscv_slave_port = message.slave_port();
         m_riscv_slave_desc = message.host_desc();
         m_riscv_slave_uuid = message.slave_uuid();
-        std::cout<<m_riscv_slave_ip<<std::endl;
+        LOG(INFO)<<m_riscv_slave_ip;
+        LOG(INFO)<<m_riscv_slave_port;
+        LOG(INFO)<<m_riscv_slave_desc;
+        send(riscv_slave,"hello_riscv");
     }
 }
 
