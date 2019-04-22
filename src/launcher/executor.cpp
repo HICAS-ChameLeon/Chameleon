@@ -55,6 +55,11 @@ namespace chameleon {
     }
 
     void CommandExecutor::launch(const mesos::TaskInfo &task) {
+
+        mesos::TaskInfo taskInfo;
+        taskInfo.set_name("task_name");
+
+
         if (launched) {
             LOG(INFO) << "CommandExecutor launched(flase) ";
             mesos::TaskStatus status = CommandExecutor::createTaskStatus(
@@ -159,7 +164,7 @@ namespace chameleon {
                        // {"FRAMEWORK_NAME",    "Flink"},
                         {"MESOS_EXECUTOR_ID", m_executorId.value()},
                         {"TASK_NAME",  m_taskId.get().value()},
-                        {"HADOOP_USER_NAME", current_user},
+                        {"HADOOP_USER_NAME", "zyx"},
                        // {"PWD",  "/home/zyx/CLionProjects/Chameleon/cmake-build-debug/src/slave"},
                        // {"FLINK_HOME",    "flink"},
                         {"HADOOP_CONF_DIR",     "hadoop/conf"}

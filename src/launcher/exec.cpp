@@ -18,8 +18,9 @@ namespace chameleon{
         return stream << taskId.value();
     }
 
-    ChameleonExecutorDriver::ChameleonExecutorDriver() {
-
+    ChameleonExecutorDriver::ChameleonExecutorDriver(): process(nullptr), status(mesos::DRIVER_NOT_STARTED)
+    {
+        process::initialize();
     }
 
     ChameleonExecutorDriver::~ChameleonExecutorDriver() {}
@@ -27,9 +28,9 @@ namespace chameleon{
     mesos::Status ChameleonExecutorDriver::start(process::UPID commandExecutorPid) {
             LOG(INFO)<<"ChameleonExecutorDriver start";
             commandExecutor = commandExecutorPid;
-/*            if (status != mesos::DRIVER_NOT_STARTED) {
+            if (status != mesos::DRIVER_NOT_STARTED) {
                 return status;
-            }*/
+            }
             process::UPID slave;
             mesos::SlaveID slaveId;
             mesos::FrameworkID frameworkId;
@@ -105,6 +106,16 @@ namespace chameleon{
         //return status;
     }
 
+    mesos::Status ChameleonExecutorDriver::stop()
+    {
+        if (status != mesos::DRIVER_RUNNING) {
+            return status;
+        }
+        dispatch(process, &ExecutorProcess::stop);
+        status = mesos::DRIVER_STOPPED;
+        return status;
+
+    }
 
     ExecutorProcess::ExecutorProcess(const process::UPID &_slave, ChameleonExecutorDriver *_driver,
                                      const mesos::SlaveID &_slaveId, const mesos::FrameworkID &_frameworkId,
@@ -115,6 +126,7 @@ namespace chameleon{
                                      slaveId(_slaveId),
                                      frameworkId(_frameworkId),
                                      executorId(_executorId),
+                                     connected(false),
                                      commandExecutor(_commandExecutor)
                                      {
         install<mesos::internal::ExecutorRegisteredMessage>(
@@ -152,10 +164,16 @@ namespace chameleon{
                                      const mesos::FrameworkInfo &frameworkInfo, const mesos::SlaveID &slaveId,
                                      const mesos::SlaveInfo &slaveInfo) {
         LOG(INFO) << "Executor registered on agent " << slaveId;
+        connected = true;
     }
 
     void ExecutorProcess::runTask(const mesos::TaskInfo &task) {
         LOG(INFO) << "ExecutorProcess runTask " ;
+        if (!connected) {
+            VLOG(1) << "Ignoring run task message for task " << task.task_id()
+                    << " because the driver is disconnected!";
+            return;
+        }
       //  std::cout<<"yxxxxxxx ExecutorProcess begin runTask "<<slaveId<<std::endl;
        // LOG(INFO) << "yxxxxxxx ExecutorProcess runTask " << slaveId;
 //        LOG(INFO) << "yxxxxxxx Executor asked to run task '" << task.task_id() << "'"<<"on"<<commandExecutor;
@@ -217,5 +235,10 @@ namespace chameleon{
      // Capture the status update.
         send(slave, message);
         LOG(INFO) << "ExecutorProcess  sendStatusUpdate to "<<slave;
+    }
+
+    void ExecutorProcess::stop()
+    {
+        terminate(self());
     }
 }
