@@ -19,7 +19,7 @@ namespace AliSim{
         trace_loader->Load_task(&m_tasks_map);
     }
 
-    void SimulatorLinker::Get_machine_mega() {
+    multimap<uint64_t, Machine_mega> SimulatorLinker::Get_machine_mega() {
         multimap<uint64_t, Machine_mega>::iterator it = m_machine_mega_map.begin();
         while(it != m_machine_mega_map.end()){
             cout << it->first << " -> " << endl;
@@ -29,6 +29,7 @@ namespace AliSim{
                 cout << it->second << endl;
             }
         }
+        return m_machine_mega_map;
     }
 
     void SimulatorLinker::Get_tasks() {

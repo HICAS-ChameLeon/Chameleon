@@ -26,7 +26,7 @@ namespace AliSim{
 
         void Load_trace_data(AliTraceLoader* trace_loader);
 
-        void Get_machine_mega();
+        multimap<uint64_t, Machine_mega> Get_machine_mega();
 
         void Get_tasks();
     };

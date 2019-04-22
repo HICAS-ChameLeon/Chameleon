@@ -20,13 +20,17 @@
 #include "AliSimulator.hpp"
 
 using namespace mesos;
-
+using namespace AliSim;
 const string trace_path = "/home/heldon/chameleon/ali_clusterdata/alibaba_clusterdata_v2018/";
 
 class SimulatorScheduler : public Scheduler{
 public:
     //construct function
-    SimulatorScheduler() : m_task_launched(0), m_task_finished(0), total_tasks(10){};
+    SimulatorScheduler() : m_task_launched(0), m_task_finished(0), total_tasks(10){
+        AliSim::SimulatedWallTime simulated_wall_time(20);
+        AliSim::AliTraceLoader trace_loader(trace_path);
+        m_simulator = new AliSimulator(simulated_wall_time, trace_loader);
+    };
 
     virtual ~SimulatorScheduler();
 
@@ -39,6 +43,7 @@ public:
     virtual void disconnected(SchedulerDriver* driver) {}
 
     virtual void resourceOffers(SchedulerDriver* driver, const vector<Offer>& offers){
+        m_simulator->Run();
 
         for(size_t i = 0; i < offers.size(); i++){
             LOG(INFO) << "Offers size : " << offers.size();
@@ -77,6 +82,7 @@ private:
     int m_task_launched;
     int m_task_finished;
     int total_tasks;
+    AliSim::AliSimulator* m_simulator;
 };
 
 int main(int argc, char* argv[]){
