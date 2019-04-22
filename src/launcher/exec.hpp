@@ -51,7 +51,7 @@ namespace chameleon{
         // other driver calls are made.
         virtual mesos::Status start(process::UPID commandExecutorPid) = 0;
 
-        virtual Status stop() = 0;
+        virtual mesos::Status stop() = 0;
         // Stops the executor driver.
         //virtual mesos::Status stop() = 0;
 

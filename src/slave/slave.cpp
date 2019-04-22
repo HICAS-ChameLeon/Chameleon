@@ -7,6 +7,7 @@
 
 //#include <stout/flags.hpp>
 #include <messages.pb.h>
+#include <slave_related.pb.h>
 #include "slave.hpp"
 //#include "slave_flags.hpp"
 //#include "containerizer/docker.hpp"
@@ -19,6 +20,7 @@ DEFINE_int32(port, 6061, "port");
 DEFINE_string(master, "", "master ip and port info");
 DEFINE_string(work_dir, "work_dir",
               "the path to store the files of frameworks. The default is build/src/slave/work_dir");
+//DEFINE_bool(fault_tolerance, false,"whether master has fault tolerance. For example, --fault_tolerance=true");
 
 /**
  * Function name  : ValidateStr
@@ -75,6 +77,7 @@ namespace chameleon {
         msp_runtime_resource_usage = make_shared<RuntimeResourceUsage>(RuntimeResourceUsage());
 //        setting::SLAVE_EXE_DIR = os::getcwd();
         m_cwd = os::getcwd();
+
         m_software_resource_manager = new SoftwareResourceManager(m_cwd, m_cwd+"/public_resources");
 
 //            msp_resource_collector = new ResourceCollector();
@@ -144,6 +147,8 @@ namespace chameleon {
         install<ReregisterMasterMessage>(&Slave::reregister_to_master);
 
         install<LaunchMasterMessage>(&Slave::launch_master);
+
+        install<BackupMasterMessage>(&Slave::send_message_to_backup_master);
 
         // http://172.20.110.228:6061/slave/runtime-resources
         route(
@@ -267,12 +272,14 @@ namespace chameleon {
                 Promise<Nothing> promise;
                 if (!os::exists(flink_home_path)) {
                     LOG(INFO) << "flink  didn't exist, download it frist";
+
                     mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
                     mesos::fetcher::FetcherInfo_Item *item = fetcher_info->add_items();
                     mesos::fetcher::URI *uri = new mesos::fetcher::URI();
                     fetcher_info->set_sandbox_directory(sanbox_path);
                     //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
-                    uri->set_value("http://archive.apache.org/dist/flink/flink-1.4.2/flink-1.4.2-bin-scala_2.11.tgz");
+//                    uri->set_value("http://archive.apache.org/dist/flink/flink-1.4.2/flink-1.4.2-bin-scala_2.11.tgz");
+                    uri->set_value("hdfs://ccrfox246:9000/flink-1.4.2-bin-scala_2.11.tgz");
                     item->set_allocated_uri(uri);
                     item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
                     download_result = m_software_resource_manager->download("my_flink", *fetcher_info);
@@ -314,7 +321,8 @@ namespace chameleon {
                     mesos::fetcher::URI *uri = new mesos::fetcher::URI();
                     fetcher_info->set_sandbox_directory(sanbox_path);
                     //        http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
-                    uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
+//                    uri->set_value("http://archive.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz");
+                    uri->set_value("hdfs://ccrfox246:9000/spark-2.3.0-bin-hadoop2.7.tgz");
                     item->set_allocated_uri(uri);
                     item->set_action(mesos::fetcher::FetcherInfo_Item_Action_BYPASS_CACHE);
                     download_result = m_software_resource_manager->download("my_spark", *fetcher_info);
@@ -363,7 +371,6 @@ namespace chameleon {
                 task.set_allocated_command(new_command_info);
                 LOG(INFO) << "the final value of command shell is " << final_value;
 
-                string com = strings::remove(spark_home_path,"flink-1.4.2");
             }
 
         }
@@ -764,6 +771,10 @@ namespace chameleon {
         // update current runtime resources of the current slave
         m_runtime_resources.CopyFrom(*rr_message);
         send(*msp_masterUPID, *rr_message);
+        if(m_is_fault_tolerance){
+            send(m_backup_master,*rr_message);
+            LOG(INFO) << "slave " << self() << " had sent a heartbeat message to the " << m_backup_master;
+        }
         LOG(INFO) << "slave " << self() << " had sent a heartbeat message to the " << *msp_masterUPID;
 
         auto t2 = std::chrono::system_clock::now();
@@ -826,15 +837,31 @@ namespace chameleon {
                 Subprocess::FD(STDIN_FILENO),
                 Subprocess::FD(out.get(), Subprocess::IO::OWNED),
                 Subprocess::FD(err.get(), Subprocess::IO::OWNED));
-        if (s.isError()) {
-            LOG(ERROR) << "cannot launch master "<< self().address.ip << ":6060";
-            send(super_master,"error");
+        if (!message.is_fault_tolerance()){
+            if (s.isError()) {
+                LOG(ERROR) << "cannot launch master "<< self().address.ip << ":6060";
+                send(super_master,"error");
+            }
+            LOG(INFO) << self().address.ip << ":6060 launched master successfully.";
+            send(super_master,"successed");
+        } else{
+            if (s.isSome()){
+                BackupMasterMessage *backup_master_message = new BackupMasterMessage();
+                backup_master_message->set_ip(stringify(self().address.ip));
+                backup_master_message->set_port("6060");
+                send(super_master,*backup_master_message);
+                delete backup_master_message;
+                LOG(INFO) << self().address.ip << ":6060 launched master successfully.";
+            }
         }
-        LOG(INFO) << self().address.ip << ":6060 launched master successfully.";
-        send(super_master,"successed");
+
     }
 
-
+    void Slave::send_message_to_backup_master(const UPID &master, const BackupMasterMessage &message) {
+        LOG(INFO)<<"received backup master message";
+        m_is_fault_tolerance = true;
+        m_backup_master = "master@" + message.ip() + ":" + message.port();
+    }
 
 //    void Slave::received_new_master(const UPID& from, const MasterRegisteredMessage& message) {
 //        LOG(INFO) << "MAKUN " << self().address.ip << " received new master ip from " << from;
@@ -893,6 +920,7 @@ int main(int argc, char *argv[]) {
         LOG(INFO)<<"Heldon address.port : " << process::address().port;
         slave.setM_interval(Seconds(FLAGS_ht));
         slave.setM_work_dir(work_dir_path);
+//        slave.setM_fault_tolerance(FLAGS_fault_tolerance);
 
         string master_ip_and_port = "master@" + stringify(FLAGS_master);
         slave.setM_master(master_ip_and_port);

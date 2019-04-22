@@ -1,7 +1,9 @@
 /build
 .idea
 /cmake-build-debug
+/src/test
 gmock-1.7.0
+riscv
 
 # Prerequisites
 *.d

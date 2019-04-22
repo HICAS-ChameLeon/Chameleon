@@ -13,7 +13,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
-
+// google
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 
@@ -238,6 +238,9 @@ namespace chameleon {
 
         const string get_web_ui() const;
 
+        // fault tolerance related
+        void set_fault_tolerance(bool fault_tolerance);
+
     private:
 
         string m_uuid;
@@ -245,6 +248,9 @@ namespace chameleon {
         string m_master_cwd;
 
         string m_webui_path;
+
+        // fault tolerance related
+        bool m_is_fault_tolerance;
 
         // master states.
         enum {
@@ -266,10 +272,12 @@ namespace chameleon {
         unordered_map<string, JSON::Object> m_runtime_resources;
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
 
+        unordered_map<string, double> m_slaves_clock;
+
         // scheduler related
         shared_ptr<SchedulerInterface> m_scheduler;
 //        shared_ptr<SchedulerInterface> m_wqn_scheduler;
-//        shared_ptr<SchedulerInterface> m_smhc_scheduler;
+       // shared_ptr<SchedulerInterface> m_smhc_scheduler;
 
         int64_t nextFrameworkId;
 
@@ -293,10 +301,13 @@ namespace chameleon {
 
         // super_master related
         string m_super_master_path;
+        void launch_master(const UPID &super_master, const LaunchMasterMessage &message);
         void super_master_control(const UPID &super_master, const SuperMasterControlMessage &super_master_control_message);
 
         void received_registered_message_from_super_master(const UPID &super_master, const AcceptRegisteredMessage &message);
         void received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message);
+
+        void received_launch_backup_master(const UPID &slave, const BackupMasterMessage &message);
     };
 
     class Framework {

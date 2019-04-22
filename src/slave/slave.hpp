@@ -132,6 +132,11 @@ namespace chameleon {
             Slave::m_work_dir = m_work_dir;
         }
 
+        // fault tolerance related
+//        void setM_fault_tolerance(bool m_fault_tolerance){
+//            Slave::m_is_fault_tolerance = m_fault_tolerance;
+//        }
+
         void run_task(const process::UPID &from,
                      const mesos::FrameworkInfo &frameworkInfo,
                      const mesos::FrameworkID &frameworkId,
@@ -182,6 +187,7 @@ namespace chameleon {
         Duration m_interval;
         string m_uuid;
         string m_master;  //master@127.0.0.1：1080
+        UPID m_backup_master;
 
         hashmap<string, Framework *> frameworks;
 
@@ -194,6 +200,9 @@ namespace chameleon {
         string m_work_dir;
         // the absolute path of the slave executable
         string m_cwd;
+
+        // fault tolerance related
+        bool m_is_fault_tolerance = false;
 
 //        BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completedFrameworks;
 
@@ -220,6 +229,9 @@ namespace chameleon {
         void reregister_to_master(const UPID &from, const ReregisterMasterMessage &message);
 
         void launch_master(const UPID &super_master, const LaunchMasterMessage &message);
+
+        // fault tolerance related
+        void send_message_to_backup_master(const UPID &master, const BackupMasterMessage &message);
 
         //super_master related
 //        void received_new_master(const UPID& from, const MasterRegisteredMessage& message);
