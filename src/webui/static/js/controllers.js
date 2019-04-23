@@ -184,7 +184,7 @@
         $scope.ok = function() {
             $http({
                 method: "POST",
-                url: leadingChameleonMasterURL('/master/post-test'),
+                url: leadingChameleonMasterURL('/master/change-scheduler'),
                 data:{name:$rootScope.selected,done:true},
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 transformRequest:function (obj) {

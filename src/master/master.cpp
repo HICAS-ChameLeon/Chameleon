@@ -150,46 +150,8 @@ namespace chameleon {
                 });
 
 
-        route("/change-scheduler",
-              "change the information of scheduler",
-              [this](Request request) {
-                  JSON::Object smhc_schedular;
-                  JSON::Object goarse_schedular;
-                  JSON::Object a_content = JSON::Object();
-                  JSON::Array schedular_array;
-                  SchedulerInterface *m_smhc_scheduler = new SMHCGrainedScheduler();
-
-//                  m_scheduler = new make_shared<CoarseGrainedScheduler>();
-//                  m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
-//                  const mesos::FrameworkID frameworkId;
-//                  mesos::internal::ResourceOffersMessage message;
-//                  m_smhc_scheduler->construct_offers(message, frameworkId, m_slave_objects);
-
-                  const string &scheduler_name = m_smhc_scheduler->m_scheduler_name;
-
-                  smhc_schedular.values["name"] = scheduler_name;
-                  smhc_schedular.values["id"] = "1";
-                  smhc_schedular.values["done"] = true;
-
-                  goarse_schedular.values["name"] = "GoarseGrained";
-                  goarse_schedular.values["id"] = "2";
-                  goarse_schedular.values["done"] = false;
-
-
-                  schedular_array.values.emplace_back(smhc_schedular);
-                  schedular_array.values.emplace_back(goarse_schedular);
-
-                  a_content.values["content"] = schedular_array;
-
-
-                  OK ok_response(stringify(a_content));
-                  ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                  return ok_response;
-              });
-
-
         route(
-                "/post-test",
+                "/change-scheduler",
                 "post a file",
                 [](Request request) {
                     string request_method = request.method;
@@ -202,9 +164,14 @@ namespace chameleon {
                     string body_str = request.body;
                     std::cout<<body_str<<std::endl;
 
-                    SchedulerInterface *m_smhc_scheduler = new SMHCGrainedScheduler();
-                    const string &scheduler_name = m_smhc_scheduler->m_scheduler_name;
-                    if(body_str==m_smhc_scheduler->m_scheduler_name){}
+                    SchedulerInterface *m_scheduler;
+                    const string &scheduler_name = m_scheduler->m_scheduler_name;
+                    SMHCGrainedScheduler name(body_str);
+                    m_scheduler = &name;
+                    LOG(INFO)<< scheduler_name;
+                   // m_scheduler->construct_offers();
+                  // if(body_str==m_scheduler->m_scheduler_name){}
+
                     std::ostringstream result;
                     result << "{ \"result\": " <<"\"" <<request_method+tpath <<"\"" << "}";
                     std::cout<<result.str()<<std::endl;
