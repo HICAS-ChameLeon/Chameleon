@@ -13,6 +13,7 @@
 #include <set>
 #include <memory>
 #include <unordered_map>
+#include <map>
 
 #include <boost/lexical_cast.hpp>
 
@@ -58,6 +59,8 @@
 #include <chameleon_os.hpp>
 #include <chameleon_resources.hpp>
 
+#include "AliTracePreProcessor.h"
+
 using std::string;
 using std::set;
 using std::vector;
@@ -86,8 +89,16 @@ namespace chameleon {
     public:
         explicit SlaveObject(const UPID& upid_,const HardwareResourcesMessage& hardware_resources_);
 
+        //Heldon overload slave_object struct funtion
+        SlaveObject(string machine_id, AliSim::Machine_mega machine_mega);
+
+
         ~ SlaveObject();
         const process::UPID m_upid;
+
+        //for simulate
+        const string m_machine_id;
+
         const string m_ip;
         const string m_hostname;
         const string m_uuid;

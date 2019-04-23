@@ -114,7 +114,7 @@ namespace AliSim{
                         task_identifier.end_time = lexical_cast<uint64_t>(line_cols[6]);
                         if(!line_cols[7].empty()){
                             task_identifier.plan_cpu = lexical_cast<float_t>(line_cols[7]);
-                            task_identifier.plan_mem = lexical_cast<float_t>(line_cols[8]);
+                            task_identifier.plan_mem = lexical_cast<double_t>(line_cols[8]);
                         }
                         else{
                             task_identifier.plan_cpu = -1;

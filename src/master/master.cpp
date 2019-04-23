@@ -8,6 +8,9 @@
 #include <slave_related.pb.h>
 #include "master.hpp"
 
+const string trace_path = "/home/heldon/chameleon/ali_clusterdata/alibaba_clusterdata_v2018/";
+
+
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
 DEFINE_string(supermaster_path, "/home/lemaker/open-source/Chameleon/build/src/master/super_master",
@@ -1177,6 +1180,15 @@ namespace chameleon {
             send(slave_id,message);
         }
     }
+
+    void Master::simulate_slave(AliSim::AliSimulator simulator) {
+        simulator.Run();
+        multimap<uint64_t ,AliSim::Machine_mega> machine_mega = simulator.Get_machine();
+        for(multimap<uint64_t, AliSim::Machine_mega>::iterator it = machine_mega.begin(); it != machine_mega.end(); it++){
+            shared_ptr<SlaveObject> slave_object = make_shared<SlaveObject>(it->second.machine_id, it->second);
+            m_slave_objects.insert({slave_object->m_machine_id, slave_object});
+        }
+    }
 }
 
 using namespace chameleon;
@@ -1212,6 +1224,14 @@ int main(int argc, char **argv) {
 
 
         LOG(INFO) << "Running master on " << process::address().ip << ":" << process::address().port;
+
+        AliSim::SimulatedWallTime simulated_wall_time(20);
+        AliSim::AliTraceLoader trace_loader(trace_path);
+        AliSim::AliSimulator simulator(simulated_wall_time, trace_loader);
+        master.simulate_slave(simulator);
+
+        LOG(INFO) << "Heldon simulate slave ";
+        master.print_slave();
 
         const PID<Master> master_pid = master.self();
         LOG(INFO) << master_pid;

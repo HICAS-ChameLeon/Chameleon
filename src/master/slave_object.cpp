@@ -31,6 +31,13 @@ namespace chameleon {
         m_available_disk =0;
     }
 
+    //Heldon overload slave_object struct funtion
+    SlaveObject::SlaveObject(string machine_id, AliSim::Machine_mega machine_mega) : m_machine_id(machine_id){
+        m_available_cpus = machine_mega.cpu_num;
+        m_available_mem = machine_mega.mem_size;
+        m_available_disk = 0;
+    }
+
     SlaveObject::~SlaveObject() {
 
     }
@@ -63,7 +70,7 @@ namespace chameleon {
         cpu_scalar->set_value(m_available_cpus);
         cpu_resource->mutable_scalar()->CopyFrom(*cpu_scalar);
         offer->add_resources()->MergeFrom(*cpu_resource);
-        LOG(INFO) << "Heldon cpu resources : " << cpu_scalar;
+        LOG(INFO) << "Heldon cpu resources : " << cpu_scalar->value();
 
         // memory
         mesos::Resource *mem_resource = new mesos::Resource();
@@ -73,7 +80,7 @@ namespace chameleon {
         mem_scalar->set_value(m_available_mem);
         mem_resource->mutable_scalar()->CopyFrom(*mem_scalar);
         offer->add_resources()->MergeFrom(*mem_resource);
-        LOG(INFO) << "Heldon mem resources : " << mem_scalar;
+        LOG(INFO) << "Heldon mem resources : " << mem_scalar->value();
         // port
         mesos::Resource *port_resource = new mesos::Resource();
         port_resource->set_name("ports");
@@ -91,11 +98,11 @@ namespace chameleon {
         offer->mutable_framework_id()->MergeFrom(framework_id);
 
         mesos::SlaveID *slaveID = new mesos::SlaveID();
-        slaveID->set_value(m_uuid);
-        LOG(INFO)<<m_uuid;
+        slaveID->set_value(m_machine_id);
+        LOG(INFO)<<m_machine_id;
         offer->mutable_slave_id()->MergeFrom(*slaveID);
 
-        offer->set_hostname(m_hostname);
+        offer->set_hostname("heldon");
         return offer;
     }
 }

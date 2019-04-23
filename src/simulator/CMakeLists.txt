@@ -7,4 +7,4 @@ set(AliSimulator_SRCS AliTracePreProcessor.h
         SimulatedWallTime.hpp SimulatedWallTime.cpp
         AliSimulator_main.cpp)
 add_executable(AliSimulator ${AliSimulator_SRCS})
-target_link_libraries(AliSimulator glog mesos-1.3.2)
+target_link_libraries(AliSimulator ${PROCESS_LIBS} glog mesos-1.3.2)

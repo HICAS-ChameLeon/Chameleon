@@ -2,6 +2,7 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
 include_directories(${CMAKE_SOURCE_DIR}/src/master/)
+include_directories(${CMAKE_SOURCE_DIR}/src/simulator)
 message(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
 
 # set the gtest 1.7 relevant library names.
@@ -14,7 +15,15 @@ set(master_SRCS
         slave_object.cpp
         scheduler_interface.hpp
         coarse_grained_scheduler.hpp
-        smhc_grained_scheduler.hpp)
+        smhc_grained_scheduler.hpp
+        ${CMAKE_SOURCE_DIR}/src/simulator/AliTracePreProcessor.h
+        ${CMAKE_SOURCE_DIR}/src/simulator/AliTraceLoader.hpp ${CMAKE_SOURCE_DIR}/src/simulator/AliTraceLoader.cpp
+        ${CMAKE_SOURCE_DIR}/src/simulator/AliSimulator.hpp ${CMAKE_SOURCE_DIR}/src/simulator/AliSimulator.cpp
+        ${CMAKE_SOURCE_DIR}/src/simulator/SimulatorLinker.hpp ${CMAKE_SOURCE_DIR}/src/simulator/SimulatorLinker.cpp
+        ${CMAKE_SOURCE_DIR}/src/simulator/SimulatedWallTime.hpp ${CMAKE_SOURCE_DIR}/src/simulator/SimulatedWallTime.cpp)
+
+
+
 set(master_PROTOS job)
 list(APPEND master_PROTOS hardware_resource)
 list(APPEND master_PROTOS runtime_resource)

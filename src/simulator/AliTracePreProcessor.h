@@ -45,8 +45,8 @@ namespace AliSim{
         string status;
         uint64_t start_time;
         uint64_t end_time;
-        int32_t plan_cpu;
-        int32_t plan_mem;
+        double plan_cpu;
+        double plan_mem;
 
         friend ostream &operator<< (ostream &out, Task_identifier task_identifier){
             cout << "task name : " <<task_identifier.task_name << " ; ";

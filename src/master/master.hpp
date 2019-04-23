@@ -60,6 +60,10 @@
 #include <coarse_grained_scheduler.hpp>
 #include <smhc_grained_scheduler.hpp>
 
+#include "AliTracePreProcessor.h"
+#include "AliTraceLoader.hpp"
+#include "AliSimulator.hpp"
+
 using std::string;
 using std::set;
 using std::vector;
@@ -241,6 +245,14 @@ namespace chameleon {
         // fault tolerance related
         void set_fault_tolerance(bool fault_tolerance);
 
+        void simulate_slave(AliSim::AliSimulator simulator);
+
+        void print_slave(){
+            unordered_map<string, shared_ptr<SlaveObject>>::iterator it = m_slave_objects.begin();
+            for(it; it != m_slave_objects.end(); it++){
+                cout << it->first << endl;
+            }
+        }
     private:
 
         string m_uuid;

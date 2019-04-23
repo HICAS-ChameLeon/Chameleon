@@ -28,7 +28,13 @@ namespace AliSim{
             m_simulated_wall_time.Increase_time_stamp_by_one_second();
 
         }
-        m_linker->Get_machine_mega();
-        m_linker->Get_tasks();
+    }
+
+    multimap<uint64_t, Machine_mega> AliSimulator::Get_machine(){
+        return m_linker->Get_machine_mega();
+    }
+
+    multimap<uint64_t, Task_identifier> AliSimulator::Get_task(){
+        return m_linker->Get_tasks();
     }
 }

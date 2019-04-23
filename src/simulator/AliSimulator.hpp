@@ -25,6 +25,9 @@ namespace AliSim{
         ~AliSimulator();
 
         void Run();
+
+        multimap<uint64_t, Machine_mega> Get_machine();
+        multimap<uint64_t, Task_identifier> Get_task();
     };
 }
 

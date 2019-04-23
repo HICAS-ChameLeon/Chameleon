@@ -28,7 +28,7 @@ namespace AliSim{
 
         multimap<uint64_t, Machine_mega> Get_machine_mega();
 
-        void Get_tasks();
+        multimap<uint64_t, Task_identifier> Get_tasks();
     };
 }
 
