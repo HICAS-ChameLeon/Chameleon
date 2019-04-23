@@ -60,7 +60,7 @@ if (NOT WIN32)
     path_tests.cpp
     protobuf_tests.cpp
     protobuf_tests.pb.cc
-    svn_tests.cpp
+#    svn_tests.cpp
     )
 endif (NOT WIN32)
 
