@@ -185,7 +185,7 @@
             $http({
                 method: "POST",
                 url: leadingChameleonMasterURL('/master/change-scheduler'),
-                data:{name:$rootScope.selected,done:true},
+                data:{name:$rootScope.selected},
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 transformRequest:function (obj) {
                     var str = [];

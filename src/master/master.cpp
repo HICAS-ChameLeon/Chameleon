@@ -153,28 +153,33 @@ namespace chameleon {
         route(
                 "/change-scheduler",
                 "post a file",
-                [](Request request) {
+                [this](Request request) {
                     string request_method = request.method;
-                    std::cout<<request_method <<std::endl;
+                    LOG(INFO)<<"Starting get "<< request_method <<" request from Client";
+
                     string& tpath = request.url.path;
-                    std::cout<<tpath<<std::endl;
                     int param_size = request.url.query.size();
-                    std::cout<< param_size<<std::endl;
 
                     string body_str = request.body;
-                    std::cout<<body_str<<std::endl;
+
+                    vector<string> str_scheduler = strings::split(body_str, "=");
+                    string str_scheduler_name = str_scheduler[1];
+                    LOG(INFO) << "The select scheduler is " << str_scheduler_name;
 
                     SchedulerInterface *m_scheduler;
-                    const string &scheduler_name = m_scheduler->m_scheduler_name;
-                    SMHCGrainedScheduler name(body_str);
+                    SMHCGrainedScheduler name(str_scheduler_name);
                     m_scheduler = &name;
+                    const string &scheduler_name = m_scheduler->m_scheduler_name;
                     LOG(INFO)<< scheduler_name;
-                   // m_scheduler->construct_offers();
+//                    mesos::internal::ResourceOffersMessage message;
+//                    auto it = this->frameworks.registered.begin();
+//                    Framework *framework = it->second;
+//                    const mesos::FrameworkID frameworkId = framework->id();
+//                    m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
                   // if(body_str==m_scheduler->m_scheduler_name){}
 
                     std::ostringstream result;
                     result << "{ \"result\": " <<"\"" <<request_method+tpath <<"\"" << "}";
-                    std::cout<<result.str()<<std::endl;
                     JSON::Value body = JSON::parse(result.str()).get();
                     return OK(body);
                 });
@@ -218,7 +223,7 @@ namespace chameleon {
                             resources.values["resources"] = it->second;
                             shared_ptr<SlaveObject> &slave_object = slave->second;
                             resources.values["slave_hostname"] = slave_object->m_hostname;
-                            slave++;
+                            slave++;   //每有一个runtime_resource增加，则slave的顺序也跟着增加，这样才slave输出的hostname才不重复
                             array.values.emplace_back(resources);
                         }
                         result.values["quantity"] = array.values.size();
