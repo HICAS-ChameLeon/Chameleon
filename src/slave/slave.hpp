@@ -54,7 +54,7 @@
 #include <process/subprocess.hpp>
 
 // protobuf
-#include <monitor_info.pb.h>
+//#include <monitor_info.pb.h>
 #include <job.pb.h>
 #include <runtime_resource.pb.h>
 #include <cluster_operation.pb.h>
@@ -132,33 +132,36 @@ namespace chameleon {
             Slave::m_work_dir = m_work_dir;
         }
 
-        void runTask(const process::UPID &from,
+        // fault tolerance related
+//        void setM_fault_tolerance(bool m_fault_tolerance){
+//            Slave::m_is_fault_tolerance = m_fault_tolerance;
+//        }
+
+        void run_task(const process::UPID &from,
                      const mesos::FrameworkInfo &frameworkInfo,
                      const mesos::FrameworkID &frameworkId,
                      const process::UPID &pid,
                      const mesos::TaskInfo &task);
 
-        void statusUpdate(mesos::internal::StatusUpdate update, const Option<UPID> &pid);
+        void status_update(mesos::internal::StatusUpdate update, const Option<UPID> &pid);
 
-        void forward(mesos::internal::StatusUpdate update);
-
-        void statusUpdateAcknowledgement(
+        void status_update_acknowledgement(
                 const UPID &from,
                 const mesos::SlaveID &slaveId,
                 const mesos::FrameworkID &frameworkId,
                 const mesos::TaskID &taskId,
                 const string &uuid);
 
-        Framework *getFramework(
+        Framework *get_framework(
                 const mesos::FrameworkID &frameworkId) const;
 
-        mesos::ExecutorInfo getExecutorInfo(
+        mesos::ExecutorInfo get_executorinfo(
                 const mesos::FrameworkInfo &frameworkInfo,
                 const mesos::TaskInfo &task) const;
 
-        void removeFramework(Framework* framework);
+        void remove_framework(Framework* framework);
 
-        void shutdownFramework(
+        void shutdown_framework(
                 const process::UPID& from,
                 const mesos::FrameworkID& frameworkId);
 
@@ -183,20 +186,22 @@ namespace chameleon {
         Duration m_interval;
         string m_uuid;
         string m_master;  //master@127.0.0.1：1080
+        UPID m_backup_master;
 
         hashmap<string, Framework *> frameworks;
 
         mesos::SlaveInfo m_slaveInfo;
         mesos::ExecutorInfo m_executorInfo;
-        mesos::ExecutorID m_executorID;
 
-        mesos::TaskInfo m_task;
 
         chameleon::slave::DockerContainerizer* m_containerizer;
 
         string m_work_dir;
         // the absolute path of the slave executable
         string m_cwd;
+
+        // fault tolerance related
+        bool m_is_fault_tolerance = false;
 
 //        BoundedHashMap<mesos::FrameworkID, process::Owned<Framework>> completedFrameworks;
 
@@ -216,17 +221,16 @@ namespace chameleon {
 
         void start_docker_container(const mesos::TaskInfo& taskInfo, const Framework *framework);
 
-        void registerExecutor(const UPID &from,
+        void register_executor(const UPID &from,
                               const mesos::FrameworkID &frameworkId,
                               const mesos::ExecutorID &executorId);
-
-        void _statusUpdate(
-                const mesos::internal::StatusUpdate &update,
-                const Option<UPID> &pid);
 
         void reregister_to_master(const UPID &from, const ReregisterMasterMessage &message);
 
         void launch_master(const UPID &super_master, const LaunchMasterMessage &message);
+
+        // fault tolerance related
+        void send_message_to_backup_master(const UPID &master, const BackupMasterMessage &message);
 
         //super_master related
 //        void received_new_master(const UPID& from, const MasterRegisteredMessage& message);
@@ -234,6 +238,7 @@ namespace chameleon {
         // running task related
         void modify_command_info_of_running_task(const string& spark_home_path, mesos::TaskInfo &task);
 
+        void modify_command_info_of_flink_task(const string& spark_home_path, mesos::TaskInfo &task);
     };
 
     class SlaveHeartbeater : public process::Process<SlaveHeartbeater> {
@@ -348,12 +353,6 @@ namespace chameleon {
 
         ~Framework();
 
-//        Executor *addExecutor(const mesos::ExecutorInfo &executorInfo);
-
-//        Executor *getExecutor(const mesos::ExecutorID &executorId) const;
-
-//        void checkpointFramework() const;
-
         const mesos::FrameworkID id() const { return info.id(); }
 
         enum State {
@@ -371,30 +370,11 @@ namespace chameleon {
         Framework &operator=(const Framework &);
     };
 
-    mesos::Task createTask(
-            const mesos::TaskInfo &task,
-            const mesos::TaskState &state,
-            const mesos::FrameworkID &frameworkId);
-
-    std::map<std::string, std::string> executorEnvironment(
-            const mesos::ExecutorInfo &executorInfo,
-            const std::string &directory,
-            const mesos::SlaveID &slaveId,
-            const process::PID<Slave> &slavePid,
-            bool checkpoint);
-
-
-    string taskOrTaskGroup(
-            const Option<mesos::TaskInfo> &task,
-            const Option<mesos::TaskGroupInfo> &taskGroup);
-
-    std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state);
-
-//    std::ostream &operator<<(std::ostream &stream, Slave::State state);
+//    inline std::ostream &operator<<(std::ostream &stream, const mesos::TaskState &state) {
+//        return stream << TaskState_Name(state);
+//    };
 
     std::ostream &operator<<(std::ostream &stream, Framework::State state);
-
-//    std::ostream &operator<<(std::ostream &stream, Executor::State state);
 
 }
 

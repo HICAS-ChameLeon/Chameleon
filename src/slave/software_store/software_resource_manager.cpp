@@ -8,7 +8,7 @@
 #include "software_resource_manager.hpp"
 namespace chameleon{
 
-    SoftwareResourceManager::SoftwareResourceManager(const string& public_resources_):m_public_resources(public_resources_),process(new DownloadProcess(public_resources_)) {
+    SoftwareResourceManager::SoftwareResourceManager(const string& slave_path_, const string& public_resources_):m_public_resources(public_resources_),m_slave_path(slave_path_),process(new DownloadProcess(m_slave_path, public_resources_)) {
         initialize();
     }
 
@@ -64,7 +64,7 @@ namespace chameleon{
         }
 
 //        string downloader_path = path::join(
-        string downloader_path = path::join(os::getcwd(),"/software_store/downloader");
+        string downloader_path = path::join(m_slave_path,"/software_store/downloader");
 //        string downloader_path = path::join("/home/lemaker/open-source/Chameleon/build/src/slave","/software_store/downloader");
         LOG(INFO)<<"downloader_path "<<downloader_path;
 
@@ -72,6 +72,9 @@ namespace chameleon{
         environment["CHAMELEON_FETCHER_INFO"] = stringify(JSON::protobuf(info));
         environment["framework_name"] = framework_name;
         environment["PUBLIC_RESOURCES_DIR"] = m_public_resources_dir;
+        Option<string> hadoop_home = os::getenv("HADOOP_HOME");
+        LOG(INFO)<<hadoop_home.get();
+        environment["HADOOP_HOME"] =hadoop_home.get();
         LOG(INFO)<<"lele download dependencies of framework_name: "<<framework_name;
         Try<Subprocess> download_subprocess = process::subprocess(
                 downloader_path,
@@ -80,7 +83,7 @@ namespace chameleon{
                 Subprocess::FD(err.get(), Subprocess::IO::OWNED),
                 environment
                 );
-
+        LOG(INFO) << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<download_subprocess.get().pid();
         if(download_subprocess.isError()){
             return process::Failure("Failed to execute downloader:"+download_subprocess.error());
         }

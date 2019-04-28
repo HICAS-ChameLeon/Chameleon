@@ -1,5 +1,5 @@
 
-PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages monitor_info ${CMAKE_BINARY_DIR}/src/messages monitor_info)
+#PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages monitor_info ${CMAKE_BINARY_DIR}/src/messages monitor_info)
 
 add_subdirectory(software_store)
 add_subdirectory(resource_collector)
@@ -174,7 +174,7 @@ list(REMOVE_DUPLICATES slave_SRCS)
 
 add_executable(slave ${slave_SRCS})
 
-set(slave_PROTOS monitor_info)
+#set(slave_PROTOS monitor_info)
 list(APPEND slave_PROTOS hardware_resource)
 list(APPEND slave_PROTOS runtime_resource)
 list(APPEND slave_PROTOS job)
@@ -192,6 +192,5 @@ target_link_libraries(slave ${slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} $
 #list(APPEND docker_launch_PROTOS mesos)
 #list(APPEND docker_launch_PROTOS scheduler)
 #list(REMOVE_DUPLICATES docker_launch_PROTOS)
-#link_libraries(/home/heldon/chameleon/mesos/mesos-1.3.2/build/src/.libs/libmesos-1.3.2.so)
 add_executable(docker_launch docker_launch.cpp)
 target_link_libraries(docker_launch ${PROCESS_LIBS} mesos-1.3.2 sched glog gflags )

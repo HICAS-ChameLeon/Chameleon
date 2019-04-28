@@ -3,6 +3,7 @@ message HardwareResourcesMessage
 {
     required string slave_id =1;
     required string slave_uuid=8;
+    required string slave_hostname=9;
     required CPUCollection cpu_collection = 2;
     required MemoryCollection mem_collection = 3;
     required GPUCollection    gpu_collection=4;
@@ -42,15 +43,15 @@ message TLBInfo{
 }
 
 message MemoryCollection {
-    required string max_size = 1;
-    required int32 device_quantity = 2;
+    required string max_size = 1;  // maximum capacity, not the actual memory size of current machine
+    required int32 device_quantity = 2; // actual how many memory cards on the current machine
     repeated MemInfo mem_infos = 3;
 }
 
 message MemInfo {
-    required string size = 1;
-    required string type = 2;
-    required string speed = 3;
+    required string size = 1; // MB
+    required string type = 2; // Type: DDR4
+    required string speed = 3; // Speed: 2133 MHz
 }
 
 message GPUCollection {
@@ -74,7 +75,8 @@ message GPUInfo {
 }
 
 
-
+//{"name": "loop0", "maj:min": "7:0", "rm": "0", "size": "91M", "ro": "1", "type": "loop", "mountpoint": "/snap/core/6350"},
+//{"name": "sda", "maj:min": "8:0", "rm": "0", "size": "1.8T", "ro": "0", "type": "disk", "mountpoint": null,
 message DiskCollection{
     repeated DiskInfo disk_infos = 1;
     required int32 disk_quantity= 2;
@@ -84,9 +86,9 @@ message DiskInfo{
         SSD = 0;
         HDD = 1;
     }
-    required string   name = 1;
-    required string   size = 2;
-    required DiskType type = 3;
+    required string   name = 1;  // "name": "sda"
+    required string   size = 2; // "size": "1.8T"
+    required DiskType type = 3; // "type": "disk"
     required string   disk_speed = 4;
 
 }
