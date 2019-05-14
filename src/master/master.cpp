@@ -1012,7 +1012,7 @@ namespace chameleon {
             LOG(INFO)<<*iter;
             LOG(INFO)<<m_slaves_last_time[*iter];
             LOG(INFO)<<time(0);
-            if (time(0) - m_slaves_last_time[*iter] > 10) {
+            if (m_slaves_last_time[*iter] != 0 && time(0) - m_slaves_last_time[*iter] > 10) {
                 m_alive_slaves.erase(*iter);
                 m_runtime_resources.erase(*iter);
                 m_proto_runtime_resources.erase(*iter);
