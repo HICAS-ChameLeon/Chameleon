@@ -42,7 +42,6 @@ add_subdirectory(submitter)
 add_subdirectory(launcher)
 add_subdirectory(docker)
 add_subdirectory(sched)
-add_subdirectory(test)
 
 #set(sched_SRC
 #        sched/constants.hpp

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html >
+<head>
+    <meta charset="utf-8">
+</head>
+<body ng-app="Chameleon" ng-controller="AddStyleCtrl">
+
+<div>Choose Tags</div>
+<div>
+    <div>You have choosen:</div>
+    <hr>
+    <label ng-repeat="selectedTag in selectedTags">
+        (({{selectedTag}}))
+    </label>
+    <hr>
+    <div ng-repeat="category in tagcategories">
+        <div>{{ category.name }}</div>
+        <div data-ng-repeat="tag in category.tags">
+            <div>
+                <input type="checkbox" id={{tag.id}} name="{{tag.name}}" ng-checked="isSelected(tag.id)" ng-click="updateSelection($event,tag.id)">
+                {{ tag.name }}
+            </div>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<pre>{{selected|json}}</pre>
+<pre>{{selectedTags|json}}</pre>
+
+<script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.min.js"></script>
+
+
+<!--<script src="/static/js/thirdparty/angular-1.5.5.min.js"></script>-->
+<script src="../js/thirdparty/bootstrap.js"></script>
+
+
+<script src="../js/thirdparty/ui-bootstrap.js"></script>
+<script src="../js/thirdparty/ui-bootstrap-tpls.js"></script>
+<script src="../js/thirdparty/angular-route-1.2.3.js"></script>
+<script src="../js/thirdparty/underscore-1.4.3.js"></script>
+
+<script src="../js/app.js"></script>
+<script src="../js/controllers.js"></script>
+
+
+</body>
+</html>
