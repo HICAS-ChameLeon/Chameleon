@@ -473,6 +473,8 @@ namespace chameleon {
 
         m_state = RUNNING;
 
+        heartbeat();
+
     }
 
     // get the absolute path of the directory where the master executable exists
@@ -985,6 +987,7 @@ namespace chameleon {
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
         //add insert slave_id to send new master message to slave
         m_alive_slaves.insert(slave_id);
+        m_slaves_last_time[slave_id] = time(0);
         if (m_is_fault_tolerance && slave_id != stringify(process::address().ip)){
             LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
             launch_master_message->set_port("6060");
@@ -995,6 +998,26 @@ namespace chameleon {
             delete launch_master_message;
             LOG(INFO)<<"send launch backup master message to "<<slave;
             m_is_fault_tolerance = false;
+        }
+    }
+
+    void Master::heartbeat() {
+        delete_slaves();
+        m_interval = Seconds(5);
+        process::delay(m_interval, self(), &Self::heartbeat);
+    }
+
+    void Master::delete_slaves() {
+        for(auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
+            LOG(INFO)<<*iter;
+            LOG(INFO)<<m_slaves_last_time[*iter];
+            LOG(INFO)<<time(0);
+            if (time(0) - m_slaves_last_time[*iter] > 10) {
+                m_alive_slaves.erase(*iter);
+                m_runtime_resources.erase(*iter);
+                m_proto_runtime_resources.erase(*iter);
+                LOG(INFO)<<"slave run on "<<*iter<<" was killed!";
+            }
         }
     }
 
