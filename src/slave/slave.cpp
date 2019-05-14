@@ -257,12 +257,12 @@ namespace chameleon {
         }
 
         if(frameworkInfo.name() == "Flink"){
-            const string spark_home_path = path::join(sanbox_path, "flink-1.4.2");
-            LOG(INFO)<<spark_home_path;
+            const string flink_home_path = path::join(sanbox_path, "flink-1.4.2");
+            LOG(INFO)<<flink_home_path;
 
             mesos::TaskInfo copy_task(taskInfo);
 
-            modify_command_info_of_flink_task(spark_home_path, copy_task);
+            modify_command_info_of_flink_task(flink_home_path, copy_task);
 
             // queue the task and executor_info
             m_tasks.push(copy_task);
@@ -270,7 +270,7 @@ namespace chameleon {
             if(taskInfo.container().type() == mesos::ContainerInfo::MESOS){
                 process::Future<Nothing> download_result;
                 Promise<Nothing> promise;
-                if (!os::exists(spark_home_path)) {
+                if (!os::exists(flink_home_path)) {
                     LOG(INFO) << "flink  didn't exist, download it frist";
 
                     mesos::fetcher::FetcherInfo *fetcher_info = new mesos::fetcher::FetcherInfo();
