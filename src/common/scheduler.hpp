@@ -1,18 +1,3 @@
-// Licensed to the Apache Software Foundation (ASF) under one
-// or more contributor license agreements.  See the NOTICE file
-// distributed with this work for additional information
-// regarding copyright ownership.  The ASF licenses this file
-// to you under the Apache License, Version 2.0 (the
-// "License"); you may not use this file except in compliance
-// with the License.  You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 
 #ifndef __CHAMELEON_SCHEDULER_HPP__
 #define __CHAMELEON_SCHEDULER_HPP__
@@ -24,14 +9,6 @@
 
 #include <mesos.pb.h>
 
-// Mesos scheduler interface and scheduler driver. A scheduler is used
-// to interact with Mesos in order to run distributed computations.
-//
-// IF YOU FIND YOURSELF MODIFYING COMMENTS HERE PLEASE CONSIDER MAKING
-// THE SAME MODIFICATIONS FOR OTHER LANGUAGE BINDINGS (e.g., Java:
-// src/java/src/org/apache/mesos, Python: src/python/src, etc.).
-
-// Forward declaration.
 namespace process {
 class Latch;
 } // namespace process {
@@ -55,17 +32,6 @@ class MasterDetector;
 } // namespace detector {
 } // namespace master {
 
-// Callback interface to be implemented by frameworks' schedulers.
-// Note that only one callback will be invoked at a time, so it is not
-// recommended that you block within a callback because it may cause a
-// deadlock.
-//
-// Each callback includes a pointer to the scheduler driver that was
-// used to run this scheduler. The pointer will not change for the
-// duration of a scheduler (i.e., from the point you do
-// SchedulerDriver::start() to the point that SchedulerDriver::join()
-// returns). This is intended for convenience so that a scheduler
-// doesn't need to store a pointer to the driver itself.
 class Scheduler
 {
 public:
@@ -176,12 +142,6 @@ public:
       const std::string& message) = 0;
 };
 
-
-// Abstract interface for connecting a scheduler to Mesos. This
-// interface is used both to manage the scheduler's lifecycle (start
-// it, stop it, or wait for it to finish) and to interact with Mesos
-// (e.g., launch tasks, kill tasks, etc.). See MesosSchedulerDriver
-// below for a concrete example of a SchedulerDriver.
 class SchedulerDriver
 {
 public:
@@ -317,32 +277,6 @@ public:
 };
 
 
-// Concrete implementation of a SchedulerDriver that connects a
-// Scheduler with a Mesos master. The MesosSchedulerDriver is
-// thread-safe.
-//
-// Note that scheduler failover is supported in Mesos. After a
-// scheduler is registered with Mesos it may failover (to a new
-// process on the same machine or across multiple machines) by
-// creating a new driver with the ID given to it in
-// Scheduler::registered.
-//
-// The driver is responsible for invoking the Scheduler callbacks as
-// it communicates with the Mesos master.
-//
-// Note that blocking on the MesosSchedulerDriver (e.g., via
-// MesosSchedulerDriver::join) doesn't affect the scheduler callbacks
-// in anyway because they are handled by a different thread.
-//
-// Note that the driver uses GLOG to do its own logging. GLOG flags
-// can be set via environment variables, prefixing the flag name with
-// "GLOG_", e.g., "GLOG_v=1". For Mesos specific logging flags see
-// src/logging/flags.hpp. Mesos flags can also be set via environment
-// variables, prefixing the flag name with "MESOS_", e.g.,
-// "MESOS_QUIET=1".
-//
-// See src/examples/test_framework.cpp for an example of using the
-// MesosSchedulerDriver.
 class MesosSchedulerDriver : public SchedulerDriver
 {
 public:
