@@ -1,0 +1,1 @@
+cmd='/usr/bin/cmake;-GUnix Makefiles;/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/http_parser-2.6.2/src/http_parser-2.6.2'

@@ -1,0 +1,10 @@
+prefix=/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libglog
+Description: Google Log (glog) C++ logging framework
+Version: 0.3.3
+Libs: -L${libdir} -lglog
+Cflags: -I${includedir}

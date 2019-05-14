@@ -988,7 +988,7 @@ protected:
   // SchedulerProcess::stop.
   void abort()
   {
-    LOG(INFO) << "Aborting framework " << framework.id();
+//    LOG(INFO) << "Aborting framework " << framework.id();
 
     CHECK(!running.load());
 
@@ -1172,7 +1172,7 @@ protected:
     }
 
     if (!savedOffers.contains(offerId)) {
-      LOG(WARNING) << "Attempting to decline an unknown offer " << offerId;
+//      LOG(WARNING) << "Attempting to decline an unknown offer " << offerId;
     }
 
     // Remove the offer. We do not need to save any PIDs
@@ -1254,11 +1254,11 @@ protected:
     // will not have a 'uuid' set.
     if (status.has_uuid() && status.has_slave_id()) {
       CHECK_SOME(master);
-
-      VLOG(2) << "Sending ACK for status update " << status.uuid()
-              << " of task " << status.task_id()
-              << " on agent " << status.slave_id()
-              << " to " << master.get().pid();
+//
+//      VLOG(2) << "Sending ACK for status update " << status.uuid()
+//              << " of task " << status.task_id()
+//              << " on agent " << status.slave_id()
+//              << " to " << master.get().pid();
 
       Call call;
 
@@ -1273,11 +1273,11 @@ protected:
 
       send(master.get().pid(), call);
     } else {
-      VLOG(2) << "Received ACK for status update"
-              << (status.has_uuid() ? " " + status.uuid() : "")
-              << " of task " << status.task_id()
-              << (status.has_slave_id()
-                  ? " on agent " + stringify(status.slave_id()) : "");
+//      VLOG(2) << "Received ACK for status update"
+//              << (status.has_uuid() ? " " + status.uuid() : "")
+//              << " of task " << status.task_id()
+//              << (status.has_slave_id()
+//                  ? " on agent " + stringify(status.slave_id()) : "");
     }
   }
 
@@ -1290,8 +1290,8 @@ protected:
      return;
     }
 
-    VLOG(2) << "Asked to send framework message to agent "
-            << slaveId;
+//    VLOG(2) << "Asked to send framework message to agent "
+//            << slaveId;
 
     // TODO(benh): After a scheduler has re-registered it won't have
     // any saved slave PIDs, maybe it makes sense to try and save each
@@ -1312,8 +1312,8 @@ protected:
       message.set_data(data);
       send(slave, message);
     } else {
-      VLOG(1) << "Cannot send directly to agent " << slaveId
-              << "; sending through master";
+//      VLOG(1) << "Cannot send directly to agent " << slaveId
+//              << "; sending through master";
 
       Call call;
 
@@ -1492,7 +1492,7 @@ void MesosSchedulerDriver::initialize() {
     LOG(WARNING) << warning.message;
   }
 
-  spawn(new VersionProcess(), true);
+//  spawn(new VersionProcess(), true);
 
   // Initialize Latch.
   latch = new Latch();

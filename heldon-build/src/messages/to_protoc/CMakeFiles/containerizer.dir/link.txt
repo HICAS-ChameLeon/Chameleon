@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcontainerizer.a  CMakeFiles/containerizer.dir/__/containerizer.pb.cc.o
+/usr/bin/ranlib libcontainerizer.a

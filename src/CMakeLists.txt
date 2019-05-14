@@ -31,18 +31,18 @@ add_subdirectory(common)
 
 add_subdirectory(messages)
 
-add_subdirectory(log)
+#add_subdirectory(log)
 
-add_subdirectory(master)
+# add_subdirectory(master)
 
-add_subdirectory(slave)
+# add_subdirectory(slave)
 
-add_subdirectory(submitter)
+# add_subdirectory(submitter)
 
-add_subdirectory(launcher)
-add_subdirectory(docker)
+#add_subdirectory(launcher)
+#add_subdirectory(docker)
 add_subdirectory(sched)
-add_subdirectory(test)
+#add_subdirectory(test)
 
 #set(sched_SRC
 #        sched/constants.hpp

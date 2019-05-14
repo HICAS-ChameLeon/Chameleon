@@ -1,0 +1,2 @@
+/usr/bin/ar qc libspec.a  CMakeFiles/spec.dir/messages/spec.pb.cc.o
+/usr/bin/ranlib libspec.a

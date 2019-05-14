@@ -1,0 +1,2 @@
+/usr/bin/ar qc liballocator.a  CMakeFiles/allocator.dir/messages/allocator.pb.cc.o
+/usr/bin/ranlib liballocator.a
