@@ -13,7 +13,10 @@ namespace chameleon{
     {
         return stream << slaveId.value();
     }
-
+    inline std::ostream& operator<<(std::ostream& stream, const mesos::TaskID& taskId)
+    {
+        return stream << taskId.value();
+    }
 
     ChameleonExecutorDriver::ChameleonExecutorDriver() {
 
@@ -22,7 +25,7 @@ namespace chameleon{
     ChameleonExecutorDriver::~ChameleonExecutorDriver() {}
 
     mesos::Status ChameleonExecutorDriver::start(process::UPID commandExecutorPid) {
-            std::cout<<"yxxxx ChameleonExecutorDriver start"<<std::endl;
+            LOG(INFO)<<"ChameleonExecutorDriver start";
             commandExecutor = commandExecutorPid;
 /*            if (status != mesos::DRIVER_NOT_STARTED) {
                 return status;
@@ -33,7 +36,7 @@ namespace chameleon{
             mesos::ExecutorID executorId;
 
 
-            std::cout<<"commandExecutorPid:  "<<commandExecutor<<std::endl;
+            LOG(INFO)<<"commandExecutorPid:  "<<commandExecutor;
 
             Option<string> value;
 
@@ -46,7 +49,7 @@ namespace chameleon{
 
             slave = process::UPID(value.get());
 
-            std::cout<<"slaveUPID"<<slave<<std::endl;
+            LOG(INFO)<<"slaveUPID"<<slave;
 
             CHECK(slave) << "Cannot parse MESOS_SLAVE_PID '" << value.get() << "'";
 
@@ -58,8 +61,7 @@ namespace chameleon{
             }
             slaveId.set_value(value.get());
 
-            std::cout<<"slaveId"<<slaveId<<std::endl;
-
+            LOG(INFO)<<"slaveId"<<slaveId;
             // Get framework ID from environment.
             value = os::getenv("MESOS_FRAMEWORK_ID");
             if (value.isNone()) {
@@ -76,7 +78,6 @@ namespace chameleon{
             }
             executorId.set_value(value.get());
 
-           // CHECK(process == nullptr);
 
             process = new chameleon::ExecutorProcess(
                     slave,
@@ -93,7 +94,15 @@ namespace chameleon{
     }
 
     mesos::Status ChameleonExecutorDriver::sendStatusUpdate(const mesos::TaskStatus &status) {
+/*        if (status != DRIVER_RUNNING) {
+            return status;
+        }*/
 
+        //CHECK(process != nullptr);
+        LOG(INFO) << "ChameleonExecutorDriver  sendStatusUpdate" ;
+        dispatch(process, &ExecutorProcess::sendStatusUpdate, status);
+
+        //return status;
     }
 
     void ChameleonExecutorDriver::launch(const mesos::TaskInfo &info) {
@@ -126,19 +135,19 @@ namespace chameleon{
     }
 
     void ExecutorProcess::initialize() {
-        LOG(INFO) << "yxxxx Executor started at: " << self()
+        LOG(INFO) << "Executor started at: " << self()
                   << " with pid " << getpid();
 
        // slave = "slave@172.20.110.100:6061" ;
     //    link(slave);
-        std::cout<<"yxxxx ExecutorProcess send a RegisterExecutorMessage to slave"<<std::endl;
+       // std::cout<<"yxxxx ExecutorProcess send a RegisterExecutorMessage to slave"<<std::endl;
         // Register with slave.
-        LOG(INFO)<<" yxxxx ExecutorProcess send a RegisterExecutorMessage to slave ";
+        LOG(INFO)<<"ExecutorProcess send a RegisterExecutorMessage to slave ";
         mesos::internal::RegisterExecutorMessage message;
         message.mutable_framework_id()->MergeFrom(frameworkId);
         message.mutable_executor_id()->MergeFrom(executorId);
         send(slave, message);
-        LOG(INFO)<<" yxxxx end send a RegisterExecutorMessage to slave "<<slave;
+        LOG(INFO)<<"end send a RegisterExecutorMessage to slave "<<slave;
     }
 
 
@@ -146,20 +155,71 @@ namespace chameleon{
     void ExecutorProcess::registered(const mesos::ExecutorInfo &executorInfo, const mesos::FrameworkID &frameworkId,
                                      const mesos::FrameworkInfo &frameworkInfo, const mesos::SlaveID &slaveId,
                                      const mesos::SlaveInfo &slaveInfo) {
-        std::cout<<"yxxxxxxx Executor registered on agent "<<slaveId<<std::endl;
-        LOG(INFO) << "yxxxxxxx Executor registered on agent " << slaveId;
+        LOG(INFO) << "Executor registered on agent " << slaveId;
     }
 
     void ExecutorProcess::runTask(const mesos::TaskInfo &task) {
-
-        std::cout<<"yxxxxxxx ExecutorProcess begin runTask "<<slaveId<<std::endl;
-        LOG(INFO) << "yxxxxxxx ExecutorProcess runTask " << slaveId;
+        LOG(INFO) << "ExecutorProcess runTask " ;
+      //  std::cout<<"yxxxxxxx ExecutorProcess begin runTask "<<slaveId<<std::endl;
+       // LOG(INFO) << "yxxxxxxx ExecutorProcess runTask " << slaveId;
 //        LOG(INFO) << "yxxxxxxx Executor asked to run task '" << task.task_id() << "'"<<"on"<<commandExecutor;
 
         send(commandExecutor, task);
     }
 
+
+    inline std::ostream& operator<<(std::ostream& stream, const mesos::FrameworkID& frameworkId)
+    {
+        return stream << frameworkId.value();
+    }
+    std::ostream& operator<<(std::ostream& stream, const mesos::internal::StatusUpdate& update)
+    {
+        stream << update.status().state();
+
+        if (update.has_uuid()) {
+            stream << " (UUID: " << stringify(UUID::fromBytes(update.uuid()).get())
+                   << ")";
+        }
+
+        stream << " for task " << update.status().task_id();
+
+        if (update.status().has_healthy()) {
+            stream << " in health state "
+                   << (update.status().healthy() ? "healthy" : "unhealthy");
+        }
+
+        return stream << " of framework " << update.framework_id();
+    }
+
+
+
     void ExecutorProcess::sendStatusUpdate(const mesos::TaskStatus &status) {
 
+        mesos::internal::StatusUpdateMessage message;
+        mesos::internal::StatusUpdate* update = message.mutable_update();
+        update->mutable_framework_id()->MergeFrom(frameworkId);
+        update->mutable_executor_id()->MergeFrom(executorId);
+        update->mutable_slave_id()->MergeFrom(slaveId);
+        update->mutable_status()->MergeFrom(status);
+        update->set_timestamp(process::Clock::now().secs());
+        update->mutable_status()->set_timestamp(update->timestamp());
+        message.set_pid(self());
+
+        // We overwrite the UUID for this status update, however with
+        // the HTTP API, the executor will have to generate a UUID
+        // (which needs to be validated to be RFC-4122 compliant).
+        UUID uuid = UUID::random();
+        update->set_uuid(uuid.toBytes());
+        update->mutable_status()->set_uuid(uuid.toBytes());
+
+        // We overwrite the SlaveID for this status update, however with
+        // the HTTP API, this can be overwritten by the slave instead.
+        update->mutable_status()->mutable_slave_id()->CopyFrom(slaveId);
+
+        LOG(INFO) << "Executor sending status update " << *update;
+
+     // Capture the status update.
+        send(slave, message);
+        LOG(INFO) << "ExecutorProcess  sendStatusUpdate to "<<slave;
     }
 }

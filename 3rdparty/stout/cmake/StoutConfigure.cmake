@@ -24,7 +24,7 @@ if (NOT WIN32)
   # we should support a CMake-based "distribution channel", even though this
   # way is sure to be more hackish.
   find_package(Apr REQUIRED)
-  find_package(Svn REQUIRED)
+#  find_package(Svn REQUIRED)
 endif (NOT WIN32)
 
 include(GroupSource)
@@ -80,7 +80,7 @@ set(STOUT_3RDPARTY_INCLUDE_DIRS
   ${NVML_INCLUDE_DIR}
   ${PICOJSON_INCLUDE_DIR}
   ${PROTOBUF_INCLUDE_DIR}
-  ${SVN_INCLUDE_DIR}
+#  ${SVN_INCLUDE_DIR}
   )
 
 if (WIN32)
@@ -123,7 +123,7 @@ set(STOUT_LIBS
   ${APR_LIBS}
   ${CURL_LFLAG}
   ${GLOG_LFLAG}
-  ${SVN_LIBS}
+#  ${SVN_LIBS}
   ${PROTOBUF_LFLAG}
   )
 

@@ -4,6 +4,24 @@ import "hardware_resource.proto";
 import "runtime_resource.proto";
 
 
+
+message ChameleonMasterINFO
+{
+    required string id = 1;
+    required uint32 ip = 2;
+    required uint32 port = 3;
+    optional string pid = 4;
+    optional string hostname = 5;
+    optional string version = 6;
+    optional Address address = 7;
+}
+
+message Address {
+    optional string hostname = 1;
+    optional string ip = 2;
+    required int32 port = 3;
+}
+
 message MasterRegisteredMessage
 {
     required string master_id =1;
@@ -20,7 +38,11 @@ message MasterRegisteredMessage
 message SlavesInfoControlledByMaster{
     required string ip = 1;
     required string port = 2;
+}
 
+message MasterInfoControlledBySuperMaster{
+    required string ip = 1;
+    required string port = 2;
 }
 
 message SuperMasterControlMessage{
@@ -28,6 +50,7 @@ message SuperMasterControlMessage{
     optional string super_master_uuid = 2;
     required bool passive = 3;
     repeated SlavesInfoControlledByMaster my_slaves=4;
+    repeated MasterInfoControlledBySuperMaster my_master=5;
 }
 
 message AcceptRegisteredMessage{
@@ -61,4 +84,12 @@ message AdministeredSlavesMessage{
     required string super_master_uuid = 3;
 
     repeated SlavesInfoControlledByMaster my_slaves = 4;
+}
+
+//launch new master parameter configuration
+message LaunchMasterMessage{
+    required string port = 1;
+    required string master_path =2 ;
+    required string webui_path = 3;
+    required bool is_fault_tolerance = 4;
 }
