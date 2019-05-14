@@ -40,10 +40,13 @@
                     templateUrl: 'supernetwork_topology.html',
                     controller: 'SuperTopologyCtrl'
                 })
+<<<<<<< HEAD
+=======
                 .when('/topology/super_master_and_super_master', {
                     templateUrl: 'super_and_supernetwork_topology.html',
                     controller: 'SuperAndSuperTopologyCtrl'
                 })
+>>>>>>> db5d236c80086e935e662f5fe21b687573495b9f
                 //framework_topology.html
                 .when('/framework_topology',{
                     templateUrl:'framework_topology.html',

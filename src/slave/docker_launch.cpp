@@ -15,7 +15,7 @@
 #include <boost/lexical_cast.hpp>
 
 //mesos dependencies
-#include <mesos/scheduler.hpp>
+#include <common/scheduler.hpp>
 
 //stout dependencies
 #include <stout/exit.hpp>
@@ -138,7 +138,7 @@ public:
         resource = task.add_resources();
         resource->set_name("mem");
         resource->set_type(Value::SCALAR);
-        resource->mutable_scalar()->set_value(1024);  //--memory = max(32MB , 32MB)
+        resource->mutable_scalar()->set_value(FLAGS_mem);  //--memory = max(32MB , 32MB)
 
         tasks.push_back(task);
 

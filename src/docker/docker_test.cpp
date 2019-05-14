@@ -64,14 +64,14 @@ int main(){
     containerInfo.set_type(mesos::ContainerInfo::DOCKER);
 
     mesos::ContainerInfo::DockerInfo dockerInfo;
-    dockerInfo.set_image("alpine");
+    dockerInfo.set_image("hello-world");
     containerInfo.mutable_docker()->CopyFrom(dockerInfo);
 
     mesos::CommandInfo commandInfo;
-    commandInfo.set_value("sleep 120");
+    //commandInfo.set_value("sleep 120");
 
     //hello-world image doesn't need shell, so we set it to be false
-    //commandInfo.set_shell(false);
+    commandInfo.set_shell(false);
 
     Try<Docker::RunOptions> runOptions = Docker::RunOptions::create(
             containerInfo,
@@ -82,7 +82,7 @@ int main(){
             resources);
 
     //add additional options
-    runOptions.get().additionalOptions.push_back("-i");
+    //runOptions.get().additionalOptions.push_back("-i");
     //runOptions.get().additionalOptions.push_back("-t");
 
     // Start the container.
@@ -100,28 +100,31 @@ int main(){
         std::cout<< "Heldon containers name : " << container.name <<std::endl;
     }
 
-//    // Stop the container.
-//    Future<Nothing> stop = docker->stop(containerName);
-//    stop.await();
-//
-//    //the container should not appear in the result of ps()
-//    //but it should appear in the result of ps(true)
-//    containers = docker->ps();
-//    containers.await();
-//    cout << "it should be 0 : " << containers.get().size() << endl;
-//
-//    containers = docker->ps(true, containerName);
-//    containers.await();
-//    cout << "int should have value : " << containers.get().size() << endl;
-//
-//    //check container's info, both id and name should remain the same since we haven't removed it
-//    //but pid should be none since it's not running
-//    inspect = docker->inspect(containerName);
-//    inspect.await();
-//    cout << "id : " << inspect->id << "name : " << inspect->name <<endl;
-//    cout << "pid : " << inspect->pid.isSome() << endl;
+    // Stop the container.
+    Future<Nothing> stop = docker->stop(containerName);
+    stop.await();
 
-    //remove the container
+    //the container should not appear in the result of ps()
+    //but it should appear in the result of ps(true)
+    containers = docker->ps();
+    containers.await();
+    cout << "it should be 0 : " << containers.get().size() << endl;
+
+    containers = docker->ps(true, containerName);
+    containers.await();
+    cout << "int should have value : " << containers.get().size() << endl;
+    foreach (const Docker::Container& container, containers.get()) {
+        std::cout<< "Heldon containers name (by ps -a): " << container.name <<std::endl;
+    }
+
+    //check container's info, both id and name should remain the same since we haven't removed it
+    //but pid should be none since it's not running
+    inspect = docker->inspect(containerName);
+    inspect.await();
+    cout << "id : " << inspect->id << "name : " << inspect->name <<endl;
+    cout << "pid : " << inspect->pid.isSome() << endl;
+    cout << "inspecet output" << inspect->output << endl;
+//    //remove the container
 //    Future<Nothing> rm = docker->rm("mesos-test");
 //    rm.await();
 //
