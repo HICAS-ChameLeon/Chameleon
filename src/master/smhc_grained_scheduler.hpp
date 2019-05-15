@@ -41,22 +41,13 @@ namespace chameleon {
 
     class SMHCGrainedScheduler : public SchedulerInterface {
     public:
-        explicit SMHCGrainedScheduler(const string& name_) : SchedulerInterface("SMHCGrained") {
+        explicit SMHCGrainedScheduler() : SchedulerInterface("SMHCGrained") {
         }
 
         virtual ~SMHCGrainedScheduler() {
 
         }
 
-        double F;
-        int a;
-        double b;
-        int c;
-        int d;
-        int e;
-
-        int x = 1;
-        double y = 0.6;
 
         /**
       *  coarse-grained scheduling: we do not consider the fine-grained resources heterogeneity of hardware, such as memory disk.
@@ -70,97 +61,120 @@ namespace chameleon {
                               const mesos::FrameworkID &framework_id,
                               const unordered_map<string, shared_ptr<SlaveObject>> &m_slave_objects) override {
 
-            LOG(INFO) << "Wqn-grained scheduling";
+            int a, c, d, e;
+            a = c = d = e = 0;
+            double b = 0;
 
-            int result_F = 0;
+            double F = 0;
+
+            int x_total = 0;
+            double y_total = 0;
+
+            LOG(INFO) << "smhc-grained scheduling";
+
+             for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
+                  shared_ptr<SlaveObject> slave = it->second;
+                 x_total = slave->m_hardware_resources.cpu_collection().cpu_quantity() + x_total ;
+                 for (auto i = slave->m_hardware_resources.mem_collection().mem_infos().begin();
+                      i != slave->m_hardware_resources.mem_collection().mem_infos().end();
+                      i++){
+                  vector<string> vec = strings::split(i->size(), "MB");
+                  y_total = strtod(vec.front().data(), NULL) + y_total;
+              }
+            }
+
+            LOG(INFO) << "Have " << x_total << " CPU Cores && " << y_total << " Memory ";
+
+            double result = 0;
             shared_ptr<SlaveObject> result_slave;
+//            result_slave = make_shared<SlaveObject>();
 
             for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
+
+                double x_slave = 0;
+                double y_slave = 0;
+                double rate = 0.6;
+
                 shared_ptr<SlaveObject> slave = it->second;
 
-                auto m_mem_collection = slave->m_hardware_resources.mem_collection();
-                auto m_mem_collection_info = slave->m_hardware_resources.mem_collection().mem_infos();
-                auto m_cpu_collection = slave->m_hardware_resources.cpu_collection();
-                auto m_cpu_collection_info = slave->m_hardware_resources.cpu_collection().cpu_infos();
-                auto m_disk_collection = slave->m_hardware_resources.disk_collection();
-                auto m_disk_collection_info = slave->m_hardware_resources.disk_collection().disk_infos();
+                const MemInfo &memInfo = slave->m_hardware_resources.mem_collection().mem_infos(0);
+                const CPUInfo &cpuInfo = slave->m_hardware_resources.cpu_collection().cpu_infos(0);
+                const DiskInfo &diskInfo = slave->m_hardware_resources.disk_collection().disk_infos(0);
 
-
-                for (int i = 0; i < 1; i++) {
-
-
-                    const MemInfo &memInfo = m_mem_collection.mem_infos(i);
-                    const CPUInfo &cpuInfo = m_cpu_collection.cpu_infos(i);
-                    const DiskInfo &diskInfo = m_disk_collection.disk_infos(i);
-
-                    string m_speed = memInfo.speed();
-                    vector<string> vec_mem = strings::split(m_speed, " ");
-                    d = stoi(vec_mem[0]);                     // memory speed
-                    if (d < 2000) {
-                        d = 1;
-                    } else if (d >= 2000) {
-
-                        d = 2;
-                    }
-
-                    string m_modal = cpuInfo.modelname();     //Intel(R) Core(TM) i7-2700K CPU @ 3.50GHz
-                    vector<string> vec_modul = strings::split(m_modal, " ");
-                    vector<string> vec2_modul = strings::split(vec_modul[3], "-");
-                    string string_a = vec2_modul[0];
-                    if (string_a == "i3") {
-                        a = 1;
-                    } else if (string_a == "i5") {
-                        a = 2;
-                    } else if (string_a == "i7") {
-                        a = 3;
-                    } else if (m_modal.find("E5") != string::npos) {
-                        a = 20;
-                    }
-
-
-                    b = cpuInfo.cpumhz();                       // cpu clock speed
-                    if ((int(b / 1000)) >= 0 && (int(b / 1000)) < 2) {
-                        b = 1;
-                    } else if ((int(b / 1000)) >= 2 && (int(b / 1000)) < 3) {
-                        b = 2;
-                    } else if ((int(b / 1000)) >= 3) {
-                        b = 3;
-                    }
-
-                    string m_cpucache = cpuInfo.l3cache();       //l3 cache
-                    vector<string> vec_cpu = strings::split(m_cpucache, "K");
-                    c = stoi(vec_mem[0]) / 1000;
-                    if (c > 0 && c <= 10) {
-                        c = 1;
-                    } else if (c > 10 && c <= 20) {
-                        c = 2;
-                    } else if (c > 20 && c <= 30) {
-                        c = 3;
-                    } else if (c > 30) {
-                        c = 4;
-                    }
-
-                    string m_diskspeed = diskInfo.disk_speed();     //Disk speed
-                    e = stoi(m_diskspeed);
-                    if (e < 100) {
-                        e = 1;
-                    } else if (e >= 100) {
-
-                        e = 2;
-                    }
-
-                    LOG(INFO) << a;
-                    LOG(INFO) << b;
-                    LOG(INFO) << c;
-                    LOG(INFO) << d;
-                    LOG(INFO) << e;
+                string m_speed = diskInfo.disk_speed();
+                vector<string> vec_mem = strings::split(m_speed, " ");
+                d = stoi(vec_mem[0]);                     // memory speed
+                if (d < 2000) {
+                    d = 1;
+                } else if (d >= 2000) {
+                    d = 2;
                 }
-                F = (a + b + c) * x + d * y + e;
-                if (F > result_F) {
-                    result_F = F;
+
+                string m_modal = cpuInfo.modelname();     //Intel(R) Core(TM) i7-2700K CPU @ 3.50GHz
+                vector<string> vec_modul = strings::split(m_modal, " ");
+                vector<string> vec2_modul = strings::split(vec_modul[3], "-");
+                string string_a = vec2_modul[0];
+                if (string_a == "i3") {
+                    a = 1;
+                } else if (string_a == "i5") {
+                    a = 2;
+                } else if (string_a == "i7") {
+                    a = 3;
+                } else if (m_modal.find("E5") != string::npos) {
+                    a = 20;
+                }
+
+
+                b = cpuInfo.cpumhz();                       // cpu clock speed
+                if ((int(b / 1000)) >= 0 && (int(b / 1000)) < 2) {
+                    b = 1;
+                } else if ((int(b / 1000)) >= 2 && (int(b / 1000)) < 3) {
+                    b = 2;
+                } else if ((int(b / 1000)) >= 3) {
+                    b = 3;
+                }
+
+                string m_cpucache = cpuInfo.l3cache();       //l3 cache
+                vector<string> vec_cpu = strings::split(m_cpucache, "K");
+                c = stoi(vec_mem[0]) / 1000;
+                if (c > 0 && c <= 10) {
+                    c = 1;
+                } else if (c > 10 && c <= 20) {
+                    c = 2;
+                } else if (c > 20 && c <= 30) {
+                    c = 3;
+                } else if (c > 30) {
+                    c = 4;
+                }
+
+                string m_diskspeed = diskInfo.disk_speed();     //Disk speed
+                e = stoi(m_diskspeed);
+                if (e < 100) {
+                    e = 1;
+                } else if (e >= 100) {
+                    e = 2;
+                }
+                double slave_memory = 0;
+                for (auto i = slave->m_hardware_resources.mem_collection().mem_infos().begin();
+                      i != slave->m_hardware_resources.mem_collection().mem_infos().end(); i++){
+                   vector<string> vec_slave = strings::split(i->size(), "MB");
+                   slave_memory = strtod(vec_slave.front().data(), NULL) + slave_memory;
+                }
+
+                x_slave = slave->m_available_cpus / x_total;
+                y_slave = slave_memory / y_total;
+
+                LOG(INFO) << "THis slave have " << slave->m_available_cpus << " CPU rate is " << x_slave
+                          << " && have " << memInfo.size().data() << " Memory rate is " << y_slave;
+
+                LOG(INFO) << "Result_slave is " << slave->m_ip;
+
+                F = rate * (a + b + c) * x_slave + (1 - rate) * d * y_slave + e;
+
+                if (F > result) {
+                    result = F;
                     result_slave = slave;
                 }
-
             }
             mesos::OfferID offer_id = new_offer_id();
             mesos::Offer *offer = result_slave->construct_a_offer(offer_id.value(), framework_id);
