@@ -259,6 +259,8 @@ namespace chameleon {
             RUNNING
         } m_state;
 
+        Duration m_interval;
+
         // key: slave_ip, value: hardware_resources
         unordered_map<string, JSON::Object> m_hardware_resources;
         unordered_map<string, HardwareResourcesMessage> m_proto_hardware_resources;
@@ -272,7 +274,10 @@ namespace chameleon {
         unordered_map<string, JSON::Object> m_runtime_resources;
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
 
-        unordered_map<string, double> m_slaves_clock;
+        // key: slave_ip, value: runtime_resources
+        unordered_map<string, time_t> m_slaves_last_time;
+        void heartbeat();
+        void delete_slaves();
 
         // scheduler related
         shared_ptr<SchedulerInterface> m_scheduler;

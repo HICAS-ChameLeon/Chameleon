@@ -75,6 +75,23 @@ namespace chameleon {
 
     extern int32_t cluster_levels = 1;
 
+    class Node{
+    public:
+        string node_ip;
+        int32_t node_port;
+        bool is_super_master;
+
+        Node(string ip,
+             int32_t port,
+             bool _is_super_master
+        ) : node_ip(ip),
+            node_port(port),
+            is_super_master(_is_super_master){}
+
+        ~Node() {}
+
+    };
+
     class SuperMaster :public ProtobufProcess<SuperMaster> {
     public:
         explicit SuperMaster(const string& initiator) : ProcessBase("super_master") ,m_initiator(initiator){
@@ -104,11 +121,11 @@ namespace chameleon {
 
         void terminating_master(const UPID &from, const OwnedSlavesMessage &message);
 
-        struct Node {
-            string node_ip;
-            int32_t node_port;
-            bool is_super_master;
-        } nodes;
+//        struct Node {
+//            string node_ip;
+//            int32_t node_port;
+//            bool is_super_master;
+//        } nodes;
 
         virtual ~SuperMaster() {
             LOG(INFO) << " ~SuperMaster";
