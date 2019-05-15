@@ -161,7 +161,7 @@ namespace chameleon {
                     int param_size = request.url.query.size();
 
                     string body_str = request.body;
-
+                    LOG(INFO) << "Heldon body_str : " << body_str;
                     vector<string> str_scheduler = strings::split(body_str, "=");
                     string str_scheduler_name = str_scheduler[1];
                     LOG(INFO) << "The select scheduler is " << str_scheduler_name;

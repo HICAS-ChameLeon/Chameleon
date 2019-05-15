@@ -23,13 +23,17 @@
         <tbody>
         <tr ng-repeat="x in master.scheduler">
             <td>{{x.name}}</td>
+
             <!--<td><input type="radio" name= "name" ng-model="x.done"/></td>-->
-            <td><input type="checkbox" ng-model="x.done" ng-click="updateSelection($event,x.name)" ng-checked="isSelected(x.name)" id = {{x.id}}  /></td>
-            <td>{{x.done}}</td>
+            <div class="list-item">
+                <td><input type="radio" ng-model="x.done" ng-click="updateSelection($event,x.name)"
+                           id={{x.id}} name="selectState" ng-value = "isSelected(x.name)"/></td>
+                <!--<td>{{x.done}}</td>-->
+            </div>
+
         </tr>
         </tbody>
     </table>
-    {{selected}}
 </div>
     <div>
         <button ng-controller="ChangeSchedulerCtrl" type="button" class="btn btn-primary" ng-click="openModal()">更换算法

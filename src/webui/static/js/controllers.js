@@ -126,25 +126,24 @@
         }, function errorCallback(response) {
         });
 
-        $rootScope.selected = [];
-        var updateSelected = function (action, id) {
-            id = "" + id + "";
-            if (action == 'add' && $rootScope.selected.indexOf(id) == -1) {
-                $rootScope.selected.push(id);
-            }
-            if (action == 'remove' && $rootScope.selected.indexOf(id) != -1) {
-                var idx = $rootScope.selected.indexOf(id);
-                $rootScope.selected.splice(idx, 1);
+        var flag;
+        var updateSelected = function (action, name) {
+            name = "" + name + "";
+            console.log(name);
+            if (action == 'true') {
+                $rootScope.selected = name;
             }
         };
-        $scope.updateSelection = function ($event, id) {
-            var checkbox = $event.target;
-            var action = (checkbox.checked ? 'add' : 'remove');
-            updateSelected(action, id);
+        $scope.updateSelection = function ($event, name) {
+            var radio = $event.target;
+            console.log(radio);
+            var action = (radio.checked ? 'true' : 'false');
+            updateSelected(action, name);
         };
 
-        $scope.isSelected = function (id) {
-            return $rootScope.selected.indexOf(id) >= 0;
+        $scope.isSelected = function (name) {
+
+            return ;
         };
 
         // $scope.getRequiremt = function () {
