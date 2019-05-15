@@ -10,6 +10,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 #include <mesos.pb.h>
 #include <scheduler.pb.h>
@@ -70,6 +71,7 @@ using std::shared_ptr;
 using std::string;
 using std::vector;
 using std::weak_ptr;
+using std::unordered_map;
 
 using process::wait; // Necessary on some OS's to disambiguate.
 
@@ -1479,13 +1481,13 @@ void MesosSchedulerDriver::initialize() {
                  << "**************************************************";
   }
 
-  // Initialize logging.
-  // TODO(benh): Replace whitespace in framework.name() with '_'?
-  if (flags.initialize_driver_logging) {
-    chameleon::logging::initialize(framework.name(), flags);
-  } else {
-    VLOG(1) << "Disabling initialization of GLOG logging";
-  }
+//  // Initialize logging.
+//  // TODO(benh): Replace whitespace in framework.name() with '_'?
+//  if (flags.initialize_driver_logging) {
+//    chameleon::logging::initialize(framework.name(), flags);
+//  } else {
+//    VLOG(1) << "Disabling initialization of GLOG logging";
+//  }
 
   // Log any flag warnings (after logging is initialized).
   foreach (const flags::Warning& warning, load->warnings) {
@@ -1518,9 +1520,9 @@ void MesosSchedulerDriver::initialize() {
 
   // Launch a local cluster if necessary.
   Option<UPID> pid;
-  if (master == "local") {
-    pid = local::launch(flags);
-  }
+//  if (master == "local") {
+//    pid = local::launch(flags);
+//  }
 
   CHECK(process == nullptr);
 
@@ -1654,9 +1656,9 @@ MesosSchedulerDriver::~MesosSchedulerDriver()
   detector.reset();
 
   // Check and see if we need to shutdown a local cluster.
-  if (master == "local" || master == "localquiet") {
-    local::shutdown();
-  }
+//  if (master == "local" || master == "localquiet") {
+//    local::shutdown();
+//  }
 }
 
 
@@ -1684,47 +1686,47 @@ Status MesosSchedulerDriver::start()
 
     // Load scheduler flags.
     internal::scheduler::Flags flags;
-    Try<flags::Warnings> load = flags.load("MESOS_");
-
-    if (load.isError()) {
-      status = DRIVER_ABORTED;
-      scheduler->error(this, load.error());
-      return status;
-    }
-
-    // Log any flag warnings.
-    foreach (const flags::Warning& warning, load->warnings) {
-      LOG(WARNING) << warning.message;
-    }
-
-    // Initialize modules. Note that since other subsystems may depend
-    // upon modules, we should initialize modules before anything else.
-    if (flags.modules.isSome() && flags.modulesDir.isSome()) {
-      status = DRIVER_ABORTED;
-      scheduler->error(
-          this,
-          "Only one of MESOS_MODULES or MESOS_MODULES_DIR should be specified");
-      return status;
-    }
-
-    if (flags.modulesDir.isSome()) {
-      Try<Nothing> result =
-        modules::ModuleManager::load(flags.modulesDir.get());
-      if (result.isError()) {
-        status = DRIVER_ABORTED;
-        scheduler->error(this, "Error loading modules: " + result.error());
-        return status;
-      }
-    }
-
-    if (flags.modules.isSome()) {
-      Try<Nothing> result = modules::ModuleManager::load(flags.modules.get());
-      if (result.isError()) {
-        status = DRIVER_ABORTED;
-        scheduler->error(this, "Error loading modules: " + result.error());
-        return status;
-      }
-    }
+//    Try<flags::Warnings> load = flags.load("MESOS_");
+//
+//    if (load.isError()) {
+//      status = DRIVER_ABORTED;
+//      scheduler->error(this, load.error());
+//      return status;
+//    }
+//
+//    // Log any flag warnings.
+//    foreach (const flags::Warning& warning, load->warnings) {
+//      LOG(WARNING) << warning.message;
+//    }
+//
+//    // Initialize modules. Note that since other subsystems may depend
+//    // upon modules, we should initialize modules before anything else.
+//    if (flags.modules.isSome() && flags.modulesDir.isSome()) {
+//      status = DRIVER_ABORTED;
+//      scheduler->error(
+//          this,
+//          "Only one of MESOS_MODULES or MESOS_MODULES_DIR should be specified");
+//      return status;
+//    }
+//
+//    if (flags.modulesDir.isSome()) {
+//      Try<Nothing> result =
+//        modules::ModuleManager::load(flags.modulesDir.get());
+//      if (result.isError()) {
+//        status = DRIVER_ABORTED;
+//        scheduler->error(this, "Error loading modules: " + result.error());
+//        return status;
+//      }
+//    }
+//
+//    if (flags.modules.isSome()) {
+//      Try<Nothing> result = modules::ModuleManager::load(flags.modules.get());
+//      if (result.isError()) {
+//        status = DRIVER_ABORTED;
+//        scheduler->error(this, "Error loading modules: " + result.error());
+//        return status;
+//      }
+//    }
 
     CHECK(process == nullptr);
 
