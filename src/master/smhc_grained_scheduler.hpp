@@ -41,7 +41,7 @@ namespace chameleon {
 
     class SMHCGrainedScheduler : public SchedulerInterface {
     public:
-        explicit SMHCGrainedScheduler() : SchedulerInterface("SMHCGrained") {
+        explicit SMHCGrainedScheduler(const string& name_) : SchedulerInterface("SMHCGrained") {
         }
 
         virtual ~SMHCGrainedScheduler() {

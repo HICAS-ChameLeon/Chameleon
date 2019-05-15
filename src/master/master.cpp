@@ -84,10 +84,7 @@ namespace chameleon {
         nextFrameworkId = 0;
         m_scheduler = make_shared<CoarseGrainedScheduler>();
 
-       // m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
-
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
-
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
         install<AcceptRegisteredMessage>(&Master::received_registered_message_from_super_master);
 
@@ -122,59 +119,6 @@ namespace chameleon {
 
 //        install<TerminatingMasterMessage>
 
-
-//        route(
-//                "/get-scheduler",
-//                "get the information of scheduler",
-//                [this](Request request) {
-//                    JSON::Object a_schedular ;
-//                    JSON::Object a_content = JSON::Object();
-//                    if (!this->m_slave_objects.empty()) {
-//                        JSON::Array schedular_array;
-//                        const string &scheduler_name = m_smhc_scheduler->m_scheduler_name;
-//                        for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
-//                            shared_ptr<SlaveObject> slave = it->second;
-//
-//                            auto m_mem_collection = slave->m_hardware_resources.mem_collection();
-//                            auto m_cpu_collection = slave->m_hardware_resources.cpu_collection();
-//                            auto m_disk_collection = slave->m_hardware_resources.disk_collection();
-//                            string uuid = slave->m_uuid;
-//
-//                            for (int i = 0; i < 1; i++) {
-//
-//                                const MemInfo &memInfo = m_mem_collection.mem_infos(i);
-//                                const CPUInfo &cpuInfo = m_cpu_collection.cpu_infos(i);
-//                                const DiskInfo &diskInfo = m_disk_collection.disk_infos(i);
-//
-//                                string m_speed = memInfo.speed();
-//                                string m_modal = cpuInfo.modelname();
-//                                string m_cpucache = cpuInfo.l3cache();
-//                                string m_diskspeed = diskInfo.disk_speed();
-//                                //double m_cpumhz = cpuInfo.cpumhz();
-//
-//                                a_schedular.values["speed"] = m_speed;
-//                                a_schedular.values["modal"] = m_modal;
-//                                a_schedular.values["cpucache"] = m_cpucache;
-//                                a_schedular.values["diskspeed"] = m_diskspeed;
-//                               // a_schedular.values["cpumhz"] = m
-//                                a_schedular.values["m_schedular_name"] = scheduler_name;
-//                                a_schedular.values["uuid"] = uuid;
-//                            }
-//
-//                            schedular_array.values.emplace_back(a_schedular);
-//
-//                        }
-//                        a_content.values["content"] = schedular_array;
-//                    } else {
-//
-//                        a_content.values["content"] = JSON::Object();
-//                    }
-//                    OK ok_response(stringify(a_content));
-//                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-//                    return ok_response;
-//                });
-
-
         route(
                 "/get-scheduler",
                 "get the information of scheduler",
@@ -186,9 +130,11 @@ namespace chameleon {
                     const string &scheduler_name = m_scheduler->m_scheduler_name;
 
                     goarse_schedular.values["name"] = scheduler_name;
+                    goarse_schedular.values["id"] = "1";
                     goarse_schedular.values["done"]= true;
 
                     smhc_schedular.values["name"] = "SMHCGrained";
+                    smhc_schedular.values["id"] = "2";
                     smhc_schedular.values["done"]= false;
 
 
@@ -204,39 +150,39 @@ namespace chameleon {
                 });
 
 
-        route("/change-scheduler",
-              "change the information of scheduler",
-              [this](Request request) {
-                  JSON::Object smhc_schedular;
-                  JSON::Object goarse_schedular;
-                  JSON::Object a_content = JSON::Object();
-                  JSON::Array schedular_array;
-                  SchedulerInterface *m_smhc_scheduler = new SMHCGrainedScheduler();
+        route(
+                "/change-scheduler",
+                "post a file",
+                [this](Request request) {
+                    string request_method = request.method;
+                    LOG(INFO)<<"Starting get "<< request_method <<" request from Client";
 
-//                  m_smhc_scheduler = make_shared<SMHCGrainedScheduler>();
-//                  const mesos::FrameworkID frameworkId;
-//                  mesos::internal::ResourceOffersMessage message;
-//                  m_smhc_scheduler->construct_offers(message, frameworkId, m_slave_objects);
+                    string& tpath = request.url.path;
+                    int param_size = request.url.query.size();
 
-                  const string &scheduler_name = m_smhc_scheduler->m_scheduler_name;
+                    string body_str = request.body;
 
-                  smhc_schedular.values["name"] = scheduler_name;
-                  smhc_schedular.values["done"] = true;
+                    vector<string> str_scheduler = strings::split(body_str, "=");
+                    string str_scheduler_name = str_scheduler[1];
+                    LOG(INFO) << "The select scheduler is " << str_scheduler_name;
 
-                  goarse_schedular.values["name"] = "GoarseGrained";
-                  goarse_schedular.values["done"] = false;
+                    SchedulerInterface *m_scheduler;
+                    SMHCGrainedScheduler name(str_scheduler_name);
+                    m_scheduler = &name;
+                    const string &scheduler_name = m_scheduler->m_scheduler_name;
+                    LOG(INFO)<< scheduler_name;
+//                    mesos::internal::ResourceOffersMessage message;
+//                    auto it = this->frameworks.registered.begin();
+//                    Framework *framework = it->second;
+//                    const mesos::FrameworkID frameworkId = framework->id();
+//                    m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+                  // if(body_str==m_scheduler->m_scheduler_name){}
 
-
-                  schedular_array.values.emplace_back(smhc_schedular);
-                  schedular_array.values.emplace_back(goarse_schedular);
-
-                  a_content.values["content"] = schedular_array;
-
-
-                  OK ok_response(stringify(a_content));
-                  ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                  return ok_response;
-              });
+                    std::ostringstream result;
+                    result << "{ \"result\": " <<"\"" <<request_method+tpath <<"\"" << "}";
+                    JSON::Value body = JSON::parse(result.str()).get();
+                    return OK(body);
+                });
 
 
         // http://172.20.110.228:6060/master/hardware-resources
@@ -268,11 +214,17 @@ namespace chameleon {
                 "get the runtime resources of the whole topology",
                 [this](Request request) {
                     JSON::Object result = JSON::Object();
+                    JSON::Object resources = JSON::Object();
                     if (!this->m_runtime_resources.empty()) {
                         JSON::Array array;
+                        auto slave = m_slave_objects.begin();
                         for (auto it = this->m_runtime_resources.begin();
                              it != this->m_runtime_resources.end(); it++) {
-                            array.values.push_back(it->second);
+                            resources.values["resources"] = it->second;
+                            shared_ptr<SlaveObject> &slave_object = slave->second;
+                            resources.values["slave_hostname"] = slave_object->m_hostname;
+                            slave++;   //每有一个runtime_resource增加，则slave的顺序也跟着增加，这样才slave输出的hostname才不重复
+                            array.values.emplace_back(resources);
                         }
                         result.values["quantity"] = array.values.size();
                         result.values["content"] = array;
@@ -472,6 +424,8 @@ namespace chameleon {
         is_passive = false;
 
         m_state = RUNNING;
+
+        heartbeat();
 
     }
 
@@ -985,6 +939,7 @@ namespace chameleon {
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
         //add insert slave_id to send new master message to slave
         m_alive_slaves.insert(slave_id);
+        m_slaves_last_time[slave_id] = time(0);
         if (m_is_fault_tolerance && slave_id != stringify(process::address().ip)){
             LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
             launch_master_message->set_port("6060");
@@ -995,6 +950,25 @@ namespace chameleon {
             delete launch_master_message;
             LOG(INFO)<<"send launch backup master message to "<<slave;
             m_is_fault_tolerance = false;
+        }
+    }
+
+    void Master::heartbeat() {
+        delete_slaves();
+        m_interval = Seconds(5);
+        process::delay(m_interval, self(), &Self::heartbeat);
+    }
+
+    void Master::delete_slaves() {
+        for(auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
+            if (m_slaves_last_time[*iter] != 0 && time(0) - m_slaves_last_time[*iter] > 10) {
+                LOG(INFO)<<"slave run on "<<*iter<<" was killed!";
+                m_hardware_resources.erase(*iter);
+                m_proto_hardware_resources.erase(*iter);
+                m_runtime_resources.erase(*iter);
+                m_proto_runtime_resources.erase(*iter);
+                m_alive_slaves.erase(*iter);
+            }
         }
     }
 
