@@ -961,14 +961,13 @@ namespace chameleon {
 
     void Master::delete_slaves() {
         for(auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
-            LOG(INFO)<<*iter;
-            LOG(INFO)<<m_slaves_last_time[*iter];
-            LOG(INFO)<<time(0);
             if (m_slaves_last_time[*iter] != 0 && time(0) - m_slaves_last_time[*iter] > 10) {
-                m_alive_slaves.erase(*iter);
+                LOG(INFO)<<"slave run on "<<*iter<<" was killed!";
+                m_hardware_resources.erase(*iter);
+                m_proto_hardware_resources.erase(*iter);
                 m_runtime_resources.erase(*iter);
                 m_proto_runtime_resources.erase(*iter);
-                LOG(INFO)<<"slave run on "<<*iter<<" was killed!";
+                m_alive_slaves.erase(*iter);
             }
         }
     }
