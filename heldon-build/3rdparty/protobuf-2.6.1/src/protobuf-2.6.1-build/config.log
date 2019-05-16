@@ -32,11 +32,6 @@ PATH: /home/lemaker/.local/bin
 PATH: /home/lemaker/software/sbt/bin
 PATH: /usr/local/jdk1.8.0_191/bin
 PATH: /usr/local/jdk1.8.0_191/jre/bin
-PATH: /home/lemaker/bin
-PATH: /home/lemaker/.local/bin
-PATH: /home/lemaker/software/sbt/bin
-PATH: /usr/local/jdk1.8.0_191/bin
-PATH: /usr/local/jdk1.8.0_191/jre/bin
 PATH: /usr/local/sbin
 PATH: /usr/local/bin
 PATH: /usr/sbin
@@ -46,9 +41,6 @@ PATH: /bin
 PATH: /usr/games
 PATH: /usr/local/games
 PATH: /snap/bin
-PATH: /home/lemaker/open-source/hadoop-2.7.5
-PATH: /home/lemaker/open-source/hadoop-2.7.5/bin
-PATH: /home/lemaker/open-source/hadoop-2.7.5/sbin
 PATH: /home/lemaker/open-source/hadoop-2.7.5
 PATH: /home/lemaker/open-source/hadoop-2.7.5/bin
 PATH: /home/lemaker/open-source/hadoop-2.7.5/sbin
@@ -723,7 +715,7 @@ configure:15992: $? = 0
 configure:15994: result: ok (1.2.0.4 or later)
 configure:15998: checking for library containing zlibVersion
 configure:16029: g++ -o conftest  -g -DNDEBUG   conftest.cpp  >&5
-/tmp/ccrfxwlo.o: In function `main':
+/tmp/cc2Autr9.o: In function `main':
 /home/lemaker/open-source/Chameleon/heldon-build/3rdparty/protobuf-2.6.1/src/protobuf-2.6.1-build/conftest.cpp:51: undefined reference to `zlibVersion'
 collect2: error: ld returned 1 exit status
 configure:16029: $? = 1
@@ -860,7 +852,7 @@ conftest.c:47:22: warning: null argument where non-null required (argument 1) [-
                       pthread_create(0,0,0,0); pthread_cleanup_pop(0);
                       ^
 conftest.c:47:22: warning: null argument where non-null required (argument 3) [-Wnonnull]
-/tmp/cc2Cc4vx.o: In function `main':
+/tmp/ccpDftAy.o: In function `main':
 conftest.c:(.text+0x27): undefined reference to `pthread_join'
 conftest.c:(.text+0x90): undefined reference to `__pthread_register_cancel'
 conftest.c:(.text+0xa9): undefined reference to `pthread_create'
@@ -1140,7 +1132,7 @@ conftest.c:47:9: warning: null argument where non-null required (argument 1) [-W
          pthread_create(0,0,0,0); pthread_cleanup_pop(0);
          ^
 conftest.c:47:9: warning: null argument where non-null required (argument 3) [-Wnonnull]
-/tmp/ccrQBLj0.o: In function `main':
+/tmp/ccxiiI8K.o: In function `main':
 conftest.c:(.text+0x18): undefined reference to `pthread_join'
 conftest.c:(.text+0x7e): undefined reference to `__pthread_register_cancel'
 conftest.c:(.text+0x97): undefined reference to `pthread_create'
@@ -1435,6 +1427,7 @@ config.status:1193: creating src/Makefile
 config.status:1193: creating protobuf.pc
 config.status:1193: creating protobuf-lite.pc
 config.status:1193: creating config.h
+config.status:1359: config.h is unchanged
 config.status:1407: executing depfiles commands
 config.status:1407: executing libtool commands
 configure:19648: === configuring in gtest (/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/protobuf-2.6.1/src/protobuf-2.6.1-build/gtest)

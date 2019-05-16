@@ -16,3 +16,5 @@ set(sched_SRC
         master/standalone.cpp)
 
 add_library(sched "SHARED" ${sched_SRC} )
+
+target_link_libraries(sched ${PROCESS_LIBS}  ${PROCESS_TARGET})

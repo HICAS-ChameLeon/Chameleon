@@ -32,11 +32,6 @@ PATH: /home/lemaker/.local/bin
 PATH: /home/lemaker/software/sbt/bin
 PATH: /usr/local/jdk1.8.0_191/bin
 PATH: /usr/local/jdk1.8.0_191/jre/bin
-PATH: /home/lemaker/bin
-PATH: /home/lemaker/.local/bin
-PATH: /home/lemaker/software/sbt/bin
-PATH: /usr/local/jdk1.8.0_191/bin
-PATH: /usr/local/jdk1.8.0_191/jre/bin
 PATH: /usr/local/sbin
 PATH: /usr/local/bin
 PATH: /usr/sbin
@@ -46,9 +41,6 @@ PATH: /bin
 PATH: /usr/games
 PATH: /usr/local/games
 PATH: /snap/bin
-PATH: /home/lemaker/open-source/hadoop-2.7.5
-PATH: /home/lemaker/open-source/hadoop-2.7.5/bin
-PATH: /home/lemaker/open-source/hadoop-2.7.5/sbin
 PATH: /home/lemaker/open-source/hadoop-2.7.5
 PATH: /home/lemaker/open-source/hadoop-2.7.5/bin
 PATH: /home/lemaker/open-source/hadoop-2.7.5/sbin
@@ -952,7 +944,7 @@ configure:15799: $? = 0
 configure:15799: result: yes
 configure:15806: checking for dladdr
 configure:15806: g++ -o conftest -g -O2   conftest.cpp  >&5
-/tmp/ccxNScd1.o: In function `main':
+/tmp/ccOWc5PA.o: In function `main':
 /home/lemaker/open-source/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-build/conftest.cpp:69: undefined reference to `dladdr'
 collect2: error: ld returned 1 exit status
 configure:15806: $? = 1
@@ -1121,7 +1113,7 @@ conftest.c:45:22: warning: null argument where non-null required (argument 1) [-
                       pthread_create(0,0,0,0); pthread_cleanup_pop(0);
                       ^
 conftest.c:45:22: warning: null argument where non-null required (argument 3) [-Wnonnull]
-/tmp/cchkytfN.o: In function `main':
+/tmp/cc1WWATA.o: In function `main':
 /home/lemaker/open-source/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-build/conftest.c:43: undefined reference to `pthread_join'
 /home/lemaker/open-source/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-build/conftest.c:44: undefined reference to `__pthread_register_cancel'
 /home/lemaker/open-source/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-build/conftest.c:45: undefined reference to `pthread_create'

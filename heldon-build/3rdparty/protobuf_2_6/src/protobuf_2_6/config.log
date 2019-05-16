@@ -32,11 +32,6 @@ PATH: /home/lemaker/.local/bin
 PATH: /home/lemaker/software/sbt/bin
 PATH: /usr/local/jdk1.8.0_191/bin
 PATH: /usr/local/jdk1.8.0_191/jre/bin
-PATH: /home/lemaker/bin
-PATH: /home/lemaker/.local/bin
-PATH: /home/lemaker/software/sbt/bin
-PATH: /usr/local/jdk1.8.0_191/bin
-PATH: /usr/local/jdk1.8.0_191/jre/bin
 PATH: /usr/local/sbin
 PATH: /usr/local/bin
 PATH: /usr/sbin
@@ -46,9 +41,6 @@ PATH: /bin
 PATH: /usr/games
 PATH: /usr/local/games
 PATH: /snap/bin
-PATH: /home/lemaker/open-source/hadoop-2.7.5
-PATH: /home/lemaker/open-source/hadoop-2.7.5/bin
-PATH: /home/lemaker/open-source/hadoop-2.7.5/sbin
 PATH: /home/lemaker/open-source/hadoop-2.7.5
 PATH: /home/lemaker/open-source/hadoop-2.7.5/bin
 PATH: /home/lemaker/open-source/hadoop-2.7.5/sbin
@@ -723,7 +715,7 @@ configure:16631: $? = 0
 configure:16633: result: ok (1.2.0.4 or later)
 configure:16637: checking for library containing zlibVersion
 configure:16668: g++ -o conftest  -g -DNDEBUG   conftest.cpp  >&5
-/tmp/cccN1fOS.o: In function `main':
+/tmp/ccgKLOaw.o: In function `main':
 /home/lemaker/open-source/Chameleon/heldon-build/3rdparty/protobuf_2_6/src/protobuf_2_6/conftest.cpp:51: undefined reference to `zlibVersion'
 collect2: error: ld returned 1 exit status
 configure:16668: $? = 1
@@ -860,7 +852,7 @@ conftest.c:47:22: warning: null argument where non-null required (argument 1) [-
                       pthread_create(0,0,0,0); pthread_cleanup_pop(0);
                       ^
 conftest.c:47:22: warning: null argument where non-null required (argument 3) [-Wnonnull]
-/tmp/cctUiGA6.o: In function `main':
+/tmp/ccrwVCcK.o: In function `main':
 conftest.c:(.text+0x27): undefined reference to `pthread_join'
 conftest.c:(.text+0x90): undefined reference to `__pthread_register_cancel'
 conftest.c:(.text+0xa9): undefined reference to `pthread_create'
@@ -1140,7 +1132,7 @@ conftest.c:47:9: warning: null argument where non-null required (argument 1) [-W
          pthread_create(0,0,0,0); pthread_cleanup_pop(0);
          ^
 conftest.c:47:9: warning: null argument where non-null required (argument 3) [-Wnonnull]
-/tmp/ccn6n27q.o: In function `main':
+/tmp/ccZIFZc6.o: In function `main':
 conftest.c:(.text+0x18): undefined reference to `pthread_join'
 conftest.c:(.text+0x7e): undefined reference to `__pthread_register_cancel'
 conftest.c:(.text+0x97): undefined reference to `pthread_create'

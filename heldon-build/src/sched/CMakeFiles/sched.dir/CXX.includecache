@@ -1,4 +1,4 @@
-#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
 
 #IncludeRegexScan: ^.*$
 
@@ -627,20 +627,6 @@ stout/attributes.hpp
 -
 
 ../3rdparty/stout/include/stout/attributes.hpp
-
-../3rdparty/stout/include/stout/base64.hpp
-cctype
--
-functional
--
-string
--
-stout/foreach.hpp
--
-stout/stringify.hpp
--
-stout/try.hpp
--
 
 ../3rdparty/stout/include/stout/bits.hpp
 stdint.h
@@ -2848,72 +2834,6 @@ stout/os/ls.hpp
 stout/os/read.hpp
 -
 
-../3rdparty/stout/include/stout/protobuf.hpp
-assert.h
--
-errno.h
--
-stdint.h
--
-unistd.h
--
-sys/types.h
--
-string
--
-type_traits
--
-vector
--
-google/protobuf/descriptor.h
--
-google/protobuf/descriptor.pb.h
--
-google/protobuf/message.h
--
-google/protobuf/repeated_field.h
--
-google/protobuf/io/zero_copy_stream_impl.h
--
-stout/abort.hpp
--
-stout/base64.hpp
--
-stout/error.hpp
--
-stout/json.hpp
--
-stout/jsonify.hpp
--
-stout/none.hpp
--
-stout/nothing.hpp
--
-stout/representation.hpp
--
-stout/result.hpp
--
-stout/stringify.hpp
--
-stout/try.hpp
--
-stout/os/close.hpp
--
-stout/os/int_fd.hpp
--
-stout/os/lseek.hpp
--
-stout/os/open.hpp
--
-stout/os/read.hpp
--
-stout/os/write.hpp
--
-
-../3rdparty/stout/include/stout/representation.hpp
-functional
--
-
 ../3rdparty/stout/include/stout/result.hpp
 assert.h
 -
@@ -3224,26 +3144,6 @@ stout/os/raw/environment.hpp
 stout/os/windows/fd.hpp
 -
 
-../src/common/parse.hpp
-mesos.pb.h
--
-stout/error.hpp
--
-stout/hashmap.hpp
--
-stout/json.hpp
--
-stout/protobuf.hpp
--
-stout/stringify.hpp
--
-stout/try.hpp
--
-stout/flags/parse.hpp
--
-docker/messages.hpp
-../src/common/docker/messages.hpp
-
 ../src/common/scheduler.hpp
 memory
 -
@@ -3288,10 +3188,6 @@ glog/logging.h
 flags.hpp
 ../src/logging/flags.hpp
 
-../src/sched/constants.hpp
-stout/duration.hpp
--
-
 /home/lemaker/open-source/Chameleon/src/logging/flags.cpp
 flags.hpp
 -
@@ -3323,18 +3219,6 @@ stout/try.hpp
 -
 logging.hpp
 -
-
-/home/lemaker/open-source/Chameleon/src/sched/flags.hpp
-stout/flags.hpp
--
-common/parse.hpp
-/home/lemaker/open-source/Chameleon/src/sched/common/parse.hpp
-logging/flags.hpp
-/home/lemaker/open-source/Chameleon/src/sched/logging/flags.hpp
-docker/messages.hpp
-/home/lemaker/open-source/Chameleon/src/sched/docker/messages.hpp
-sched/constants.hpp
-/home/lemaker/open-source/Chameleon/src/sched/sched/constants.hpp
 
 /home/lemaker/open-source/Chameleon/src/sched/master/detector.cpp
 string
@@ -3481,8 +3365,6 @@ docker/messages.hpp
 -
 master/detector.hpp
 /home/lemaker/open-source/Chameleon/src/sched/master/detector.hpp
-flags.hpp
-/home/lemaker/open-source/Chameleon/src/sched/flags.hpp
 
 3rdparty/boost-1.53.0-prefix/src/boost-1.53.0/boost/aligned_storage.hpp
 cstddef
@@ -11114,24 +10996,6 @@ string
 vector
 -
 google/protobuf/stubs/common.h
--
-
-3rdparty/protobuf_2_6/include/google/protobuf/descriptor.pb.h
-string
--
-google/protobuf/stubs/common.h
--
-google/protobuf/generated_message_util.h
--
-google/protobuf/message.h
--
-google/protobuf/repeated_field.h
--
-google/protobuf/extension_set.h
--
-google/protobuf/generated_enum_reflection.h
--
-google/protobuf/unknown_field_set.h
 -
 
 3rdparty/protobuf_2_6/include/google/protobuf/extension_set.h

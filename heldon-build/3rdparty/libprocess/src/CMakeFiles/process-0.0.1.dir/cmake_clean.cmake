@@ -23,8 +23,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/process-0.0.1.dir/libev.cpp.o"
   "CMakeFiles/process-0.0.1.dir/libev_poll.cpp.o"
   "libprocess-0.0.1.pdb"
-  "libprocess-0.0.1.so"
   "libprocess-0.0.1.so.0.0.1"
+  "libprocess-0.0.1.so"
   "libprocess-0.0.1.so.0"
 )
 

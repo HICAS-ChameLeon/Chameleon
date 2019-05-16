@@ -32,11 +32,6 @@ PATH: /home/lemaker/.local/bin
 PATH: /home/lemaker/software/sbt/bin
 PATH: /usr/local/jdk1.8.0_191/bin
 PATH: /usr/local/jdk1.8.0_191/jre/bin
-PATH: /home/lemaker/bin
-PATH: /home/lemaker/.local/bin
-PATH: /home/lemaker/software/sbt/bin
-PATH: /usr/local/jdk1.8.0_191/bin
-PATH: /usr/local/jdk1.8.0_191/jre/bin
 PATH: /usr/local/sbin
 PATH: /usr/local/bin
 PATH: /usr/sbin
@@ -46,9 +41,6 @@ PATH: /bin
 PATH: /usr/games
 PATH: /usr/local/games
 PATH: /snap/bin
-PATH: /home/lemaker/open-source/hadoop-2.7.5
-PATH: /home/lemaker/open-source/hadoop-2.7.5/bin
-PATH: /home/lemaker/open-source/hadoop-2.7.5/sbin
 PATH: /home/lemaker/open-source/hadoop-2.7.5
 PATH: /home/lemaker/open-source/hadoop-2.7.5/bin
 PATH: /home/lemaker/open-source/hadoop-2.7.5/sbin
@@ -629,7 +621,7 @@ configure:11502: $? = 0
 configure:11502: result: yes
 configure:11502: checking for kqueue
 configure:11502: gcc -o conftest -g -O3   conftest.c  >&5
-/tmp/ccJo9oSh.o: In function `main':
+/tmp/cc2MFfgY.o: In function `main':
 /home/lemaker/open-source/Chameleon/heldon-build/3rdparty/libev-4.22/src/libev-4.22-build/conftest.c:65: undefined reference to `kqueue'
 collect2: error: ld returned 1 exit status
 configure:11502: $? = 1
@@ -705,7 +697,7 @@ configure: failed program was:
 configure:11502: result: no
 configure:11502: checking for port_create
 configure:11502: gcc -o conftest -g -O3   conftest.c  >&5
-/tmp/cc1i3H1A.o: In function `main':
+/tmp/cclJ5T5g.o: In function `main':
 /home/lemaker/open-source/Chameleon/heldon-build/3rdparty/libev-4.22/src/libev-4.22-build/conftest.c:65: undefined reference to `port_create'
 collect2: error: ld returned 1 exit status
 configure:11502: $? = 1
@@ -808,7 +800,7 @@ configure:11724: gcc -o conftest -g -O3   conftest.c  >&5
 conftest.c:44:6: warning: conflicting types for built-in function 'floor'
  char floor ();
       ^
-/tmp/ccxXVnz2.o: In function `main':
+/tmp/ccTcexcE.o: In function `main':
 /home/lemaker/open-source/Chameleon/heldon-build/3rdparty/libev-4.22/src/libev-4.22-build/conftest.c:48: undefined reference to `floor'
 collect2: error: ld returned 1 exit status
 configure:11724: $? = 1
@@ -891,6 +883,7 @@ on AMD-V
 
 config.status:1098: creating Makefile
 config.status:1098: creating config.h
+config.status:1264: config.h is unchanged
 config.status:1312: executing depfiles commands
 config.status:1312: executing libtool commands
 
