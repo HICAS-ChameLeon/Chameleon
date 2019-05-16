@@ -26,7 +26,7 @@
 #include <chameleon_resources.hpp>
 #include <slave_object.hpp>
 #include <scheduler_interface.hpp>
-
+#include <chameleon_SMHC.hpp>
 
 using std::string;
 using std::set;
@@ -61,10 +61,15 @@ namespace chameleon {
                               const mesos::FrameworkID &framework_id,
                               const unordered_map<string, shared_ptr<SlaveObject>> &m_slave_objects) override {
 
-            int a, c, d, e;
-            a = c = d = e = 0;
+            /**
+             * SMHC_Scheduling   :   Scheduling algorithm based on fine-grained resources, it's approximate characterization of the computing power of the Ith server
+             * Algorithm formula : F(x , y) = (a + b + c) * X + d * Y + e
+             *                    a:CPU model; b:CPU MHz; c:L3 cache; d:Memory Speed; e: Disk Speed
+             *                    X is the ratio of the server CPU cores to the total CPU cores in the cluster
+             *                    Y is the ratio of the server Memory to the total Memory in the cluster
+             * */
+            int a = 0, c = 0 , d = 0, e = 0;
             double b = 0;
-
             double F = 0;
 
             int x_total = 0;
@@ -101,59 +106,69 @@ namespace chameleon {
                 const CPUInfo &cpuInfo = slave->m_hardware_resources.cpu_collection().cpu_infos(0);
                 const DiskInfo &diskInfo = slave->m_hardware_resources.disk_collection().disk_infos(0);
 
-                string m_speed = diskInfo.disk_speed();
-                vector<string> vec_mem = strings::split(m_speed, " ");
-                d = stoi(vec_mem[0]);                     // memory speed
-                if (d < 2000) {
-                    d = 1;
-                } else if (d >= 2000) {
-                    d = 2;
-                }
-
-                string m_modal = cpuInfo.modelname();     //Intel(R) Core(TM) i7-2700K CPU @ 3.50GHz
-                vector<string> vec_modul = strings::split(m_modal, " ");
+                //CPU Model
+                string m_model = cpuInfo.modelname();
+                vector<string> vec_modul = strings::split(m_model, " ");
                 vector<string> vec2_modul = strings::split(vec_modul[3], "-");
-                string string_a = vec2_modul[0];
-                if (string_a == "i3") {
-                    a = 1;
-                } else if (string_a == "i5") {
-                    a = 2;
-                } else if (string_a == "i7") {
-                    a = 3;
-                } else if (m_modal.find("E5") != string::npos) {
-                    a = 20;
-                }
 
-
-                b = cpuInfo.cpumhz();                       // cpu clock speed
-                if ((int(b / 1000)) >= 0 && (int(b / 1000)) < 2) {
-                    b = 1;
-                } else if ((int(b / 1000)) >= 2 && (int(b / 1000)) < 3) {
-                    b = 2;
-                } else if ((int(b / 1000)) >= 3) {
-                    b = 3;
-                }
-
-                string m_cpucache = cpuInfo.l3cache();       //l3 cache
+                //CPU L3 Cache
+                string m_cpucache = cpuInfo.l3cache();
                 vector<string> vec_cpu = strings::split(m_cpucache, "K");
-                c = stoi(vec_mem[0]) / 1000;
-                if (c > 0 && c <= 10) {
-                    c = 1;
-                } else if (c > 10 && c <= 20) {
-                    c = 2;
-                } else if (c > 20 && c <= 30) {
-                    c = 3;
-                } else if (c > 30) {
-                    c = 4;
+
+                //Memory Speed
+                string mem_speed = memInfo.speed();
+                vector<string> vec_mem = strings::split(mem_speed, " ");
+
+                //Disk Speed
+                string m_diskspeed = diskInfo.disk_speed();
+
+
+                string a_cpu_model = vec2_modul[0];                       //CPU Model
+                if (a_cpu_model == "i3") {
+                    a = SMHC::a1;
+                } else if (a_cpu_model == "i5") {
+                    a = SMHC::a2;
+                } else if (a_cpu_model == "i7") {
+                    a = SMHC::a3;
+                } else if (m_model.find("E5") != string::npos) {
+                    a = SMHC::a4;
                 }
 
-                string m_diskspeed = diskInfo.disk_speed();     //Disk speed
-                e = stoi(m_diskspeed);
-                if (e < 100) {
-                    e = 1;
-                } else if (e >= 100) {
-                    e = 2;
+
+                int b_cpu_speed = cpuInfo.cpumhz();                       // cpu clock speed
+                if ((int(b_cpu_speed / 1000)) >= 0 && (int(b_cpu_speed / 1000)) < 2) {
+                    b = SMHC::b1;
+                } else if ((int(b_cpu_speed / 1000)) >= 2 && (int(b_cpu_speed / 1000)) < 3) {
+                    b = SMHC::b2;
+                } else if ((int(b_cpu_speed / 1000)) >= 3) {
+                    b = SMHC::b3;
                 }
+
+                int c_cpu_l3 = stoi(vec_mem[0]) / 1000;                   //CPU L3 Cache
+                if (c_cpu_l3 > 0 && c_cpu_l3 <= 10) {
+                    c = SMHC::c1;
+                } else if (c_cpu_l3 > 10 && c_cpu_l3 <= 20) {
+                    c = SMHC::c2;
+                } else if (c_cpu_l3 > 20 && c_cpu_l3 <= 30) {
+                    c = SMHC::c3;
+                } else if (c_cpu_l3 > 30) {
+                    c = SMHC::c4;
+                }
+
+                int d_mem_speed = stoi(vec_mem[0]);                      // memory speed
+                if (d_mem_speed < 2000) {
+                    d = SMHC::d1;
+                } else if (d_mem_speed >= 2000) {
+                    d = SMHC::d2;
+                }
+
+                int e_disk_speed = stoi(m_diskspeed);                    //Disk speed
+                if (e_disk_speed < 100) {
+                    e = SMHC::e1;
+                } else if (e_disk_speed >= 100) {
+                    e = SMHC::e2;
+                }
+
                 double slave_memory = 0;
                 for (auto i = slave->m_hardware_resources.mem_collection().mem_infos().begin();
                       i != slave->m_hardware_resources.mem_collection().mem_infos().end(); i++){
