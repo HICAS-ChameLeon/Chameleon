@@ -52,6 +52,9 @@ namespace chameleon {
         install<MasterRegisteredMessage>(&SuperMaster::registered_master);
         install<OwnedSlavesMessage>(&SuperMaster::terminating_master);
 
+        install<HardwareResourcesMessage>(&SuperMaster::received_hardware_resources);
+        install<RuntimeResourcesMessage>(&SuperMaster::received_runtime_resources);
+
         //franework related
         install<mesos::scheduler::Call>(&SuperMaster::received_call);
         install("error",&SuperMaster::launch_master_results);
@@ -166,6 +169,31 @@ namespace chameleon {
                         result.values["content"] = JSON::Object();
                     }
 
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+        route(
+                "/resources",
+                "get all resources of the whole topology",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    JSON::Object resources = JSON::Object();
+                    if (!this->m_master_slave.empty()) {
+                        JSON::Array array;
+                        for (auto it = this->m_master_slave.begin();
+                             it != this->m_master_slave.end(); it++) {
+//                            resources.values["resources"] = it->second;
+                            resources.values["resources"] = 0;
+                            array.values.emplace_back(resources);
+                        }
+                        result.values["quantity"] = array.values.size();
+                        result.values["content"] = array;
+                    } else {
+                        result.values["quantity"] = 0;
+                        result.values["content"] = JSON::Object();
+                    }
                     OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
@@ -502,6 +530,32 @@ namespace chameleon {
         LOG(INFO) << self() << " is terminating due to change levels to one";
         delete(terminating_master);
         terminate(self());
+    }
+
+    void SuperMaster::received_hardware_resources(const UPID &from, const HardwareResourcesMessage &message) {
+        string master_id = strings::tokenize(stringify(from),"@")[1];
+        LOG(INFO)<<"received hardware resources from "<<master_id;
+        Node *node = new Node(message.slave_id(),6061);
+        node->set_hardware(message);
+        vector<Node> m_slave = m_master_slave[master_id];
+        m_slave.push_back(*node);
+    }
+
+
+    void SuperMaster::received_runtime_resources(const UPID &from, const RuntimeResourcesMessage &message) {
+        string master_id = strings::tokenize(stringify(from),"@")[1];
+        LOG(INFO)<<"received runtime resources from "<<master_id;
+        for(auto iter = m_master_slave.begin(); iter != m_master_slave.end(); iter++){
+            if(iter->first == master_id){
+                for(Node& node: m_master_slave[master_id]){
+                    if(node.node_ip == strings::tokenize(master_id,":")[0]){
+                        node.set_runtime(message);
+                    }
+                    break;
+                }
+                break;
+            }
+        }
     }
 
     //framework related

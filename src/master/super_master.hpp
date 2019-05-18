@@ -79,14 +79,27 @@ namespace chameleon {
     public:
         string node_ip;
         int32_t node_port;
-        bool is_super_master;
+        enum {
+            SUPERMASTER,
+            MASTER,
+            SLAVE
+        } m_status;
+
+        HardwareResourcesMessage m_hardware;
+        RuntimeResourcesMessage m_runtime;
 
         Node(string ip,
-             int32_t port,
-             bool _is_super_master
+             int32_t port
         ) : node_ip(ip),
-            node_port(port),
-            is_super_master(_is_super_master){}
+            node_port(port) {}
+
+        void set_hardware(HardwareResourcesMessage hardwareResourcesMessage){
+            m_hardware = hardwareResourcesMessage;
+        }
+
+        void set_runtime(RuntimeResourcesMessage runtimeResourcesMessage){
+            m_runtime = runtimeResourcesMessage;
+        }
 
         ~Node() {}
 
@@ -166,8 +179,9 @@ namespace chameleon {
         unordered_map<string,vector<MasterInfoControlledBySuperMaster>> m_classification_masters;
         vector<string> m_vector_super_master;
 
-        vector<Node> m_nodes;
-//        vector<Node,vector<Node>> m_nodes;
+//        vector<Node> m_master;
+        unordered_map<string,vector<Node>> m_master_slave;
+//        std::unordered_multimap<string,vector<Node>> m_master_slave;
 
         //framework related
         unordered_map<string,string> m_master_framework;
@@ -183,6 +197,9 @@ namespace chameleon {
 
         const string select_master();
         void send_terminating_master(string master_ip);
+
+        void received_hardware_resources(const UPID &from, const HardwareResourcesMessage &message);
+        void received_runtime_resources(const UPID &from, const RuntimeResourcesMessage &message);
 
         //framework related
         void received_call(const UPID &from, const mesos::scheduler::Call &call);

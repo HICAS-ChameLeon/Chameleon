@@ -370,11 +370,20 @@ namespace chameleon {
                     const string launcher =
                             m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
                             m_webui_path + " --level=2";
+                    const string stdoutPath = path::join("/home/marcie/chameleon/Chameleon1/Chameleon/build/src/slave/", "makun");
+                    Try<int_fd> out = os::open(
+                            stdoutPath,
+                            O_WRONLY | O_CREAT | O_TRUNC | O_NONBLOCK | O_CLOEXEC,
+                            S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+                    if (out.isError()) {
+                        LOG(INFO) << "Failed to create 'stdout' file: " + stdoutPath + " . " +out.error();
+                    }
+                    LOG(INFO)<<launcher;
                     Try<Subprocess> super_master = subprocess(
                             launcher,
                             Subprocess::FD(STDIN_FILENO),
                             Subprocess::FD(STDOUT_FILENO),
-                            Subprocess::FD(STDERR_FILENO)
+                            Subprocess::FD(out.get(), Subprocess::IO::OWNED)
                     );
                     result.values["start"] = "success";
                     OK response(stringify(result));
@@ -425,7 +434,7 @@ namespace chameleon {
 
         m_state = RUNNING;
 
-        heartbeat();
+        heartbeat_check_slaves();
 
     }
 
@@ -953,10 +962,9 @@ namespace chameleon {
         }
     }
 
-    void Master::heartbeat() {
+    void Master::heartbeat_check_slaves() {
         delete_slaves();
-        m_interval = Seconds(5);
-        process::delay(m_interval, self(), &Self::heartbeat);
+        process::delay(m_interval, self(), &Self::heartbeat_check_slaves);
     }
 
     void Master::delete_slaves() {
@@ -1104,6 +1112,14 @@ namespace chameleon {
                 send(super_master, *owned_slaves);
                 delete owned_slaves;
                 LOG(INFO) << " send owned slaves of " << self() << " to super_master " << super_master;
+            } else{
+//                sleep(5);
+//                LOG(INFO)<<"xunhuan";
+                m_super_master = super_master;
+//                for(auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++){
+//                    send(m_super_master,iter->second);
+//                }
+                heartbeat_to_supermaster();
             }
 
 
@@ -1112,6 +1128,19 @@ namespace chameleon {
                       << ". Maybe it has registered to other supermaster before";
 
         }
+    }
+
+    void Master::heartbeat_to_supermaster(){
+        LOG(INFO)<<"xunhuan";
+        for(auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++){
+            send(m_super_master,iter->second);
+        }
+        LOG(INFO)<<"heartbeat";
+        for(auto iter = m_proto_runtime_resources.begin(); iter != m_proto_runtime_resources.end(); iter++){
+            send(m_super_master,iter->second);
+            LOG(INFO)<<"send message to "<<m_super_master;
+        }
+        process::delay(m_interval, self(), &Self::heartbeat_to_supermaster);
     }
 
     void
