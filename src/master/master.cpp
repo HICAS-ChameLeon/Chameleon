@@ -383,7 +383,7 @@ namespace chameleon {
                             launcher,
                             Subprocess::FD(STDIN_FILENO),
                             Subprocess::FD(STDOUT_FILENO),
-                            Subprocess::FD(out.get(), Subprocess::IO::OWNED)
+                            Subprocess::FD(STDERR_FILENO)
                     );
                     result.values["start"] = "success";
                     OK response(stringify(result));
