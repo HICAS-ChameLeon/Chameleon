@@ -18,7 +18,7 @@ namespace chameleon{
         return stream << taskId.value();
     }
 
-    ChameleonExecutorDriver::ChameleonExecutorDriver(): process(nullptr), status(mesos::DRIVER_NOT_STARTED)
+    ChameleonExecutorDriver::ChameleonExecutorDriver(): m_process(nullptr), m_status(mesos::DRIVER_NOT_STARTED)
     {
         process::initialize();
     }
@@ -27,9 +27,9 @@ namespace chameleon{
 
     mesos::Status ChameleonExecutorDriver::start(process::UPID commandExecutorPid) {
             LOG(INFO)<<"ChameleonExecutorDriver start";
-            commandExecutor = commandExecutorPid;
-            if (status != mesos::DRIVER_NOT_STARTED) {
-                return status;
+            m_commandExecutor = commandExecutorPid;
+            if (m_status != mesos::DRIVER_NOT_STARTED) {
+                return m_status;
             }
             process::UPID slave;
             mesos::SlaveID slaveId;
@@ -37,7 +37,7 @@ namespace chameleon{
             mesos::ExecutorID executorId;
 
 
-            LOG(INFO)<<"commandExecutorPid:  "<<commandExecutor;
+            LOG(INFO)<<"commandExecutorPid:  "<<m_commandExecutor;
 
             Option<string> value;
 
@@ -80,17 +80,17 @@ namespace chameleon{
             executorId.set_value(value.get());
 
 
-            process = new chameleon::ExecutorProcess(
+             m_process = new chameleon::ExecutorProcess(
                     slave,
                     this,
                     slaveId,
                     frameworkId,
                     executorId,
-                    commandExecutor);
+                    m_commandExecutor);
 
-            spawn(process);
+            spawn(m_process);
 
-            return status = mesos::DRIVER_RUNNING;
+            return m_status = mesos::DRIVER_RUNNING;
 
     }
 
@@ -101,19 +101,19 @@ namespace chameleon{
 
         //CHECK(process != nullptr);
         LOG(INFO) << "ChameleonExecutorDriver  sendStatusUpdate" ;
-        dispatch(process, &ExecutorProcess::sendStatusUpdate, status);
+        dispatch(m_process, &ExecutorProcess::sendStatusUpdate, status);
 
         //return status;
     }
 
     mesos::Status ChameleonExecutorDriver::stop()
     {
-        if (status != mesos::DRIVER_RUNNING) {
-            return status;
+        if (m_status != mesos::DRIVER_RUNNING) {
+            return m_status;
         }
-        dispatch(process, &ExecutorProcess::stop);
-        status = mesos::DRIVER_STOPPED;
-        return status;
+        dispatch(m_process, &ExecutorProcess::stop);
+        m_status = mesos::DRIVER_STOPPED;
+        return m_status;
 
     }
 
@@ -121,13 +121,13 @@ namespace chameleon{
                                      const mesos::SlaveID &_slaveId, const mesos::FrameworkID &_frameworkId,
                                      const mesos::ExecutorID &_executorId,process::UPID& _commandExecutor)
                                      : ProcessBase("executor"),
-                                     slave(_slave),
-                                     driver(_driver),
-                                     slaveId(_slaveId),
-                                     frameworkId(_frameworkId),
-                                     executorId(_executorId),
+                                     m_slave(_slave),
+                                     m_driver(_driver),
+                                     m_slaveId(_slaveId),
+                                     m_frameworkId(_frameworkId),
+                                     m_executorId(_executorId),
                                      connected(false),
-                                     commandExecutor(_commandExecutor)
+                                     m_commandExecutorId(_commandExecutor)
                                      {
         install<mesos::internal::ExecutorRegisteredMessage>(
                 &ExecutorProcess::registered,
@@ -152,10 +152,10 @@ namespace chameleon{
         // Register with slave.
         LOG(INFO)<<"ExecutorProcess send a RegisterExecutorMessage to slave ";
         mesos::internal::RegisterExecutorMessage message;
-        message.mutable_framework_id()->MergeFrom(frameworkId);
-        message.mutable_executor_id()->MergeFrom(executorId);
-        send(slave, message);
-        LOG(INFO)<<"end send a RegisterExecutorMessage to slave "<<slave;
+        message.mutable_framework_id()->MergeFrom(m_frameworkId);
+        message.mutable_executor_id()->MergeFrom(m_executorId);
+        send(m_slave, message);
+        LOG(INFO)<<"end send a RegisterExecutorMessage to slave "<<m_slave;
     }
 
 
@@ -178,7 +178,7 @@ namespace chameleon{
        // LOG(INFO) << "yxxxxxxx ExecutorProcess runTask " << slaveId;
 //        LOG(INFO) << "yxxxxxxx Executor asked to run task '" << task.task_id() << "'"<<"on"<<commandExecutor;
 
-        send(commandExecutor, task);
+        send(m_commandExecutorId, task);
     }
 
 
@@ -211,9 +211,9 @@ namespace chameleon{
 
         mesos::internal::StatusUpdateMessage message;
         mesos::internal::StatusUpdate* update = message.mutable_update();
-        update->mutable_framework_id()->MergeFrom(frameworkId);
-        update->mutable_executor_id()->MergeFrom(executorId);
-        update->mutable_slave_id()->MergeFrom(slaveId);
+        update->mutable_framework_id()->MergeFrom(m_frameworkId);
+        update->mutable_executor_id()->MergeFrom(m_executorId);
+        update->mutable_slave_id()->MergeFrom(m_slaveId);
         update->mutable_status()->MergeFrom(status);
         update->set_timestamp(process::Clock::now().secs());
         update->mutable_status()->set_timestamp(update->timestamp());
@@ -228,13 +228,13 @@ namespace chameleon{
 
         // We overwrite the SlaveID for this status update, however with
         // the HTTP API, this can be overwritten by the slave instead.
-        update->mutable_status()->mutable_slave_id()->CopyFrom(slaveId);
+        update->mutable_status()->mutable_slave_id()->CopyFrom(m_slaveId);
 
         LOG(INFO) << "Executor sending status update " << *update;
 
      // Capture the status update.
-        send(slave, message);
-        LOG(INFO) << "ExecutorProcess  sendStatusUpdate to "<<slave;
+        send(m_slave, message);
+        LOG(INFO) << "ExecutorProcess  sendStatusUpdate to "<<m_slave;
     }
 
     void ExecutorProcess::stop()

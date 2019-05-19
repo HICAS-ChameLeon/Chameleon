@@ -73,12 +73,12 @@ namespace chameleon{
 
         mesos::Status sendStatusUpdate(const mesos::TaskStatus& status);
 
-        mesos::Status ChameleonExecutorDriver::stop();
+        mesos::Status stop();
 
     private:
         friend class chameleon::ExecutorProcess;
         // Libprocess process for communicating with slave.
-        ExecutorProcess* process;
+        ExecutorProcess* m_process;
         // Current status of the driver.
         /*
          * enum Status {
@@ -88,9 +88,9 @@ namespace chameleon{
              DRIVER_STOPPED = 4
             };
          * */
-        mesos::Status status;
+        mesos::Status m_status;
 
-        process::UPID commandExecutor;
+        process::UPID m_commandExecutor;
 
     };
 
@@ -118,18 +118,18 @@ namespace chameleon{
 
         void sendStatusUpdate(const mesos::TaskStatus& status);
 
-        void ExecutorProcess::stop();
+        void stop();
 
     private:
         friend class chameleon::ChameleonExecutorDriver;
 
-        process::UPID slave;
-        chameleon::ChameleonExecutorDriver* driver;
-        mesos::SlaveID slaveId;
-        mesos::FrameworkID frameworkId;
-        mesos::ExecutorID executorId;
+        process::UPID m_slave;
+        chameleon::ChameleonExecutorDriver* m_driver;
+        mesos::SlaveID m_slaveId;
+        mesos::FrameworkID m_frameworkId;
+        mesos::ExecutorID m_executorId;
 
-        process::UPID commandExecutor;
+        process::UPID m_commandExecutorId;
         //chameleon::CommandExecutor* m_executor;
 
         bool local;
