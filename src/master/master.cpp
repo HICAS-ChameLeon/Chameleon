@@ -161,7 +161,6 @@ namespace chameleon {
                     int param_size = request.url.query.size();
 
                     string body_str = request.body;
-                    LOG(INFO) << "Heldon body_str : " << body_str;
                     vector<string> str_scheduler = strings::split(body_str, "=");
                     string str_scheduler_name = str_scheduler[1];
                     LOG(INFO) << "The select scheduler is " << str_scheduler_name;
@@ -376,7 +375,13 @@ namespace chameleon {
                             Subprocess::FD(STDOUT_FILENO),
                             Subprocess::FD(STDERR_FILENO)
                     );
-                    result.values["start"] = "success";
+                    if(super_master.isError()){
+                        result.values["start"] = "failed";
+                        LOG(ERROR)<< super_master.error();
+                    }
+                    else{
+                        result.values["start"] = "success";
+                    }
                     OK response(stringify(result));
                     response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return response;

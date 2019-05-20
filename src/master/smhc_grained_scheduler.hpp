@@ -65,7 +65,6 @@ namespace chameleon {
       * @param framework_id
       * @param m_slave_objects
       **/
-
         void construct_offers(mesos::internal::ResourceOffersMessage &resource_offers_message,
                               const mesos::FrameworkID &framework_id,
                               const unordered_map<string, shared_ptr<SlaveObject>> &m_slave_objects) override {

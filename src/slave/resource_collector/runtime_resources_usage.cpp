@@ -244,13 +244,13 @@ namespace chameleon {
         /* net class */
         NetUsage *m_net_usage = new NetUsage();
 
-        long int start_download_rates;  //Traffic count at the start of saving
-        long int end_download_rates;    //Traffic count when saving results
-        get_net_used_info(&start_download_rates);
-        sleep(WAIT_SECOND);             //How many seconds to sleep, this value is determined according to the value of WAIT_SECOND in the macro definition
-        get_net_used_info(&end_download_rates);
-        float m_net;
-        m_net = (end_download_rates - start_download_rates) / WAIT_SECOND / 1024.00;
+//        long int start_download_rates;  //Traffic count at the start of saving
+//        long int end_download_rates;    //Traffic count when saving results
+//        get_net_used_info(&start_download_rates);
+//        sleep(WAIT_SECOND);             //How many seconds to sleep, this value is determined according to the value of WAIT_SECOND in the macro definition
+//        get_net_used_info(&end_download_rates);
+        float m_net = 0.6;
+//        m_net = (end_download_rates - start_download_rates) / WAIT_SECOND / 1024.00;
         m_net_usage->set_net_used(m_net);
         return m_net_usage;
 
