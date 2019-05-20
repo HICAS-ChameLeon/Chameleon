@@ -563,7 +563,7 @@ protected:
 
     LOG(INFO) << "Framework re-registered with " << frameworkId.value();
 
-    CHECK(framework.id() == frameworkId);
+//    CHECK(framework.id() == frameworkId);
 
     connected = true;
     failover = false;
@@ -858,7 +858,7 @@ protected:
       return;
     }
 
-    VLOG(1) << "Lost agent " << slaveId;
+    VLOG(1) << "Lost agent " << slaveId.value();
 
     savedSlavePids.erase(slaveId);
 
@@ -899,7 +899,7 @@ protected:
     }
 
     VLOG(1)
-      << "Executor " << executorId.value() << " on agent " << slaveId
+      << "Executor " << executorId.value() << " on agent " << slaveId.value()
       << " exited with status " << status;
 
     Stopwatch stopwatch;
@@ -958,7 +958,7 @@ protected:
 
   void stop(bool failover)
   {
-    LOG(INFO) << "Stopping framework " << framework.id();
+    LOG(INFO) << "Stopping framework " << framework.id().value();
 
     // Whether or not we send an unregister message, we want to
     // terminate this process.
@@ -1127,7 +1127,7 @@ protected:
         // TODO(jieyu): A duplicated offer ID could also cause this
         // warning being printed. Consider refine this message here
         // and in launchTasks as well.
-        LOG(WARNING) << "Attempting to accept an unknown offer " << offerId;
+        LOG(WARNING) << "Attempting to accept an unknown offer " << offerId.value();
       } else {
         LOG(INFO)<<"Heldon savedOffers contains offerid"<<offerId.value();
         // Keep only the slave PIDs where we run tasks so we can send
@@ -1143,8 +1143,8 @@ protected:
             if (savedOffers[offerId].contains(slaveId)) {
               savedSlavePids[slaveId] = savedOffers[offerId][slaveId];
             } else {
-              LOG(WARNING) << "Attempting to launch task " << task.task_id()
-                           << " with the wrong agent id " << slaveId;
+              LOG(WARNING) << "Attempting to launch task " << task.task_id().value()
+                           << " with the wrong agent id " << slaveId.value();
             }
           }
         }
@@ -1172,7 +1172,7 @@ protected:
     }
 
     if (!savedOffers.contains(offerId)) {
-      LOG(WARNING) << "Attempting to decline an unknown offer " << offerId;
+      LOG(WARNING) << "Attempting to decline an unknown offer " << offerId.value();
     }
 
     // Remove the offer. We do not need to save any PIDs
@@ -1275,7 +1275,7 @@ protected:
     } else {
       VLOG(2) << "Received ACK for status update"
               << (status.has_uuid() ? " " + status.uuid() : "")
-              << " of task " << status.task_id()
+              << " of task " << status.task_id().value()
               << (status.has_slave_id()
                   ? " on agent " + stringify(status.slave_id()) : "");
     }
@@ -1291,7 +1291,7 @@ protected:
     }
 
     VLOG(2) << "Asked to send framework message to agent "
-            << slaveId;
+            << slaveId.value();
 
     // TODO(benh): After a scheduler has re-registered it won't have
     // any saved slave PIDs, maybe it makes sense to try and save each
@@ -1312,7 +1312,7 @@ protected:
       message.set_data(data);
       send(slave, message);
     } else {
-      VLOG(1) << "Cannot send directly to agent " << slaveId
+      VLOG(1) << "Cannot send directly to agent " << slaveId.value()
               << "; sending through master";
 
       Call call;
@@ -1431,8 +1431,8 @@ private:
   // Timer for triggering registration of the framework with the master.
   process::Timer frameworkRegistrationTimer;
 
-  hashmap<OfferID, hashmap<SlaveID, UPID>> savedOffers;
-  hashmap<SlaveID, UPID> savedSlavePids;
+  hashmap<string, hashmap<string, UPID>> savedOffers;
+  hashmap<string, UPID> savedSlavePids;
 
   // The driver optionally provides implicit acknowledgements
   // for frameworks. If disabled, the framework must send its

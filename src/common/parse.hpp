@@ -14,10 +14,10 @@
 #define __COMMON_PARSE_HPP__
 
 #include <mesos.pb.h>
-
-#include <mesos/authorizer/acls.hpp>
-
-#include <mesos/module/module.hpp>
+//
+//#include <mesos/authorizer/acls.hpp>
+//
+//#include <mesos/module/module.hpp>
 
 #include <stout/error.hpp>
 #include <stout/hashmap.hpp>
@@ -32,18 +32,18 @@
 
 namespace flags {
 
-template <>
-inline Try<mesos::ACLs> parse(const std::string& value)
-{
-  // Convert from string or file to JSON.
-  Try<JSON::Object> json = parse<JSON::Object>(value);
-  if (json.isError()) {
-    return Error(json.error());
-  }
-
-  // Convert from JSON to Protobuf.
-  return protobuf::parse<mesos::ACLs>(json.get());
-}
+//template <>
+//inline Try<mesos::ACLs> parse(const std::string& value)
+//{
+//  // Convert from string or file to JSON.
+//  Try<JSON::Object> json = parse<JSON::Object>(value);
+//  if (json.isError()) {
+//    return Error(json.error());
+//  }
+//
+//  // Convert from JSON to Protobuf.
+//  return protobuf::parse<mesos::ACLs>(json.get());
+//}
 
 
 template <>
@@ -60,18 +60,18 @@ inline Try<mesos::RateLimits> parse(const std::string& value)
 }
 
 
-template <>
-inline Try<mesos::Modules> parse(const std::string& value)
-{
-  // Convert from string or file to JSON.
-  Try<JSON::Object> json = parse<JSON::Object>(value);
-  if (json.isError()) {
-    return Error(json.error());
-  }
-
-  // Convert from JSON to Protobuf.
-  return protobuf::parse<mesos::Modules>(json.get());
-}
+//template <>
+//inline Try<mesos::Modules> parse(const std::string& value)
+//{
+//  // Convert from string or file to JSON.
+//  Try<JSON::Object> json = parse<JSON::Object>(value);
+//  if (json.isError()) {
+//    return Error(json.error());
+//  }
+//
+//  // Convert from JSON to Protobuf.
+//  return protobuf::parse<mesos::Modules>(json.get());
+//}
 
 
 template <>
