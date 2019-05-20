@@ -370,15 +370,6 @@ namespace chameleon {
                     const string launcher =
                             m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
                             m_webui_path + " --level=2";
-                    const string stdoutPath = path::join("/home/marcie/chameleon/Chameleon1/Chameleon/build/src/slave/", "makun");
-                    Try<int_fd> out = os::open(
-                            stdoutPath,
-                            O_WRONLY | O_CREAT | O_TRUNC | O_NONBLOCK | O_CLOEXEC,
-                            S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-                    if (out.isError()) {
-                        LOG(INFO) << "Failed to create 'stdout' file: " + stdoutPath + " . " +out.error();
-                    }
-                    LOG(INFO)<<launcher;
                     Try<Subprocess> super_master = subprocess(
                             launcher,
                             Subprocess::FD(STDIN_FILENO),

@@ -179,14 +179,21 @@ namespace chameleon {
                 "get all resources of the whole topology",
                 [this](Request request) {
                     JSON::Object result = JSON::Object();
-                    JSON::Object resources = JSON::Object();
+                    JSON::Object master = JSON::Object();
+                    JSON::Object slave =  JSON::Object();
                     if (!this->m_master_slave.empty()) {
                         JSON::Array array;
                         for (auto it = this->m_master_slave.begin();
                              it != this->m_master_slave.end(); it++) {
-//                            resources.values["resources"] = it->second;
-                            resources.values["resources"] = 0;
-                            array.values.emplace_back(resources);
+                            master.values["master"] = it->first;
+                            array.values.emplace_back(master);
+                            for(auto iter = it->second.begin();
+                             iter != it->second.end(); iter++){
+                                slave.values["slave_ip"] = iter->node_ip;
+                                slave.values["slave_port"] = iter->node_port;
+//                                master.values.emplace(slave);
+                                array.values.emplace_back(slave);
+                            }
                         }
                         result.values["quantity"] = array.values.size();
                         result.values["content"] = array;
