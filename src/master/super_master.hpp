@@ -101,6 +101,13 @@ namespace chameleon {
             m_runtime = runtimeResourcesMessage;
         }
 
+        bool operator==(const Node& node){
+        if(this->node_ip.compare(node.node_ip)==0 && this->node_port==node.node_port){
+            return true;
+        }
+        return false;
+        }
+
         ~Node() {}
 
     };

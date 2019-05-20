@@ -179,21 +179,21 @@ namespace chameleon {
                 "get all resources of the whole topology",
                 [this](Request request) {
                     JSON::Object result = JSON::Object();
-                    JSON::Object master = JSON::Object();
-                    JSON::Object slave =  JSON::Object();
                     if (!this->m_master_slave.empty()) {
                         JSON::Array array;
+                        JSON::Object master = JSON::Object();
+                        JSON::Object slave =  JSON::Object();
                         for (auto it = this->m_master_slave.begin();
                              it != this->m_master_slave.end(); it++) {
                             master.values["master"] = it->first;
-                            array.values.emplace_back(master);
                             for(auto iter = it->second.begin();
                              iter != it->second.end(); iter++){
                                 slave.values["slave_ip"] = iter->node_ip;
                                 slave.values["slave_port"] = iter->node_port;
-//                                master.values.emplace(slave);
-                                array.values.emplace_back(slave);
+//                                array.values.emplace_back(slave);
                             }
+                            master.values["slave"] = slave;
+                            array.values.emplace_back(master);
                         }
                         result.values["quantity"] = array.values.size();
                         result.values["content"] = array;
@@ -541,26 +541,32 @@ namespace chameleon {
 
     void SuperMaster::received_hardware_resources(const UPID &from, const HardwareResourcesMessage &message) {
         string master_id = strings::tokenize(stringify(from),"@")[1];
-        LOG(INFO)<<"1111received hardware resources from "<<master_id;
+        LOG(INFO)<<"received hardware resources from "<<master_id;
         Node *node = new Node(message.slave_id(),6061);
         node->set_hardware(message);
-        vector<Node> m_slave = m_master_slave[master_id];
-        m_slave.push_back(*node);
-        LOG(INFO)<<"@@@";
-        LOG(INFO)<<m_slave[0].node_ip<<m_slave[0].node_port;
+        auto iter = std::find(m_master_slave[master_id].begin(),m_master_slave[master_id].end(),*node);
+        if(iter == m_master_slave[master_id].end()){
+            m_master_slave[master_id].push_back(*node);
+            LOG(INFO)<<"++";
+        }
     }
 
 
     void SuperMaster::received_runtime_resources(const UPID &from, const RuntimeResourcesMessage &message) {
         string master_id = strings::tokenize(stringify(from),"@")[1];
         LOG(INFO)<<"received runtime resources from "<<master_id;
+        LOG(INFO)<<"1";
         for(auto iter = m_master_slave.begin(); iter != m_master_slave.end(); iter++){
-            LOG(INFO)<<iter->second[0].node_ip;
-            LOG(INFO)<<"1";
+            LOG(INFO)<<"2";
             if(iter->first == master_id){
+                LOG(INFO)<<"3";
+//                for(auto item = m_master_slave[master_id].begin();
+//                 item != m_master_slave[master_id].end(); item++){
                 for(Node& node: m_master_slave[master_id]){
+                    LOG(INFO)<<"4";
                     if(node.node_ip == strings::tokenize(master_id,":")[0]){
                         node.set_runtime(message);
+                        LOG(INFO)<<"5";
                     }
                     break;
                 }
