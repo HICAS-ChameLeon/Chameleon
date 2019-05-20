@@ -541,11 +541,13 @@ namespace chameleon {
 
     void SuperMaster::received_hardware_resources(const UPID &from, const HardwareResourcesMessage &message) {
         string master_id = strings::tokenize(stringify(from),"@")[1];
-        LOG(INFO)<<"received hardware resources from "<<master_id;
+        LOG(INFO)<<"1111received hardware resources from "<<master_id;
         Node *node = new Node(message.slave_id(),6061);
         node->set_hardware(message);
         vector<Node> m_slave = m_master_slave[master_id];
         m_slave.push_back(*node);
+        LOG(INFO)<<"@@@";
+        LOG(INFO)<<m_slave[0].node_ip<<m_slave[0].node_port;
     }
 
 
@@ -553,6 +555,8 @@ namespace chameleon {
         string master_id = strings::tokenize(stringify(from),"@")[1];
         LOG(INFO)<<"received runtime resources from "<<master_id;
         for(auto iter = m_master_slave.begin(); iter != m_master_slave.end(); iter++){
+            LOG(INFO)<<iter->second[0].node_ip;
+            LOG(INFO)<<"1";
             if(iter->first == master_id){
                 for(Node& node: m_master_slave[master_id]){
                     if(node.node_ip == strings::tokenize(master_id,":")[0]){
