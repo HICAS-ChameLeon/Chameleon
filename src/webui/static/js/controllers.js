@@ -139,6 +139,9 @@
         };
         $scope.updateSelection = function ($event, id) {
             var checkbox = $event.target;
+            console.log(checkbox);
+            console.log(checkbox.checked);
+
             var action = (checkbox.checked ? 'add' : 'remove');
             updateSelected(action, id);
         };

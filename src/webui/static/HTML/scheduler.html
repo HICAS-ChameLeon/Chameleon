@@ -23,8 +23,8 @@
         <tbody>
         <tr ng-repeat="x in master.scheduler">
             <td>{{x.name}}</td>
-            <!--<td><input type="radio" name= "name" ng-model="x.done"/></td>-->
-            <td><input type="checkbox" ng-model="x.done" ng-click="updateSelection($event,x.name)" ng-checked="isSelected(x.name)" id = {{x.id}}  /></td>
+            <!--<td><input type="checkbox" ng-model="x.done" ng-click="updateSelection($event,x.name)" ng-checked="isSelected(x.name)" id = {{x.id}} /></td>-->
+            <td><input type="radio" ng-model="x.done" ng-click="updateSelection($event,x.name)" ng-checked="isSelected(x.name)" id = {{x.id}}  name = "scheduler" /></td>
             <td>{{x.done}}</td>
         </tr>
         </tbody>
