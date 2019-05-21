@@ -21,6 +21,7 @@
                 <thead>
                 <tr>
                     <th data-key="id">slave_uuid</th>
+                    <th data-key="ip">slave_ip</th>
                     <th data-key="name">cpus</th>
                     <th data-key="role">mems</th>
 
@@ -29,6 +30,8 @@
                 <tbody>
                 <tr ng-repeat="x in slaves">
                     <th>{{x.slave_uuid}}
+                    </th>
+                    <th>{{x.slave_ip}}
                     </th>
                     <th>
                         {{x.cpus}}

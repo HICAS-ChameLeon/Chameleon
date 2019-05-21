@@ -5,6 +5,7 @@
  * Description：master
  */
 
+#include <slave_related.pb.h>
 #include "master.hpp"
 
 //The following has default value
@@ -13,6 +14,7 @@ DEFINE_string(supermaster_path, "/home/lemaker/open-source/Chameleon/build/src/m
               "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 DEFINE_string(webui_path, "",
               "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
+DEFINE_bool(fault_tolerance, false,"whether master has fault tolerance. For example, --fault_tolerance=true");
 
 
 /*
@@ -81,14 +83,8 @@ namespace chameleon {
 
         nextFrameworkId = 0;
         m_scheduler = make_shared<CoarseGrainedScheduler>();
-//
-//        m_wqn_scheduler = make_shared<WqnGrainedScheduler>();
-
-//        m_scheduler = make_shared<SMHCGrainedScheduler>();
 
         install<HardwareResourcesMessage>(&Master::update_hardware_resources);
-        //install<mesos::FrameworkInfo>(&Master::change_frameworks);  // wqn changes
-
         install<RuntimeResourcesMessage>(&Master::received_heartbeat);
         install<AcceptRegisteredMessage>(&Master::received_registered_message_from_super_master);
 
@@ -110,6 +106,8 @@ namespace chameleon {
         install<SuperMasterControlMessage>(&Master::super_master_control);
         install<TerminatingMasterMessage>(&Master::received_terminating_master_message);
 
+        install<BackupMasterMessage>(&Master::received_launch_backup_master);
+
 //        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
 
         /**
@@ -120,17 +118,71 @@ namespace chameleon {
         install<mesos::scheduler::Call>(&Master::receive);
 
 //        install<TerminatingMasterMessage>
-//        route(
-//                "/get-scheduler",
-//                "get the information of scheduler",
-//                [this](Request request) {
-//                    const string& scheduler_name = m_scheduler->m_scheduler_name;
-//
-//                    OK ok_response(scheduler_name);
-//                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-//                    return ok_response;
-//                });
 
+        route(
+                "/get-scheduler",
+                "get the information of scheduler",
+                [this](Request request) {
+                    JSON::Object goarse_schedular ;
+                    JSON::Object smhc_schedular ;
+                    JSON::Object a_content = JSON::Object();
+                    JSON::Array schedular_array;
+                    const string &scheduler_name = m_scheduler->m_scheduler_name;
+
+                    goarse_schedular.values["name"] = scheduler_name;
+                    goarse_schedular.values["id"] = "1";
+                    goarse_schedular.values["done"]= true;
+
+                    smhc_schedular.values["name"] = "SMHCGrained";
+                    smhc_schedular.values["id"] = "2";
+                    smhc_schedular.values["done"]= false;
+
+
+                    schedular_array.values.emplace_back(goarse_schedular);
+                    schedular_array.values.emplace_back(smhc_schedular);
+
+                    a_content.values["content"] = schedular_array;
+
+
+                    OK ok_response(stringify(a_content));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+
+        route(
+                "/change-scheduler",
+                "post a file",
+                [this](Request request) {
+                    string request_method = request.method;
+                    LOG(INFO)<<"Starting get "<< request_method <<" request from Client";
+
+                    string& tpath = request.url.path;
+                    int param_size = request.url.query.size();
+
+                    string body_str = request.body;
+
+                    vector<string> str_scheduler = strings::split(body_str, "=");
+                    string str_scheduler_name = str_scheduler[1];
+                    LOG(INFO) << "The select scheduler is " << str_scheduler_name;
+
+                    SchedulerInterface *m_scheduler;
+                    SMHCGrainedScheduler name(str_scheduler_name);
+                    m_scheduler = &name;
+                    const string &scheduler_name = m_scheduler->m_scheduler_name;
+                    LOG(INFO)<< scheduler_name;
+//                    mesos::internal::ResourceOffersMessage message;
+//                    auto it = this->frameworks.registered.begin();
+//                    Framework *framework = it->second;
+//                    const mesos::FrameworkID frameworkId = framework->id();
+//                    m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+                  // if(body_str==m_scheduler->m_scheduler_name){}
+
+                    std::ostringstream result;
+                    result << "{ \"result\": " <<"\"" <<request_method+tpath <<"\"" << "}";
+                    JSON::Value body = JSON::parse(result.str()).get();
+                    return OK(body);
+                });
 
 
         // http://172.20.110.228:6060/master/hardware-resources
@@ -143,7 +195,7 @@ namespace chameleon {
                         JSON::Array array;
                         for (auto it = this->m_hardware_resources.begin();
                              it != this->m_hardware_resources.end(); it++) {
-                            array.values.push_back(it->second);
+                            array.values.emplace_back(it->second);
                         }
                         result.values["quantity"] = array.values.size();
                         result.values["content"] = array;
@@ -162,11 +214,17 @@ namespace chameleon {
                 "get the runtime resources of the whole topology",
                 [this](Request request) {
                     JSON::Object result = JSON::Object();
+                    JSON::Object resources = JSON::Object();
                     if (!this->m_runtime_resources.empty()) {
                         JSON::Array array;
+                        auto slave = m_slave_objects.begin();
                         for (auto it = this->m_runtime_resources.begin();
                              it != this->m_runtime_resources.end(); it++) {
-                            array.values.push_back(it->second);
+                            resources.values["resources"] = it->second;
+                            shared_ptr<SlaveObject> &slave_object = slave->second;
+                            resources.values["slave_hostname"] = slave_object->m_hostname;
+                            slave++;   //每有一个runtime_resource增加，则slave的顺序也跟着增加，这样才slave输出的hostname才不重复
+                            array.values.emplace_back(resources);
                         }
                         result.values["quantity"] = array.values.size();
                         result.values["content"] = array;
@@ -217,6 +275,7 @@ namespace chameleon {
                                     const ResourcesOfFramework &resources_of_framework = slave_object->m_framework_resources[framework_id];
                                     JSON::Object resources_record = JSON::Object();
                                     resources_record.values["slave_uuid"] = *it;
+                                    resources_record.values["slave_ip"] = slave_object->m_ip;
                                     resources_record.values["cpus"] = resources_of_framework.m_consumped_cpus;
                                     sum_cpus += resources_of_framework.m_consumped_cpus;
                                     resources_record.values["mem"] = resources_of_framework.m_consumped_mem;
@@ -366,6 +425,8 @@ namespace chameleon {
 
         m_state = RUNNING;
 
+        heartbeat();
+
     }
 
     // get the absolute path of the directory where the master executable exists
@@ -375,6 +436,10 @@ namespace chameleon {
 
     void Master::set_webui_path(const string &path) {
         m_webui_path = path;
+    }
+
+    void Master::set_fault_tolerance(bool fault_tolerance) {
+        m_is_fault_tolerance = fault_tolerance;
     }
 
     const string Master::get_web_ui() const {
@@ -389,6 +454,7 @@ namespace chameleon {
       * @param          : UPID& from ,Call& call
       * */
     void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
+        LOG(INFO)<<call.subscribe().framework_info().name();
         //first call
         if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
             subscribe(from, call.subscribe());
@@ -513,12 +579,11 @@ namespace chameleon {
         mesos::internal::ResourceOffersMessage message;
         LOG(INFO) << "start scheduling to provide offers";
 
-//        m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
-
-//        m_wqn_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+        m_scheduler->construct_offers(message, frameworkId, m_slave_objects);
 //
-        m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
+//        m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
+       // m_smhc_scheduler->construct_offers(message,frameworkId,m_slave_objects);
 
 
         if (message.offers_size() > 0) {
@@ -874,6 +939,37 @@ namespace chameleon {
         m_proto_runtime_resources[slave_id] = runtime_resouces_message;
         //add insert slave_id to send new master message to slave
         m_alive_slaves.insert(slave_id);
+        m_slaves_last_time[slave_id] = time(0);
+        if (m_is_fault_tolerance && slave_id != stringify(process::address().ip)){
+            LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
+            launch_master_message->set_port("6060");
+            launch_master_message->set_master_path(get_cwd()+"/master");
+            launch_master_message->set_webui_path(m_webui_path);
+            launch_master_message->set_is_fault_tolerance(true);
+            send(slave,*launch_master_message);
+            delete launch_master_message;
+            LOG(INFO)<<"send launch backup master message to "<<slave;
+            m_is_fault_tolerance = false;
+        }
+    }
+
+    void Master::heartbeat() {
+        delete_slaves();
+        m_interval = Seconds(5);
+        process::delay(m_interval, self(), &Self::heartbeat);
+    }
+
+    void Master::delete_slaves() {
+        for(auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
+            if (m_slaves_last_time[*iter] != 0 && time(0) - m_slaves_last_time[*iter] > 10) {
+                LOG(INFO)<<"slave run on "<<*iter<<" was killed!";
+                m_hardware_resources.erase(*iter);
+                m_proto_hardware_resources.erase(*iter);
+                m_runtime_resources.erase(*iter);
+                m_proto_runtime_resources.erase(*iter);
+                m_alive_slaves.erase(*iter);
+            }
+        }
     }
 
     Try<string> Master::find_min_cpu_and_memory_rates() {
@@ -951,7 +1047,8 @@ namespace chameleon {
 
         if (is_passive) {
             // is_passive = true means the master was evoked by a super_master,
-            // so in super_master_related.proto at line 30 repeated SlavesInfoControlledByMaster my_slaves=4 is not empty
+            // so in super_master_related.proto at line 30 repeated SlavesInfoControlledByMaster my_slaves=4
+            // is not empty
             for (auto &slave_info:super_master_control_message.my_slaves()) {
                 UPID slave_upid("slave@" + slave_info.ip() + ":" + slave_info.port());
                 ReregisterMasterMessage *register_message = new ReregisterMasterMessage();
@@ -1046,6 +1143,14 @@ namespace chameleon {
         }
     }
     // end of super_mater related
+
+    void Master::received_launch_backup_master(const UPID &slave, const BackupMasterMessage &message) {
+        LOG(INFO)<<"received BackupMasterMessage from "<<slave;
+        for (auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
+            UPID slave_id("slave@" + *iter + ":6061");
+            send(slave_id,message);
+        }
+    }
 }
 
 using namespace chameleon;
@@ -1074,6 +1179,8 @@ int main(int argc, char **argv) {
 
         // set the webui path for the master
         master.set_webui_path(FLAGS_webui_path);
+
+        master.set_fault_tolerance(FLAGS_fault_tolerance);
 
         PID<Master> cur_master = process::spawn(master);
 

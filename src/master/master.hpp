@@ -238,6 +238,9 @@ namespace chameleon {
 
         const string get_web_ui() const;
 
+        // fault tolerance related
+        void set_fault_tolerance(bool fault_tolerance);
+
     private:
 
         string m_uuid;
@@ -246,12 +249,17 @@ namespace chameleon {
 
         string m_webui_path;
 
+        // fault tolerance related
+        bool m_is_fault_tolerance;
+
         // master states.
         enum {
             REGISTERING, // is registering from a super_master
             INITIALIZING,
             RUNNING
         } m_state;
+
+        Duration m_interval;
 
         // key: slave_ip, value: hardware_resources
         unordered_map<string, JSON::Object> m_hardware_resources;
@@ -266,10 +274,15 @@ namespace chameleon {
         unordered_map<string, JSON::Object> m_runtime_resources;
         unordered_map<string, RuntimeResourcesMessage> m_proto_runtime_resources;
 
+        // key: slave_ip, value: runtime_resources
+        unordered_map<string, time_t> m_slaves_last_time;
+        void heartbeat();
+        void delete_slaves();
+
         // scheduler related
         shared_ptr<SchedulerInterface> m_scheduler;
 //        shared_ptr<SchedulerInterface> m_wqn_scheduler;
-//        shared_ptr<SchedulerInterface> m_smhc_scheduler;
+       // shared_ptr<SchedulerInterface> m_smhc_scheduler;
 
         int64_t nextFrameworkId;
 
@@ -298,6 +311,8 @@ namespace chameleon {
 
         void received_registered_message_from_super_master(const UPID &super_master, const AcceptRegisteredMessage &message);
         void received_terminating_master_message(const UPID &super_master, const TerminatingMasterMessage &message);
+
+        void received_launch_backup_master(const UPID &slave, const BackupMasterMessage &message);
     };
 
     class Framework {
