@@ -52,6 +52,9 @@ namespace chameleon {
         install<MasterRegisteredMessage>(&SuperMaster::registered_master);
         install<OwnedSlavesMessage>(&SuperMaster::terminating_master);
 
+        install<HardwareResourcesMessage>(&SuperMaster::received_hardware_resources);
+        install<RuntimeResourcesMessage>(&SuperMaster::received_runtime_resources);
+
         //franework related
         install<mesos::scheduler::Call>(&SuperMaster::received_call);
         install("error",&SuperMaster::launch_master_results);
@@ -166,6 +169,75 @@ namespace chameleon {
                         result.values["content"] = JSON::Object();
                     }
 
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
+        route(
+                "/resources",
+                "get all resources of the whole topology",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_master_slave.empty()) {
+                        JSON::Array array;
+                        JSON::Object master = JSON::Object();
+                        JSON::Array slaves;
+                        JSON::Object slave =  JSON::Object();
+                        JSON::Object hardware = JSON::Object();
+//                        JSON::Object cpu_collection = JSON::Object();
+//                        JSON::Object mem_collection = JSON::Object();
+//                        JSON::Object gpu_collection = JSON::Object();
+//                        JSON::Object disk_collection = JSON::Object();
+//                        JSON::Object port_collection = JSON::Object();
+//                        JSON::Object tlb_collection = JSON::Object();
+                        JSON::Object runtime = JSON::Object();
+                        JSON::Object cpu_usage = JSON::Object();
+                        JSON::Object disk_usage = JSON::Object();
+                        JSON::Object mem_usage = JSON::Object();
+                        JSON::Object net_usage = JSON::Object();
+                        for (auto it = this->m_master_slave.begin();
+                             it != this->m_master_slave.end(); it++) {
+                            master.values["master"] = it->first;
+                            for(auto iter = it->second.begin();
+                             iter != it->second.end(); iter++){
+                                slave.values["slave_ip"] = iter->node_ip;
+                                slave.values["slave_port"] = iter->node_port;
+                                hardware.values["slave_hostname"] = iter->m_hardware.slave_hostname();
+//                                cpu_collection.values["cpu_infos"] = iter->m_hardware.cpu_collection().cpu_infos();
+//                                cpu_collection.values["cpu_quantity"] = iter->m_hardware.cpu_collection().cpu_quantity();
+//                                hardware.values["cpu_collection"] = cpu_collection;
+                                slave.values["hardware_resources"] = hardware;
+                                cpu_usage.values["cpu_used"] = iter->m_runtime.cpu_usage().cpu_used();
+                                runtime.values["cpu_usage"] = cpu_usage;
+                                disk_usage.values["disk_available"] = iter->m_runtime.disk_usage().disk_available();
+                                disk_usage.values["available_percent"] = iter->m_runtime.disk_usage().available_percent();
+                                runtime.values["disk_usage"] = disk_usage;
+                                mem_usage.values["mem_total"] = iter->m_runtime.mem_usage().mem_total();
+                                mem_usage.values["mem_free"] = iter->m_runtime.mem_usage().mem_free();
+                                mem_usage.values["mem_available"] = iter->m_runtime.mem_usage().mem_available();
+                                mem_usage.values["buffers"] = iter->m_runtime.mem_usage().buffers();
+                                mem_usage.values["cached"] = iter->m_runtime.mem_usage().cached();
+                                mem_usage.values["swap_total"] = iter->m_runtime.mem_usage().swap_total();
+                                mem_usage.values["swap_free"] = iter->m_runtime.mem_usage().swap_free();
+                                mem_usage.values["hugepagesize"] = iter->m_runtime.mem_usage().hugepagesize();
+                                runtime.values["mem_usage"] = mem_usage;
+                                net_usage.values["net_used"] = iter->m_runtime.net_usage().net_used();
+                                runtime.values["net_usage"] = net_usage;
+                                slave.values["runtime_resources"] = runtime;
+                                slaves.values.emplace_back(slave);
+                            }
+                            master.values["slaves"] = slaves;
+                            master.values["slave_quantity"] = slaves.values.size();
+                            array.values.emplace_back(master);
+                            slaves.values.clear();
+                        }
+                        result.values["master_quantity"] = array.values.size();
+                        result.values["content"] = array;
+                    } else {
+                        result.values["master_quantity"] = 0;
+                        result.values["content"] = JSON::Object();
+                    }
                     OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
                     return ok_response;
@@ -502,6 +574,37 @@ namespace chameleon {
         LOG(INFO) << self() << " is terminating due to change levels to one";
         delete(terminating_master);
         terminate(self());
+    }
+
+    void SuperMaster::received_hardware_resources(const UPID &from, const HardwareResourcesMessage &message) {
+        string master_id = strings::tokenize(stringify(from),"@")[1];
+        LOG(INFO)<<"received hardware resources from "<<master_id;
+        Node *node = new Node(message.slave_id(),6061);
+        node->set_hardware(message);
+        auto iter = std::find(m_master_slave[master_id].begin(),m_master_slave[master_id].end(),*node);
+        if(iter == m_master_slave[master_id].end()){
+            m_master_slave[master_id].push_back(*node);
+            LOG(INFO)<<"++";
+        }
+    }
+
+
+    void SuperMaster::received_runtime_resources(const UPID &from, const RuntimeResourcesMessage &message) {
+        string master_id = strings::tokenize(stringify(from),"@")[1];
+        LOG(INFO)<<"received runtime resources from "<<master_id;
+        for(auto iter = m_master_slave.begin(); iter != m_master_slave.end(); iter++){
+            if(iter->first == master_id){
+//                for(auto item = m_master_slave[master_id].begin();
+//                 item != m_master_slave[master_id].end(); item++){
+                for(Node& node: m_master_slave[master_id]){
+                    if(node.node_ip == strings::tokenize(master_id,":")[0]){
+                        node.set_runtime(message);
+                    }
+                    break;
+                }
+                break;
+            }
+        }
     }
 
     //framework related

@@ -427,7 +427,7 @@ namespace chameleon {
 
         m_state = RUNNING;
 
-        heartbeat();
+        heartbeat_check_slaves();
 
     }
 
@@ -955,10 +955,9 @@ namespace chameleon {
         }
     }
 
-    void Master::heartbeat() {
+    void Master::heartbeat_check_slaves() {
         delete_slaves();
-        m_interval = Seconds(5);
-        process::delay(m_interval, self(), &Self::heartbeat);
+        process::delay(m_interval, self(), &Self::heartbeat_check_slaves);
     }
 
     void Master::delete_slaves() {
@@ -1106,6 +1105,9 @@ namespace chameleon {
                 send(super_master, *owned_slaves);
                 delete owned_slaves;
                 LOG(INFO) << " send owned slaves of " << self() << " to super_master " << super_master;
+            } else{
+                m_super_master = super_master;
+                heartbeat_to_supermaster();
             }
 
 
@@ -1114,6 +1116,17 @@ namespace chameleon {
                       << ". Maybe it has registered to other supermaster before";
 
         }
+    }
+
+    void Master::heartbeat_to_supermaster(){
+        for(auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++){
+            send(m_super_master,iter->second);
+        }
+        for(auto iter = m_proto_runtime_resources.begin(); iter != m_proto_runtime_resources.end(); iter++){
+            send(m_super_master,iter->second);
+            LOG(INFO)<<"send message to "<<m_super_master;
+        }
+        process::delay(m_interval, self(), &Self::heartbeat_to_supermaster);
     }
 
     void
