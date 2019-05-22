@@ -193,7 +193,6 @@ target_link_libraries(slave ${slave_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} $
 list(APPEND docker_PROTOS mesos)
 list(APPEND docker_PROTOS messages)
 list(APPEND docker_PROTOS scheduler)
-#link_libraries("/home/heldon/chameleon/mesos/mesos-1.3.2/build/src/.libs/libmesos-1.3.2.so")
+
 add_executable(docker_launch docker_launch.cpp)
-#target_link_libraries(docker_launch ${PROCESS_LIBS} libmesos-1.3.2.so glog gflags )
 target_link_libraries(docker_launch ${PROCESS_LIBS} sched ${docker_PROTOS} glog gflags )
