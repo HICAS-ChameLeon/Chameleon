@@ -1,1 +1,0 @@
-cmd='/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/protobuf-2.6.1/src/protobuf-2.6.1/src/../configure;--prefix=/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/protobuf-2.6.1/src/protobuf-2.6.1-lib/lib'

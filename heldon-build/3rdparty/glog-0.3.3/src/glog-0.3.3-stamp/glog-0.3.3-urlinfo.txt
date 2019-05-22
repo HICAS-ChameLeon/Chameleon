@@ -1,3 +1,0 @@
-repository='external project URL'
-module='/home/heldon/chameleon/Chameleon/3rdparty/glog-0.3.3.tar.gz'
-tag=''

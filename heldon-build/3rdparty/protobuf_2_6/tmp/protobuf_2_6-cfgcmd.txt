@@ -1,1 +1,0 @@
-cmd='cd;/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/protobuf_2_6/src/protobuf_2_6;&&;./autogen.sh;&&;./configure;--prefix=/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/protobuf_2_6'

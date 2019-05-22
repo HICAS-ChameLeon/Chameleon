@@ -1,6 +1,0 @@
-This package provides a copy of the 'nvml.h' header file included with
-version 352.79 of the Nvidia GPU deployment kit. It was obtained by
-running the 'install-nvidia-gdk.sh' script bundled with this package.
-
-The `nvml.h' file is located under 'nvidia/gdk/nvml.h' to mimic its
-install location when installed via the GDK installer.

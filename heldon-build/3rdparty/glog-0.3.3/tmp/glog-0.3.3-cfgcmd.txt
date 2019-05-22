@@ -1,1 +1,0 @@
-cmd='/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3/src/../configure;--prefix=/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-lib/lib'
