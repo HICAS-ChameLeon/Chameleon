@@ -370,7 +370,9 @@ namespace chameleon {
                       * */
                     // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
                     const string launcher =
-                            m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
+//                            m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
+//                            m_webui_path + " --level=2";
+                            m_super_master_path + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master" + " --webui_path=" +
                             m_webui_path + " --level=2";
                     Try<Subprocess> super_master = subprocess(
                             launcher,
@@ -1119,12 +1121,14 @@ namespace chameleon {
     }
 
     void Master::heartbeat_to_supermaster(){
-        for(auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++){
-            send(m_super_master,iter->second);
-        }
-        for(auto iter = m_proto_runtime_resources.begin(); iter != m_proto_runtime_resources.end(); iter++){
-            send(m_super_master,iter->second);
-            LOG(INFO)<<"send message to "<<m_super_master;
+        if(!m_proto_hardware_resources.size()&&!m_proto_runtime_resources.size()) {
+            for (auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++) {
+                send(m_super_master, iter->second);
+            }
+            for (auto iter = m_proto_runtime_resources.begin(); iter != m_proto_runtime_resources.end(); iter++) {
+                send(m_super_master, iter->second);
+                LOG(INFO) << "send message to " << m_super_master;
+            }
         }
         process::delay(m_interval, self(), &Self::heartbeat_to_supermaster);
     }
