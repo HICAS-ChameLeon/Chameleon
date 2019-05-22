@@ -1,0 +1,4 @@
+files,language,blank,comment,code,"http://cloc.sourceforge.net v 1.60  T=0.04 s (359.2 files/s, 77302.4 lines/s)"
+7,C++,327,327,1379,
+7,C/C++ Header,245,203,698,
+1,CMake,7,5,37,
