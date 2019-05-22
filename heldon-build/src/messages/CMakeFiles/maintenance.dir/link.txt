@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmaintenance.a  CMakeFiles/maintenance.dir/maintenance.pb.cc.o
+/usr/bin/ranlib libmaintenance.a

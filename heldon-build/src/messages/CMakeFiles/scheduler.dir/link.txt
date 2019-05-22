@@ -1,0 +1,2 @@
+/usr/bin/ar qc libscheduler.a  CMakeFiles/scheduler.dir/scheduler.pb.cc.o
+/usr/bin/ranlib libscheduler.a

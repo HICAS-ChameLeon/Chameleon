@@ -39,5 +39,6 @@ namespace chameleon {
         const int e1 = 1;      //  e<100
         const int e2 = 2;      //  e>=200
     }
+}
 
-#endif
+#endif CHAMELEON_CHAMELEON_SMHC_HPP

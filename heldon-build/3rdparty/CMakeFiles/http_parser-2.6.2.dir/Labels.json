@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/CMakeFiles/http_parser-2.6.2"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/CMakeFiles/http_parser-2.6.2.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/CMakeFiles/http_parser-2.6.2-complete.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/http_parser-2.6.2/src/http_parser-2.6.2-stamp/http_parser-2.6.2-install.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/http_parser-2.6.2/src/http_parser-2.6.2-stamp/http_parser-2.6.2-mkdir.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/http_parser-2.6.2/src/http_parser-2.6.2-stamp/http_parser-2.6.2-download.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/http_parser-2.6.2/src/http_parser-2.6.2-stamp/http_parser-2.6.2-update.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/http_parser-2.6.2/src/http_parser-2.6.2-stamp/http_parser-2.6.2-patch.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/http_parser-2.6.2/src/http_parser-2.6.2-stamp/http_parser-2.6.2-configure.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/http_parser-2.6.2/src/http_parser-2.6.2-stamp/http_parser-2.6.2-build.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"http_parser-2.6.2"
+		],
+		"name" : "http_parser-2.6.2"
+	}
+}

@@ -23,15 +23,15 @@
 
 #include "logging/flags.hpp"
 
-#include "messages/messages.hpp"
+#include "docker/messages.hpp"
 
 #include "sched/constants.hpp"
 
-namespace mesos {
+namespace mesos{
 namespace internal {
 namespace scheduler {
 
-class Flags : public virtual logging::Flags
+class Flags : public virtual chameleon::logging::Flags
 {
 public:
   Flags()
@@ -55,11 +55,6 @@ public:
         stringify(REGISTRATION_RETRY_INTERVAL_MAX) + ", whichever is smaller",
         DEFAULT_REGISTRATION_BACKOFF_FACTOR);
 
-    // This help message for --modules flag is the same for
-    // {master,slave,sched,tests}/flags.[ch]pp and should always be kept in
-    // in sync.
-    // TODO(karya): Remove the JSON example and add reference to the
-    // doc file explaining the --modules flag.
     add(&Flags::modules,
         "modules",
         "List of modules to be loaded and be available to the internal\n"
@@ -102,9 +97,6 @@ public:
         "  ]\n"
         "}");
 
-    // This help message for --modules_dir flag is the same for
-    // {master,slave,sched,tests}/flags.[ch]pp and should always be kept in
-    // sync.
     add(&Flags::modulesDir,
         "modules_dir",
         "Directory path of the module manifest files.\n"

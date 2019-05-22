@@ -126,25 +126,24 @@
         }, function errorCallback(response) {
         });
 
-        $rootScope.selected = [];
-        var updateSelected = function (action, id) {
-            id = "" + id + "";
-            if (action == 'add' && $rootScope.selected.indexOf(id) == -1) {
-                $rootScope.selected.push(id);
-            }
-            if (action == 'remove' && $rootScope.selected.indexOf(id) != -1) {
-                var idx = $rootScope.selected.indexOf(id);
-                $rootScope.selected.splice(idx, 1);
+        var flag;
+        var updateSelected = function (action, name) {
+            name = "" + name + "";
+            console.log(name);
+            if (action == 'true') {
+                $rootScope.selected = name;
             }
         };
-        $scope.updateSelection = function ($event, id) {
-            var checkbox = $event.target;
-            var action = (checkbox.checked ? 'add' : 'remove');
-            updateSelected(action, id);
+        $scope.updateSelection = function ($event, name) {
+            var radio = $event.target;
+            console.log(radio);
+            var action = (radio.checked ? 'true' : 'false');
+            updateSelected(action, name);
         };
 
-        $scope.isSelected = function (id) {
-            return $rootScope.selected.indexOf(id) >= 0;
+        $scope.isSelected = function (name) {
+
+            return ;
         };
 
         // $scope.getRequiremt = function () {
@@ -1202,28 +1201,28 @@
                         }
 
                     }
-                        var nodes = new vis.DataSet(vertexes);
-                        var edges = new vis.DataSet(my_edges);
+                    var nodes = new vis.DataSet(vertexes);
+                    var edges = new vis.DataSet(my_edges);
 
-                        var container = document.getElementById('mynetwork');
-                        var data = {
-                            nodes: nodes,
-                            edges: edges
-                        };
+                    var container = document.getElementById('mynetwork');
+                    var data = {
+                        nodes: nodes,
+                        edges: edges
+                    };
 
-                        var options = {
-                            interaction: {
-                                navigationButtons: true,
-                                keyboard: true
-                            },
-                        };
+                    var options = {
+                        interaction: {
+                            navigationButtons: true,
+                            keyboard: true
+                        },
+                    };
 
-                        var network = new vis.Network(container, data, options);
+                    var network = new vis.Network(container, data, options);
 
-                        // add event listeners
-                        network.on('select', function (params) {
-                            document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
-                        });
+                    // add event listeners
+                    network.on('select', function (params) {
+                        document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
+                    });
 
 
                 }, function errorCallback(response) {
@@ -1276,17 +1275,17 @@
         }
     });
 
-
+    var SupermasterStarted;
     //开启supermaster对应的Controller
     chameleon_app.controller('StartSupermasterCtrl', function ($scope, $rootScope, $uibModal) {
         //$scope.startSupermaster = response.data.start;
-        console.log('8' + $rootScope.startSupermaster);
-        console.log('88'+ $rootScope.stopSupermaster);
+        console.log('startSupermaster' + $rootScope.startSupermaster);
+        console.log('stopSupermaster'+ $rootScope.stopSupermaster);
         $scope.openModal = function () {
             if ($rootScope.stopSupermaster == 'success'||$rootScope.startSupermaster == undefined) {
                 //$scope.startSupermaster = $rootScope.startSupermaster;
                 var alert_message = "确认开启Supermaster?";
-                console.log('9' + $rootScope.startSupermaster);
+                console.log('after alert startSupermaster' + $rootScope.startSupermaster);
                 var modalInstance = $uibModal.open({
                     templateUrl: 'ControlSupermaster.html',
                     controller: 'StartSupermasterInstanceCtrl',   //shutdown modal对应的Controller
@@ -1297,16 +1296,19 @@
                     }
                 })
             }
-            $scope.openModal = function () {
-                alert("supermaster已经开启");
+            else if ($rootScope.startSupermaster == 'success'){
+                $scope.openModal = function () {
+                    alert("supermaster已经开启");
 
+                }
             }
+
         }
     });
 
     chameleon_app.controller('StartThreeSupermasterCtrl', function ($scope, $rootScope, $uibModal) {
         $scope.openModal = function () {
-            if ($rootScope.stopSupermaster == 'success'||$rootScope.startSupermaster == undefined) {
+            if ($rootScope.startSupermaster == undefined || SupermasterStarted == false) {
                 var alert_message = "确认开启Supermaster?";
                 var modalInstance = $uibModal.open({
                     templateUrl: 'ControlSupermaster.html',
@@ -1318,10 +1320,13 @@
                     }
                 })
             }
-            $scope.openModal = function () {
-                alert("supermaster已经开启");
+            else {
+                $scope.openModal = function () {
+                    alert("supermaster已经开启");
 
+                }
             }
+
         }
     });
 
@@ -1335,8 +1340,14 @@
                 url: leadingChameleonMasterURL('/master/start_supermaster')
             }).then(function successCallback(response) {
                 $rootScope.startSupermaster = response.data.start;
-                console.log('10'+$rootScope.startSupermaster);
+                if($rootScope == 'success'){
+                    SupermasterStarted = true;
+                }
+                else
+                    SupermasterStarted = false;
+                console.log('after confirm start'+$rootScope.startSupermaster);
                 $uibModalInstance.dismiss('cancel');
+
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
@@ -1369,7 +1380,7 @@
 
     //关闭supermaster对应的Controller
     chameleon_app.controller('StopSupermasterCtrl',function ($scope,$rootScope,$uibModal) {
-        console.log('5' + $rootScope.stopSupermaster);
+        console.log('stopSupermaster' + $rootScope.stopSupermaster);
 
         var alert_message = "确认停止Supermaster?";
         $scope.openModal = function() {
@@ -1385,10 +1396,13 @@
                     }
                 })
             }
-            $scope.openModal = function () {
-                alert("supermaster已经关闭");
+            else{
+                $scope.openModal = function () {
+                    alert("supermaster已经关闭");
 
+                }
             }
+
         }
 
     });
@@ -1400,12 +1414,13 @@
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: leadingChameleonSuperMasterURL('/super_master/kill_master')
+                url: leadingChameleonSuperMasterURL('/super_master/kill_super_master')
             }).then(function successCallback(response) {
                 $rootScope.stopSupermaster = response.data.stop;
                 console.log(response);
                 console.log('55' + $rootScope.stopSupermaster);
                 $uibModalInstance.dismiss('cancel');
+
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
