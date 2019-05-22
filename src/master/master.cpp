@@ -1104,19 +1104,7 @@ namespace chameleon {
                 delete owned_slaves;
                 LOG(INFO) << " send owned slaves of " << self() << " to super_master " << super_master;
             } else{
-//                sleep(5);
-//                LOG(INFO)<<"xunhuan";
                 m_super_master = super_master;
-//                for(auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++){
-//                    send(m_super_master,iter->second);
-//                }
-//                do{
-//                    sleep(1);
-//                }while(!m_hardware_resources.empty());
-//                LOG(INFO)<<"xunhuan";
-//                for(auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++){
-//                    send(m_super_master,iter->second);
-//                }
                 heartbeat_to_supermaster();
             }
 
@@ -1129,11 +1117,9 @@ namespace chameleon {
     }
 
     void Master::heartbeat_to_supermaster(){
-        LOG(INFO)<<"xunhuan";
         for(auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++){
             send(m_super_master,iter->second);
         }
-        LOG(INFO)<<"heartbeat";
         for(auto iter = m_proto_runtime_resources.begin(); iter != m_proto_runtime_resources.end(); iter++){
             send(m_super_master,iter->second);
             LOG(INFO)<<"send message to "<<m_super_master;
