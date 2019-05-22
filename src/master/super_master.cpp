@@ -182,7 +182,20 @@ namespace chameleon {
                     if (!this->m_master_slave.empty()) {
                         JSON::Array array;
                         JSON::Object master = JSON::Object();
+                        JSON::Array slaves;
                         JSON::Object slave =  JSON::Object();
+                        JSON::Object hardware = JSON::Object();
+//                        JSON::Object cpu_collection = JSON::Object();
+//                        JSON::Object mem_collection = JSON::Object();
+//                        JSON::Object gpu_collection = JSON::Object();
+//                        JSON::Object disk_collection = JSON::Object();
+//                        JSON::Object port_collection = JSON::Object();
+//                        JSON::Object tlb_collection = JSON::Object();
+                        JSON::Object runtime = JSON::Object();
+                        JSON::Object cpu_usage = JSON::Object();
+                        JSON::Object disk_usage = JSON::Object();
+                        JSON::Object mem_usage = JSON::Object();
+                        JSON::Object net_usage = JSON::Object();
                         for (auto it = this->m_master_slave.begin();
                              it != this->m_master_slave.end(); it++) {
                             master.values["master"] = it->first;
@@ -190,15 +203,38 @@ namespace chameleon {
                              iter != it->second.end(); iter++){
                                 slave.values["slave_ip"] = iter->node_ip;
                                 slave.values["slave_port"] = iter->node_port;
-//                                array.values.emplace_back(slave);
+                                hardware.values["slave_hostname"] = iter->m_hardware.slave_hostname();
+//                                cpu_collection.values["cpu_infos"] = iter->m_hardware.cpu_collection().cpu_infos();
+//                                cpu_collection.values["cpu_quantity"] = iter->m_hardware.cpu_collection().cpu_quantity();
+//                                hardware.values["cpu_collection"] = cpu_collection;
+                                slave.values["hardware_resources"] = hardware;
+                                cpu_usage.values["cpu_used"] = iter->m_runtime.cpu_usage().cpu_used();
+                                runtime.values["cpu_usage"] = cpu_usage;
+                                disk_usage.values["disk_available"] = iter->m_runtime.disk_usage().disk_available();
+                                disk_usage.values["available_percent"] = iter->m_runtime.disk_usage().available_percent();
+                                runtime.values["disk_usage"] = disk_usage;
+                                mem_usage.values["mem_total"] = iter->m_runtime.mem_usage().mem_total();
+                                mem_usage.values["mem_free"] = iter->m_runtime.mem_usage().mem_free();
+                                mem_usage.values["mem_available"] = iter->m_runtime.mem_usage().mem_available();
+                                mem_usage.values["buffers"] = iter->m_runtime.mem_usage().buffers();
+                                mem_usage.values["cached"] = iter->m_runtime.mem_usage().cached();
+                                mem_usage.values["swap_total"] = iter->m_runtime.mem_usage().swap_total();
+                                mem_usage.values["swap_free"] = iter->m_runtime.mem_usage().swap_free();
+                                mem_usage.values["hugepagesize"] = iter->m_runtime.mem_usage().hugepagesize();
+                                runtime.values["mem_usage"] = mem_usage;
+                                net_usage.values["net_used"] = iter->m_runtime.net_usage().net_used();
+                                runtime.values["net_usage"] = net_usage;
+                                slave.values["runtime_resources"] = runtime;
+                                slaves.values.emplace_back(slave);
                             }
-                            master.values["slave"] = slave;
+                            master.values["slaves"] = slaves;
+                            master.values["slave_quantity"] = slaves.values.size();
                             array.values.emplace_back(master);
                         }
-                        result.values["quantity"] = array.values.size();
+                        result.values["master_quantity"] = array.values.size();
                         result.values["content"] = array;
                     } else {
-                        result.values["quantity"] = 0;
+                        result.values["master_quantity"] = 0;
                         result.values["content"] = JSON::Object();
                     }
                     OK ok_response(stringify(result));

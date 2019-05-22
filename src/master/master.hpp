@@ -250,7 +250,7 @@ namespace chameleon {
         string m_webui_path;
 
         // fault tolerance related
-        bool m_is_fault_tolerance = false;
+        bool m_is_fault_tolerance;
 
         // master states.
         enum {

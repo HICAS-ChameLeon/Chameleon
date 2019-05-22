@@ -10,7 +10,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "/home/lemaker/open-source/Chameleon/build/src/master/super_master",
+DEFINE_string(supermaster_path, "/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/super_master",
               "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 DEFINE_string(webui_path, "",
               "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
@@ -940,6 +940,7 @@ namespace chameleon {
         //add insert slave_id to send new master message to slave
         m_alive_slaves.insert(slave_id);
         m_slaves_last_time[slave_id] = time(0);
+        LOG(INFO)<<"1";
         if (m_is_fault_tolerance && slave_id != stringify(process::address().ip)){
             LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
             launch_master_message->set_port("6060");
@@ -950,7 +951,9 @@ namespace chameleon {
             delete launch_master_message;
             LOG(INFO)<<"send launch backup master message to "<<slave;
             m_is_fault_tolerance = false;
+            LOG(INFO)<<"2";
         }
+        LOG(INFO)<<"3";
     }
 
     void Master::heartbeat_check_slaves() {
@@ -1064,7 +1067,7 @@ namespace chameleon {
         if(super_master_control_message.my_master().size()){
             LOG(INFO) << self().address << " received message from " << super_master;
             string launch_command = m_super_master_path + " --initiator=" + stringify(self().address)
-                    + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master --webui_path="
+                    + " --master_path=/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/master --webui_path="
                     + stringify(FLAGS_webui_path) + " --port=7001";
             Try<Subprocess> s = subprocess(
                     launch_command,
