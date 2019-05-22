@@ -1,0 +1,3 @@
+repository='external project URL'
+module='/home/heldon/chameleon/Chameleon/3rdparty/nvml-352.79.tar.gz'
+tag=''

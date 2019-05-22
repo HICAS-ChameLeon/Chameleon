@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/CMakeFiles/glog-0.3.3"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/CMakeFiles/glog-0.3.3.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/CMakeFiles/glog-0.3.3-complete.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-stamp/glog-0.3.3-install.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-stamp/glog-0.3.3-mkdir.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-stamp/glog-0.3.3-download.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-stamp/glog-0.3.3-update.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-stamp/glog-0.3.3-patch.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-stamp/glog-0.3.3-configure.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/glog-0.3.3/src/glog-0.3.3-stamp/glog-0.3.3-build.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"glog-0.3.3"
+		],
+		"name" : "glog-0.3.3"
+	}
+}

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcluster_operation.a  CMakeFiles/cluster_operation.dir/cluster_operation.pb.cc.o
+/usr/bin/ranlib libcluster_operation.a

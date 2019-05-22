@@ -1,0 +1,3 @@
+repository='external project URL'
+module='/home/heldon/chameleon/Chameleon/3rdparty/http-parser-2.6.2.tar.gz'
+tag=''

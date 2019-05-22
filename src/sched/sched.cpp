@@ -10,6 +10,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 #include <mesos.pb.h>
 #include <scheduler.pb.h>
@@ -44,10 +45,11 @@
 #include <stout/uuid.hpp>
 
 #include <common/scheduler.hpp>
+#include <docker/type_utils.hpp>
 #include <docker/messages.hpp>
 
 #include "master/detector.hpp"
-#include "flags.hpp"
+//#include "flags.hpp"
 
 using namespace mesos;
 using namespace mesos::internal;
@@ -64,16 +66,20 @@ using process::MessageEvent;
 using process::Process;
 using process::UPID;
 
+
 using std::map;
 using std::mutex;
 using std::shared_ptr;
 using std::string;
 using std::vector;
 using std::weak_ptr;
+using std::unordered_map;
 
 using process::wait; // Necessary on some OS's to disambiguate.
 
 using utils::copy;
+
+constexpr Duration REGISTRATION_RETRY_INTERVAL_MAX = Minutes(1);
 
 namespace mesos {
     namespace scheduler {
@@ -96,8 +102,6 @@ namespace mesos {
 
 namespace mesos {
 namespace internal {
-
-
 // The DetectorPool is responsible for tracking single detector per url
 // to avoid having multiple detectors per url when multiple frameworks
 // are instantiated per process. See MESOS-3595.
@@ -165,7 +169,6 @@ public:
                    bool _implicitAcknowledgements,
                    const string& schedulerId,
                    MasterDetector* _detector,
-                   const internal::scheduler::Flags& _flags,
                    std::recursive_mutex* _mutex,
                    Latch* _latch)
     : ProcessBase(schedulerId),
@@ -179,7 +182,6 @@ public:
       connected(false),
       running(true),
       detector(_detector),
-      flags(_flags),
       implicitAcknowledgements(_implicitAcknowledgements){
 
     LOG(INFO) << "Version: " << "0.1";
@@ -271,9 +273,9 @@ protected:
       // In any case, we will reconnect (possibly immediately), so we
       // must notify schedulers of the disconnection.
       Stopwatch stopwatch;
-      if (FLAGS_v >= 1) {
+//      if (FLAGS_v >= 1) {
         stopwatch.start();
-      }
+//      }
 
       scheduler->disconnected(driver);
 
@@ -292,7 +294,8 @@ protected:
       Clock::cancel(frameworkRegistrationTimer);
 
         LOG(INFO)<<"lele 359 started doReliableRegistration";
-        doReliableRegistration(flags.registration_backoff_factor);
+        doReliableRegistration(Seconds(10));
+//        doReliableRegistration(flags.registration_backoff_factor);
         LOG(INFO)<<"lele 360 finished doReliableRegistration";
     }
     else {
@@ -527,9 +530,9 @@ protected:
     failover = false;
 
     Stopwatch stopwatch;
-    if (FLAGS_v >= 1) {
+//    if (FLAGS_v >= 1) {
       stopwatch.start();
-    }
+//    }
 
     scheduler->registered(driver, frameworkId, masterInfo);
 
@@ -569,9 +572,9 @@ protected:
     failover = false;
 
     Stopwatch stopwatch;
-    if (FLAGS_v >= 1) {
+//    if (FLAGS_v >= 1) {
       stopwatch.start();
-    }
+//    }
 
     scheduler->reregistered(driver, masterInfo);
 
@@ -605,7 +608,7 @@ protected:
 
     // Bound the maximum backoff by 'REGISTRATION_RETRY_INTERVAL_MAX'.
     maxBackoff =
-      std::min(maxBackoff, scheduler::REGISTRATION_RETRY_INTERVAL_MAX);
+      std::min(maxBackoff, REGISTRATION_RETRY_INTERVAL_MAX);
 
     // If failover timeout is present, bound the maximum backoff
     // by 1/10th of the failover timeout.
@@ -680,9 +683,9 @@ protected:
     }
 
     Stopwatch stopwatch;
-    if (FLAGS_v >= 1) {
+//    if (FLAGS_v >= 1) {
       stopwatch.start();
-    }
+//    }
     LOG(INFO)<<"lele scheduler->resourceOffers(driver, offers)";
     scheduler->resourceOffers(driver, offers);
 
@@ -717,9 +720,9 @@ protected:
     savedOffers.erase(offerId);
 
     Stopwatch stopwatch;
-    if (FLAGS_v >= 1) {
+//    if (FLAGS_v >= 1) {
       stopwatch.start();
-    }
+//    }
       LOG(INFO)<<"lele scheduler->offerRescinded(driver, offerId)";
     scheduler->offerRescinded(driver, offerId);
 
@@ -790,9 +793,9 @@ protected:
     }
 
     Stopwatch stopwatch;
-    if (FLAGS_v >= 1) {
+//    if (FLAGS_v >= 1) {
       stopwatch.start();
-    }
+//    }
     LOG(INFO)<< "lele scheduler->statusUpdate(driver, status) ";
     scheduler->statusUpdate(driver, status);
 
@@ -863,9 +866,9 @@ protected:
     savedSlavePids.erase(slaveId);
 
     Stopwatch stopwatch;
-    if (FLAGS_v >= 1) {
+//    if (FLAGS_v >= 1) {
       stopwatch.start();
-    }
+//    }
 
     scheduler->slaveLost(driver, slaveId);
 
@@ -903,9 +906,9 @@ protected:
       << " exited with status " << status;
 
     Stopwatch stopwatch;
-    if (FLAGS_v >= 1) {
+//    if (FLAGS_v >= 1) {
       stopwatch.start();
-    }
+//    }
 
     scheduler->executorLost(driver, executorId, slaveId, status);
 
@@ -926,9 +929,9 @@ protected:
     VLOG(2) << "Received framework message";
 
     Stopwatch stopwatch;
-    if (FLAGS_v >= 1) {
+//    if (FLAGS_v >= 1) {
       stopwatch.start();
-    }
+//    }
 
     scheduler->frameworkMessage(driver, executorId, slaveId, data);
 
@@ -947,9 +950,7 @@ protected:
     driver->abort();
 
     Stopwatch stopwatch;
-    if (FLAGS_v >= 1) {
-      stopwatch.start();
-    }
+    stopwatch.start();
 
     scheduler->error(driver, message);
 
@@ -988,7 +989,7 @@ protected:
   // SchedulerProcess::stop.
   void abort()
   {
-    LOG(INFO) << "Aborting framework " << framework.id();
+//    LOG(INFO) << "Aborting framework " << framework.id();
 
     CHECK(!running.load());
 
@@ -1079,10 +1080,10 @@ protected:
       // task launch. If the framework is not partition-aware, we send
       // TASK_LOST instead. See details from notes in `launchTasks`.
       TaskState newTaskState = TASK_DROPPED;
-      if (!protobuf::frameworkHasCapability(
-              framework, FrameworkInfo::Capability::PARTITION_AWARE)) {
-        newTaskState = TASK_LOST;
-      }
+//      if (!protobuf::frameworkHasCapability(
+//              framework, FrameworkInfo::Capability::PARTITION_AWARE)) {
+//        newTaskState = TASK_LOST;
+//      }
 
       foreach (const Offer::Operation& operation, operations) {
         if (operation.type() != Offer::Operation::LAUNCH) {
@@ -1090,7 +1091,7 @@ protected:
         }
 
         foreach (const TaskInfo& task, operation.launch().task_infos()) {
-          StatusUpdate update = protobuf::createStatusUpdate(
+          StatusUpdate update = createStatusUpdate(
               framework.id(),
               None(),
               task.task_id(),
@@ -1122,14 +1123,14 @@ protected:
     // Setting accept.offer_ids.
     foreach (const OfferID& offerId, offerIds) {
       accept->add_offer_ids()->CopyFrom(offerId);
-
+      if(offerId == offerId)
       if (!savedOffers.contains(offerId)) {
         // TODO(jieyu): A duplicated offer ID could also cause this
         // warning being printed. Consider refine this message here
         // and in launchTasks as well.
         LOG(WARNING) << "Attempting to accept an unknown offer " << offerId.value();
       } else {
-        LOG(INFO)<<"Heldon savedOffers contains offerid"<<offerId.value();
+        LOG(INFO)<<"Heldon savedOffers contains offerid" << offerId.value();
         // Keep only the slave PIDs where we run tasks so we can send
         // framework messages directly.
         foreach (const Offer::Operation& operation, operations) {
@@ -1161,6 +1162,55 @@ protected:
       LOG(INFO)<<"lele accept Offers";
       send(master.get().pid(), call);
   }
+
+    StatusUpdate createStatusUpdate(
+            const FrameworkID& frameworkId,
+            const Option<SlaveID>& slaveId,
+            const TaskID& taskId,
+            const TaskState& state,
+            const TaskStatus::Source& source,
+            const Option<UUID>& uuid,
+            const string& message,
+            const Option<TaskStatus::Reason>& reason)
+    {
+      StatusUpdate update;
+
+      update.set_timestamp(process::Clock::now().secs());
+      update.mutable_framework_id()->MergeFrom(frameworkId);
+
+      if (slaveId.isSome()) {
+        update.mutable_slave_id()->MergeFrom(slaveId.get());
+      }
+
+
+
+      // TODO(alexr): Use `createTaskStatus()` instead
+      // once `UUID` is required in this function.
+      TaskStatus* status = update.mutable_status();
+      status->mutable_task_id()->MergeFrom(taskId);
+
+      if (slaveId.isSome()) {
+        status->mutable_slave_id()->MergeFrom(slaveId.get());
+      }
+
+      status->set_state(state);
+      status->set_source(source);
+      status->set_message(message);
+      status->set_timestamp(update.timestamp());
+
+      if (uuid.isSome()) {
+        update.set_uuid(uuid.get().toBytes());
+        status->set_uuid(uuid.get().toBytes());
+      }
+
+      if (reason.isSome()) {
+        status->set_reason(reason.get());
+      }
+
+
+
+      return update;
+    }
 
   void declineOffer(
       const OfferID& offerId,
@@ -1254,11 +1304,11 @@ protected:
     // will not have a 'uuid' set.
     if (status.has_uuid() && status.has_slave_id()) {
       CHECK_SOME(master);
-
-      VLOG(2) << "Sending ACK for status update " << status.uuid()
-              << " of task " << status.task_id()
-              << " on agent " << status.slave_id()
-              << " to " << master.get().pid();
+//
+//      VLOG(2) << "Sending ACK for status update " << status.uuid()
+//              << " of task " << status.task_id()
+//              << " on agent " << status.slave_id()
+//              << " to " << master.get().pid();
 
       Call call;
 
@@ -1273,11 +1323,11 @@ protected:
 
       send(master.get().pid(), call);
     } else {
-      VLOG(2) << "Received ACK for status update"
-              << (status.has_uuid() ? " " + status.uuid() : "")
-              << " of task " << status.task_id().value()
-              << (status.has_slave_id()
-                  ? " on agent " + stringify(status.slave_id()) : "");
+//      VLOG(2) << "Received ACK for status update"
+//              << (status.has_uuid() ? " " + status.uuid() : "")
+//              << " of task " << status.task_id().value()
+//              << (status.has_slave_id()
+//                  ? " on agent " + stringify(status.slave_id()) : "");
     }
   }
 
@@ -1289,7 +1339,6 @@ protected:
      VLOG(1) << "Ignoring send framework message as master is disconnected";
      return;
     }
-
     VLOG(2) << "Asked to send framework message to agent "
             << slaveId.value();
 
@@ -1426,13 +1475,12 @@ private:
 
   MasterDetector* detector;
 
-  const internal::scheduler::Flags flags;
 
   // Timer for triggering registration of the framework with the master.
   process::Timer frameworkRegistrationTimer;
 
-  hashmap<string, hashmap<string, UPID>> savedOffers;
-  hashmap<string, UPID> savedSlavePids;
+  hashmap<OfferID, hashmap<SlaveID, UPID>> savedOffers;
+  hashmap<SlaveID, UPID> savedSlavePids;
 
   // The driver optionally provides implicit acknowledgements
   // for frameworks. If disabled, the framework must send its
@@ -1454,14 +1502,14 @@ void MesosSchedulerDriver::initialize() {
   // In the future, just as the TODO in local/main.cpp discusses,
   // we'll probably want a way to load master::Flags and slave::Flags
   // as well.
-  local::Flags flags;
-  Try<flags::Warnings> load = flags.load("MESOS_");
-
-  if (load.isError()) {
-    status = DRIVER_ABORTED;
-    scheduler->error(this, load.error());
-    return;
-  }
+//  local::Flags flags;
+//  Try<flags::Warnings> load = flags.load("MESOS_");
+//
+//  if (load.isError()) {
+//    status = DRIVER_ABORTED;
+//    scheduler->error(this, load.error());
+//    return;
+//  }
 
   // Initialize libprocess. NOTE: We need to ensure this happens
   // before we invoke anything in libprocess. While libprocess will
@@ -1479,20 +1527,20 @@ void MesosSchedulerDriver::initialize() {
                  << "**************************************************";
   }
 
-  // Initialize logging.
-  // TODO(benh): Replace whitespace in framework.name() with '_'?
-  if (flags.initialize_driver_logging) {
-    chameleon::logging::initialize(framework.name(), flags);
-  } else {
-    VLOG(1) << "Disabling initialization of GLOG logging";
-  }
+//  // Initialize logging.
+//  // TODO(benh): Replace whitespace in framework.name() with '_'?
+//  if (flags.initialize_driver_logging) {
+//    chameleon::logging::initialize(framework.name(), flags);
+//  } else {
+//    VLOG(1) << "Disabling initialization of GLOG logging";
+//  }
 
   // Log any flag warnings (after logging is initialized).
-  foreach (const flags::Warning& warning, load->warnings) {
-    LOG(WARNING) << warning.message;
-  }
+//  foreach (const flags::Warning& warning, load->warnings) {
+//    LOG(WARNING) << warning.message;
+//  }
 
-  spawn(new VersionProcess(), true);
+//  spawn(new VersionProcess(), true);
 
   // Initialize Latch.
   latch = new Latch();
@@ -1518,9 +1566,9 @@ void MesosSchedulerDriver::initialize() {
 
   // Launch a local cluster if necessary.
   Option<UPID> pid;
-  if (master == "local") {
-    pid = local::launch(flags);
-  }
+//  if (master == "local") {
+//    pid = local::launch(flags);
+//  }
 
   CHECK(process == nullptr);
 
@@ -1654,9 +1702,9 @@ MesosSchedulerDriver::~MesosSchedulerDriver()
   detector.reset();
 
   // Check and see if we need to shutdown a local cluster.
-  if (master == "local" || master == "localquiet") {
-    local::shutdown();
-  }
+//  if (master == "local" || master == "localquiet") {
+//    local::shutdown();
+//  }
 }
 
 
@@ -1683,77 +1731,73 @@ Status MesosSchedulerDriver::start()
     }
 
     // Load scheduler flags.
-    internal::scheduler::Flags flags;
-    Try<flags::Warnings> load = flags.load("MESOS_");
-
-    if (load.isError()) {
-      status = DRIVER_ABORTED;
-      scheduler->error(this, load.error());
-      return status;
-    }
-
-    // Log any flag warnings.
-    foreach (const flags::Warning& warning, load->warnings) {
-      LOG(WARNING) << warning.message;
-    }
-
-    // Initialize modules. Note that since other subsystems may depend
-    // upon modules, we should initialize modules before anything else.
-    if (flags.modules.isSome() && flags.modulesDir.isSome()) {
-      status = DRIVER_ABORTED;
-      scheduler->error(
-          this,
-          "Only one of MESOS_MODULES or MESOS_MODULES_DIR should be specified");
-      return status;
-    }
-
-    if (flags.modulesDir.isSome()) {
-      Try<Nothing> result =
-        modules::ModuleManager::load(flags.modulesDir.get());
-      if (result.isError()) {
-        status = DRIVER_ABORTED;
-        scheduler->error(this, "Error loading modules: " + result.error());
-        return status;
-      }
-    }
-
-    if (flags.modules.isSome()) {
-      Try<Nothing> result = modules::ModuleManager::load(flags.modules.get());
-      if (result.isError()) {
-        status = DRIVER_ABORTED;
-        scheduler->error(this, "Error loading modules: " + result.error());
-        return status;
-      }
-    }
+//    internal::scheduler::Flags flags;
+//    Try<flags::Warnings> load = flags.load("MESOS_");
+//
+//    if (load.isError()) {
+//      status = DRIVER_ABORTED;
+//      scheduler->error(this, load.error());
+//      return status;
+//    }
+//
+//    // Log any flag warnings.
+//    foreach (const flags::Warning& warning, load->warnings) {
+//      LOG(WARNING) << warning.message;
+//    }
+//
+//    // Initialize modules. Note that since other subsystems may depend
+//    // upon modules, we should initialize modules before anything else.
+//    if (flags.modules.isSome() && flags.modulesDir.isSome()) {
+//      status = DRIVER_ABORTED;
+//      scheduler->error(
+//          this,
+//          "Only one of MESOS_MODULES or MESOS_MODULES_DIR should be specified");
+//      return status;
+//    }
+//
+//    if (flags.modulesDir.isSome()) {
+//      Try<Nothing> result =
+//        modules::ModuleManager::load(flags.modulesDir.get());
+//      if (result.isError()) {
+//        status = DRIVER_ABORTED;
+//        scheduler->error(this, "Error loading modules: " + result.error());
+//        return status;
+//      }
+//    }
+//
+//    if (flags.modules.isSome()) {
+//      Try<Nothing> result = modules::ModuleManager::load(flags.modules.get());
+//      if (result.isError()) {
+//        status = DRIVER_ABORTED;
+//        scheduler->error(this, "Error loading modules: " + result.error());
+//        return status;
+//      }
+//    }
 
     CHECK(process == nullptr);
 
-    if (credential == nullptr) {
       process = new SchedulerProcess(
           this,
           scheduler,
           framework,
-          None(),
           implicitAcknowlegements,
           schedulerId,
           detector.get(),
-          flags,
           &mutex,
           latch);
-    } else {
-      const Credential& cred = *credential;
-      process = new SchedulerProcess(
-          this,
-          scheduler,
-          framework,
-          cred,
-          implicitAcknowlegements,
-          schedulerId,
-          detector.get(),
-          flags,
-          &mutex,
-          latch);
-    }
+//    } else {
+//      const Credential& cred = *credential;
+//      process = new SchedulerProcess(
+//          this,
+//          scheduler,
+//          framework,
+//          cred,
+//          implicitAcknowlegements,
+//          schedulerId,
+//          detector.get(),
+//          &mutex,
+//          latch);
+//    }
 
     spawn(process);
 
@@ -2029,7 +2073,7 @@ Status MesosSchedulerDriver::reconcileTasks(
 
     CHECK(process != nullptr);
 
-    dispatch(process, &SchedulerProcess::reconcileTasks, statuses);
+      process::dispatch(process, &SchedulerProcess::reconcileTasks, statuses);
 
     return status;
   }
@@ -2046,8 +2090,10 @@ Status MesosSchedulerDriver::requestResources(
 
     CHECK(process != nullptr);
 
-    dispatch(process, &SchedulerProcess::requestResources, requests);
+    process::dispatch(process, &SchedulerProcess::requestResources, requests);
 
     return status;
   }
+
+
 }

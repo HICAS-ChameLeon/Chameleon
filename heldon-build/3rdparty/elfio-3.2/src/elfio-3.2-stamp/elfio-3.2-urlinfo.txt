@@ -1,0 +1,3 @@
+repository='external project URL'
+module='/home/heldon/chameleon/Chameleon/3rdparty/elfio-3.2.tar.gz'
+tag=''

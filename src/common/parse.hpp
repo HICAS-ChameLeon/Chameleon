@@ -14,9 +14,8 @@
 #define __COMMON_PARSE_HPP__
 
 #include <mesos.pb.h>
-//
 //#include <mesos/authorizer/acls.hpp>
-//
+
 //#include <mesos/module/module.hpp>
 
 #include <stout/error.hpp>
@@ -44,7 +43,6 @@ namespace flags {
 //  // Convert from JSON to Protobuf.
 //  return protobuf::parse<mesos::ACLs>(json.get());
 //}
-
 
 template <>
 inline Try<mesos::RateLimits> parse(const std::string& value)

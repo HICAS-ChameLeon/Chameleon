@@ -1,0 +1,1 @@
+cmd='cd;/home/heldon/chameleon/Chameleon/3rdparty;&&;tar;zxvf;./gmock-1.7.0.tar.gz;&&;cd;/home/heldon/chameleon/Chameleon/3rdparty/gmock-1.7.0;&&;cmake;.'

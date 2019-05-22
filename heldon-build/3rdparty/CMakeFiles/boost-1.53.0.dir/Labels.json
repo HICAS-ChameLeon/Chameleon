@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/CMakeFiles/boost-1.53.0"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/CMakeFiles/boost-1.53.0.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/CMakeFiles/boost-1.53.0-complete.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/boost-1.53.0-prefix/src/boost-1.53.0-stamp/boost-1.53.0-install.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/boost-1.53.0-prefix/src/boost-1.53.0-stamp/boost-1.53.0-mkdir.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/boost-1.53.0-prefix/src/boost-1.53.0-stamp/boost-1.53.0-download.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/boost-1.53.0-prefix/src/boost-1.53.0-stamp/boost-1.53.0-update.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/boost-1.53.0-prefix/src/boost-1.53.0-stamp/boost-1.53.0-patch.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/boost-1.53.0-prefix/src/boost-1.53.0-stamp/boost-1.53.0-configure.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/boost-1.53.0-prefix/src/boost-1.53.0-stamp/boost-1.53.0-build.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"boost-1.53.0"
+		],
+		"name" : "boost-1.53.0"
+	}
+}

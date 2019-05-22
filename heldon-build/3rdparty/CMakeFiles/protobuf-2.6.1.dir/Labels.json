@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/CMakeFiles/protobuf-2.6.1"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/CMakeFiles/protobuf-2.6.1.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/CMakeFiles/protobuf-2.6.1-complete.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/protobuf-2.6.1/src/protobuf-2.6.1-stamp/protobuf-2.6.1-install.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/protobuf-2.6.1/src/protobuf-2.6.1-stamp/protobuf-2.6.1-mkdir.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/protobuf-2.6.1/src/protobuf-2.6.1-stamp/protobuf-2.6.1-download.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/protobuf-2.6.1/src/protobuf-2.6.1-stamp/protobuf-2.6.1-update.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/protobuf-2.6.1/src/protobuf-2.6.1-stamp/protobuf-2.6.1-patch.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/protobuf-2.6.1/src/protobuf-2.6.1-stamp/protobuf-2.6.1-configure.rule"
+		},
+		{
+			"file" : "/home/heldon/chameleon/Chameleon/heldon-build/3rdparty/protobuf-2.6.1/src/protobuf-2.6.1-stamp/protobuf-2.6.1-build.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"protobuf-2.6.1"
+		],
+		"name" : "protobuf-2.6.1"
+	}
+}
