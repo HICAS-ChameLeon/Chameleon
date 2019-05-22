@@ -158,17 +158,19 @@ namespace chameleon {
                     LOG(INFO)<<"Starting get "<< request_method <<" request from Client";
 
                     string& tpath = request.url.path;
-                    int param_size = request.url.query.size();
+                    LOG(INFO)<<request.url;
 
                     string body_str = request.body;
-
+                    LOG(INFO)<<body_str;
                     vector<string> str_scheduler = strings::split(body_str, "=");
                     string str_scheduler_name = str_scheduler[1];
                     LOG(INFO) << "The select scheduler is " << str_scheduler_name;
 
-                    SchedulerInterface *m_scheduler;
-                    SMHCGrainedScheduler name(str_scheduler_name);
-                    m_scheduler = &name;
+                    if(str_scheduler_name=="SMHCGrained"){
+                        m_scheduler = make_shared<SMHCGrainedScheduler>();
+                    }else{ // CoarseGrained
+                        m_scheduler = make_shared<CoarseGrainedScheduler>();
+                    }
                     const string &scheduler_name = m_scheduler->m_scheduler_name;
                     LOG(INFO)<< scheduler_name;
 //                    mesos::internal::ResourceOffersMessage message;

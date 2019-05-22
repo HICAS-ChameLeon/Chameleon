@@ -126,25 +126,24 @@
         }, function errorCallback(response) {
         });
 
-        $rootScope.selected = [];
-        var updateSelected = function (action, id) {
-            id = "" + id + "";
-            if (action == 'add' && $rootScope.selected.indexOf(id) == -1) {
-                $rootScope.selected.push(id);
-            }
-            if (action == 'remove' && $rootScope.selected.indexOf(id) != -1) {
-                var idx = $rootScope.selected.indexOf(id);
-                $rootScope.selected.splice(idx, 1);
+        var flag;
+        var updateSelected = function (action, name) {
+            name = "" + name + "";
+            console.log(name);
+            if (action == 'true') {
+                $rootScope.selected = name;
             }
         };
-        $scope.updateSelection = function ($event, id) {
-            var checkbox = $event.target;
-            var action = (checkbox.checked ? 'add' : 'remove');
-            updateSelected(action, id);
+        $scope.updateSelection = function ($event, name) {
+            var radio = $event.target;
+            console.log(radio);
+            var action = (radio.checked ? 'true' : 'false');
+            updateSelected(action, name);
         };
 
-        $scope.isSelected = function (id) {
-            return $rootScope.selected.indexOf(id) >= 0;
+        $scope.isSelected = function (name) {
+
+            return ;
         };
 
         // $scope.getRequiremt = function () {
@@ -689,15 +688,15 @@
 
     });
 
-    chameleon_app.controller('SuperTopologyCtrl', function ($scope, $http) {      //可合并到下发的SuperAndSuperTopologyCtrl中
+    chameleon_app.controller('SuperTopologyCtrl', function($scope, $http){      //可合并到下发的SuperAndSuperTopologyCtrl中
         $http({
             method: 'GET',
             url: leadingChameleonSuperMasterURL('/super_master/super_master')       //此API查看super_master管理的master,若请求成功则为两层及以上结构
         }).then(function successCallback(response) {
 
             $scope.supermaster = {
-                contents: response.data.content,
-                quantities: response.data.quantity,
+                contents   : response.data.content,
+                quantities : response.data.quantity,
             };
 
             var DIR = '../icon/refresh-cl/';
@@ -710,7 +709,7 @@
             my_supermaster.label = "super_master";
             my_supermaster.shape = 'image';
             my_supermaster.image = DIR + 'Hardware-WQN-superserver.png';
-            my_supermaster.title = $scope.supermaster.contents[0] + ':7000';　　//默认主super_master在本地运行
+            my_supermaster.title = $scope.supermaster.contents[0]+':7000';　　//默认主super_master在本地运行
 
             var index_master = 1;
             var index_superedge = -1;
@@ -722,116 +721,80 @@
 
                 for (var i in $scope.supermaster.contents) {
                     var my_master = {};    //构造一个master节点
-                    vertexes_super[parseInt(i) + 1] = my_master;
+                    vertexes_super[parseInt(i)+1] = my_master;
                     cur_masterindex++;      //全局变量
                     my_master.id = cur_masterindex;
                     my_master.label = "master";
                     my_master.shape = 'image';
                     my_master.image = DIR + 'Hardware-WQN-main.png';
 
-                    for (var i in $scope.supermaster.resource) {
-                        var my_master = {};    //构造一个master节点
-                        vertexes_super[0 + $scope.supermaster.quantities] = my_master;
-                        cur_masterindex++;      //全局变量
-                        my_master.id = cur_masterindex;
-                        my_master.label = "master";
-                        my_master.shape = 'image';
-                        my_master.image = DIR + 'Hardware-WQN-main.png';
-                        my_master.title = $scope.master.runtime[i].resources.slave_id + ':6060';
-                        var temp_superedge = {};       //添加一条super_master到my_master的边
+                    my_master.title = $scope.supermaster.contents[i] + ':6060';
+                    var temp_superedge = {};       //添加一条super_master到my_master的边
 
-                        temp_superedge.from = my_supermaster.id;
-                        temp_superedge.to = my_master.id;
-                        temp_superedge.arrows = 'to';
-                        index_superedge++;
-                        my_superedges[index_superedge] = temp_superedge;
-                    }
-                    if ($scope.master.quantities >= 1) {
-                        for (var j in $scope.master.runtime) {
-                            var temp_slave = {};       // 添加一个slave节点
-                            cur_masterindex++;
-                            //console.log('2' + cur_masterindex);
-                            temp_slave.id = cur_masterindex;
-                            temp_slave.shape = 'image';
-                            temp_slave.image = DIR + 'Hardware-WQN-server.png';
-                            temp_slave.title = $scope.master.runtime[i].resources.slave_id;
-                            vertexes_super[cur_masterindex] = temp_slave;
+                    temp_superedge.from = my_supermaster.id;
+                    temp_superedge.to = my_master.id;
+                    temp_superedge.arrows = 'to';
+                    index_superedge++;
+                    my_superedges[index_superedge] = temp_superedge;
 
-                            var data = {
-                                nodes: nodes,
-                                edges: edges
-                            };
-                            var container = document.getElementById('mynetwork');
+                    var nodes = new vis.DataSet(vertexes_super);
+                    var edges = new vis.DataSet(my_superedges);
 
-                            // 添加cpu节点
-                            var temp_cpu = {};
-                            cur_masterindex++;
-                            temp_cpu.label = "cpu";
-                            temp_cpu.id = cur_masterindex;
-                            temp_cpu.group = 'server';
-                            temp_cpu.title = Math.round($scope.master.runtime[i].resources.cpu_usage.cpu_used);
-                            temp_cpu.value = Math.ceil(Math.round($scope.master.runtime[i].resources.cpu_usage.cpu_used) / 10);
-                            vertexes_super[cur_masterindex] = temp_cpu;
-                            // 添加连接cpu节点的边, temp_slave -> temp_cpu
-                            var edge_cpu = {};
-                            index_superedge++;
-                            edge_cpu.from = temp_slave.id;
-                            edge_cpu.to = temp_cpu.id;
-                            edge_cpu.arrows = 'to';
-                            my_superedges[index_superedge] = edge_cpu;
+                    var data = {
+                        nodes: nodes,
+                        edges: edges
+                    };
+                    var container = document.getElementById('mynetwork');
 
-                            // 添加disk节点
-                            var temp_disk = {};
-                            cur_masterindex++;
-                            temp_disk.label = "disk";
-                            temp_disk.id = cur_masterindex;
-                            temp_disk.group = 'switch';
-                            temp_disk.title = Math.round(100 - $scope.master.runtime[i].resources.disk_usage.available_percent);
-                            temp_disk.value = Math.ceil(Math.round(100 - $scope.master.runtime[i].resources.disk_usage.available_percent) / 10);
-                            vertexes_super[cur_masterindex] = temp_disk;
-                            // 添加连接cpu节点的边, temp_slave -> temp_cpu
-                            var edge_disk = {};
-                            index_superedge++;
-                            edge_disk.from = temp_slave.id;
-                            edge_disk.to = temp_disk.id;
-                            edge_disk.arrows = 'to';
-                            my_superedges[index_superedge] = edge_disk;
+                    var options = {
+                        interaction: {
+                            navigationButtons: true,
+                            keyboard: true
+                        },
+                        groups: {
+                            'switch': {
+                                shape: 'dot',
+                                color: '#FF9900' // orange
+                            },
+                            desktop: {
+                                shape: 'dot',
+                                color: "#109618" // green
+                            },
+                            mobile: {
+                                shape: 'dot',
+                                color: "#5A1E5C" // purple
+                            },
+                            server: {
+                                shape: 'dot',
+                                color: "#c53c3d" // red
+                            },
+                            internet: {
+                                shape: 'square',
+                                color: "#0c58c5" // blue
+                            }
+                        },
 
-                            // 添加mem节点
-                            var temp_mem = {};
-                            cur_masterindex++;
-                            temp_mem.label = "mem";
-                            temp_mem.id = cur_masterindex;
-                            temp_mem.group = 'desktop';
-                            temp_mem.title = Math.round($scope.master.runtime[i].resources.mem_usage.mem_available / $scope.master.runtime[i].resources.mem_usage.mem_total * 100);
-                            temp_mem.value = Math.ceil(Math.round($scope.master.runtime[i].resources.mem_usage.mem_available / $scope.master.runtime[i].resources.mem_usage.mem_total * 100) / 10);
-                            vertexes_super[cur_masterindex] = temp_mem;
-                            // 添加连接mem节点的边, temp_slave -> temp_mem
-                            var edge_mem = {};
-                            index_superedge++;
-                            edge_mem.from = temp_slave.id;
-                            edge_mem.to = temp_mem.id;
-                            edge_mem.arrows = 'to';
-                            my_superedges[index_superedge] = edge_mem;
+                    };
 
-                            // 添加swap节点
-                            var temp_swap = {};
-                            cur_masterindex++;
-                            temp_swap.label = "swap";
-                            temp_swap.id = cur_masterindex;
-                            temp_swap.group = 'mobile';
-                            temp_swap.title = $scope.master.runtime[i].resources.mem_usage.swap_free / $scope.master.runtime[i].resources.mem_usage.swap_total * 100;
-                            vertexes_super[cur_masterindex] = temp_swap;
-                            // 添加连接net节点的边, temp_slave -> temp_net
-                            var edge_swap = {};
-                            index_superedge++;
-                            edge_swap.from = temp_slave.id;
-                            edge_swap.to = temp_swap.id;
-                            edge_swap.arrows = 'to';
-                            my_superedges[index_superedge] = edge_swap;
-                        }
-                    }
+                    var network = new vis.Network(container, data, options);
+
+                    // add event listeners
+                    network.on('select', function (params) {
+                        document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
+                    });
+//
+//                             }
+//
+//
+//                         }
+//
+//                     }, function errorCallback(response) {
+//                         // 请求失败执行代码
+//                     });
+                    //
                 }
+
+
             }
 
 
@@ -840,6 +803,7 @@
         });
 
     });
+
 
 
     chameleon_app.controller('SuperAndSuperTopologyCtrl', function($scope, $http){
@@ -1176,28 +1140,28 @@
                         }
 
                     }
-                        var nodes = new vis.DataSet(vertexes);
-                        var edges = new vis.DataSet(my_edges);
+                    var nodes = new vis.DataSet(vertexes);
+                    var edges = new vis.DataSet(my_edges);
 
-                        var container = document.getElementById('mynetwork');
-                        var data = {
-                            nodes: nodes,
-                            edges: edges
-                        };
+                    var container = document.getElementById('mynetwork');
+                    var data = {
+                        nodes: nodes,
+                        edges: edges
+                    };
 
-                        var options = {
-                            interaction: {
-                                navigationButtons: true,
-                                keyboard: true
-                            },
-                        };
+                    var options = {
+                        interaction: {
+                            navigationButtons: true,
+                            keyboard: true
+                        },
+                    };
 
-                        var network = new vis.Network(container, data, options);
+                    var network = new vis.Network(container, data, options);
 
-                        // add event listeners
-                        network.on('select', function (params) {
-                            document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
-                        });
+                    // add event listeners
+                    network.on('select', function (params) {
+                        document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
+                    });
 
 
                 }, function errorCallback(response) {
@@ -1208,166 +1172,6 @@
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
-            $timeout(pollState, $scope.delay);
-        };
-        pollState();
-    });
-    
-    chameleon_app.controller('FrameworkTopologyCtrl',function ($scope, $http,$timeout)
-    {
-        var pollState = function() {
-            $scope.delay = 10000;
-        $http({
-            method: 'GET',
-            url: leadingChameleonMasterURL('/master/runtime-resources')
-        }).then(function successCallback(response) {
-            $scope.master_runtime = response.data.content;
-            console.log(response.data.content);
-            $scope.master_runtime_quantities = response.data.quantity;
-            // console.log(response.data.quantity);
-
-            var DIR = '../icon/refresh-cl/';
-            var vertexes = new Array();
-
-            var my_master = {};
-            vertexes[0] = my_master;
-            my_master.id = 0;
-            my_master.label = "master";
-            my_master.shape = 'image';
-            my_master.image = DIR + 'Hardware-WQN-main.png';
-            my_master.title = "主节点";    //unchangeable
-
-            //my_slaves[0] = my_master;
-            var index_slave = 1;
-            var index_edge = -1;
-            var my_edges = [];
-            var cur_index = 0;
-            //var framework_index = 0;
-            console.log('2'+$scope.master_runtime_quantities);
-            if ($scope.master_runtime_quantities >= 1) {
-                my_edges = [];
-                for (var i in $scope.master_runtime) {
-                    var slave = $scope.master_runtime[i];
-
-                    var temp_slave = {}; // 添加一个顶点
-                    cur_index++; // 全局id
-                    temp_slave.label = "slave" + cur_index;
-                    // console.log('57 '+cur_index);
-                    temp_slave.id = cur_index;
-                    temp_slave.shape = 'image';
-                    temp_slave.image = DIR + 'Hardware-WQN-server.png';
-                    temp_slave.title = $scope.master_runtime[i].slave_id;
-                    vertexes[cur_index] = temp_slave; // cur_index 同时代表 顶点集合 my_slaves 的下标
-                    // console.info(vertexes);
-                    var temp_edge = {}; // 添加一条边 master -> temp_slave
-                    temp_edge.from = 0;
-                    temp_edge.to = temp_slave.id;
-                    temp_edge.arrows = 'to';
-                    temp_edge.label = Math.round($scope.master_runtime[i].net_usage.net_used * 100) / 100 + 'KiB/s';
-                    index_edge++; // 边集合 my_edges 的下标
-                    my_edges[index_edge] = temp_edge;
-
-
-                }
-            } else      {
-                my_edges = [];
-            }
-
-            $http({
-                method: 'GET',
-                url: leadingChameleonMasterURL('/master/frameworks')
-            }).then(function successCallback(response) {
-                $scope.framework = response.data.content;
-                $scope.framework_quantities = response.data.quantity;
-
-                if($scope.framework_quantities >=1)
-                {
-                    //var my_edges = [];
-                    var framework_index = cur_index;
-                    for (var f in $scope.framework)
-                    {
-                        //   添加framework运行节点
-                        var temp_framework = {};
-                        framework_index++;
-                        console.log('9'+framework_index);
-                        temp_framework.label = $scope.framework[f].name;
-                        temp_framework.id = framework_index;
-                        temp_framework.group = 'internet';
-                        temp_framework.title = $scope.framework[f].id;
-                        // temp_framework.value = Math.ceil(Math.round($scope.master_runtime[i].cpu_usage.cpu_used) / 10);
-                        vertexes[framework_index] = temp_framework;
-                        // 添加连接cpu节点的边, temp_slave -> temp_cpu
-                        var edge_framework = {};
-                        index_edge++;
-                        console.log('5'+index_edge);
-                        edge_framework.from = my_master.id;
-                        console.log('0'+my_master.id);
-                        edge_framework.to = temp_framework.id;
-                        console.log('3'+temp_framework.id);
-                        edge_framework.arrows = 'to';
-                        my_edges[index_edge] = edge_framework;
-                    }
-
-
-                }
-
-                var nodes = new vis.DataSet(vertexes);
-
-
-                var edges = new vis.DataSet(my_edges);
-
-                var container = document.getElementById('mynetwork');
-                var data = {
-                    nodes: nodes,
-                    edges: edges
-                };
-
-                var options = {
-                    interaction: {
-                        navigationButtons: true,
-                        keyboard: true
-                    },
-                    groups: {
-                        'switch': {
-                            shape: 'dot',
-                            color: '#FF9900' // orange
-                        },
-                        desktop: {
-                            shape: 'dot',
-                            color: "#109618" // green
-                        },
-                        mobile: {
-                            shape: 'dot',
-                            color: "#5A1E5C" // purple
-                        },
-                        server: {
-                            shape: 'dot',
-                            color: "#c53c3d" // red
-                        },
-                        internet: {
-                            shape: 'square',
-                            color: "#c50ac2" // blue
-                        }
-                    }
-
-                };
-
-                var network = new vis.Network(container, data, options);
-
-                // add event listeners
-                network.on('select', function (params) {
-                    document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
-                });
-
-            }, function errorCallback(response) {
-                // 请求失败执行代码
-            });
-
-
-
-        }, function errorCallback(response) {
-            // 请求失败执行代码
-        });
             $timeout(pollState, $scope.delay);
         };
         pollState();
@@ -1410,26 +1214,18 @@
         }
     });
 
-
+    var SupermasterStarted;
     //开启supermaster对应的Controller
-<<<<<<< HEAD
-    chameleon_app.controller('StartSupermasterCtrl', function ($scope, $rootScope, $modal) {
-=======
     chameleon_app.controller('StartSupermasterCtrl', function ($scope, $rootScope, $uibModal) {
->>>>>>> db5d236c80086e935e662f5fe21b687573495b9f
         //$scope.startSupermaster = response.data.start;
-        console.log('8' + $rootScope.startSupermaster);
-        console.log('88'+ $rootScope.stopSupermaster);
+        console.log('startSupermaster' + $rootScope.startSupermaster);
+        console.log('stopSupermaster'+ $rootScope.stopSupermaster);
         $scope.openModal = function () {
             if ($rootScope.stopSupermaster == 'success'||$rootScope.startSupermaster == undefined) {
                 //$scope.startSupermaster = $rootScope.startSupermaster;
                 var alert_message = "确认开启Supermaster?";
-                console.log('9' + $rootScope.startSupermaster);
-<<<<<<< HEAD
-                var modalInstance = $modal.open({
-=======
+                console.log('after alert startSupermaster' + $rootScope.startSupermaster);
                 var modalInstance = $uibModal.open({
->>>>>>> db5d236c80086e935e662f5fe21b687573495b9f
                     templateUrl: 'ControlSupermaster.html',
                     controller: 'StartSupermasterInstanceCtrl',   //shutdown modal对应的Controller
                     resolve: {
@@ -1439,25 +1235,19 @@
                     }
                 })
             }
-            $scope.openModal = function () {
-<<<<<<< HEAD
+            else if ($rootScope.startSupermaster == 'success'){
+                $scope.openModal = function () {
                     alert("supermaster已经开启");
 
+                }
             }
-            }
-        });
 
-    chameleon_app.controller('StartSupermasterInstanceCtrl', function($scope,$rootScope,$routeParams, $modalInstance,$http, date) {
-=======
-                alert("supermaster已经开启");
-
-            }
         }
     });
 
     chameleon_app.controller('StartThreeSupermasterCtrl', function ($scope, $rootScope, $uibModal) {
         $scope.openModal = function () {
-            if ($rootScope.stopSupermaster == 'success'||$rootScope.startSupermaster == undefined) {
+            if ($rootScope.startSupermaster == undefined || SupermasterStarted == false) {
                 var alert_message = "确认开启Supermaster?";
                 var modalInstance = $uibModal.open({
                     templateUrl: 'ControlSupermaster.html',
@@ -1469,15 +1259,17 @@
                     }
                 })
             }
-            $scope.openModal = function () {
-                alert("supermaster已经开启");
+            else {
+                $scope.openModal = function () {
+                    alert("supermaster已经开启");
 
+                }
             }
+
         }
     });
 
     chameleon_app.controller('StartSupermasterInstanceCtrl', function($scope,$rootScope,$routeParams, $uibModalInstance,$http, date) {
->>>>>>> db5d236c80086e935e662f5fe21b687573495b9f
         $scope.date= date;
 
         //在这里处理要进行的操作
@@ -1487,12 +1279,14 @@
                 url: leadingChameleonMasterURL('/master/start_supermaster')
             }).then(function successCallback(response) {
                 $rootScope.startSupermaster = response.data.start;
-                console.log('10'+$rootScope.startSupermaster);
-<<<<<<< HEAD
-                $modalInstance.dismiss('cancel');
-=======
+                if($rootScope == 'success'){
+                    SupermasterStarted = true;
+                }
+                else
+                    SupermasterStarted = false;
+                console.log('after confirm start'+$rootScope.startSupermaster);
                 $uibModalInstance.dismiss('cancel');
->>>>>>> db5d236c80086e935e662f5fe21b687573495b9f
+
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
@@ -1524,22 +1318,14 @@
     });
 
     //关闭supermaster对应的Controller
-<<<<<<< HEAD
-    chameleon_app.controller('StopSupermasterCtrl',function ($scope,$rootScope,$modal) {
-=======
     chameleon_app.controller('StopSupermasterCtrl',function ($scope,$rootScope,$uibModal) {
->>>>>>> db5d236c80086e935e662f5fe21b687573495b9f
-        console.log('5' + $rootScope.stopSupermaster);
+        console.log('stopSupermaster' + $rootScope.stopSupermaster);
 
         var alert_message = "确认停止Supermaster?";
         $scope.openModal = function() {
             if ($rootScope.stopSupermaster == undefined)
             {
-<<<<<<< HEAD
-                var modalInstance = $modal.open({
-=======
                 var modalInstance = $uibModal.open({
->>>>>>> db5d236c80086e935e662f5fe21b687573495b9f
                     templateUrl: 'ControlSupermaster.html',
                     controller: 'StopSupermasterInstanceCtrl',   //shutdown modal对应的Controller
                     resolve: {
@@ -1549,35 +1335,31 @@
                     }
                 })
             }
-            $scope.openModal = function () {
-                alert("supermaster已经关闭");
+            else{
+                $scope.openModal = function () {
+                    alert("supermaster已经关闭");
 
+                }
             }
+
         }
 
     });
 
-<<<<<<< HEAD
-    chameleon_app.controller('StopSupermasterInstanceCtrl', function($scope,$rootScope, $modalInstance,$http, date) {
-=======
     chameleon_app.controller('StopSupermasterInstanceCtrl', function($scope,$rootScope, $uibModalInstance,$http, date) {
->>>>>>> db5d236c80086e935e662f5fe21b687573495b9f
         $scope.date= date;
 
         //在这里处理要进行的操作
         $scope.ok = function() {
             $http({
                 method: 'GET',
-                url: leadingChameleonSuperMasterURL('/super_master/kill_master')
+                url: leadingChameleonSuperMasterURL('/super_master/kill_super_master')
             }).then(function successCallback(response) {
                 $rootScope.stopSupermaster = response.data.stop;
                 console.log(response);
                 console.log('55' + $rootScope.stopSupermaster);
-<<<<<<< HEAD
-                $modalInstance.dismiss('cancel');
-=======
                 $uibModalInstance.dismiss('cancel');
->>>>>>> db5d236c80086e935e662f5fe21b687573495b9f
+
             }, function errorCallback(response) {
                 // 请求失败执行代码
             });
