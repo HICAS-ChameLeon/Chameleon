@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/CMakeFiles/protobuf_2_6"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/CMakeFiles/protobuf_2_6.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/CMakeFiles/protobuf_2_6-complete.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/protobuf_2_6/src/protobuf_2_6-stamp/protobuf_2_6-install.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/protobuf_2_6/src/protobuf_2_6-stamp/protobuf_2_6-mkdir.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/protobuf_2_6/src/protobuf_2_6-stamp/protobuf_2_6-download.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/protobuf_2_6/src/protobuf_2_6-stamp/protobuf_2_6-update.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/protobuf_2_6/src/protobuf_2_6-stamp/protobuf_2_6-patch.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/protobuf_2_6/src/protobuf_2_6-stamp/protobuf_2_6-configure.rule"
+		},
+		{
+			"file" : "/home/lemaker/open-source/Chameleon/heldon-build/3rdparty/protobuf_2_6/src/protobuf_2_6-stamp/protobuf_2_6-build.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"protobuf_2_6"
+		],
+		"name" : "protobuf_2_6"
+	}
+}

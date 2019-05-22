@@ -5,6 +5,8 @@
 gmock-1.7.0
 riscv
 cloc
+heldon-buid
+
 
 # Prerequisites
 *.d

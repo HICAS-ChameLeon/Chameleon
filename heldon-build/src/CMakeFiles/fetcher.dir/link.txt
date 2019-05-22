@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfetcher.a  CMakeFiles/fetcher.dir/messages/fetcher.pb.cc.o
+/usr/bin/ranlib libfetcher.a
