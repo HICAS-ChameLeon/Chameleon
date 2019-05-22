@@ -166,11 +166,11 @@ namespace chameleon {
                     string str_scheduler_name = str_scheduler[1];
                     LOG(INFO) << "The select scheduler is " << str_scheduler_name;
 
-                    SchedulerInterface *m_scheduler;
-                    SMHCGrainedScheduler name(str_scheduler_name);
-                    m_scheduler = &name;
-                    const string &scheduler_name = m_scheduler->m_scheduler_name;
-                    LOG(INFO)<< scheduler_name;
+//                    SchedulerInterface *m_scheduler;
+//                    SMHCGrainedScheduler name(str_scheduler_name);
+//                    m_scheduler = &name;
+//                    const string &scheduler_name = m_scheduler->m_scheduler_name;
+//                    LOG(INFO)<< scheduler_name;
 //                    mesos::internal::ResourceOffersMessage message;
 //                    auto it = this->frameworks.registered.begin();
 //                    Framework *framework = it->second;
