@@ -940,7 +940,6 @@ namespace chameleon {
         //add insert slave_id to send new master message to slave
         m_alive_slaves.insert(slave_id);
         m_slaves_last_time[slave_id] = time(0);
-        LOG(INFO)<<"1";
         if (m_is_fault_tolerance && slave_id != stringify(process::address().ip)){
             LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
             launch_master_message->set_port("6060");
@@ -951,9 +950,7 @@ namespace chameleon {
             delete launch_master_message;
             LOG(INFO)<<"send launch backup master message to "<<slave;
             m_is_fault_tolerance = false;
-            LOG(INFO)<<"2";
         }
-        LOG(INFO)<<"3";
     }
 
     void Master::heartbeat_check_slaves() {

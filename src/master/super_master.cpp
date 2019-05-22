@@ -230,6 +230,7 @@ namespace chameleon {
                             master.values["slaves"] = slaves;
                             master.values["slave_quantity"] = slaves.values.size();
                             array.values.emplace_back(master);
+                            slaves.values.clear();
                         }
                         result.values["master_quantity"] = array.values.size();
                         result.values["content"] = array;
@@ -591,18 +592,13 @@ namespace chameleon {
     void SuperMaster::received_runtime_resources(const UPID &from, const RuntimeResourcesMessage &message) {
         string master_id = strings::tokenize(stringify(from),"@")[1];
         LOG(INFO)<<"received runtime resources from "<<master_id;
-        LOG(INFO)<<"1";
         for(auto iter = m_master_slave.begin(); iter != m_master_slave.end(); iter++){
-            LOG(INFO)<<"2";
             if(iter->first == master_id){
-                LOG(INFO)<<"3";
 //                for(auto item = m_master_slave[master_id].begin();
 //                 item != m_master_slave[master_id].end(); item++){
                 for(Node& node: m_master_slave[master_id]){
-                    LOG(INFO)<<"4";
                     if(node.node_ip == strings::tokenize(master_id,":")[0]){
                         node.set_runtime(message);
-                        LOG(INFO)<<"5";
                     }
                     break;
                 }
