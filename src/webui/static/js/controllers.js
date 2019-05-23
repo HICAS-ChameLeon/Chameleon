@@ -90,7 +90,7 @@
     chameleon_app.controller('HardwareCtrl', function($scope,$route, $http,$timeout) {
 
         var pollState = function() {
-            $scope.delay = 3600000;
+            $scope.delay = 3600000; //one hour updates
             $http({
                 method: 'GET',
                 url: leadingChameleonMasterURL('/master/hardware-resources')

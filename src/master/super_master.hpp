@@ -88,7 +88,7 @@ namespace chameleon {
         HardwareResourcesMessage m_hardware;
         RuntimeResourcesMessage m_runtime;
 
-        Node(string ip,
+        explicit Node(string ip,
              int32_t port
         ) : node_ip(ip),
             node_port(port) {}
@@ -170,6 +170,7 @@ namespace chameleon {
 
         // represent the current number of level
         int32_t m_levels;
+        // represent the master starting the super_master
         string m_initiator;
 
         vector<SlaveInfo> m_admin_slaves;
@@ -181,6 +182,7 @@ namespace chameleon {
 
         // key: master:ip , value: vector<SlavesInfoControlledByMaster>
         unordered_map<string,vector<SlavesInfoControlledByMaster>> m_classification_slaves;
+        // represent the masters created by the super_master
         vector<string> m_vector_masters;
         // key: super_master:ip , value: vector<MasterInfoControlledBySuperMaster>
         unordered_map<string,vector<MasterInfoControlledBySuperMaster>> m_classification_masters;
