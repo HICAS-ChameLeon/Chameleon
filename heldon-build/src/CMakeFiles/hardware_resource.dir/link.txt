@@ -1,2 +1,0 @@
-/usr/bin/ar qc libhardware_resource.a  CMakeFiles/hardware_resource.dir/messages/hardware_resource.pb.cc.o
-/usr/bin/ranlib libhardware_resource.a

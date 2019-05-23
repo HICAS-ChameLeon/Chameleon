@@ -1,2 +1,0 @@
-/usr/bin/ar qc libmesos.a  CMakeFiles/mesos.dir/messages/mesos.pb.cc.o
-/usr/bin/ranlib libmesos.a

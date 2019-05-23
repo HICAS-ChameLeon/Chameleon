@@ -1,2 +1,0 @@
-/usr/bin/ar qc libmodule.a  CMakeFiles/module.dir/module.pb.cc.o
-/usr/bin/ranlib libmodule.a

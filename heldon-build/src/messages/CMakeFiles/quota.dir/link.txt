@@ -1,2 +1,0 @@
-/usr/bin/ar qc libquota.a  CMakeFiles/quota.dir/quota.pb.cc.o
-/usr/bin/ranlib libquota.a

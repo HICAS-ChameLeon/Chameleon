@@ -1,2 +1,0 @@
-/usr/bin/ar qc libmaster_p.a  CMakeFiles/master_p.dir/__/master_p.pb.cc.o
-/usr/bin/ranlib libmaster_p.a
