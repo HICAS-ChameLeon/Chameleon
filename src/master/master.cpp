@@ -129,14 +129,22 @@ namespace chameleon {
                     JSON::Array schedular_array;
                     const string &scheduler_name = m_scheduler->m_scheduler_name;
 
-                    goarse_schedular.values["name"] = scheduler_name;
+                    goarse_schedular.values["name"] = "CoarseGrained";
                     goarse_schedular.values["id"] = "1";
-                    goarse_schedular.values["done"]= true;
+                    if(scheduler_name=="CoarseGrained"){
+                        goarse_schedular.values["done"]= true;
+                    }else{
+                        goarse_schedular.values["done"]= false;
+                    }
 
                     smhc_schedular.values["name"] = "SMHCGrained";
                     smhc_schedular.values["id"] = "2";
-                    smhc_schedular.values["done"]= false;
+                    if(scheduler_name=="SMHCGrained"){
+                        smhc_schedular.values["done"]= true;
+                    }else{
+                        smhc_schedular.values["done"]= false;
 
+                    }
 
                     schedular_array.values.emplace_back(goarse_schedular);
                     schedular_array.values.emplace_back(smhc_schedular);
