@@ -404,6 +404,9 @@ namespace chameleon {
         return stream << TaskState_Name(state);
     };
 
+    namespace optimization {
+
+    }
 }
 
 

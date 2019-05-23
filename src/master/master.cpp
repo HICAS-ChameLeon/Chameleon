@@ -6,7 +6,9 @@
  */
 
 #include <slave_related.pb.h>
+#include <process/io.hpp>
 #include "master.hpp"
+namespace io = process::io;
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
@@ -1166,6 +1168,11 @@ namespace chameleon {
             send(slave_id,message);
         }
     }
+
+    namespace optimization{
+        //Collect training data
+
+    }
 }
 
 using namespace chameleon;
@@ -1180,6 +1187,7 @@ int main(int argc, char **argv) {
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     google::CommandLineFlagInfo info;
+
 
     if (has_port_Int && has_super_master_path && has_webui_path) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
