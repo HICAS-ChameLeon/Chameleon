@@ -1,33 +1,7 @@
-// Licensed to the Apache Software Foundation (ASF) under one
-// or more contributor license agreements.  See the NOTICE file
-// distributed with this work for additional information
-// regarding copyright ownership.  The ASF licenses this file
-// to you under the Apache License, Version 2.0 (the
-// "License"); you may not use this file except in compliance
-// with the License.  You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-#ifndef __WINDOWS__
-#include <dlfcn.h>
-#endif // __WINDOWS__
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef __WINDOWS__
-#include <unistd.h>
-#endif // __WINDOWS__
-
-#ifndef __WINDOWS__
-#include <arpa/inet.h>
-#endif // __WINDOWS__
 
 #include <cmath>
 #include <iostream>
@@ -37,18 +11,8 @@
 #include <sstream>
 #include <string>
 
-#include <mesos/mesos.hpp>
-#include <mesos/module.hpp>
-#include <mesos/scheduler.hpp>
-#include <mesos/type_utils.hpp>
-
-#include <mesos/authentication/authenticatee.hpp>
-
-#include <mesos/master/detector.hpp>
-
-#include <mesos/module/authenticatee.hpp>
-
-#include <mesos/scheduler/scheduler.hpp>
+#include <mesos.pb.h>
+#include <scheduler.pb.h>
 
 #include <process/defer.hpp>
 #include <process/delay.hpp>
@@ -79,28 +43,15 @@
 #include <stout/utils.hpp>
 #include <stout/uuid.hpp>
 
-#include "authentication/cram_md5/authenticatee.hpp"
+#include <common/scheduler.hpp>
+#include <docker/messages.hpp>
 
-#include "common/protobuf_utils.hpp"
-
-#include "local/flags.hpp"
-#include "local/local.hpp"
-
-#include "logging/flags.hpp"
-#include "logging/logging.hpp"
-
-#include "messages/messages.hpp"
-
-#include "module/manager.hpp"
-
-#include "sched/constants.hpp"
-#include "sched/flags.hpp"
-
-#include "version/version.hpp"
+#include "master/detector.hpp"
+#include "flags.hpp"
 
 using namespace mesos;
 using namespace mesos::internal;
-using namespace mesos::internal::master;
+
 using namespace mesos::scheduler;
 
 using mesos::master::detector::MasterDetector;
@@ -123,6 +74,25 @@ using std::weak_ptr;
 using process::wait; // Necessary on some OS's to disambiguate.
 
 using utils::copy;
+
+namespace mesos {
+    namespace scheduler {
+
+        inline std::ostream& operator<<(std::ostream& stream, const Call::Type& type)
+        {
+            return stream << Call::Type_Name(type);
+        }
+
+
+        inline std::ostream& operator<<(std::ostream& stream, const Event::Type& type)
+        {
+            return stream << Event::Type_Name(type);
+        }
+
+    } // namespace scheduler
+} // namespace mesos
+
+
 
 namespace mesos {
 namespace internal {
@@ -192,23 +162,12 @@ public:
   SchedulerProcess(MesosSchedulerDriver* _driver,
                    Scheduler* _scheduler,
                    const FrameworkInfo& _framework,
-                   const Option<Credential>& _credential,
                    bool _implicitAcknowledgements,
                    const string& schedulerId,
                    MasterDetector* _detector,
                    const internal::scheduler::Flags& _flags,
                    std::recursive_mutex* _mutex,
                    Latch* _latch)
-      // We use a UUID here to ensure that the master can reliably
-      // distinguish between scheduler runs. Otherwise the master may
-      // receive a delayed ExitedEvent enqueued behind a
-      // re-registration, and deactivate the framework incorrectly.
-      // TODO(bmahler): Investigate better ways to solve this problem.
-      // Check if bidirectional links in Erlang provides better
-      // semantics:
-      // http://www.erlang.org/doc/reference_manual/processes.html#id84804.
-      // Consider using unique PIDs throughout libprocess and relying
-      // on name registration to identify the process without the PID.
     : ProcessBase(schedulerId),
       metrics(*this),
       driver(_driver),
@@ -221,21 +180,12 @@ public:
       running(true),
       detector(_detector),
       flags(_flags),
-      implicitAcknowledgements(_implicitAcknowledgements),
-      credential(_credential),
-      authenticatee(nullptr),
-      authenticating(None()),
-      authenticated(false),
-      reauthenticate(false),
-      failedAuthentications(0)
-  {
-    LOG(INFO) << "Version: " << MESOS_VERSION;
+      implicitAcknowledgements(_implicitAcknowledgements){
+
+    LOG(INFO) << "Version: " << "0.1";
   }
 
-  virtual ~SchedulerProcess()
-  {
-    delete authenticatee;
-  }
+  virtual ~SchedulerProcess() {}
 
 protected:
   virtual void initialize()
@@ -341,37 +291,11 @@ protected:
       // is safe even if no timer is active or pending.
       Clock::cancel(frameworkRegistrationTimer);
 
-#ifdef HAS_AUTHENTICATION
-      if (credential.isSome()) {
-        // Authenticate with the master.
-        // TODO(adam-mesos): Consider adding an initial delay like we do for
-        // slave registration, to combat thundering herds on master failover.
-        authenticate();
-      } else {
-        // Proceed with registration without authentication.
-        LOG(INFO) << "No credentials provided."
-                  << " Attempting to register without authentication";
-
-        // TODO(vinod): Similar to the slave add a random delay to the
-        // first registration attempt too. This needs fixing tests
-        // that expect scheduler to register even with clock paused
-        // (e.g., rate limiting tests).
         LOG(INFO)<<"lele 359 started doReliableRegistration";
         doReliableRegistration(flags.registration_backoff_factor);
         LOG(INFO)<<"lele 360 finished doReliableRegistration";
-      }
-#else
-      // Authentication not enabled on this platform. Proceed with registration
-      // without authentication.
-      reauthenticate = false;
-      LOG(INFO) << "Authentication is not available on this platform. "
-                   "Attempting to register without authentication";
-
-      doReliableRegistration(flags.registration_backoff_factor);
-#endif // HAS_AUTHENTICATION
-    } else {
-      // In this case, we don't actually invoke Scheduler::error
-      // since we might get reconnected to a master imminently.
+    }
+    else {
       LOG(INFO) << "No master detected";
     }
 
@@ -380,171 +304,8 @@ protected:
       .onAny(defer(self(), &SchedulerProcess::detected, lambda::_1));
   }
 
-#ifdef HAS_AUTHENTICATION
-  void authenticate()
-  {
-    if (!running.load()) {
-      VLOG(1) << "Ignoring authenticate because the driver is not running!";
-      return;
-    }
-
-    authenticated = false;
-
-    if (master.isNone()) {
-      return;
-    }
-
-    if (authenticating.isSome()) {
-      // Authentication is in progress. Try to cancel it.
-      // Note that it is possible that 'authenticating' is ready
-      // and the dispatch to '_authenticate' is enqueued when we
-      // are here, making the 'discard' here a no-op. This is ok
-      // because we set 'reauthenticate' here which enforces a retry
-      // in '_authenticate'.
-      copy(authenticating.get()).discard();
-      reauthenticate = true;
-      return;
-    }
-
-    LOG(INFO) << "Authenticating with master " << master.get().pid();
-
-    CHECK_SOME(credential);
-
-    CHECK(authenticatee == nullptr);
-
-    if (flags.authenticatee == scheduler::DEFAULT_AUTHENTICATEE) {
-      LOG(INFO) << "Using default CRAM-MD5 authenticatee";
-      authenticatee = new cram_md5::CRAMMD5Authenticatee();
-    } else {
-      Try<Authenticatee*> module =
-        modules::ModuleManager::create<Authenticatee>(flags.authenticatee);
-      if (module.isError()) {
-        EXIT(EXIT_FAILURE)
-          << "Could not create authenticatee module '"
-          << flags.authenticatee << "': " << module.error();
-      }
-      LOG(INFO) << "Using '" << flags.authenticatee << "' authenticatee";
-      authenticatee = module.get();
-    }
-
-    // NOTE: We do not pass 'Owned<Authenticatee>' here because doing
-    // so could make 'AuthenticateeProcess' responsible for deleting
-    // 'Authenticatee' causing a deadlock because the destructor of
-    // 'Authenticatee' waits on 'AuthenticateeProcess'.
-    // This will happen in the following scenario:
-    // --> 'AuthenticateeProcess' does a 'Future.set()'.
-    // --> '_authenticate()' is dispatched to this process.
-    // --> This process executes '_authenticatee()'.
-    // --> 'AuthenticateeProcess' removes the onAny callback
-    //     from its queue which holds the last reference to
-    //     'Authenticatee'.
-    // --> '~Authenticatee()' is invoked by 'AuthenticateeProcess'.
-    // TODO(vinod): Consider using 'Shared' to 'Owned' upgrade.
-    authenticating =
-      authenticatee->authenticate(master.get().pid(), self(), credential.get())
-        .onAny(defer(self(), &Self::_authenticate));
-
-    delay(flags.authentication_timeout,
-          self(),
-          &Self::authenticationTimeout,
-          authenticating.get());
-  }
-
-  void _authenticate()
-  {
-    if (!running.load()) {
-      VLOG(1) << "Ignoring _authenticate because the driver is not running!";
-      return;
-    }
-
-    delete CHECK_NOTNULL(authenticatee);
-    authenticatee = nullptr;
-
-    CHECK_SOME(authenticating);
-    const Future<bool>& future = authenticating.get();
-
-    if (master.isNone()) {
-      LOG(INFO) << "Ignoring _authenticate because the master is lost";
-      authenticating = None();
-      // Set it to false because we do not want further retries until
-      // a new master is detected.
-      // We obviously do not need to reauthenticate either even if
-      // 'reauthenticate' is currently true because the master is
-      // lost.
-      reauthenticate = false;
-      return;
-    }
-
-    if (reauthenticate || !future.isReady()) {
-      LOG(INFO)
-        << "Failed to authenticate with master " << master.get().pid() << ": "
-        << (reauthenticate ? "master changed" :
-           (future.isFailed() ? future.failure() : "future discarded"));
-
-      authenticating = None();
-      reauthenticate = false;
-
-      ++failedAuthentications;
-
-      // Backoff.
-      // The backoff is a random duration in the interval [0, b * 2^N)
-      // where `b = authentication_backoff_factor` and `N` the number
-      // of failed authentication attempts. It is capped by
-      // `REGISTER_RETRY_INTERVAL_MAX`.
-      Duration backoff = flags.authentication_backoff_factor *
-                         std::pow(2, failedAuthentications);
-      backoff = std::min(backoff, scheduler::AUTHENTICATION_RETRY_INTERVAL_MAX);
-
-      // Determine the delay for next attempt by picking a random
-      // duration between 0 and 'maxBackoff'.
-      // TODO(vinod): Use random numbers from <random> header.
-      backoff *= double(os::random()) / RAND_MAX;
-
-      // TODO(vinod): Add a limit on number of retries.
-      delay(backoff, self(), &Self::authenticate);
-      return;
-    }
-
-    if (!future.get()) {
-      LOG(ERROR) << "Master " << master.get().pid()
-                 << " refused authentication";
-      error("Master refused authentication");
-      return;
-    }
-
-    LOG(INFO) << "Successfully authenticated with master "
-              << master.get().pid();
-
-    authenticated = true;
-    authenticating = None();
-
-    failedAuthentications = 0;
-
-    doReliableRegistration(flags.registration_backoff_factor);
-  }
-
-  void authenticationTimeout(Future<bool> future)
-  {
-    if (!running.load()) {
-      VLOG(1) << "Ignoring authentication timeout because "
-              << "the driver is not running!";
-      return;
-    }
-
-    // NOTE: Discarded future results in a retry in '_authenticate()'.
-    // Also note that a 'discard' here is safe even if another
-    // authenticator is in progress because this copy of the future
-    // corresponds to the original authenticator that started the timer.
-    if (future.discard()) { // This is a no-op if the future is already ready.
-      LOG(WARNING) << "Authentication timed out";
-    }
-  }
-#endif // HAS_AUTHENTICATION
-
   void drop(const Event& event, const string& message)
   {
-    // TODO(bmahler): Increment a metric.
-
     LOG(WARNING) << "Dropping " << event.type() << ": " << message;
   }
 
@@ -758,7 +519,7 @@ protected:
       return;
     }
 
-    LOG(INFO) << "Framework registered with " << frameworkId;
+    LOG(INFO) << "Framework registered with " << frameworkId.value();
 
     framework.mutable_id()->MergeFrom(frameworkId);
 
@@ -800,7 +561,7 @@ protected:
       return;
     }
 
-    LOG(INFO) << "Framework re-registered with " << frameworkId;
+    LOG(INFO) << "Framework re-registered with " << frameworkId.value();
 
     CHECK(framework.id() == frameworkId);
 
@@ -826,14 +587,6 @@ protected:
     if (connected || master.isNone()) {
       return;
     }
-
-#ifdef HAS_AUTHENTICATION
-    if (credential.isSome() && !authenticated) {
-      return;
-    }
-#else
-    authenticated = false;
-#endif // HAS_AUTHENTICATION
 
     LOG(INFO) << "Sending SUBSCRIBE call to " << master.get().pid();
 
@@ -959,7 +712,7 @@ protected:
       return;
     }
 
-      LOG(INFO) << "Rescinded offer " << offerId;
+      LOG(INFO) << "Rescinded offer " << offerId.value();
 
     savedOffers.erase(offerId);
 
@@ -1006,7 +759,7 @@ protected:
 
     LOG(INFO) << "lele Received status update " << update << " from " << pid;
 
-    CHECK(framework.id() == update.framework_id());
+    //CHECK(framework.id() == update.framework_id());
 
     // TODO(benh): Note that this maybe a duplicate status update!
     // Once we get support to try and have a more consistent view
@@ -1146,7 +899,7 @@ protected:
     }
 
     VLOG(1)
-      << "Executor " << executorId << " on agent " << slaveId
+      << "Executor " << executorId.value() << " on agent " << slaveId
       << " exited with status " << status;
 
     Stopwatch stopwatch;
@@ -1687,22 +1440,6 @@ private:
   // of the TaskStatus is set (which also implies the 'slave_id'
   // is set).
   bool implicitAcknowledgements;
-
-  const Option<Credential> credential;
-
-  Authenticatee* authenticatee;
-
-  // Indicates if an authentication attempt is in progress.
-  Option<Future<bool>> authenticating;
-
-  // Indicates if the authentication is successful.
-  bool authenticated;
-
-  // Indicates if a new authentication attempt should be enforced.
-  bool reauthenticate;
-
-  // Indicates the number of failed authentication attempts.
-  uint64_t failedAuthentications;
 };
 
 } // namespace internal {实现的接口 SchedulerDriver
@@ -1745,7 +1482,7 @@ void MesosSchedulerDriver::initialize() {
   // Initialize logging.
   // TODO(benh): Replace whitespace in framework.name() with '_'?
   if (flags.initialize_driver_logging) {
-    logging::initialize(framework.name(), flags);
+    chameleon::logging::initialize(framework.name(), flags);
   } else {
     VLOG(1) << "Disabling initialization of GLOG logging";
   }

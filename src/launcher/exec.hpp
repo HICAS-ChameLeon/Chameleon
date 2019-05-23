@@ -31,7 +31,6 @@
 // protobuf
 #include <messages.pb.h>
 #include <mesos.pb.h>
-#include "executor.hpp"
 
 namespace chameleon{
 

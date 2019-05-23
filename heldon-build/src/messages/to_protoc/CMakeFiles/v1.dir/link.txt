@@ -1,0 +1,2 @@
+/usr/bin/ar qc libv1.a  CMakeFiles/v1.dir/__/v1.pb.cc.o
+/usr/bin/ranlib libv1.a

@@ -13,7 +13,7 @@
 //#include "containerizer/docker.hpp"
 
 //The following flags has default values
-DEFINE_uint32(ht, 6, "Heartbeat interval");
+DEFINE_uint32(ht, 5, "Heartbeat interval");
 DEFINE_int32(port, 6061, "port");
 
 //The following flags must be set by user

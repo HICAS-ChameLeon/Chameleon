@@ -1,0 +1,3 @@
+repository='external project URL'
+module='/home/lemaker/open-source/Chameleon/3rdparty/picojson-1.3.0.tar.gz'
+tag=''

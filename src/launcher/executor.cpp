@@ -5,6 +5,15 @@
 
 #include "executor.hpp"
 
+#ifdef linux
+#include <unistd.h>
+#include <pwd.h>
+#endif
+
+#ifdef _WIN32
+#include<Windows.h>
+#endif
+
 namespace chameleon {
     std::ostream& operator<<(std::ostream& stream, const mesos::TaskID& taskId)
     {
@@ -157,7 +166,9 @@ namespace chameleon {
 
       //  LOG(INFO) << "\n yxxx launch launchEnvironment " << launchEnvironment.Utf8DebugString();
         string current_user = get_current_user();
+
         LOG(INFO) << "get_current_user:" << current_user;
+
         const std::map<string, string> environment_string =
                 {
                        // {"JVM_ARGS", " -Xms3072m -Xmx3072m "},
@@ -321,23 +332,12 @@ namespace chameleon {
     }
 
     string CommandExecutor::get_current_user() {
-        #if defined linux   //linux system
-            uid_t userid;
+        uid_t userid;
     struct passwd* pwd;
     userid=getuid();
     pwd=getpwuid(userid);
     return pwd->pw_name;
 
-#elif defined _WIN32  //windows system
-            const int MAX_LEN = 100;
-    char sz_buffer[MAX_LEN];
-    DWORD len = MAX_LEN;
-    if( GetUserName(sz_buffer, &len) )     //we save the username in sz_buffer
-        return sz_buffer;
-
-#else  //outher system
-            return "";
-#endif
 //        Try<process::Subprocess> s = subprocess(
 //                "who",
 //                process::Subprocess::FD(STDIN_FILENO),
