@@ -11,6 +11,7 @@
 #include <stout/uuid.hpp>
 
 #include "detector.hpp"
+#include "standalone.hpp"
 
 using std::string;
 using namespace process;
