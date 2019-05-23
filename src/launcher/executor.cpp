@@ -29,13 +29,14 @@ namespace chameleon {
             launched(false)
             {
                 //std::cout<<"yxxxx CommandExecutor Construct start"<<std::endl;
-                LOG(INFO) << "CommandExecutor Construct start" ;
-                /* use method 'CommandExecutor::launch' to executor TaskInfo */
-                install<mesos::TaskInfo>(
-                        &CommandExecutor::launch);
+                LOG(INFO) << "CommandExecutor Construct start " ;
+
             }
 
     void CommandExecutor::initialize() {
+        /* use method 'CommandExecutor::launch' to executor TaskInfo */
+        install<mesos::TaskInfo>(
+                &CommandExecutor::launch);
        // std::cout<<"yxxxx CommandExecutor initialize"<<std::endl;
         process::UPID commandExecutorPid = self();
         LOG(INFO) << "CommandExecutor initialize and PID: " <<commandExecutorPid;
@@ -427,7 +428,7 @@ int main(int argc, char *argv[]) {
                     flags.m_task_environment,
                     frameworkId,
                     executorId));
-
+    LOG(INFO)<<"CommandExecutor spawn process";
     process::spawn(executor.get());
     process::wait(executor.get());
     executor.reset();

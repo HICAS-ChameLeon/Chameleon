@@ -129,6 +129,10 @@ namespace chameleon{
                                      connected(false),
                                      m_commandExecutorId(_commandExecutor)
                                      {
+
+    }
+
+    void ExecutorProcess::initialize() {
         install<mesos::internal::ExecutorRegisteredMessage>(
                 &ExecutorProcess::registered,
                 &mesos::internal::ExecutorRegisteredMessage::executor_info,
@@ -140,9 +144,7 @@ namespace chameleon{
         install<mesos::internal::RunTaskMessage>(
                 &ExecutorProcess::runTask,
                 &mesos::internal::RunTaskMessage::task);
-    }
 
-    void ExecutorProcess::initialize() {
         LOG(INFO) << "Executor started at: " << self()
                   << " with pid " << getpid();
 
