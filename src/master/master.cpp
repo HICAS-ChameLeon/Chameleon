@@ -10,7 +10,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/super_master",
+DEFINE_string(supermaster_path, "/home/lemaker/open-source/Chameleon/build/src/master/super_master",
               "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 DEFINE_string(webui_path, "",
               "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
@@ -1070,7 +1070,7 @@ namespace chameleon {
         if(super_master_control_message.my_master().size()){
             LOG(INFO) << self().address << " received message from " << super_master;
             string launch_command = m_super_master_path + " --initiator=" + stringify(self().address)
-                    + " --master_path=/home/marcie/chameleon/Chameleon1/build/src/master/master --webui_path="
+                    + " --master_path=" + m_master_cwd + "/master --webui_path="
                     + stringify(FLAGS_webui_path) + " --port=7001";
             Try<Subprocess> s = subprocess(
                     launch_command,
