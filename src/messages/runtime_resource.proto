@@ -10,6 +10,11 @@ message RuntimeResourcesMessage
 
 }
 
+message RuntimeResourcesMessages
+{
+    repeated RuntimeResourcesMessage runtime_resources = 1;
+}
+
 message CPUUsage{
     required float cpu_used = 1;    //CPU Usage
 }

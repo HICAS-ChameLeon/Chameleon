@@ -10,7 +10,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "/home/lemaker/open-source/Chameleon/build/src/master/super_master",
+DEFINE_string(supermaster_path, "/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/super_master",
               "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 DEFINE_string(webui_path, "",
               "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
@@ -370,8 +370,10 @@ namespace chameleon {
                       * */
                     // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
                     const string launcher =
-                            m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
+                            m_super_master_path + " --master_path=" + m_master_cwd + "/master" + " --webui_path=" +
                             m_webui_path + " --level=2";
+//                            m_super_master_path + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master" + " --webui_path=" +
+//                            m_webui_path + " --level=2";
                     Try<Subprocess> super_master = subprocess(
                             launcher,
                             Subprocess::FD(STDIN_FILENO),
@@ -957,12 +959,12 @@ namespace chameleon {
 
     void Master::heartbeat_check_slaves() {
         delete_slaves();
-        process::delay(m_interval, self(), &Self::heartbeat_check_slaves);
+        process::delay(Seconds(10), self(), &Self::heartbeat_check_slaves);
     }
 
     void Master::delete_slaves() {
         for(auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
-            if (m_slaves_last_time[*iter] != 0 && time(0) - m_slaves_last_time[*iter] > 10) {
+            if (m_slaves_last_time[*iter] != 0 && time(0) - m_slaves_last_time[*iter] > 15) {
                 LOG(INFO)<<"slave run on "<<*iter<<" was killed!";
                 m_hardware_resources.erase(*iter);
                 m_proto_hardware_resources.erase(*iter);
@@ -1066,7 +1068,7 @@ namespace chameleon {
         if(super_master_control_message.my_master().size()){
             LOG(INFO) << self().address << " received message from " << super_master;
             string launch_command = m_super_master_path + " --initiator=" + stringify(self().address)
-                    + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master --webui_path="
+                    + " --master_path=/home/marcie/chameleon/Chameleon1/build/src/master/master --webui_path="
                     + stringify(FLAGS_webui_path) + " --port=7001";
             Try<Subprocess> s = subprocess(
                     launch_command,
@@ -1119,12 +1121,14 @@ namespace chameleon {
     }
 
     void Master::heartbeat_to_supermaster(){
-        for(auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++){
-            send(m_super_master,iter->second);
-        }
-        for(auto iter = m_proto_runtime_resources.begin(); iter != m_proto_runtime_resources.end(); iter++){
-            send(m_super_master,iter->second);
-            LOG(INFO)<<"send message to "<<m_super_master;
+        if(!m_proto_hardware_resources.empty()&&!m_proto_runtime_resources.empty()) {
+            for (auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++) {
+                send(m_super_master, iter->second);
+            }
+            for (auto iter = m_proto_runtime_resources.begin(); iter != m_proto_runtime_resources.end(); iter++) {
+                send(m_super_master, iter->second);
+                LOG(INFO) << "send message to " << m_super_master;
+            }
         }
         process::delay(m_interval, self(), &Self::heartbeat_to_supermaster);
     }
