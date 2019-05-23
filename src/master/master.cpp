@@ -10,7 +10,7 @@
 
 //The following has default value
 DEFINE_int32(port, 6060, "master run on this port");
-DEFINE_string(supermaster_path, "/home/marcie/chameleon/Chameleon1/Chameleon/build/src/master/super_master",
+DEFINE_string(supermaster_path, "/home/lemaker/open-source/Chameleon/build/src/master/super_master",
               "the absolute path of supermaster executive. For example, --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master");
 DEFINE_string(webui_path, "",
               "the absolute path of webui. For example, --webui=/home/lemaker/open-source/Chameleon/src/webui");
@@ -937,23 +937,25 @@ namespace chameleon {
     }
 
     void Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
-        LOG(INFO) << "received a heartbeat message from " << slave;
-        auto slave_id = runtime_resouces_message.slave_id();
-        m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
-        m_proto_runtime_resources[slave_id] = runtime_resouces_message;
-        //add insert slave_id to send new master message to slave
-        m_alive_slaves.insert(slave_id);
-        m_slaves_last_time[slave_id] = time(0);
-        if (m_is_fault_tolerance && slave_id != stringify(process::address().ip)){
-            LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
-            launch_master_message->set_port("6060");
-            launch_master_message->set_master_path(get_cwd()+"/master");
-            launch_master_message->set_webui_path(m_webui_path);
-            launch_master_message->set_is_fault_tolerance(true);
-            send(slave,*launch_master_message);
-            delete launch_master_message;
-            LOG(INFO)<<"send launch backup master message to "<<slave;
-            m_is_fault_tolerance = false;
+        if(m_slave_objects.count(runtime_resouces_message.slave_uuid())) {
+            LOG(INFO) << "received a heartbeat message from " << slave;
+            auto slave_id = runtime_resouces_message.slave_id();
+            m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
+            m_proto_runtime_resources[slave_id] = runtime_resouces_message;
+            //add insert slave_id to send new master message to slave
+            m_alive_slaves.insert(slave_id);
+            m_slaves_last_time[slave_id] = time(0);
+            if (m_is_fault_tolerance && slave_id != stringify(process::address().ip)) {
+                LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
+                launch_master_message->set_port("6060");
+                launch_master_message->set_master_path(get_cwd() + "/master");
+                launch_master_message->set_webui_path(m_webui_path);
+                launch_master_message->set_is_fault_tolerance(true);
+                send(slave, *launch_master_message);
+                delete launch_master_message;
+                LOG(INFO) << "send launch backup master message to " << slave;
+                m_is_fault_tolerance = false;
+            }
         }
     }
 
@@ -1068,7 +1070,7 @@ namespace chameleon {
         if(super_master_control_message.my_master().size()){
             LOG(INFO) << self().address << " received message from " << super_master;
             string launch_command = m_super_master_path + " --initiator=" + stringify(self().address)
-                    + " --master_path=/home/marcie/chameleon/Chameleon1/build/src/master/master --webui_path="
+                    + " --master_path=" + m_master_cwd + "/master --webui_path="
                     + stringify(FLAGS_webui_path) + " --port=7001";
             Try<Subprocess> s = subprocess(
                     launch_command,
