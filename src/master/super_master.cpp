@@ -597,10 +597,10 @@ namespace chameleon {
 //                for(auto item = m_master_slave[master_id].begin();
 //                 item != m_master_slave[master_id].end(); item++){
                 for(Node& node: m_master_slave[master_id]){
-                    if(node.node_ip == strings::tokenize(master_id,":")[0]){
+                    if(node.node_ip == message.slave_id()){
                         node.set_runtime(message);
+                        break;
                     }
-                    break;
                 }
                 break;
             }
