@@ -12,6 +12,11 @@ message HardwareResourcesMessage
     required TLBCollection    tlb_collection = 7;
 }
 
+message HardwareResourcesMessages
+{
+    repeated HardwareResourcesMessage hardware_resources = 1;
+}
+
 message CPUCollection{
     repeated CPUInfo cpu_infos = 1;
     required int32 cpu_quantity= 2;

@@ -372,8 +372,10 @@ namespace chameleon {
                       * */
                     // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
                     const string launcher =
-                            m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
+                            m_super_master_path + " --master_path=" + m_master_cwd + "/master" + " --webui_path=" +
                             m_webui_path + " --level=2";
+//                            m_super_master_path + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master" + " --webui_path=" +
+//                            m_webui_path + " --level=2";
                     Try<Subprocess> super_master = subprocess(
                             launcher,
                             Subprocess::FD(STDIN_FILENO),
@@ -937,34 +939,36 @@ namespace chameleon {
     }
 
     void Master::received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message) {
-        LOG(INFO) << "received a heartbeat message from " << slave;
-        auto slave_id = runtime_resouces_message.slave_id();
-        m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
-        m_proto_runtime_resources[slave_id] = runtime_resouces_message;
-        //add insert slave_id to send new master message to slave
-        m_alive_slaves.insert(slave_id);
-        m_slaves_last_time[slave_id] = time(0);
-        if (m_is_fault_tolerance && slave_id != stringify(process::address().ip)){
-            LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
-            launch_master_message->set_port("6060");
-            launch_master_message->set_master_path(get_cwd()+"/master");
-            launch_master_message->set_webui_path(m_webui_path);
-            launch_master_message->set_is_fault_tolerance(true);
-            send(slave,*launch_master_message);
-            delete launch_master_message;
-            LOG(INFO)<<"send launch backup master message to "<<slave;
-            m_is_fault_tolerance = false;
+        if(m_slave_objects.count(runtime_resouces_message.slave_uuid())) {
+            LOG(INFO) << "received a heartbeat message from " << slave;
+            auto slave_id = runtime_resouces_message.slave_id();
+            m_runtime_resources[slave_id] = JSON::protobuf(runtime_resouces_message);
+            m_proto_runtime_resources[slave_id] = runtime_resouces_message;
+            //add insert slave_id to send new master message to slave
+            m_alive_slaves.insert(slave_id);
+            m_slaves_last_time[slave_id] = time(0);
+            if (m_is_fault_tolerance && slave_id != stringify(process::address().ip)) {
+                LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
+                launch_master_message->set_port("6060");
+                launch_master_message->set_master_path(get_cwd() + "/master");
+                launch_master_message->set_webui_path(m_webui_path);
+                launch_master_message->set_is_fault_tolerance(true);
+                send(slave, *launch_master_message);
+                delete launch_master_message;
+                LOG(INFO) << "send launch backup master message to " << slave;
+                m_is_fault_tolerance = false;
+            }
         }
     }
 
     void Master::heartbeat_check_slaves() {
         delete_slaves();
-        process::delay(m_interval, self(), &Self::heartbeat_check_slaves);
+        process::delay(Seconds(10), self(), &Self::heartbeat_check_slaves);
     }
 
     void Master::delete_slaves() {
         for(auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
-            if (m_slaves_last_time[*iter] != 0 && time(0) - m_slaves_last_time[*iter] > 10) {
+            if (m_slaves_last_time[*iter] != 0 && time(0) - m_slaves_last_time[*iter] > 15) {
                 LOG(INFO)<<"slave run on "<<*iter<<" was killed!";
                 m_hardware_resources.erase(*iter);
                 m_proto_hardware_resources.erase(*iter);
@@ -1068,7 +1072,7 @@ namespace chameleon {
         if(super_master_control_message.my_master().size()){
             LOG(INFO) << self().address << " received message from " << super_master;
             string launch_command = m_super_master_path + " --initiator=" + stringify(self().address)
-                    + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master --webui_path="
+                    + " --master_path=" + m_master_cwd + "/master --webui_path="
                     + stringify(FLAGS_webui_path) + " --port=7001";
             Try<Subprocess> s = subprocess(
                     launch_command,
@@ -1121,12 +1125,14 @@ namespace chameleon {
     }
 
     void Master::heartbeat_to_supermaster(){
-        for(auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++){
-            send(m_super_master,iter->second);
-        }
-        for(auto iter = m_proto_runtime_resources.begin(); iter != m_proto_runtime_resources.end(); iter++){
-            send(m_super_master,iter->second);
-            LOG(INFO)<<"send message to "<<m_super_master;
+        if(!m_proto_hardware_resources.empty()&&!m_proto_runtime_resources.empty()) {
+            for (auto iter = m_proto_hardware_resources.begin(); iter != m_proto_hardware_resources.end(); iter++) {
+                send(m_super_master, iter->second);
+            }
+            for (auto iter = m_proto_runtime_resources.begin(); iter != m_proto_runtime_resources.end(); iter++) {
+                send(m_super_master, iter->second);
+                LOG(INFO) << "send message to " << m_super_master;
+            }
         }
         process::delay(m_interval, self(), &Self::heartbeat_to_supermaster);
     }
