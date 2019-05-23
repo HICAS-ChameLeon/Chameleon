@@ -145,6 +145,14 @@ namespace chameleon {
             m_masterInfo.mutable_address()->set_hostname(hostname);
 
             m_master_cwd = os::getcwd();
+            if(strings::endsWith(m_master_cwd,"slave")){
+                vector<string> tokens = strings::tokenize(m_master_cwd,"/");
+                m_master_cwd.clear();
+                for(int i = 0 ; i < tokens.size() - 1 ; i++){
+                    m_master_cwd += "/" + tokens[i];
+                }
+                m_master_cwd += "/master";
+            }
         }
 
         virtual ~Master() {}

@@ -370,10 +370,10 @@ namespace chameleon {
                       * */
                     // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
                     const string launcher =
-//                            m_super_master_path + " --master_path=" + m_master_cwd + "/master" + " --webui_path=" +
-//                            m_webui_path + " --level=2";
-                            m_super_master_path + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master" + " --webui_path=" +
+                            m_super_master_path + " --master_path=" + m_master_cwd + "/master" + " --webui_path=" +
                             m_webui_path + " --level=2";
+//                            m_super_master_path + " --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master" + " --webui_path=" +
+//                            m_webui_path + " --level=2";
                     Try<Subprocess> super_master = subprocess(
                             launcher,
                             Subprocess::FD(STDIN_FILENO),
@@ -959,12 +959,12 @@ namespace chameleon {
 
     void Master::heartbeat_check_slaves() {
         delete_slaves();
-        process::delay(m_interval, self(), &Self::heartbeat_check_slaves);
+        process::delay(Seconds(10), self(), &Self::heartbeat_check_slaves);
     }
 
     void Master::delete_slaves() {
         for(auto iter = m_alive_slaves.begin(); iter != m_alive_slaves.end(); iter++) {
-            if (m_slaves_last_time[*iter] != 0 && time(0) - m_slaves_last_time[*iter] > 10) {
+            if (m_slaves_last_time[*iter] != 0 && time(0) - m_slaves_last_time[*iter] > 15) {
                 LOG(INFO)<<"slave run on "<<*iter<<" was killed!";
                 m_hardware_resources.erase(*iter);
                 m_proto_hardware_resources.erase(*iter);
