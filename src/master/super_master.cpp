@@ -591,16 +591,16 @@ namespace chameleon {
 
     void SuperMaster::received_runtime_resources(const UPID &from, const RuntimeResourcesMessage &message) {
         string master_id = strings::tokenize(stringify(from),"@")[1];
-        LOG(INFO)<<"received runtime resources from "<<master_id;
+        LOG(INFO)<<"received runtime resources from "<<master_id<<" "<<message.slave_id();
         for(auto iter = m_master_slave.begin(); iter != m_master_slave.end(); iter++){
             if(iter->first == master_id){
 //                for(auto item = m_master_slave[master_id].begin();
 //                 item != m_master_slave[master_id].end(); item++){
                 for(Node& node: m_master_slave[master_id]){
-                    if(node.node_ip == strings::tokenize(master_id,":")[0]){
+                    if(node.node_ip == message.slave_id()){
                         node.set_runtime(message);
+                        break;
                     }
-                    break;
                 }
                 break;
             }
