@@ -10,6 +10,8 @@
 #include <process/id.hpp>
 #include <process/process.hpp>
 
+#include <docker/type_utils.hpp>
+
 #include "standalone.hpp"
 #include "detector.hpp"
 
@@ -29,9 +31,37 @@ namespace mesos{
                     discardPromises(&promises);
                 }
 
+                void appoint(const Option<MasterInfo>& leader_)
+                {
+                    leader = leader_;
+
+                    setPromises(&promises, leader);
+                }
+
+                Future<Option<MasterInfo>> detect(
+                        const Option<MasterInfo>& previous = None())
+                {
+                    if (leader != previous) {
+                        return leader;
+                    }
+
+                    Promise<Option<MasterInfo>>* promise = new Promise<Option<MasterInfo>>();
+
+                    promise->future()
+                            .onDiscard(defer(self(), &Self::discard, promise->future()));
+
+                    promises.insert(promise);
+                    return promise->future();
+                }
+
             private:
+                void discard(const Future<Option<MasterInfo>>& future)
+                {
+                    // Discard the promise holding this future.
+                    discardPromises(&promises, future);
+                }
                 Option<MasterInfo> leader; // The appointed master.
-                set<Promise<Option<MasterInfo>>*> promises;
+                std::set<Promise<Option<MasterInfo>>*> promises;
             };
 
             StandaloneMasterDetector::StandaloneMasterDetector()
