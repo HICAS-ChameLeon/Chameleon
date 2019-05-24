@@ -1167,9 +1167,11 @@ namespace chameleon {
             }
             delete reregister_master_message;
             LOG(INFO) << self() << " is terminating due to change levels to one";
-            terminate(self());
-            process::wait(self());
+//            terminate(self());
+//            process::wait(self());
+//            sleep(3);
 //            exit(0);
+            this->shouldQuit.set(true);
         }
     }
     // end of super_mater related
@@ -1219,6 +1221,18 @@ int main(int argc, char **argv) {
 
         const PID<Master> master_pid = master.self();
         LOG(INFO) << master_pid;
+
+        Future<bool> quit = master.done();
+        quit.await();
+
+//        process::wait(master.self());
+
+        if (!quit.get()) {
+            LOG(INFO) << "The server encountered an error and is exiting now" ;
+        } else {
+            LOG(INFO) << "Done";
+        }
+        process::terminate(master.self());
         process::wait(master.self());
     } else {
         LOG(INFO) << "To run this program , must set all parameters correctly "

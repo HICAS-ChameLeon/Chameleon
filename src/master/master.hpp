@@ -249,7 +249,18 @@ namespace chameleon {
         // fault tolerance related
         void set_fault_tolerance(bool fault_tolerance);
 
+        Future<bool> done() {
+            LOG(INFO) << "are we done yet? ";
+            return shouldQuit.future();
+        }
+
+        void shutdown() {
+            LOG(INFO) << "Shutting down server..." ;
+            this->shouldQuit.set(true);
+        }
+
     private:
+        Promise<bool> shouldQuit;
 
         string m_uuid;
         // the absolute path of the directory where the master executable exists.
