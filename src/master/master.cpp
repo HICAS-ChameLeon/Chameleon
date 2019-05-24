@@ -1167,8 +1167,10 @@ namespace chameleon {
             }
             delete reregister_master_message;
             LOG(INFO) << self() << " is terminating due to change levels to one";
-            terminate(self());
-            process::wait(self());
+//            terminate(self());
+//            process::wait(self());
+            sleep(3);
+            exit(0);
         }
     }
     // end of super_mater related
