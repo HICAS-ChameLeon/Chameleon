@@ -571,7 +571,6 @@ namespace chameleon {
                 send(*iter, *terminating_master);
             }
         }
-        sleep(3);
         LOG(INFO) << self() << " is terminating due to change levels to one";
         delete(terminating_master);
 //        terminate(self());
