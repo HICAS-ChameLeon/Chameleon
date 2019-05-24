@@ -1148,7 +1148,7 @@ namespace chameleon {
         LOG(INFO) << " receive a TerminatingMasterMessage from " << super_master;
         if (message.master_id() == stringify(self().address.ip)) {
             LOG(INFO) << self() << "  is terminating due to new super_master was deteched";
-            terminate(self());
+            this->shouldQuit.set(true);
         } else {
             ReregisterMasterMessage *reregister_master_message = new ReregisterMasterMessage();
             reregister_master_message->set_master_ip(message.master_id());
