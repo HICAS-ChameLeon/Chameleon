@@ -1169,6 +1169,7 @@ namespace chameleon {
             LOG(INFO) << self() << " is terminating due to change levels to one";
             terminate(self());
             process::wait(self());
+//            exit(0);
         }
     }
     // end of super_mater related
