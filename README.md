@@ -61,7 +61,7 @@ $ ./master --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/mast
 ### slave
 ```shell
  cd ./build/src/slave/
-$ ./slave --master=172.20.110.228:6060 --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master --ht=555555
+$ ./slave --master=172.20.110.228:6060 --ht=555555
 ```
 
 ### Required Flags

@@ -151,7 +151,18 @@ namespace chameleon {
             LOG(INFO) << " ~SuperMaster";
         }
 
+        Future<bool> done() {
+            LOG(INFO) << "are we done yet? ";
+            return shouldQuit.future();
+        }
+
+        void shutdown() {
+            LOG(INFO) << "Shutting down server..." ;
+            this->shouldQuit.set(true);
+        }
+
     private:
+        Promise<bool> shouldQuit;
 
         string m_uuid;
         // the absolute path for the super_master executable
