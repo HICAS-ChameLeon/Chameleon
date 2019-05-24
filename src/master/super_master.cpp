@@ -573,7 +573,9 @@ namespace chameleon {
         }
         LOG(INFO) << self() << " is terminating due to change levels to one";
         delete(terminating_master);
-        terminate(self());
+//        terminate(self());
+//        wait(self());
+        this->shouldQuit.set(true);
     }
 
     void SuperMaster::received_hardware_resources(const UPID &from, const HardwareResourcesMessage &message) {
@@ -699,6 +701,19 @@ int main(int argc, char **argv) {
 //    if (res) {
 //        std::cout << " successfully launched master";
 //    }
+
+        Future<bool> quit = super_master.done();
+        quit.await();
+
+        // wait for the server to complete the request
+//        std::this_thread::sleep_for(seconds(2));
+
+        if (!quit.get()) {
+            LOG(INFO) << "The server encountered an error and is exiting now" ;
+        } else {
+            LOG(INFO) << "Done";
+        }
+        process::terminate(super_master.self());
         process::wait(super_master.self());
     }else{
         LOG(INFO) << "To run this program , must set all parameters correctly "
