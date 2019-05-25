@@ -365,11 +365,11 @@ namespace chameleon {
 //        LOG(INFO) << " send a TerminatingMasterMessage to master " << from
 //                  << " since the super master has receive the owned slaves of that master";
 //
-//        // delete the terminating_master from m_masters
-//        auto iter = std::find(m_masters.begin(), m_masters.end(), from);
-//        if (iter != m_masters.end()) {
-//            m_masters.erase(iter);
-//        }
+        // delete the terminating_master from m_masters
+        auto iter = std::find(m_masters.begin(), m_masters.end(), from);
+        if (iter != m_masters.end()) {
+            m_masters.erase(iter);
+        }
 
         // create new masters
         process::delay(Seconds(1), self(), &Self::create_masters);
