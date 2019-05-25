@@ -1062,6 +1062,12 @@ namespace chameleon {
             // is_passive = true means the master was evoked by a super_master,
             // so in super_master_related.proto at line 30 repeated SlavesInfoControlledByMaster my_slaves=4
             // is not empty
+            m_hardware_resources.clear();
+            m_proto_hardware_resources.clear();
+            m_runtime_resources.clear();
+            m_proto_runtime_resources.clear();
+            m_alive_slaves.clear();
+            m_slave_objects.clear();
             for (auto &slave_info:super_master_control_message.my_slaves()) {
                 UPID slave_upid("slave@" + slave_info.ip() + ":" + slave_info.port());
                 ReregisterMasterMessage *register_message = new ReregisterMasterMessage();
