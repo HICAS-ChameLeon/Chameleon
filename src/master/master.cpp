@@ -1062,6 +1062,12 @@ namespace chameleon {
             // is_passive = true means the master was evoked by a super_master,
             // so in super_master_related.proto at line 30 repeated SlavesInfoControlledByMaster my_slaves=4
             // is not empty
+            m_hardware_resources.clear();
+            m_proto_hardware_resources.clear();
+            m_runtime_resources.clear();
+            m_proto_runtime_resources.clear();
+            m_alive_slaves.clear();
+            m_slave_objects.clear();
             for (auto &slave_info:super_master_control_message.my_slaves()) {
                 UPID slave_upid("slave@" + slave_info.ip() + ":" + slave_info.port());
                 ReregisterMasterMessage *register_message = new ReregisterMasterMessage();
@@ -1104,14 +1110,25 @@ namespace chameleon {
             LOG(INFO) << self() << " registered from super_master " << super_master << " successfully";
             if (!is_passive) {
                 OwnedSlavesMessage *owned_slaves = new OwnedSlavesMessage();
+                const string& ip_self = stringify(self().address.ip);
+                SlaveInfo *t_slave = owned_slaves->add_slave_infos();
+                HardwareResourcesMessage *hardware_resources = new HardwareResourcesMessage(
+                        m_proto_hardware_resources[ip_self]);
+                t_slave->set_allocated_hardware_resources(hardware_resources);
+                RuntimeResourcesMessage *runtime_Resources = new RuntimeResourcesMessage(
+                        m_proto_runtime_resources[ip_self]);
+                t_slave->set_allocated_runtime_resources(runtime_Resources);
+
                 for (const string &slave_ip:m_alive_slaves) {
-                    SlaveInfo *t_slave = owned_slaves->add_slave_infos();
-                    HardwareResourcesMessage *hardware_resources = new HardwareResourcesMessage(
-                            m_proto_hardware_resources[slave_ip]);
-                    t_slave->set_allocated_hardware_resources(hardware_resources);
-                    RuntimeResourcesMessage *runtime_Resources = new RuntimeResourcesMessage(
-                            m_proto_runtime_resources[slave_ip]);
-                    t_slave->set_allocated_runtime_resources(runtime_Resources);
+                    if(slave_ip!=ip_self){
+                        SlaveInfo *t_slave = owned_slaves->add_slave_infos();
+                        HardwareResourcesMessage *hardware_resources = new HardwareResourcesMessage(
+                                m_proto_hardware_resources[slave_ip]);
+                        t_slave->set_allocated_hardware_resources(hardware_resources);
+                        RuntimeResourcesMessage *runtime_Resources = new RuntimeResourcesMessage(
+                                m_proto_runtime_resources[slave_ip]);
+                        t_slave->set_allocated_runtime_resources(runtime_Resources);
+                    }
                 }
                 owned_slaves->set_quantity(owned_slaves->slave_infos_size());
                 send(super_master, *owned_slaves);

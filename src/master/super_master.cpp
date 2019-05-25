@@ -252,21 +252,20 @@ namespace chameleon {
                     LOG(INFO) << "MAKUN KILL MASTER";
 //                  //string new_master_ip = select_master();
                     string new_master_ip = stringify(process::address().ip);
-                    if(find(m_vector_masters.begin(),m_vector_masters.end(),new_master_ip) == m_vector_masters.end()){
-                        LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
-                        launch_master_message->set_port("6060");
-                        launch_master_message->set_master_path(m_master_path);
-                        launch_master_message->set_webui_path(m_webui_path);
-                        launch_master_message->set_is_fault_tolerance(false);
-                        send(UPID("slave@" + new_master_ip + ":6061"), *launch_master_message);
-                        LOG(INFO) << "send message to " << new_master_ip;
-                    }
+//                    if(find(m_vector_masters.begin(),m_vector_masters.end(),new_master_ip) == m_vector_masters.end()){
+//                        LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
+//                        launch_master_message->set_port("6060");
+//                        launch_master_message->set_master_path(m_master_path);
+//                        launch_master_message->set_webui_path(m_webui_path);
+//                        launch_master_message->set_is_fault_tolerance(false);
+//                        send(UPID("slave@" + new_master_ip + ":6061"), *launch_master_message);
+//                        LOG(INFO) << "send message to " << new_master_ip;
+//                    }
                     send_terminating_master(new_master_ip);
                     result.values["stop"] = "success";
                     //result.values["new_master_ip"] = new_master_ip;
                     OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                    //select_master();
 
                     return ok_response;
                 });
@@ -358,14 +357,14 @@ namespace chameleon {
         for (SlaveInfo &slaveInfo: m_admin_slaves) {
             LOG(INFO) << "MAKUN slaveInfo has " << slaveInfo.hardware_resources().cpu_collection().cpu_infos_size() << "CPU";
         }
-        TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
-        terminating_master->set_master_id(stringify(from.address.ip));
-        LOG(INFO) << "MAKUN: " << from;
-        send(from, *terminating_master);
-        delete terminating_master;
-        LOG(INFO) << " send a TerminatingMasterMessage to master " << from
-                  << " since the super master has receive the owned slaves of that master";
-
+//        TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
+//        terminating_master->set_master_id(stringify(from.address.ip));
+//        LOG(INFO) << "MAKUN: " << from;
+//        send(from, *terminating_master);
+//        delete terminating_master;
+//        LOG(INFO) << " send a TerminatingMasterMessage to master " << from
+//                  << " since the super master has receive the owned slaves of that master";
+//
         // delete the terminating_master from m_masters
         auto iter = std::find(m_masters.begin(), m_masters.end(), from);
         if (iter != m_masters.end()) {
@@ -499,21 +498,18 @@ namespace chameleon {
         launch_master_message->set_master_path(m_master_path);
         launch_master_message->set_webui_path(m_webui_path);
         launch_master_message->set_is_fault_tolerance(false);
-        for(const string& master_ip:m_vector_masters) {
-//            if(master_ip == stringify(process::address().ip)){
-//                send(UPID("master@" + master_ip + ":6060"), *launch_master_message);
- //               LOG(INFO) << "send message to " << master_ip;
- //           } else {
-                send(UPID("slave@" + master_ip + ":6061"), *launch_master_message);
-                LOG(INFO) << "send message to " << master_ip;
- //           }
+//        for(const string& master_ip:m_vector_masters) {
+        for(auto iter = m_vector_masters.begin()+1; iter != m_vector_masters.end(); iter++){
+                send(UPID("slave@" + *iter + ":6061"), *launch_master_message);
+                LOG(INFO) << "send message to " << *iter;
         }
     }
 
     void SuperMaster::is_launch() {
         if(is_launch_master){
-            LOG(INFO)<<" launched "<<m_vector_masters.size() << " masters.";
+            LOG(INFO)<<" launched "<<m_vector_masters.size()-1 << " masters.";
             LOG(INFO)<<" launched all new masters successfully!";
+            LOG(INFO)<<" super_master has "<<m_vector_masters.size()<<" masters";
             send_super_master_control_message();
         }else{
             LOG(INFO) << "launching masters failed!";
@@ -522,15 +518,13 @@ namespace chameleon {
 
     void SuperMaster::create_masters(){
         classify_masters();
-//        bool launch_success = launch_masters();
         launch_masters();
-        process::delay(Seconds(3),self(),&Self::is_launch);
-//        if(is_launch_master){
-//            LOG(INFO)<<" launched all new masters successfully!";
-//            process::delay(Seconds(3), self(), &Self::send_super_master_control_message);
-//        }else{
-//            LOG(INFO) << "launching masters failed!";
-//        }
+        if(m_vector_masters.size()>1){
+            process::delay(Seconds(3),self(),&Self::is_launch);
+        }
+        else {
+            send_super_master_control_message();
+        }
     }
 
     void SuperMaster::send_super_master_control_message(){
