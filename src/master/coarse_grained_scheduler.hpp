@@ -38,11 +38,13 @@ using std::make_shared;
 using std::list;
 
 namespace chameleon {
+
     class CoarseGrainedScheduler : public SchedulerInterface {
     public:
-        explicit CoarseGrainedScheduler() {
+        explicit CoarseGrainedScheduler():SchedulerInterface("CoarseGrained") {
 
         }
+
 
         virtual ~CoarseGrainedScheduler() {
 
@@ -57,20 +59,19 @@ namespace chameleon {
        */
         void construct_offers(mesos::internal::ResourceOffersMessage &resource_offers_message,
                               const mesos::FrameworkID &framework_id,
-                              const unordered_map<string, shared_ptr<SlaveObject>> &slave_objects) override {
+                              const unordered_map<string, shared_ptr<SlaveObject>> &m_slave_objects) override {
             LOG(INFO)<<"coarse-grained scheduling ";
-            for (auto it = slave_objects.begin(); it != slave_objects.end(); it++) {
+            for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
                 mesos::OfferID offer_id = new_offer_id();
                 shared_ptr<SlaveObject> slave = it->second;
                 mesos::Offer *offer = slave->construct_a_offer(offer_id.value(), framework_id);
                 resource_offers_message.add_offers()->MergeFrom(*offer);
                 LOG(INFO) << offer->slave_id().value();
+                m_offers[offer->slave_id().value()] = offer->id().value();
                 resource_offers_message.add_pids(slave->m_upid_str);
             }
-
         }
-
     };
-}
+};
 
 #endif //CHAMELEON_COARSE_GRAINED_SCHEDULING_HPP

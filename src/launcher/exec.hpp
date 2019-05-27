@@ -17,7 +17,6 @@
 // stout dependencies
 #include <stout/os.hpp>
 #include <stout/strings.hpp>
-#include <stout/flags.hpp>
 #include <stout/option.hpp>
 #include <stout/try.hpp>
 #include <stout/uuid.hpp>
@@ -32,7 +31,6 @@
 // protobuf
 #include <messages.pb.h>
 #include <mesos.pb.h>
-#include "executor.hpp"
 
 namespace chameleon{
 

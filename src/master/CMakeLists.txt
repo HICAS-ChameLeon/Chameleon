@@ -13,7 +13,8 @@ set(master_SRCS
         slave_object.hpp
         slave_object.cpp
         scheduler_interface.hpp
-        coarse_grained_scheduler.hpp)
+        coarse_grained_scheduler.hpp
+        smhc_grained_scheduler.hpp)
 set(master_PROTOS job)
 list(APPEND master_PROTOS hardware_resource)
 list(APPEND master_PROTOS runtime_resource)

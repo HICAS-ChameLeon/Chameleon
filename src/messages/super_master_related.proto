@@ -38,7 +38,11 @@ message MasterRegisteredMessage
 message SlavesInfoControlledByMaster{
     required string ip = 1;
     required string port = 2;
+}
 
+message MasterInfoControlledBySuperMaster{
+    required string ip = 1;
+    required string port = 2;
 }
 
 message SuperMasterControlMessage{
@@ -46,6 +50,7 @@ message SuperMasterControlMessage{
     optional string super_master_uuid = 2;
     required bool passive = 3;
     repeated SlavesInfoControlledByMaster my_slaves=4;
+    repeated MasterInfoControlledBySuperMaster my_master=5;
 }
 
 message AcceptRegisteredMessage{
@@ -86,4 +91,5 @@ message LaunchMasterMessage{
     required string port = 1;
     required string master_path =2 ;
     required string webui_path = 3;
+    required bool is_fault_tolerance = 4;
 }

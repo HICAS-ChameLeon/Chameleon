@@ -43,7 +43,7 @@ $ make
 ### master
 ```shell
 $ cd ./build/src/master/
-$ ./master --webui_path=/home/lemaker/open-source/Chameleon/src/webui
+$ ./master --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master --webui_path=/home/lemaker/open-source/Chameleon/src/webui
 ```
 
 ### Required Flags
@@ -56,6 +56,7 @@ $ ./master --webui_path=/home/lemaker/open-source/Chameleon/src/webui
 | ------ | ------ | ------ |
 | --port | master run on this port, (default 6060 ) | --port=6060 |
 | --supermaster_path | the absolute path of supermaster executive, default("./super_master") | --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master|
+| --fault_tolerance |   whether master has fault tolerance, (default false )  |   --fault_tolerance=true  |
 
 ### slave
 ```shell

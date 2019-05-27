@@ -7,6 +7,7 @@
     <meta charset="utf-8">
 
     <link rel="stylesheet" href="/static/css/bootstrap.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-theme.css">
     <link rel="stylesheet" type="text/css" href="/static/css/navbar.css">
     <link rel="stylesheet" href="/static/css/Chameleon.css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
@@ -133,7 +134,7 @@
                 <a href="#/scheduling" data-toggle="tab" style="font-size: 100%">
                 调度算法选择
             </a></li>
-            <li><a href="#/time_space" data-toggle="tab" style="font-size: 100%">
+            <li><a href="#/time_space" style="font-size: 100%">
                 时空共享调度策略
             </a></li>
             <li><a href="#/topology" style="font-size: 100%">
@@ -145,7 +146,7 @@
             <!--Indicates a dangerous or potentially negative action-->
             <div ng-controller = "ShutdownCtrl">
                 <li>
-                <button type="button" class="btn btn-danger" ng-click="openModal()">关闭所有slave节点</button>
+                    <button type="button" class="btn btn-danger" ng-click="openModal()">关闭所有slave节点</button>
                 </li>
             </div>
         </ul>
@@ -164,7 +165,9 @@
 <script src="/static/js/thirdparty/angular-1.5.5.min.js"></script>
 <script src="/static/js/thirdparty/bootstrap.js"></script>
 
-<script src="/static/js/thirdparty/ui-bootstrap-tpls-0.11.2.min.js"></script>
+
+<script src="/static/js/thirdparty/ui-bootstrap.js"></script>
+<script src="/static/js/thirdparty/ui-bootstrap-tpls.js"></script>
 <script src="/static/js/thirdparty/angular-route-1.2.3.js"></script>
 <script src="/static/js/thirdparty/underscore-1.4.3.js"></script>
 <script src="/static/js/thirdparty/clipboard-1.5.16.js"></script>

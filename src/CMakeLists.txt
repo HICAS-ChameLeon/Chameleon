@@ -21,7 +21,6 @@ PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages fetcher ${CMAKE_BINARY_DIR}/src/
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages hardware_resource ${CMAKE_BINARY_DIR}/src/messages hardware_resource)
 PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages runtime_resource ${CMAKE_BINARY_DIR}/src/messages runtime_resource)
 
-
 # libprocess .so .a libraries directories
 link_directories(${PROCESS_LIB_DIRS})
 
@@ -39,10 +38,6 @@ add_subdirectory(submitter)
 
 add_subdirectory(launcher)
 add_subdirectory(docker)
+add_subdirectory(sched)
 
-#set(sched_SRC
-#        sched/constants.hpp
-#        sched/flags.hpp
-#        sched/sched.cpp)
-#
-#add_library(sched "STATIC" ${sched_SRC})
+#add_subdirectory(test)

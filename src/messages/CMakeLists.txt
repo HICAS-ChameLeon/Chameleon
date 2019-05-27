@@ -13,7 +13,3 @@ PROTOC_COMPILE(${CMAKE_SOURCE_DIR}/src/messages slave_related ${CMAKE_BINARY_DIR
 
 
 
-
-
-
-

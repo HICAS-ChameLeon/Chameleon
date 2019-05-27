@@ -8,9 +8,9 @@
 #ifndef CHAMELEON_SUPER_MASTER_HPP
 #define CHAMELEON_SUPER_MASTER_HPP
 // C++ 11 dependencies
+#include <iterator>
 #include <vector>
 #include <set>
-#include<iterator>
 #include <sstream>
 #include <unordered_map>
 // google
@@ -24,7 +24,6 @@
 #include <stout/protobuf.hpp>
 #include <stout/os.hpp>
 #include <stout/uuid.hpp>
-
 
 // libprocess dependencies
 #include <process/defer.hpp>
@@ -44,7 +43,7 @@
 
 // chameleon headers
 #include <configuration_glog.hpp>
-#include "master.hpp"
+#include <scheduler.pb.h>
 
 
 using std::string;
@@ -65,10 +64,10 @@ using process::http::Request;
 using process::http::OK;
 using process::http::Response;
 
-using namespace process::http;
+//using namespace process::http;
 
-using process::http::Request;
-using process::http::OK;
+//using process::http::Request;
+//using process::http::OK;
 using process::http::InternalServerError;
 
 
@@ -76,11 +75,50 @@ namespace chameleon {
 
     extern int32_t cluster_levels = 1;
 
+    class Node{
+    public:
+        string node_ip;
+        int32_t node_port;
+        enum {
+            SUPERMASTER,
+            MASTER,
+            SLAVE
+        } m_status;
+
+        HardwareResourcesMessage m_hardware;
+        RuntimeResourcesMessage m_runtime;
+
+        explicit Node(string ip,
+             int32_t port
+        ) : node_ip(ip),
+            node_port(port) {}
+
+        void set_hardware(HardwareResourcesMessage hardwareResourcesMessage){
+            m_hardware = hardwareResourcesMessage;
+        }
+
+        void set_runtime(RuntimeResourcesMessage runtimeResourcesMessage){
+            m_runtime = runtimeResourcesMessage;
+        }
+
+        bool operator==(const Node& node){
+        if(this->node_ip.compare(node.node_ip)==0 && this->node_port==node.node_port){
+            return true;
+        }
+        return false;
+        }
+
+        ~Node() {}
+
+    };
+
     class SuperMaster :public ProtobufProcess<SuperMaster> {
     public:
         explicit SuperMaster(const string& initiator) : ProcessBase("super_master") ,m_initiator(initiator){
                 m_super_master_cwd = os::getcwd();
         }
+
+        void set_level(const int32_t& level);
 
         void set_webui_path(const string& path);
 
@@ -103,11 +141,28 @@ namespace chameleon {
 
         void terminating_master(const UPID &from, const OwnedSlavesMessage &message);
 
+//        struct Node {
+//            string node_ip;
+//            int32_t node_port;
+//            bool is_super_master;
+//        } nodes;
+
         virtual ~SuperMaster() {
             LOG(INFO) << " ~SuperMaster";
         }
 
+        Future<bool> done() {
+            LOG(INFO) << "are we done yet? ";
+            return shouldQuit.future();
+        }
+
+        void shutdown() {
+            LOG(INFO) << "Shutting down server..." ;
+            this->shouldQuit.set(true);
+        }
+
     private:
+        Promise<bool> shouldQuit;
 
         string m_uuid;
         // the absolute path for the super_master executable
@@ -115,6 +170,7 @@ namespace chameleon {
         string m_master_path;
 
         string m_webui_path;
+        int32_t m_level;
 
         UPID m_framework;
         // represent the masters administered by the current super_master.
@@ -125,27 +181,45 @@ namespace chameleon {
 
         // represent the current number of level
         int32_t m_levels;
+        // represent the master starting the super_master
         string m_initiator;
 
         vector<SlaveInfo> m_admin_slaves;
 
         // represent the current number of masters
         int32_t m_masters_size;
+        // represent the current number of super_masters
+        int32_t m_super_masters_size;
 
         // key: master:ip , value: vector<SlavesInfoControlledByMaster>
         unordered_map<string,vector<SlavesInfoControlledByMaster>> m_classification_slaves;
-        vector<string> m_classification_masters;
+        // represent the masters created by the super_master
+        vector<string> m_vector_masters;
+        // key: super_master:ip , value: vector<MasterInfoControlledBySuperMaster>
+        unordered_map<string,vector<MasterInfoControlledBySuperMaster>> m_classification_masters;
+        vector<string> m_vector_super_master;
+
+//        vector<Node> m_master;
+        unordered_map<string,vector<Node>> m_master_slave;
+//        std::unordered_multimap<string,vector<Node>> m_master_slave;
+
         //framework related
-        unordered_map<string,string> m_classification_masters_framework;
+        unordered_map<string,string> m_master_framework;
         bool is_launch_master = true;
+        bool is_launch_super_master = true;
 
         void classify_masters();
+        //change to three levels related
+        void classify_super_masters();
 
         void create_masters();
         void send_super_master_control_message();
 
         const string select_master();
         void send_terminating_master(string master_ip);
+
+        void received_hardware_resources(const UPID &from, const HardwareResourcesMessage &message);
+        void received_runtime_resources(const UPID &from, const RuntimeResourcesMessage &message);
 
         //framework related
         void received_call(const UPID &from, const mesos::scheduler::Call &call);

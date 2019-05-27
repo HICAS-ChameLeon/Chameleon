@@ -72,6 +72,9 @@ namespace chameleon{
         environment["CHAMELEON_FETCHER_INFO"] = stringify(JSON::protobuf(info));
         environment["framework_name"] = framework_name;
         environment["PUBLIC_RESOURCES_DIR"] = m_public_resources_dir;
+        Option<string> hadoop_home = os::getenv("HADOOP_HOME");
+        LOG(INFO)<<hadoop_home.get();
+        environment["HADOOP_HOME"] =hadoop_home.get();
         LOG(INFO)<<"lele download dependencies of framework_name: "<<framework_name;
         Try<Subprocess> download_subprocess = process::subprocess(
                 downloader_path,
@@ -80,7 +83,7 @@ namespace chameleon{
                 Subprocess::FD(err.get(), Subprocess::IO::OWNED),
                 environment
                 );
-
+        LOG(INFO) << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<download_subprocess.get().pid();
         if(download_subprocess.isError()){
             return process::Failure("Failed to execute downloader:"+download_subprocess.error());
         }

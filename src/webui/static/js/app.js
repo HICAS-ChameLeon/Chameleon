@@ -24,6 +24,11 @@
                     templateUrl: 'runtime.html',
                     controller: 'UpdateCtrl'
                 })
+
+                .when('/scheduling', {
+                    templateUrl: 'scheduler.html',
+                    controller: 'SchedulerCtrl'
+                })
                 // network_topology.html
                 .when('/topology', {
                     templateUrl: 'network_topology.html',
@@ -34,6 +39,10 @@
                 .when('/topology/super_master', {
                     templateUrl: 'supernetwork_topology.html',
                     controller: 'SuperTopologyCtrl'
+                })
+                .when('/topology/super_master_and_super_master', {
+                    templateUrl: 'super_and_supernetwork_topology.html',
+                    controller: 'SuperAndSuperTopologyCtrl'
                 })
                 //framework_topology.html
                 .when('/framework_topology',{
