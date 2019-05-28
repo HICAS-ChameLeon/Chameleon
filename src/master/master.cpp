@@ -369,13 +369,6 @@ namespace chameleon {
                 "start supermaster by subprocess",
                 [this](Request request) {
                     JSON::Object result = JSON::Object();
-                    /**
-                      * Function model  :  start a subprocess of super_master
-                      * Author          :  Jessicallo
-                      * Date            :  2019-2-27
-                      * Funtion name    :  Try
-                      * @param          :
-                      * */
                     // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
                     const string launcher =
                             m_super_master_path + " --master_path=" + m_master_cwd + "/master" + " --webui_path=" +
@@ -408,7 +401,7 @@ namespace chameleon {
                       * */
                     // for example, --master_path=/home/lemaker/open-source/Chameleon/build/src/master/master
                     const string launcher =
-                            m_super_master_path + " --master_path=" + get_cwd() + "/master" + " --webui_path=" +
+                            m_super_master_path + " --master_path=" + m_master_cwd + "/master" + " --webui_path=" +
                             m_webui_path + " --level=3";
                     Try<Subprocess> super_master = subprocess(
                             launcher,
@@ -432,7 +425,7 @@ namespace chameleon {
 
         // super_master related
         // when we have only one level (i.e. we have no super_master),
-        // is_passive = true stands fro that the master is started initiatively.
+        // is_passive = false stands fro that the master is started initiatively.
         is_passive = false;
 
         m_state = RUNNING;

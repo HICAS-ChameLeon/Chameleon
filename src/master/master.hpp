@@ -145,6 +145,7 @@ namespace chameleon {
             m_masterInfo.mutable_address()->set_hostname(hostname);
 
             m_master_cwd = os::getcwd();
+            //when the master is started passively, its address is XXX/src/slave, not XXX/src/master
             if(strings::endsWith(m_master_cwd,"slave")){
                 vector<string> tokens = strings::tokenize(m_master_cwd,"/");
                 m_master_cwd.clear();
