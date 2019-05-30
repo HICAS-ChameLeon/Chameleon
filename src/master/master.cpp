@@ -94,14 +94,6 @@ namespace chameleon {
                 &mesos::internal::StatusUpdateMessage::update,
                 &mesos::internal::StatusUpdateMessage::pid);
 
-        // send the status update acknowledement message from master to the specific slave
-        install<mesos::internal::StatusUpdateAcknowledgementMessage>(
-                &Master::status_update_acknowledgement,
-                &mesos::internal::StatusUpdateAcknowledgementMessage::slave_id,
-                &mesos::internal::StatusUpdateAcknowledgementMessage::framework_id,
-                &mesos::internal::StatusUpdateAcknowledgementMessage::task_id,
-                &mesos::internal::StatusUpdateAcknowledgementMessage::uuid);
-
         install<LaunchMasterMessage>(&Master::launch_master);
         install<SuperMasterControlMessage>(&Master::super_master_control);
         install<TerminatingMasterMessage>(&Master::received_terminating_master_message);
@@ -110,11 +102,6 @@ namespace chameleon {
 
 //        install<ReplyShutdownMessage>(&Master::received_reply_shutdown_message,&ReplyShutdownMessage::slave_ip, &ReplyShutdownMessage::is_shutdown);
 
-        /**
-         * Function  :  install schedule
-         * Author    :  weiguow
-         * Date      :  2018-12-27
-         * */
         install<mesos::scheduler::Call>(&Master::receive);
 
 //        install<TerminatingMasterMessage>
@@ -451,15 +438,9 @@ namespace chameleon {
         return m_webui_path;
     }
 
-    /**
-      * Function model  :  spark run on chameleon
-      * Author          :  weiguow
-      * Date            :  2018-12-27
-      * Funtion name    :  receive
-      * @param          : UPID& from ,Call& call
-      * */
+    //Handles messages sent from spark
     void Master::receive(const UPID &from, const mesos::scheduler::Call &call) {
-        LOG(INFO)<<call.subscribe().framework_info().name();
+
         //first call
         if (call.type() == mesos::scheduler::Call::SUBSCRIBE) {
             subscribe(from, call.subscribe());
@@ -496,10 +477,6 @@ namespace chameleon {
                 decline(framework, call.decline());
                 break;
 
-            case mesos::scheduler::Call::SHUTDOWN:
-                shutdown(framework, call.shutdown());
-                break;
-
             case mesos::scheduler::Call::ACKNOWLEDGE: {
                 Try<UUID> uuid = UUID::fromBytes(call.acknowledge().uuid());
                 if (uuid.isError()) {
@@ -516,28 +493,16 @@ namespace chameleon {
         }
     }
 
-    /**
-     * Function model  :  spark run on chameleon
-     * Author          :  weiguow
-     * Date            :  2018-12-28
-     * Funtion name    :  subscribe
-     * @param          : UPID &from ,Call::Subscribe &subscribe
-     * */
+    //Framework subscribe to Chameleon
     void Master::subscribe(const UPID &from, const mesos::scheduler::Call::Subscribe &subscribe) {
 
         mesos::FrameworkInfo frameworkInfo = subscribe.framework_info();
 
-//        LOG(INFO) << "Received  SUBSCRIBE call for framework "
-//                  << frameworkInfo.name() << " at " << from;
-
         if (!frameworkInfo.has_id() || frameworkInfo.id().value().empty()) {
 
-            // If we are here the framework is subscribing for the first time.
-            // Check if this framework is already subscribed (because it retries).
+
             foreachvalue (Framework *framework, frameworks.registered) {
                                     if (framework->pid == from) {
-//                                        LOG(INFO) << "Framework " << *framework
-//                                                  << " already subscribed, resending acknowledgement";
                                         mesos::internal::FrameworkRegisteredMessage message;
                                         message.mutable_framework_id()->MergeFrom(framework->id());
                                         message.mutable_master_info()->MergeFrom(framework->master->m_masterInfo);
@@ -551,7 +516,14 @@ namespace chameleon {
             frameworkInfo.mutable_id()->CopyFrom(newFrameworkId());
             Framework *framework = new Framework(this, frameworkInfo, from);
 
-            add_framework(framework);
+            //add Framework
+            frameworks.registered[framework->id().value()] = framework;
+
+            if (framework->connected()) {
+                if (framework->pid.isSome()) {
+                    link(framework->pid.get());
+                }
+            }
 
             message.mutable_framework_id()->MergeFrom(framework->id());
             message.mutable_master_info()->MergeFrom(m_masterInfo);
@@ -559,11 +531,7 @@ namespace chameleon {
             framework->send(message);
 
             LOG(INFO) << "Subscribe framework " << frameworkInfo.name() << " successful!";
-//
-//            const Duration temp_duration = Seconds(0);
-//            //
-//            process::delay(temp_duration, self(), &Master::Offer, framework->id());
-// after subscribed, the framework can be given resource offers.
+
             offer(framework->id());
 
             return;
@@ -571,12 +539,6 @@ namespace chameleon {
     }
 
 
-    /**
-     * Function model  :  spark run on chameleon
-     * Author          :  weiguow
-     * Date            :  2018-12-28
-     * Funtion name    :  Master::offer
-     * */
     void Master::offer(const mesos::FrameworkID &frameworkId) {
 
         Framework *framework = CHECK_NOTNULL(frameworks.registered.at(frameworkId.value()));
@@ -602,12 +564,6 @@ namespace chameleon {
         return;
     }
 
-    /**
-    * Function model  :  spark run on chameleon
-    * Author          :  weiguow
-    * Date            :  2018-12-29
-    * Funtion name    :  Master::accept
-    * */
     void Master::accept(Framework *framework, mesos::scheduler::Call::Accept accept) {
         //judge the operation type
         for (int i = 0; i < accept.operations_size(); ++i) {
@@ -718,149 +674,12 @@ namespace chameleon {
 
         LOG(INFO) << "Processing TEARDOWN call for framework " << *framework;
 
-        remove_framework(framework);
-    }
-
-
-    void Master::decline(Framework *framework, const mesos::scheduler::Call::Decline &decline) {
-        CHECK_NOTNULL(framework);
-        for (auto i = decline.offer_ids().begin(); i != decline.offer_ids().end(); i++) {
-            if (decline.offer_ids().size() == m_scheduler->m_offers.size()) {
-                process::dispatch(self(), &Master::offer, framework->id());
-            }
-            else {
-                LOG(INFO) << "Offer "<< i->value() << " has been declined by framework "
-                << framework->pid.get();
-                m_scheduler->m_offers.erase(i->value());
-            }
-        }
-    }
-
-
-    void Master::shutdown(Framework *framework, const mesos::scheduler::Call::Shutdown &shutdown) {
-        CHECK_NOTNULL(framework);
-
-        const mesos::SlaveID &slaveID = shutdown.slave_id();
-
-//        const
-    }
-
-    /**
-     * Function     : status_update
-     * Author       : weiguow
-     * Date         : 2019-1-10
-     * Description  : get statusUpdate message from slave and send it to framework
-     * */
-    void Master::status_update(mesos::internal::StatusUpdate update, const UPID &pid) {
-
-        LOG(INFO) << "Status update " << update.status().state()
-                  << " from agent " << update.slave_id().value();
-
-        Framework *framework = get_framework(update.framework_id());
-
-        if (update.has_uuid()) {
-            update.mutable_status()->set_uuid(update.uuid());
-        }
-
-        if (update.has_framework_id()) {
-
-//            LOG(INFO) << "Sending status update " << update.status().state()
-//                      << " to framework " << update.framework_id().value();
-
-            mesos::internal::StatusUpdateMessage message;
-            message.mutable_update()->MergeFrom(update);
-            message.set_pid(pid);   //this pid is slavePID
-
-            framework->send(message);
-        }
-    }
-
-    /**
-     * Function     : status_update_acknowledgement
-     * Author       : weiguow
-     * Date         : 2019-1-10
-     * Description  : get statusUpdateAcknowledge message from slave
-     * */
-    void Master::status_update_acknowledgement(
-            const UPID &from,
-            const mesos::SlaveID &slaveId,
-            const mesos::FrameworkID &frameworkId,
-            const mesos::TaskID &taskId,
-            const string &uuid) {
-        Framework *framework = get_framework(frameworkId);
-
-        mesos::scheduler::Call::Acknowledge message;
-        message.mutable_slave_id()->CopyFrom(slaveId);
-        message.mutable_task_id()->CopyFrom(taskId);
-        message.set_uuid(uuid);
-
-        acknowledge(framework, message);
-    }
-
-    /**
-    * Function     : acknowledge
-    * Author       : weiguow
-    * Date         : 2019-1-10
-    * Description  : send StatusUpdateAcknowledgementMessage message to
-    * slave make sure the status
-    * */
-    void Master::acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge) {
-        const mesos::SlaveID &slaveId = acknowledge.slave_id();
-        const mesos::TaskID &taskId = acknowledge.task_id();
-        const UUID uuid = UUID::fromBytes(acknowledge.uuid()).get();
-
-        mesos::internal::StatusUpdateAcknowledgementMessage message;
-        message.mutable_slave_id()->CopyFrom(slaveId);
-
-        message.mutable_framework_id()->MergeFrom(framework->id());
-        message.mutable_task_id()->CopyFrom(taskId);
-        message.set_uuid(uuid.toBytes());
-
-        LOG(INFO) << "Sending acknowledge to slave " <<  m_slave_objects.at(slaveId.value())->m_upid;
-
-        send(m_slave_objects.at(slaveId.value())->m_upid, message);
-    }
-
-    /**
-     * Function     : addFramework
-     * Author       : weiguow
-     * Date         : 2019-2-22
-     * Description  : Save Frameworkinfo to master
-     * */
-    void Master::add_framework(Framework *framework) {
-
-        frameworks.registered[framework->id().value()] = framework;
-
-        if (framework->connected()) {
-            if (framework->pid.isSome()) {
-                link(framework->pid.get());
-            }
-        }
-    }
-
-    /**
-     * use frameworkId to get Framework-weiguow-2019/2/24
-     * */
-    Framework *Master::get_framework(const mesos::FrameworkID &frameworkId) {
-        return frameworks.registered.contains(frameworkId.value())
-               ? frameworks.registered.at(frameworkId.value())
-               : nullptr;
-    }
-
-    /**
-     * remove framework-weiguow-2019/2/26*
-     * */
-    void Master::remove_framework(Framework *framework) {
-        CHECK_NOTNULL(framework);
-
         LOG(INFO) << "Removing framework " << *framework;
 
         // restore the resources occupied by the framework in the specific slave
         const string framework_id = framework->id().value();
-        LOG(INFO) << "Removing " << framework_id;
         if (m_framework_to_slaves.count(framework_id)) {
             unordered_set<string> &slave_uuids = m_framework_to_slaves.at(framework_id);
-            LOG(INFO) << "Removing 752";
 
             if (!slave_uuids.empty()) {
                 for (auto it = slave_uuids.begin(); it != slave_uuids.end(); it++) {
@@ -869,7 +688,6 @@ namespace chameleon {
                         LOG(INFO) << "restore begins";
                         if (slave->restore_resource_of_framework(framework_id)) {
                             if (framework->active()) {
-//                            CHECK(framework->active());
 
                                 LOG(INFO) << "Deactive framework " << *framework;
 
@@ -885,26 +703,84 @@ namespace chameleon {
                     } else {
                         LOG(INFO) << "slave == nullptr";
                     }
-
                 }
             } else {
                 LOG(INFO) << "slave_uuids == empty";
-
             }
-
-
             m_framework_to_slaves.erase(framework_id);
         }
-
     }
 
+    //The Framework rejects offers
+    void Master::decline(Framework *framework, const mesos::scheduler::Call::Decline &decline) {
+        CHECK_NOTNULL(framework);
+        for (auto i = decline.offer_ids().begin(); i != decline.offer_ids().end(); i++) {
+            if (decline.offer_ids().size() == m_scheduler->m_offers.size()) {
+                process::dispatch(self(), &Master::offer, framework->id());
+            }
+            else {
+                LOG(INFO) << "Offer "<< i->value() << " has been declined by framework "
+                << framework->pid.get();
+                m_scheduler->m_offers.erase(i->value());
+            }
+        }
+    }
 
+    //Receive status updates from the slave side and send message to Framework
+    void Master::status_update(mesos::internal::StatusUpdate update, const UPID &pid) {
+
+        LOG(INFO) << "Status update " << update.status().state()
+                  << " from agent " << update.slave_id().value();
+
+        Framework *framework = get_framework(update.framework_id());
+
+        if (update.has_uuid()) {
+            update.mutable_status()->set_uuid(update.uuid());
+        }
+
+        if (update.has_framework_id()) {
+
+            mesos::internal::StatusUpdateMessage message;
+            message.mutable_update()->MergeFrom(update);
+            message.set_pid(pid);
+
+            framework->send(message);
+        }
+    }
+
+    //Accepts status confirmation messages sent from the Framework
+    //and send a status update to confirm the success of the message to slave
+    void Master::acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge) {
+
+        LOG(INFO) << "Received status update from framework " << framework->id().value();
+
+        const mesos::SlaveID &slaveId = acknowledge.slave_id();
+        const mesos::TaskID &taskId = acknowledge.task_id();
+        const UUID uuid = UUID::fromBytes(acknowledge.uuid()).get();
+
+        mesos::internal::StatusUpdateAcknowledgementMessage message;
+        message.mutable_slave_id()->CopyFrom(slaveId);
+
+        message.mutable_framework_id()->MergeFrom(framework->id());
+        message.mutable_task_id()->CopyFrom(taskId);
+        message.set_uuid(uuid.toBytes());
+
+        LOG(INFO) << "Sending acknowledge to " <<  m_slave_objects.at(slaveId.value())->m_upid;
+
+        send(m_slave_objects.at(slaveId.value())->m_upid, message);
+    }
+
+    Framework *Master::get_framework(const mesos::FrameworkID &frameworkId) {
+        return frameworks.registered.contains(frameworkId.value())
+               ? frameworks.registered.at(frameworkId.value())
+               : nullptr;
+    }
+
+    //Create an id for the newly subscribe Framework
     mesos::FrameworkID Master::newFrameworkId() {
         std::ostringstream out;
         out << m_masterInfo.id() << "-" << std::setw(4)
             << std::setfill('0') << nextFrameworkId++;
-
-        LOG(INFO) << "m_masterInfo.id(): " << m_masterInfo.id();
 
         mesos::FrameworkID frameworkId;
         frameworkId.set_value(out.str());

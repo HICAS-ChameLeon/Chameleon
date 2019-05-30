@@ -220,14 +220,6 @@ namespace chameleon {
         }
     }
 
-
-
-
-    /**
-     * Funtion  : runTask
-     * Author   : weiguow zhangyixin
-     * Date     : 2019-1-2
-     * */
     void Slave:: run_task(
             const process::UPID &from,
             const mesos::FrameworkInfo &frameworkInfo,
@@ -508,13 +500,6 @@ namespace chameleon {
         send(from, run_task_message);
     }
 
-
-    /**
-     * Function  : getExecutorInfo
-     * Author    : weiguow
-     * Date      : 2019-1-4
-     * Description  : getExecutorInfo from FrameworkInfo & TaskInfo
-     * */
     mesos::ExecutorInfo Slave::get_executorinfo(
             const mesos::FrameworkInfo &frameworkInfo,
             const mesos::TaskInfo &task) const {
@@ -608,18 +593,10 @@ namespace chameleon {
         return executorInfo;
     }
 
-    /**
-     * Function    : status_update
-     * Author      : weiguow
-     * Date        : 2019-1-8
-     * Description : Encapsulates the statusUpdate message and send ack to executor,
-     * also send status update message to master
-     * @param      : update & pid
-     * */
     void Slave::status_update(mesos::internal::StatusUpdate update, const Option<UPID> &pid) {
 
         LOG(INFO) << "Received status update " << update.status().state()
-          << " of framework " << update.framework_id().value();
+          << " from framework " << update.framework_id().value();
 
         update.mutable_status()->set_uuid(update.uuid());
         update.mutable_status()->set_source(
@@ -653,14 +630,6 @@ namespace chameleon {
 
     }
 
-    /**
-     * Function     : statusUpdateAcknowledgement
-     * Author      : weiguow
-     * Date        : 2019-1-10
-     * Description : get statusUpdateAcknowledgement message from master to
-     *               make sure the status update is successful
-     * @param      : from, slaveId, frameworkId, taskId, uuid
-     * */
     void Slave::status_update_acknowledgement(
             const UPID &from,
             const mesos::SlaveID &slaveId,
@@ -677,9 +646,6 @@ namespace chameleon {
         LOG(INFO) << "Status update manager successfully of framework " << frameworkId.value();
     }
 
-    /**
-     * get FrameworkInfo by FrameworkId-by weiguow-2019/2/25
-     * */
     Framework *Slave::get_framework(const mesos::FrameworkID &frameworkId) const {
         if (frameworks.count(frameworkId.value()) > 0) {
             return frameworks.at(frameworkId.value());
@@ -687,12 +653,6 @@ namespace chameleon {
         return nullptr;
     }
 
-    /**
-     * Function     : shutdown_framework
-     * Author       : weiguow
-     * Date         : 2019-2-26
-     * Description  : shutdownFramework after task run over
-     * */
     void Slave::shutdown_framework(const process::UPID &from, const mesos::FrameworkID &frameworkId) {
         LOG(INFO) << "Asked to shut down framework " << frameworkId.value()
                   << " by " << from;

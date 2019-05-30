@@ -183,23 +183,15 @@ namespace chameleon {
          */
         void received_heartbeat(const UPID &slave, const RuntimeResourcesMessage &runtime_resouces_message);
 
-        /**
-         * make random ID-weiguow-2019/2/24
-         * */
         mesos::FrameworkID newFrameworkId();
 
         Framework *get_framework(const mesos::FrameworkID &frameworkId);
 
         hashmap<string, mesos::Offer*> offers;
 
-        /**
-         * save Frameworkinfo-weiguow-2019-2-22
-         * */
         struct Frameworks {
             // key: framework ID, value: Framework
             hashmap<string, Framework*> registered;
-
-//            BoundedHashMap<string, Framework*> completed;
 
         } frameworks;
 
@@ -219,24 +211,10 @@ namespace chameleon {
 
         void decline(Framework* framework,const mesos::scheduler::Call::Decline& decline);
 
-        void shutdown(Framework* framework,const mesos::scheduler::Call::Shutdown& shutdown);
-
         void status_update(mesos::internal::StatusUpdate update, const UPID &pid);
-
-        void status_update_acknowledgement(
-                const UPID &from,
-                const mesos::SlaveID &slaveId,
-                const mesos::FrameworkID &frameworkId,
-                const mesos::TaskID &taskId,
-                const string &uuid);
 
         void acknowledge(Framework *framework, const mesos::scheduler::Call::Acknowledge &acknowledge);
 
-        void add_framework(Framework *framework);
-
-        void remove_framework(Framework *framework);
-
-        void deactivate(Framework* framework, bool rescind);
 
         // super_master related
         void set_super_master_path(const string& path);
@@ -259,6 +237,8 @@ namespace chameleon {
             LOG(INFO) << "Shutting down server..." ;
             this->shouldQuit.set(true);
         }
+
+        int64_t nextFrameworkId;
 
     private:
         Promise<bool> shouldQuit;
@@ -304,8 +284,7 @@ namespace chameleon {
 //        shared_ptr<SchedulerInterface> m_wqn_scheduler;
        // shared_ptr<SchedulerInterface> m_smhc_scheduler;
 
-        int64_t nextFrameworkId;
-
+        //Save master information, including master id, master IP, etc
         mesos::MasterInfo m_masterInfo;
 
         // super_master_related
