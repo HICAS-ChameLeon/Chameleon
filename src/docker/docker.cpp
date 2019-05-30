@@ -81,6 +81,13 @@ static Future<Nothing> checkError(const string& cmd, const Subprocess& s)
             .then(lambda::bind(_checkError, cmd, s));
 }
 
+/**
+ * Function name  : create
+ * Author         : Heldon
+ * Date           : 2019-05-28
+ * Description    : create the docker class
+ * Return         : Try<Owned<Docker>>
+ */
 Try<Owned<Docker>> Docker::create(
     const string& path,
     const string& socket,
@@ -105,6 +112,13 @@ Try<Owned<Docker>> Docker::create(
   return docker;
 }
 
+/**
+ * Function name  : create
+ * Author         : Heldon
+ * Date           : 2019-05-28
+ * Description    : create image struct
+ * Return         : Try<Docker::Image>
+ */
 Try<Docker::Image> Docker::Image::create(const JSON::Object& json)
 {
     Result<JSON::Value> entrypoint =
@@ -189,6 +203,13 @@ Try<Docker::Image> Docker::Image::create(const JSON::Object& json)
     return Docker::Image(entrypointOption, envOption);
 }
 
+/**
+ * Function name  : create
+ * Author         : Heldon
+ * Date           : 2019-05-28
+ * Description    : create the docker contaienr
+ * Return         : Try<Docker::Container>
+ */
 Try<Docker::Container> Docker::Container::create(const string& output)
 {
     Try<JSON::Array> parse = JSON::parse<JSON::Array>(output);
@@ -350,6 +371,13 @@ Try<Docker::Container> Docker::Container::create(const string& output)
     return Container(output, id, name, optionalPid, started, ipAddress, devices);
 }
 
+/**
+ * Function name  : create
+ * Author         : Heldon
+ * Date           : 2019-05-28
+ * Description    : create the run options
+ * Return         : Try<Docker::RunOptions>
+ */
 Try<Docker::RunOptions> Docker::RunOptions::create(
         const ContainerInfo& containerInfo,
         const CommandInfo& commandInfo,
@@ -624,11 +652,18 @@ Try<Docker::RunOptions> Docker::RunOptions::create(
 
 void commandDiscarded(const Subprocess& s, const string& cmd)
 {
-  LOG(INFO) << "Heldon" << "'" << cmd << "' is being discarded";
+  LOG(INFO) << "'" << cmd << "' is being discarded";
   os::killtree(s.pid(), SIGKILL);
 }
 
-//docker run
+
+/**
+ * Function name  : run
+ * Author         : Heldon
+ * Date           : 2019-05-28
+ * Description    : command docker run, run the image
+ * Return         : Future<Option<int>>
+ */
 Future<Option<int>> Docker::run(
         const Docker::RunOptions& options,
         const process::Subprocess::IO& _stdout,
@@ -746,8 +781,6 @@ Future<Option<int>> Docker::run(
     argv.push_back(argument);
   }
 
-  //LOG(INFO) << "Heldon docker run's arguments : " << options.arguments.front() << options.arguments.at(1) ;
-
   string cmd = strings::join(" ", argv);
 
   LOG(INFO) << "Running " << cmd;
@@ -768,7 +801,14 @@ Future<Option<int>> Docker::run(
   return s->status();
 }
 
-//docker inspect
+
+/**
+ * Function name  : inspect
+ * Author         : Heldon
+ * Date           : 2019-05-28
+ * Description    : command docker inspect, show the detail of container
+ * Return         : Future<Docker::Container>
+ */
 Future<Docker::Container> Docker::inspect(
         const string& containerName,
         const Option<Duration>& retryInterval) const
@@ -902,7 +942,14 @@ void Docker::___inspect(
     promise->set(container.get());
 }
 
-//docker stop
+
+/**
+ * Function name  : stop
+ * Author         : Heldon
+ * Date           : 2019-05-28
+ * Description    : command docker stop, stop the container
+ * Return         : Future<Nothing>
+ */
 Future<Nothing> Docker::stop(
         const string& containerName,
         const Duration& timeout,
@@ -961,7 +1008,14 @@ Future<Nothing> Docker::_stop(
     return checkError(cmd, s);
 }
 
-//docker rm (-f)
+
+/**
+ * Function name  : rm
+ * Author         : Heldon
+ * Date           : 2019-05-28
+ * Description    : command docker rm -v/ rm, remove the container
+ * Return         : void
+ */
 Future<Nothing> Docker::rm(
         const string& containerName,
         bool force) const
@@ -986,7 +1040,14 @@ Future<Nothing> Docker::rm(
     return checkError(cmd, s.get());
 }
 
-//docker ps -a
+
+/**
+ * Function name  : ps
+ * Author         : Heldon
+ * Date           : 2019-05-28
+ * Description    : command ps -a/ps, show container list
+ * Return         : void
+ */
 Future<list<Docker::Container>> Docker::ps(
         bool all,
         const Option<string>& prefix) const
@@ -1122,7 +1183,14 @@ list<Future<Docker::Container>> Docker::createInspectBatch(
     return batch;
 }
 
-//docker pull
+
+/**
+ * Function name  : pull
+ * Author         : Heldon
+ * Date           : 2019-05-28
+ * Description    : command pull, pull the image
+ * Return         : void
+ */
 Future<Docker::Image> Docker::pull(
         const string& directory,
         const string& image,

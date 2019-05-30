@@ -102,23 +102,10 @@ namespace slave{
             const Option<string>& user,
             const mesos::SlaveID& slaveId,
             const map<string, string>& environment){
-        LOG(INFO)<<"Heldon Enter function DockerContainerizerProcess::Container::create";
-//        Try<Nothing> touch = os::touch(path::join(directory, "stdout"));
-//        if (touch.isError()) {
-//            LOG(INFO)<<"Heldon touch stout error";
-//            return Error("Failed to touch 'stdout': " + touch.error());
-//        }
-
         string containerWorkdir = directory;
-
-//        if (touch.isError()) {
-//            LOG(INFO)<<"Heldon touch stderr error";
-//            return Error("Failed to touch 'stderr': " + touch.error());
-//        }
 
         Option<mesos::ContainerInfo> containerInfo = None();
         Option<mesos::CommandInfo> commandInfo = None();
-        LOG(INFO) << "Heldon ready to return Container";
         return new Container(
                 container_id,
                 taskInfo,
@@ -146,7 +133,6 @@ namespace slave{
             const Option<std::string>& user,
             const mesos::SlaveID& slaveId,
             const std::map<std::string, std::string>& environment){
-        LOG(INFO)<<"Heldon Enter function launch";
         return dispatch(
                 m_process.get(),
                 &DockerContainerizerProcess::launch,
@@ -175,7 +161,6 @@ namespace slave{
             const mesos::SlaveID& slaveId,
             const map<string, string>& environment){
 
-        LOG(INFO)<<"Heldon Enter function DockerContainerizerProcess launch";
         Option<mesos::ContainerInfo> containerInfo;
 
         //assign the containerInfo
@@ -278,7 +263,6 @@ namespace slave{
         }
 
         Container* container = m_containers.at(container_id);
-        LOG(INFO)<<"Heldon container name  = "<<container_name;
         Try<Docker::RunOptions> runOptions = Docker::RunOptions::create(
                 container->m_container,
                 container->m_command,

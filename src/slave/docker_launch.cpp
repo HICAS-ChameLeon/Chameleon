@@ -65,11 +65,18 @@ class DockerNoExecutorScheduler : public Scheduler
 {
 public:
   DockerNoExecutorScheduler()
-    : tasksLaunched(0), tasksFinished(0), totalTasks(1) {}
+    : tasks_launched(0), tasks_finished(0), total_tasks(1) {}
 
   virtual ~DockerNoExecutorScheduler() {}
 
-  virtual void registered(SchedulerDriver*,
+  /**
+   * Function name  : registered
+   * Author         : Heldon
+   * Date           : 2019-05-28
+   * Description    : Master and Slave are registered
+   * Return         : void
+   */
+    virtual void registered(SchedulerDriver*,
                           const FrameworkID&,
                           const MasterInfo&)
   {
@@ -80,12 +87,17 @@ public:
 
   virtual void disconnected(SchedulerDriver* driver) {}
 
+  /**
+   * Function name  : resourceOffers
+   * Author         : Heldon
+   * Date           : 2019-05-28
+   * Description    : Allocating offer's resource for tasks
+   * Return         : void
+   */
   virtual void resourceOffers(SchedulerDriver* driver,
                               const vector<Offer>& offers)
   {
-    cout << "." << flush;
     for (size_t i = 0; i < offers.size(); i++){
-      LOG(INFO) << "Heldon offers_size : " << offers.size();
       const Offer& offer = offers[i];
 
       double cpus = 0;
@@ -104,8 +116,8 @@ public:
 
       // Launch tasks.
       vector<TaskInfo> tasks;
-      while (tasksLaunched < totalTasks && cpus >= FLAGS_cpu && mem >= FLAGS_mem) {
-        int taskId = tasksLaunched++;
+      while (tasks_launched < total_tasks && cpus >= FLAGS_cpu && mem >= FLAGS_mem) {
+        int taskId = tasks_launched++;
 
         cout << "Starting task " << taskId << " on "
              << offer.hostname() << endl;
@@ -153,6 +165,13 @@ public:
   virtual void offerRescinded(SchedulerDriver* driver,
                               const OfferID& offerId) {}
 
+  /**
+   * Function name  : statusUpdate
+   * Author         : Heldon
+   * Date           : 2019-05-28
+   * Description    : update tasks' status
+   * Return         : void
+   */
   virtual void statusUpdate(SchedulerDriver* driver, const TaskStatus& status)
   {
     int taskId = lexical_cast<int>(status.task_id().value());
@@ -160,9 +179,9 @@ public:
     cout << "Task " << taskId << " is in state " << status.state() << endl;
 
     if (status.state() == TASK_FINISHED)
-      tasksFinished++;
+      tasks_finished++;
 
-    if (tasksFinished == totalTasks)
+    if (tasks_finished == total_tasks)
       driver->stop();
   }
 
@@ -181,9 +200,9 @@ public:
   virtual void error(SchedulerDriver* driver, const string& message) {}
 
 private:
-  int tasksLaunched;
-  int tasksFinished;
-  int totalTasks;
+  int tasks_launched;  //tasks that have been launched
+  int tasks_finished;  //tasks that have been finished
+  int total_tasks;  //the number of tasks
 };
 
 

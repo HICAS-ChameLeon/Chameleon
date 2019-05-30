@@ -9,7 +9,6 @@ add_subdirectory(resource_collector)
 set(GTEST_LIBS gmock gtest gflags)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR})
-
 #Gpu
 set(Gpu_Collector_SRCS
         resource_collector/gpu_collector.cpp

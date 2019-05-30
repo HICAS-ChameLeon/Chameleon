@@ -397,7 +397,6 @@ namespace chameleon {
             LOG(INFO) << "framework " << framework->info.name() << " downloaded successfully";
         }
 
-        LOG(INFO)<<"Heldon enter function start_mesos_executor";
         const string slave_upid = construct_UPID_string("slave", stringify(self().address.ip), "6061");
         const string mesos_directory = path::join(os::getcwd(), "/mesos_executor/mesos-directory");
 
@@ -460,18 +459,14 @@ namespace chameleon {
         container_id.set_value(UUID::random().toString());
 
         const string container_directory = path::join(os::getcwd(), "/container/"+container_id.value());
-        cout<<container_directory<<endl;
         Future<bool> launch;
-
-        LOG(INFO)<<"Heldon enter function containerizer->launch";
-        LOG(INFO)<<"Heldon m_executorInfo.resources().size() : "<<m_executorInfo.resources().size();
 
         launch = m_containerizer->launch(
                 container_id,
                 taskInfo,
                 m_executorInfo,
                 container_directory,
-                "heldon",
+                self().address.hostname().get(),
                 m_slaveInfo.id(),
                 environment);
     }
@@ -532,7 +527,6 @@ namespace chameleon {
 
         if (task.has_container()) {
             executorInfo.mutable_container()->CopyFrom(task.container());
-            LOG(INFO)<<"Heldon task has a container" ;
         }
 
         string name = "(Task: " + task.task_id().value() + ") ";
@@ -911,7 +905,6 @@ int main(int argc, char *argv[]) {
         os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));
 
 //        os::setenv("LIBPROCESS_PORT", stringify(FLAGS_port));  // LIBPROCESS_
-        LOG(INFO)<<"Heldon env port : "<< os::getenv("LIBPROCESS_PORT").get();
         process::initialize("slave");
 
         chameleon::Slave slave;
@@ -924,8 +917,6 @@ int main(int argc, char *argv[]) {
 
         slave.setM_containerizer(docker_containerizer.get());
 
-        LOG(INFO)<<"Heldon port : "<<stringify(FLAGS_port);
-        LOG(INFO)<<"Heldon address.port : " << process::address().port;
         slave.setM_interval(Seconds(FLAGS_ht));
         slave.setM_work_dir(work_dir_path);
 //        slave.setM_fault_tolerance(FLAGS_fault_tolerance);

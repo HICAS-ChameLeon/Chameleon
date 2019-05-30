@@ -73,8 +73,8 @@ namespace chameleon{
         environment["framework_name"] = framework_name;
         environment["PUBLIC_RESOURCES_DIR"] = m_public_resources_dir;
         Option<string> hadoop_home = os::getenv("HADOOP_HOME");
-        LOG(INFO)<<hadoop_home.get();
-        environment["HADOOP_HOME"] =hadoop_home.get();
+        //LOG(INFO)<<hadoop_home.get();
+        //environment["HADOOP_HOME"] =hadoop_home.get();
         LOG(INFO)<<"lele download dependencies of framework_name: "<<framework_name;
         Try<Subprocess> download_subprocess = process::subprocess(
                 downloader_path,

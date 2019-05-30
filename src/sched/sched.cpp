@@ -1072,7 +1072,6 @@ protected:
   {
     // TODO(jieyu): Move all driver side verification to master since
     // we are moving towards supporting pure launguage scheduler.
-    LOG(INFO)<<"Heldon Enter function acceptOffers";
     if (!connected) {
       VLOG(1) << "Ignoring accept offers message as master is disconnected";
 
@@ -1130,7 +1129,6 @@ protected:
         // and in launchTasks as well.
         LOG(WARNING) << "Attempting to accept an unknown offer " << offerId.value();
       } else {
-        LOG(INFO)<<"Heldon savedOffers contains offerid" << offerId.value();
         // Keep only the slave PIDs where we run tasks so we can send
         // framework messages directly.
         foreach (const Offer::Operation& operation, operations) {

@@ -21,6 +21,11 @@ set(sched_SRC
         master/standalone.hpp
         master/standalone.cpp)
 
-add_library(sched "SHARED" ${sched_SRC} )
+
+list(APPEND sched_PROTOS mesos)
+#list(APPEND sched_PROTOS messages)
+#list(APPEND sched_PROTOS scheduler)
+message(${sched_PROTOS})
+add_library(sched "SHARED" ${sched_SRC} ${CMAKE_BINARY_DIR}/src/libmesos.a)
 
 target_link_libraries(sched ${PROCESS_LIBS}  ${PROCESS_TARGET})
