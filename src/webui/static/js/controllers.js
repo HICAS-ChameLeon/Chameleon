@@ -39,12 +39,14 @@
         }
     }
 
+    //启动master后获取hostname的路径地址
     var leadingChameleonMasterURL = function(path){
         var address = location.hostname + ':' + '6060';
         return '//'+ address + path;
 
     };
 
+    //启动supermaster后获取hostname的路径地址
     var leadingChameleonSuperMasterURL = function(path){
         var address = location.hostname + ':' + '7000';
         return '//'+ address + path;
@@ -53,7 +55,7 @@
 
     //数据自动更新的Controller
     chameleon_app.controller('UpdateCtrl',function($scope,$http,$timeout){
-
+        //每隔两秒，向.../master/runtime-resources路由发送一次请求
         var pollState = function() {
             $scope.delay = 2000;
             $http({
@@ -87,6 +89,7 @@
         }
     });
 
+    //控制机器节点的Controller
     chameleon_app.controller('HardwareCtrl', function($scope,$route, $http,$timeout) {
 
         var pollState = function() {
@@ -109,9 +112,11 @@
 
     });
 
+    //统计所有集群资源的Controller
     chameleon_app.controller('RuntimeCtrl', function($scope,$rootScope,$http) {
     });
 
+    //获得当前framework使用的调度算法的Controller
     chameleon_app.controller('SchedulerCtrl', function($scope,$rootScope,$http) {
         $http({
             method: 'GET',
@@ -161,6 +166,7 @@
 
     });
 
+    //改变调度算法的Controller
     chameleon_app.controller('ChangeSchedulerCtrl', function($scope,$uibModal) {
         var alert_message = "确认更换算法?";
         $scope.openModal = function() {
@@ -511,7 +517,7 @@
         });
     });
 
-    //拓扑图的Controller
+    //网络拓扑图的Controller
     chameleon_app.controller('TopologyCtrl', function($scope, $http) {
 
         $http({
@@ -1104,6 +1110,7 @@
 
     });
 
+    //framework拓扑图的Controller
     chameleon_app.controller('FrameworkTopologyCtrl', function ($scope, $http, $timeout) {
         var pollState = function () {
             $scope.delay = 10000;
@@ -1276,7 +1283,7 @@
     });
 
     var SupermasterStarted;
-    //开启supermaster对应的Controller
+    //开启两层supermaster对应的Controller
     chameleon_app.controller('StartSupermasterCtrl', function ($scope, $rootScope, $uibModal) {
         //$scope.startSupermaster = response.data.start;
         console.log('startSupermaster' + $rootScope.startSupermaster);
@@ -1297,30 +1304,6 @@
                 })
             }
             else if ($rootScope.startSupermaster == 'success'){
-                $scope.openModal = function () {
-                    alert("supermaster已经开启");
-
-                }
-            }
-
-        }
-    });
-
-    chameleon_app.controller('StartThreeSupermasterCtrl', function ($scope, $rootScope, $uibModal) {
-        $scope.openModal = function () {
-            if ($rootScope.startSupermaster == undefined || SupermasterStarted == false) {
-                var alert_message = "确认开启Supermaster?";
-                var modalInstance = $uibModal.open({
-                    templateUrl: 'ControlSupermaster.html',
-                    controller: 'StartThreeSupermasterInstanceCtrl',   //shutdown modal对应的Controller
-                    resolve: {
-                        date: function () {                //date作为shutdown modal的controller传入的参数
-                            return alert_message;          //用于传递数据
-                        }
-                    }
-                })
-            }
-            else {
                 $scope.openModal = function () {
                     alert("supermaster已经开启");
 
@@ -1354,6 +1337,31 @@
         };
         $scope.cancel = function() {
             $uibModalInstance.dismiss('cancel');
+        }
+    });
+
+    //开启三层supermaster对应的Controller
+    chameleon_app.controller('StartThreeSupermasterCtrl', function ($scope, $rootScope, $uibModal) {
+        $scope.openModal = function () {
+            if ($rootScope.startSupermaster == undefined || SupermasterStarted == false) {
+                var alert_message = "确认开启Supermaster?";
+                var modalInstance = $uibModal.open({
+                    templateUrl: 'ControlSupermaster.html',
+                    controller: 'StartThreeSupermasterInstanceCtrl',   //shutdown modal对应的Controller
+                    resolve: {
+                        date: function () {                //date作为shutdown modal的controller传入的参数
+                            return alert_message;          //用于传递数据
+                        }
+                    }
+                })
+            }
+            else {
+                $scope.openModal = function () {
+                    alert("supermaster已经开启");
+
+                }
+            }
+
         }
     });
 
