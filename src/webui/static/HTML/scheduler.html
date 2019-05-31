@@ -1,52 +1,42 @@
 <div class="container-fluid">
-<div class="page-header">
-    <h2>
-        可供选择的算法
-     
-    </h2>
-</div>
-<div class="panel">
+    <div class="page-header">
+        <h2>
+            可供选择的算法(默认为CoarseGrained)
 
-    <!--<div class="input-group">-->
+        </h2>
+    </div>
+    <div class="panel">
+
+        <!--<div class="input-group">-->
         <!--<input class="form-control"/>-->
         <!--<span class="input-group-btn">-->
-                <!--<button class="btn btn-default">Add</button>-->
-            <!--</span>-->
-    <!--</div>-->
-    <table class="table table-striped">
-        <thead>
-        <tr>
-            <th>算法名称</th>
-            <th>选择</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr ng-repeat="x in master.scheduler">
-            <td>{{x.name}}</td>
-            <!--<td><input type="radio" name= "name" ng-model="x.done"/></td>-->
-            <td><input type="checkbox" ng-model="x.done" ng-click="updateSelection($event,x.name)" ng-checked="isSelected(x.name)" id = {{x.id}}  /></td>
-            <td>{{x.done}}</td>
-        </tr>
-        </tbody>
-    </table>
-    {{selected}}
-</div>
+        <!--<button class="btn btn-default">Add</button>-->
+        <!--</span>-->
+        <!--</div>-->
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>算法名称</th>
+                <th>选择</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="x in master.scheduler">
+                <td>{{x.name}}</td>
+
+                <!--<td><input type="radio" name= "name" ng-model="x.done"/></td>-->
+                <div class="list-item">
+                    <td><input type="radio" ng-model="x.done" ng-click="updateSelection($event,x.name)"
+                               id={{x.id}} name="selectState" ng-value = "isSelected(x.name)"/></td>
+                    <!--<td>{{x.done}}</td>-->
+                </div>
+
+            </tr>
+            </tbody>
+        </table>
+    </div>
     <div>
         <button ng-controller="ChangeSchedulerCtrl" type="button" class="btn btn-primary" ng-click="openModal()">更换算法
         </button>
     </div>
-<!--<div class="btn-group" uib-dropdown dropdown-append-to-body>-->
-    <!--<button id="btn-append-to-body" type="button"-->
-            <!--class="btn btn-primary" uib-dropdown-toggle>-->
-        <!--更换算法 <span class="caret"></span>-->
-    <!--</button>-->
-    <!--<ul class="dropdown-menu" uib-dropdown-menu role="menu"-->
-        <!--aria-labelledby="btn-append-to-body">-->
-        <!--<li role="menuitem"><a href="#/topology" ng-click="clickItem1()">全部推送算法</a></li>-->
-        <!--<li role="menuitem"><a href="#/topology/super_master">SMHC算法</a></li>-->
-        <!--<li role="menuitem"><a href="">xxx算法</a></li>-->
-        <!--<li class="divider"></li>-->
-        <!--<li role="menuitem"><a href="#">不使用算法</a></li>-->
-    <!--</ul>-->
-<!--</div>-->
 </div>

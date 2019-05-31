@@ -43,7 +43,7 @@ $ make
 ### master
 ```shell
 $ cd ./build/src/master/
-$ ./master --webui_path=/home/lemaker/open-source/Chameleon/src/webui
+$ ./master --supermaster_path=/home/lemaker/open-source/Chameleon/build/src/master/super_master --webui_path=/home/lemaker/open-source/Chameleon/src/webui
 ```
 
 ### Required Flags

@@ -52,6 +52,9 @@ namespace chameleon {
         install<MasterRegisteredMessage>(&SuperMaster::registered_master);
         install<OwnedSlavesMessage>(&SuperMaster::terminating_master);
 
+        install<HardwareResourcesMessage>(&SuperMaster::received_hardware_resources);
+        install<RuntimeResourcesMessage>(&SuperMaster::received_runtime_resources);
+
         //franework related
         install<mesos::scheduler::Call>(&SuperMaster::received_call);
         install("error",&SuperMaster::launch_master_results);
@@ -171,20 +174,98 @@ namespace chameleon {
                     return ok_response;
                 });
 
+        route(
+                "/resources",
+                "get all resources of the whole topology",
+                [this](Request request) {
+                    JSON::Object result = JSON::Object();
+                    if (!this->m_master_slave.empty()) {
+                        JSON::Array array;
+                        JSON::Object master = JSON::Object();
+                        JSON::Array slaves;
+                        JSON::Object slave =  JSON::Object();
+                        JSON::Object hardware = JSON::Object();
+//                        JSON::Object cpu_collection = JSON::Object();
+//                        JSON::Object mem_collection = JSON::Object();
+//                        JSON::Object gpu_collection = JSON::Object();
+//                        JSON::Object disk_collection = JSON::Object();
+//                        JSON::Object port_collection = JSON::Object();
+//                        JSON::Object tlb_collection = JSON::Object();
+                        JSON::Object runtime = JSON::Object();
+                        JSON::Object cpu_usage = JSON::Object();
+                        JSON::Object disk_usage = JSON::Object();
+                        JSON::Object mem_usage = JSON::Object();
+                        JSON::Object net_usage = JSON::Object();
+                        for (auto it = this->m_master_slave.begin();
+                             it != this->m_master_slave.end(); it++) {
+                            master.values["master"] = it->first;
+                            for(auto iter = it->second.begin();
+                             iter != it->second.end(); iter++){
+                                slave.values["slave_ip"] = iter->m_ip;
+                                slave.values["slave_port"] = iter->m_port;
+                                hardware.values["slave_hostname"] = iter->m_hardware.slave_hostname();
+//                                cpu_collection.values["cpu_infos"] = iter->m_hardware.cpu_collection().cpu_infos();
+//                                cpu_collection.values["cpu_quantity"] = iter->m_hardware.cpu_collection().cpu_quantity();
+//                                hardware.values["cpu_collection"] = cpu_collection;
+                                slave.values["hardware_resources"] = hardware;
+                                cpu_usage.values["cpu_used"] = iter->m_runtime.cpu_usage().cpu_used();
+                                runtime.values["cpu_usage"] = cpu_usage;
+                                disk_usage.values["disk_available"] = iter->m_runtime.disk_usage().disk_available();
+                                disk_usage.values["available_percent"] = iter->m_runtime.disk_usage().available_percent();
+                                runtime.values["disk_usage"] = disk_usage;
+                                mem_usage.values["mem_total"] = iter->m_runtime.mem_usage().mem_total();
+                                mem_usage.values["mem_free"] = iter->m_runtime.mem_usage().mem_free();
+                                mem_usage.values["mem_available"] = iter->m_runtime.mem_usage().mem_available();
+                                mem_usage.values["buffers"] = iter->m_runtime.mem_usage().buffers();
+                                mem_usage.values["cached"] = iter->m_runtime.mem_usage().cached();
+                                mem_usage.values["swap_total"] = iter->m_runtime.mem_usage().swap_total();
+                                mem_usage.values["swap_free"] = iter->m_runtime.mem_usage().swap_free();
+                                mem_usage.values["hugepagesize"] = iter->m_runtime.mem_usage().hugepagesize();
+                                runtime.values["mem_usage"] = mem_usage;
+                                net_usage.values["net_used"] = iter->m_runtime.net_usage().net_used();
+                                runtime.values["net_usage"] = net_usage;
+                                slave.values["runtime_resources"] = runtime;
+                                slaves.values.emplace_back(slave);
+                            }
+                            master.values["slaves"] = slaves;
+                            master.values["slave_quantity"] = slaves.values.size();
+                            array.values.emplace_back(master);
+                            slaves.values.clear();
+                        }
+                        result.values["master_quantity"] = array.values.size();
+                        result.values["content"] = array;
+                    } else {
+                        result.values["master_quantity"] = 0;
+                        result.values["content"] = JSON::Object();
+                    }
+                    OK ok_response(stringify(result));
+                    ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
+                    return ok_response;
+                });
+
 
         route(  //change from two level to one levels
                 "/kill_super_master",
                 "kill the super_master of two levels",
                 [this](Request request){
                     JSON::Object result = JSON::Object();
-                    LOG(INFO) << "MAKUN KILL MASTER";
-                    string new_master_ip = select_master();
+                    LOG(INFO) << " KILL MASTER";
+//                  //string new_master_ip = select_master();
+                    string new_master_ip = stringify(process::address().ip);
+//                    if(find(m_vector_masters.begin(),m_vector_masters.end(),new_master_ip) == m_vector_masters.end()){
+//                        LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
+//                        launch_master_message->set_port("6060");
+//                        launch_master_message->set_master_path(m_master_path);
+//                        launch_master_message->set_webui_path(m_webui_path);
+//                        launch_master_message->set_is_fault_tolerance(false);
+//                        send(UPID("slave@" + new_master_ip + ":6061"), *launch_master_message);
+//                        LOG(INFO) << "send message to " << new_master_ip;
+//                    }
                     send_terminating_master(new_master_ip);
                     result.values["stop"] = "success";
                     //result.values["new_master_ip"] = new_master_ip;
                     OK ok_response(stringify(result));
                     ok_response.headers.insert({"Access-Control-Allow-Origin", "*"});
-                    //select_master();
 
                     return ok_response;
                 });
@@ -199,10 +280,18 @@ namespace chameleon {
         return m_super_master_cwd;
     }
 
+    /**
+     *  set webui_path from FlAGS_webui_path, webui_path is the required flag of launch super_master
+     * @param path
+     */
     void SuperMaster::set_webui_path(const string &path)  {
         m_webui_path = path;
     }
 
+    /**
+     *  set level from FlAGS_level, level is the required flag of launch super_master
+     * @param level
+     */
     void SuperMaster::set_level(const int32_t &level) {
         m_level = level;
     }
@@ -211,6 +300,11 @@ namespace chameleon {
         return m_webui_path;
     }
 
+    /**
+     * when master received the SuperMasterControlMessage, they will send MasterRegisteredMessage to super_master to register
+     * @param from
+     * @param master_registered_message
+     */
     void SuperMaster::registered_master(const UPID &from, const MasterRegisteredMessage &master_registered_message) {
         LOG(INFO) << "accept a mater_registered_message from " << from;
         Future<bool> distinctive = true;
@@ -219,14 +313,19 @@ namespace chameleon {
 
     }
 
+    /**
+     * set master_path from FlAGS_master_path, master_math is the required flag of launch super_master
+     * @param path
+     */
     void SuperMaster::set_master_path(const string& path) {
         m_master_path = path;
     }
 
-    void SuperMaster::set_first_to_second_master(const string &master) {
-
-    }
-
+    /**
+     * determine if the master is registered for the first time
+     * @param upid
+     * @return true: the master first registration, otherwise return false
+     */
     Future<bool> SuperMaster::is_repeated_registered(const UPID &upid) {
         if (std::find(m_masters.begin(), m_masters.end(), upid) != m_masters.end()) {
             LOG(INFO) << " master " << upid << " registered repeatedly!";
@@ -236,6 +335,12 @@ namespace chameleon {
         return true;
     }
 
+    /**
+     * record masters when received MasterRegisteredMessage message
+     * @param future
+     * @param from
+     * @param master_registered_message
+     */
     void SuperMaster::record_master(const Future<bool> &future, const UPID &from,
                                     const MasterRegisteredMessage &master_registered_message) {
         CHECK(!future.isDiscarded());
@@ -267,23 +372,26 @@ namespace chameleon {
         return;
     }
 
+    /*
+     * when change level, terminate masters and launch new master
+     */
     void SuperMaster::terminating_master(const UPID &from, const OwnedSlavesMessage &message) {
         LOG(INFO) << " get an OwnedSlavesMessage from " << from;
-        LOG(INFO) << "MAKUN slaveInfo size: " << message.slave_infos().size();
+        LOG(INFO) << " slaveInfo size: " << message.slave_infos().size();
 
         std::copy(message.slave_infos().begin(), message.slave_infos().end(), std::back_inserter(m_admin_slaves));
-        LOG(INFO) << "MAKUN admin slave size: " << m_admin_slaves.size();
+        LOG(INFO) << " admin slave size: " << m_admin_slaves.size();
         for (SlaveInfo &slaveInfo: m_admin_slaves) {
-            LOG(INFO) << "MAKUN slaveInfo has " << slaveInfo.hardware_resources().cpu_collection().cpu_infos_size() << "CPU";
+            LOG(INFO) << " slaveInfo has " << slaveInfo.hardware_resources().cpu_collection().cpu_infos_size() << "CPU";
         }
-        TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
-        terminating_master->set_master_id(stringify(from.address.ip));
-        LOG(INFO) << "MAKUN: " << from;
-        send(from, *terminating_master);
-        delete terminating_master;
-        LOG(INFO) << " send a TerminatingMasterMessage to master " << from
-                  << " since the super master has receive the owned slaves of that master";
-
+//        TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
+//        terminating_master->set_master_id(stringify(from.address.ip));
+//        LOG(INFO) << "MAKUN: " << from;
+//        send(from, *terminating_master);
+//        delete terminating_master;
+//        LOG(INFO) << " send a TerminatingMasterMessage to master " << from
+//                  << " since the super master has receive the owned slaves of that master";
+//
         // delete the terminating_master from m_masters
         auto iter = std::find(m_masters.begin(), m_masters.end(), from);
         if (iter != m_masters.end()) {
@@ -295,6 +403,10 @@ namespace chameleon {
 
     }
 
+    /**
+     * when the level change to two from one, we need to launch some masters.
+     * classify masters by all slaves managed by super_master, select some masters to launch
+     */
     void SuperMaster::classify_masters() {
 
         CHECK(m_masters.size() == 0);
@@ -363,10 +475,15 @@ namespace chameleon {
         classify_masters_framework();
 
         //change to three levels related
+        //if change level to three from one
         if (m_level == 3)
             classify_super_masters();
     }
 
+    /**
+     * when the level change to three, we need launch some super_masters.
+     * classify super_masters by all masters managed by super_master, select some super_masters to launch
+     */
     void SuperMaster::classify_super_masters() {
         m_classification_masters.clear();
         m_vector_super_master.clear();
@@ -410,47 +527,54 @@ namespace chameleon {
         }
     }
 
-    // launch the exectuables of maters administered by the current super_master
+    /**
+     *  launch the exectuables of maters administered by the current super_master
+     *  send message to related slaves to launch the selection
+     */
     void SuperMaster::launch_masters() {
         LaunchMasterMessage *launch_master_message = new LaunchMasterMessage();
         launch_master_message->set_port("6060");
         launch_master_message->set_master_path(m_master_path);
         launch_master_message->set_webui_path(m_webui_path);
         launch_master_message->set_is_fault_tolerance(false);
-        for(const string& master_ip:m_vector_masters) {
-//            if(master_ip == stringify(process::address().ip)){
-//                send(UPID("master@" + master_ip + ":6060"), *launch_master_message);
- //               LOG(INFO) << "send message to " << master_ip;
- //           } else {
-                send(UPID("slave@" + master_ip + ":6061"), *launch_master_message);
-                LOG(INFO) << "send message to " << master_ip;
- //           }
+//        for(const string& master_ip:m_vector_masters) {
+        for(auto iter = m_vector_masters.begin()+1; iter != m_vector_masters.end(); iter++){
+                send(UPID("slave@" + *iter + ":6061"), *launch_master_message);
+                LOG(INFO) << "send message to " << *iter;
         }
     }
 
+    /**
+     * LOG(INFO) the result of launch master
+     */
     void SuperMaster::is_launch() {
         if(is_launch_master){
-            LOG(INFO)<<" launched "<<m_vector_masters.size() << " masters.";
+            LOG(INFO)<<" launched "<<m_vector_masters.size()-1 << " masters.";
             LOG(INFO)<<" launched all new masters successfully!";
+            LOG(INFO)<<" super_master has "<<m_vector_masters.size()<<" masters";
             send_super_master_control_message();
         }else{
             LOG(INFO) << "launching masters failed!";
         }
     }
 
+    /**
+     * select the masters to launch and launch them
+     */
     void SuperMaster::create_masters(){
         classify_masters();
-//        bool launch_success = launch_masters();
         launch_masters();
-        process::delay(Seconds(3),self(),&Self::is_launch);
-//        if(is_launch_master){
-//            LOG(INFO)<<" launched all new masters successfully!";
-//            process::delay(Seconds(3), self(), &Self::send_super_master_control_message);
-//        }else{
-//            LOG(INFO) << "launching masters failed!";
-//        }
+        if(m_vector_masters.size()>1){
+            process::delay(Seconds(3),self(),&Self::is_launch);
+        }
+        else {
+            send_super_master_control_message();
+        }
     }
 
+    /**
+     * when launch new masters successfully or when don't need to launch master, send the slaves' info to it
+     */
     void SuperMaster::send_super_master_control_message(){
         for(const string& master_ip: m_vector_masters){
             SuperMasterControlMessage *super_master_control_message = new SuperMasterControlMessage();
@@ -476,6 +600,10 @@ namespace chameleon {
         }
     }
 
+    /**
+     * select the only master when change two level to one level, but now select the self, don't use it
+     * @return
+     */
     const string SuperMaster::select_master(){
         string master_ip;
         int num_slaves = 0;
@@ -486,10 +614,14 @@ namespace chameleon {
                 master_ip = *iter;
             }
         }
-        LOG(INFO) << "MAKUN select master ip: " << master_ip;
+        LOG(INFO) << " select master ip: " << master_ip;
         return master_ip;
     }
 
+    /**
+     * send message to master to kill it when change two level to one level
+     * @param master_ip
+     */
     void SuperMaster::send_terminating_master(string master_ip) {
         TerminatingMasterMessage *terminating_master = new TerminatingMasterMessage();
         terminating_master->set_master_id(master_ip);
@@ -501,10 +633,56 @@ namespace chameleon {
         }
         LOG(INFO) << self() << " is terminating due to change levels to one";
         delete(terminating_master);
-        terminate(self());
+//        terminate(self());
+//        wait(self());
+        this->shouldQuit.set(true);
     }
 
-    //framework related
+    /**
+     * store the information when received hardware resources
+     * @param from
+     * @param message
+     */
+    void SuperMaster::received_hardware_resources(const UPID &from, const HardwareResourcesMessage &message) {
+        string master_id = strings::tokenize(stringify(from),"@")[1];
+        LOG(INFO)<<"received hardware resources from "<<master_id;
+        Node node = Node(message.slave_id(),6061,message);
+        auto iter = std::find(m_master_slave[master_id].begin(),m_master_slave[master_id].end(),node);
+        if(iter == m_master_slave[master_id].end()){
+            m_master_slave[master_id].push_back(node);
+            LOG(INFO)<<"++";
+        }
+    }
+
+    /**
+     * store the information when received runtime resources
+     * @param from
+     * @param message
+     */
+    void SuperMaster::received_runtime_resources(const UPID &from, const RuntimeResourcesMessage &message) {
+        string master_id = strings::tokenize(stringify(from),"@")[1];
+        LOG(INFO)<<"received runtime resources from "<<master_id;
+        for(auto iter = m_master_slave.begin(); iter != m_master_slave.end(); iter++){
+            if(iter->first == master_id){
+//                for(auto item = m_master_slave[master_id].begin();
+//                 item != m_master_slave[master_id].end(); item++){
+                for(Node& node: m_master_slave[master_id]){
+                    if(node.m_ip == message.slave_id()){
+                        node.set_runtime(message);
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    /**
+     * framework related
+     * super_master send the master address to Framework scheduler driver when received Call message
+     * @param from
+     * @param call
+     */
     void SuperMaster::received_call(const UPID &from, const mesos::scheduler::Call &call) {
         LOG(INFO)<<call.subscribe().framework_info().name();
         mesos::MasterInfo *master_info = new mesos::MasterInfo();
@@ -547,6 +725,9 @@ namespace chameleon {
         delete master_info;
     }
 
+    /**
+     * classify masters to run different framework
+     */
     void SuperMaster::classify_masters_framework() {
         if(m_vector_masters.size() > 1){
             m_master_framework.insert(std::pair<string,string>("spark",m_vector_masters[0].data()));
@@ -554,6 +735,11 @@ namespace chameleon {
         } else m_master_framework.insert(std::pair<string,string>("spark,flink",m_vector_masters[0].data()));
     }
 
+    /**
+     * determine whether all masters were successfully launch
+     * @param from
+     * @param message
+     */
     void SuperMaster::launch_master_results(const UPID &from, const string &message) {
         if(message == "error"){
             LOG(ERROR) << from << " cannot launch master";
@@ -596,6 +782,19 @@ int main(int argc, char **argv) {
 //    if (res) {
 //        std::cout << " successfully launched master";
 //    }
+
+        Future<bool> quit = super_master.done();
+        quit.await();
+
+        // wait for the server to complete the request
+//        std::this_thread::sleep_for(seconds(2));
+
+        if (!quit.get()) {
+            LOG(INFO) << "The server encountered an error and is exiting now" ;
+        } else {
+            LOG(INFO) << "Done";
+        }
+        process::terminate(super_master.self());
         process::wait(super_master.self());
     }else{
         LOG(INFO) << "To run this program , must set all parameters correctly "
