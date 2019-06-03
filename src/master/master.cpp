@@ -106,6 +106,7 @@ namespace chameleon {
 
 //        install<TerminatingMasterMessage>
 
+        //Get the scheduling algorithm when the current framework is running
         route(
                 "/get-scheduler",
                 "get the information of scheduler",
@@ -144,7 +145,7 @@ namespace chameleon {
                     return ok_response;
                 });
 
-
+        //change scheduling algorithm
         route(
                 "/change-scheduler",
                 "post a file",
@@ -160,7 +161,6 @@ namespace chameleon {
                     vector<string> str_scheduler = strings::split(body_str, "=");
                     string str_scheduler_name = str_scheduler[1];
                     LOG(INFO) << "The select scheduler is " << str_scheduler_name;
-
                     if(str_scheduler_name=="SMHCGrained"){
                         m_scheduler = make_shared<SMHCGrainedScheduler>();
                     }else{ // CoarseGrained
@@ -168,12 +168,6 @@ namespace chameleon {
                     }
                     const string &scheduler_name = m_scheduler->m_scheduler_name;
                     LOG(INFO)<< scheduler_name;
-//                    mesos::internal::ResourceOffersMessage message;
-//                    auto it = this->frameworks.registered.begin();
-//                    Framework *framework = it->second;
-//                    const mesos::FrameworkID frameworkId = framework->id();
-//                    m_scheduler->construct_offers(message,frameworkId,m_slave_objects);
-                  // if(body_str==m_scheduler->m_scheduler_name){}
 
                     std::ostringstream result;
                     result << "{ \"result\": " <<"\"" <<request_method+tpath <<"\"" << "}";
@@ -234,6 +228,7 @@ namespace chameleon {
                     return ok_response;
                 });
 
+        //Get information about the status of the framework, etc.
         route(
                 "/frameworks",
                 "get all the information of frameworks related with the current master",
@@ -302,6 +297,7 @@ namespace chameleon {
                     return ok_response;
                 });
 
+        //Get the slave information of the current framework
         route(
                 "/framework_id",
                 "get all the information of frameworks related with the current master",
@@ -351,6 +347,7 @@ namespace chameleon {
                     return ok_response;
                 });
 
+        //start two-level supermaster by subprocess
         route(
                 "/start_supermaster",
                 "start supermaster by subprocess",
@@ -374,6 +371,7 @@ namespace chameleon {
                     return response;
                 });
 
+        //start three-level supermaster by subprocess
         route(
                 "/start_three_supermaster",
                 "start supermaster by subprocess",
