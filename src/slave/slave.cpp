@@ -803,6 +803,7 @@ namespace chameleon {
             LOG(INFO) << " prepare to  a  heartbeat to the new master " << m_master << " ";
             UPID new_master_ip(m_master);
             DLOG(INFO) << "Before send message to master";
+            sleep(3);
             send(new_master_ip, *hr_message);
             send_heartbeat_to_master();
         }
