@@ -1,0 +1,12 @@
+q()
+source("brt.functions.R")
+library(gbm)
+library(caret)
+#library(caret)
+# test: create a matrix
+dataset<-read.table("/home/zyx/app/Hibench-7.0/report/time_conf.txt",head=FALSE)
+# dataset<-read.table("test.txt",head=FALSE)
+# split dataset to 'train' and 'test'
+tmpset<-createDataPartition(y=dataset$V36,p=0.8,list=FALSE)
+install.packages("caretEnsemble")
+library(caretEnsemble)

@@ -1,0 +1,11 @@
+环境要求：R3.5.1　Python3.6
+    　　　　　R3.5.1压缩包：https://cran.r-project.org/src/base/R-3/
+１．收集数据　hm_ga/DAC/autoDACrun.py 　需要修改文件路径　将生成的数据中字符换成１或０
+２．生成model　hm_ga/asplos/HM.R 需要修改文件路径
+３．生成最优配置　hm_ga/DAC/GA_autoDAC.py　　需要修改文件路径（GA_autoDAC.py以及HG_autoDAC.py中的enCodein,deCodein,preByhm,selectPop,writeConf函数）
+
+Python3需要下载的依赖：　pip install　rpy2　
+R需要下载的依赖命令如下：
+R
+install.packages('gbm')
+install.packages('caret')

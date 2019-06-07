@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "source(\"brt.functions.R\")\nlibrary(gbm)\nlibrary(caret)\n\n# test: create a matrix\ndataset<-read.table(\"/home/zyx/app/Hibench-7.0/report/time_conf.txt\",head=FALSE)\n\n# dataset<-read.table(\"test.txt\",head=FALSE)\n\n\n# split dataset to 'train' and 'test'\ntmpset<-createDataPartition(y=dataset$V36,p=0.8,list=FALSE)\ntrain<-dataset[tmpset, ]  #80%的dataset数据作为训练数据\ntest<-dataset[-tmpset, ]  #20%的dataset数据作为测试数据\nprint(nrow(train))\nprint(nrow(test))\n\n\n\nS<<-train\ntc<-8\nnt<<-5000\nlr<<-0.005\ntmc<-HM(S,tc,nt,lr)\n\n\n\n# save model\nsave(tmc,file=\"/home/zyx/open-source/hm_ga/asplos/model/HModle.RData\")\n\nprint(\"end of programe\")\n\n# functon: pre_func\n# load model\n# HModel <-load(file = \"HModle.RData\")\n\n# predict the test\n# pre_fuc<-function(){\n#   ptest <- test\n#   pre_res <- predict(get(HModel),ptest,nt)\n#   print(\"---------------\")\n#   print(mode(get(HModel)))\n#   print(mode(ptest))\n# }\n\n# pre_fuc()\n\n\n\n\n################################################\n# Function: \n#       HM(S,tc,nt,lr);\n#       HigherOrderProcedure(order)\n#       HigherOrderProcedure(S)\n################################################\n\nHM<-function(S,tc,nt,lr){\n  print(\"hello world my God\")\n  tmc<-list()\n  accuracy<-9\n  order<-1\n  while(accuracy>=0.1){\n    print(\"start...\")\n    print(accuracy)\n    if(order==1){\n      result<-FirstOrderProcedure(S)\n      TM<-result[[1]]\n      accuracy<-result[[2]]\n      print(accuracy)\n      tmc<-c(tmc,list(TM))\n    }else{\n      \n      #TM<-TM*lr+HigherOrderProcedure(order-1)*lr\n      tmc<-c(tmc,HigherOrderProcedure(order-1))\n      ml<-length(tmc)\n      result<-0\n      for(i in 1:ml){\n        result<-result+predict(tmc[[i]],test,nt)\n      }#end for\n      \n      accuracy<-sum((result-test[,1])/test[,1])/nrow(test)\n      #accuracy<-sum(abs(result-test[,1])/test[,1])/nrow(test)\n      cat(\"order is:\",order,\"accuracy is\",accuracy)\n    }#end else\n    \n    order<-order+1\n  }#end while\n  \n  #FM<-TM\n  print(\"the acc is:\")\n  print(accuracy)\n  return(tmc)\n}#end HM func\n\n\nHigherOrderProcedure<-function(order){\n  if(order==1){\n    TM<-FirstOrderProcedure(S)\n    tmc<-list(TM[[1]])\n  }else{\n    TM1<-HigherOrderProcedure(order-1)\n    TM2<-HigherOrderProcedure(order-1)\n\n     #TM<-TM1*lr+TM2*lr\n    tmc<-c(tmc,TM1,TM2)\n\n  }#end else\n\n  return(tmc)\n\n\n}#end HigherOrderfunc\n\n\nFirstOrderProcedure<-function(S){\n\n  #sn<-sample(nrow(pr),nrow(pr)*0.8)\n  #S<-pr[sn,]\n  TM<-gbm.fixed(data=S,gbm.x=2:ncol(S),gbm.y=1,family=\"laplace\",bag.fraction=0.75,learning.rate=lr,tree.complexity=tc,n.trees=nt)\n  pred<-predict(TM,test,nt)\n  # print(\"TM-----------\")\n  # print(mode(TM))\n  # print(mode(test))\n  residual<-predict(TM,S,nt)-S[,1]\n  S<<-data.frame(residual=residual,S[,-1])\n  err<-sum(abs(pred-test[,1])/test[,1])/nrow(test)\n  accuracy<-err\n  # print(accuracy)\n  return(list(TM,accuracy))\n\n}#end FirstOrderfunc\n\n",
+    "created" : 1555297384033.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2410842401",
+    "id" : "7CC12E49",
+    "lastKnownWriteTime" : 1555297574,
+    "last_content_update" : 1555297574681,
+    "path" : "~/open-source/hm_ga/asplos/HM.R",
+    "project_path" : "HM.R",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

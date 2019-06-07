@@ -42,3 +42,6 @@ set(super_master_SRCS
 add_executable(super_master ${super_master_SRCS})
 target_link_libraries(super_master gflags ${super_master_PROTOS} ${PROCESS_LIBS}  ${PROCESS_TARGET} ${master_PROTOS})
 
+set(optimization_SRCS optimization.cpp)
+add_executable(optimization_tests
+        ${optimization_SRCS})

@@ -1,0 +1,24 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1552530676895.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "558D375",
+    "lastKnownWriteTime" : 1554860799,
+    "last_content_update" : 1554860799361,
+    "path" : "D:/asplos/HMmod.R",
+    "project_path" : "HMmod.R",
+    "properties" : {
+        "cursorPosition" : "128,12",
+        "docOutlineSize" : "183.97286082011524",
+        "docOutlineVisible" : "1",
+        "scrollLine" : "103"
+    },
+    "relative_order" : 1,
+    "source_on_save" : true,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1552963219316.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "B1783449",
+    "lastKnownWriteTime" : 1554769915,
+    "last_content_update" : 1554769915842,
+    "path" : "D:/asplos/preModel.R",
+    "project_path" : "preModel.R",
+    "properties" : {
+        "cursorPosition" : "19,32",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 3,
+    "source_on_save" : true,
+    "source_window" : "",
+    "type" : "r_source"
+}
