@@ -1,3 +1,0 @@
-repository='external project URL'
-module='/home/lemaker/open-source/Chameleon/3rdparty/protobuf-2.6.1.tar.gz'
-tag=''

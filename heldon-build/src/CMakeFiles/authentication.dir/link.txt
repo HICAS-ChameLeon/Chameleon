@@ -1,2 +1,0 @@
-/usr/bin/ar qc libauthentication.a  CMakeFiles/authentication.dir/messages/authentication.pb.cc.o
-/usr/bin/ranlib libauthentication.a

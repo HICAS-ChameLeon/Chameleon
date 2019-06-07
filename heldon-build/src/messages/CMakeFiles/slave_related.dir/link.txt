@@ -1,2 +1,0 @@
-/usr/bin/ar qc libslave_related.a  CMakeFiles/slave_related.dir/slave_related.pb.cc.o
-/usr/bin/ranlib libslave_related.a

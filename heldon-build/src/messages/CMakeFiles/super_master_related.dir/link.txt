@@ -1,2 +1,0 @@
-/usr/bin/ar qc libsuper_master_related.a  CMakeFiles/super_master_related.dir/super_master_related.pb.cc.o
-/usr/bin/ranlib libsuper_master_related.a

@@ -16,6 +16,7 @@
         .config(function ($routeProvider) {
             $routeProvider.when('/hardware', {
                 //templateURL：插入ng-view的HTML模板文件
+                //controller: 控制与templateUrl相对应的html的控制器
                 templateUrl: 'hardware.html',
                 controller: 'HardwareCtrl'
 
@@ -66,6 +67,7 @@
                     controller: 'SlaveCtrl'
                 })
         })
+        //指令clipboard,实现点击复制
         .directive('clipboard', [function() {
             return {
                 restrict: 'A',

@@ -1,1 +1,0 @@
-cmd='/home/lemaker/software/clion-2018.2.5/bin/cmake/linux/bin/cmake;-E;echo'

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libruntime_resource.a  CMakeFiles/runtime_resource.dir/messages/runtime_resource.pb.cc.o
-/usr/bin/ranlib libruntime_resource.a

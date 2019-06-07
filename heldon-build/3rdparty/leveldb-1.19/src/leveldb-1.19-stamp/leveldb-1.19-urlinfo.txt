@@ -1,3 +1,0 @@
-repository='external project URL'
-module='/home/lemaker/open-source/Chameleon/3rdparty/leveldb-1.19.tar.gz'
-tag=''

@@ -1,3 +1,0 @@
-repository='external project URL'
-module='/home/lemaker/open-source/Chameleon/3rdparty/nvml-352.79.tar.gz'
-tag=''
