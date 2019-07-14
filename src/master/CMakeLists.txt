@@ -7,14 +7,22 @@ message(${CMAKE_SOURCE_DIR}/src/slave/resource_collector)
 # set the gtest 1.7 relevant library names.
 set(GTEST_LIBS gmock gtest gflags)
 
+add_library(master_scheduler SHARED scheduler_interface.hpp coarse_grained_scheduler.hpp smhc_grained_scheduler.hpp)
+set_target_properties(
+        ${master_scheduler} PROPERTIES
+        POSITION_INDEPENDENT_CODE TRUE
+)
+
+set_target_properties(master_scheduler PROPERTIES LINKER_LANGUAGE CXX)
+
+
+
 set(master_SRCS
         master.hpp
         master.cpp
         slave_object.hpp
         slave_object.cpp
-        scheduler_interface.hpp
-        coarse_grained_scheduler.hpp
-        smhc_grained_scheduler.hpp)
+    )
 set(master_PROTOS job)
 list(APPEND master_PROTOS hardware_resource)
 list(APPEND master_PROTOS runtime_resource)
