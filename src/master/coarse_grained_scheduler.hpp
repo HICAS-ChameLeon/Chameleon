@@ -41,7 +41,7 @@ namespace chameleon {
 
     class CoarseGrainedScheduler : public SchedulerInterface {
     public:
-        explicit CoarseGrainedScheduler():SchedulerInterface("CoarseGrained") {
+        explicit CoarseGrainedScheduler() : SchedulerInterface("CoarseGrained"), m_round_robin_index(0) {
 
         }
 
@@ -53,6 +53,9 @@ namespace chameleon {
         /**
        *  coarse-grained scheduling: we do not consider the fine-grained resources heterogeneity of hardware, such as cpu speed.
          *  we will find all the slave objects that can satisfy the framework's coarse-grained resource requirements
+         *  轮询调度算法(Round-Robin Scheduling)
+
+　　     轮询调度算法的原理是每一次把来自用户的请求轮流分配给内部中的服务器，从1开始，直到N(内部服务器个数)，然后重新开始循环。
        * @param resource_offers_message
        * @param framework_id
        * @param m_slave_objects
@@ -60,17 +63,43 @@ namespace chameleon {
         void construct_offers(mesos::internal::ResourceOffersMessage &resource_offers_message,
                               const mesos::FrameworkID &framework_id,
                               const unordered_map<string, shared_ptr<SlaveObject>> &m_slave_objects) override {
-            LOG(INFO)<<"coarse-grained scheduling ";
-            for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
-                mesos::OfferID offer_id = new_offer_id();
-                shared_ptr<SlaveObject> slave = it->second;
-                mesos::Offer *offer = slave->construct_a_offer(offer_id.value(), framework_id);
-                resource_offers_message.add_offers()->MergeFrom(*offer);
-                LOG(INFO) << offer->slave_id().value();
-                m_offers[offer->slave_id().value()] = offer->id().value();
-                resource_offers_message.add_pids(slave->m_upid_str);
+            LOG(INFO) << "coarse-grained scheduling, round-robin algorithm";
+            int current_size = m_slave_objects.size();
+            auto it = m_slave_objects.begin();
+
+            if (m_round_robin_index == current_size) {
+                m_round_robin_index = 0;
+                it = m_slave_objects.begin();
             }
+
+            int index = 0;
+            while (index < m_round_robin_index) {
+                it++;
+                index++;
+            }
+            m_round_robin_index++;
+
+            mesos::OfferID offer_id = new_offer_id();
+            shared_ptr<SlaveObject> slave = it->second;
+            mesos::Offer *offer = slave->construct_a_offer(offer_id.value(), framework_id);
+            resource_offers_message.add_offers()->MergeFrom(*offer);
+            LOG(INFO) << offer->slave_id().value();
+            m_offers[offer->slave_id().value()] = offer->id().value();
+            resource_offers_message.add_pids(slave->m_upid_str);
+
+//            for (auto it = m_slave_objects.begin(); it != m_slave_objects.end(); it++) {
+//                mesos::OfferID offer_id = new_offer_id();
+//                shared_ptr<SlaveObject> slave = it->second;
+//                mesos::Offer *offer = slave->construct_a_offer(offer_id.value(), framework_id);
+//                resource_offers_message.add_offers()->MergeFrom(*offer);
+//                LOG(INFO) << offer->slave_id().value();
+//                m_offers[offer->slave_id().value()] = offer->id().value();
+//                resource_offers_message.add_pids(slave->m_upid_str);
+//            }
         }
+
+    private:
+        int m_round_robin_index;
     };
 };
 
